@@ -1,0 +1,25 @@
+# Sutradhar Python Dependencies
+# Requires Python >=3.10, <3.14 (Python 3.12 recommended; kokoro-onnx==0.6.1 does not support Python 3.14 yet)
+
+# Local Offline Neural TTS & Word Alignment
+kokoro-onnx==0.6.1
+faster-whisper==1.2.1
+onnxruntime>=1.20.0,<2.0.0
+numpy>=1.26.4,<2.3.0
+soundfile>=0.12.1,<1.0.0
+huggingface-hub>=0.25.0,<1.0.0
+
+# Audio Mastering & Production QA Gate
+kinocut==2.0.1
+
+# Schema Validation, Config & Contact Sheet Generation
+pydantic>=2.9.0,<3.0.0
+PyYAML>=6.0.2,<7.0.0
+Pillow>=10.4.0,<12.0.0
+python-dotenv>=1.0.1,<2.0.0
+
+# YouTube Data API v3 & OAuth2
+google-api-python-client>=2.150.0,<3.0.0
+google-auth>=2.35.0,<3.0.0
+google-auth-oauthlib>=1.2.1,<2.0.0
+google-auth-httplib2>=0.2.0,<1.0.0

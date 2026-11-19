@@ -1,0 +1,41 @@
+# Ephemeral build outputs & renders
+build/
+*.mp4
+*.wav
+!assets/sfx/*.wav
+
+# Local database state
+episodes.db
+episodes.db-journal
+episodes.db-shm
+episodes.db-wal
+
+# Secrets (isolated from HyperFrames .env)
+.env
+.env.local
+.env.youtube
+client_secret*.json
+token.json
+
+# Downloaded local AI model weights (Kokoro-82M & Whisper caches)
+models/
+.cache/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Node.js / HyperFrames
+node_modules/
+.hyperframes/
+npm-debug.log*
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

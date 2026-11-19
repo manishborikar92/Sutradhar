@@ -1,0 +1,49 @@
+# Sutradhar Phonetic Override Map for Kokoro-82M (English)
+# Format: "Canonical Spelling in Captions": "Phonetic hint for TTS synthesis"
+# Applied whole-word, case-insensitively to narration_text only (captions remain untouched).
+
+replacements:
+  # Brand & Core Storytelling Terms
+  Sutradhar: "Soo-truh-dhaar"
+  Sanatan: "Suh-naa-tuhn"
+  Dharma: "Dhar-muh"
+  Purana: "Poo-raa-nuh"
+  Puranas: "Poo-raa-nuhs"
+  Puranic: "Poo-raa-nik"
+  Upanishad: "Oo-puh-nee-shuhd"
+  Upanishads: "Oo-puh-nee-shuhdz"
+  Veda: "Vay-duh"
+  Vedas: "Vay-duhz"
+  Katha: "Kuh-thaa"
+  Yuga: "Yoo-guh"
+  Kalpa: "Kuhl-puh"
+
+  # Ancient Epics & Lore
+  Mahabharata: "Muh-haa-bhaa-ruh-tuh"
+  Ramayana: "Raa-maa-yuh-nuh"
+  Ravana: "Raa-vuh-nuh"
+  Shani: "Shuh-nee"
+  Narad: "Naa-ruhd"
+  Muni: "Moo-nee"
+  Shiva: "Shee-vuh"
+  Vishnu: "Vish-noo"
+  Brahma: "Bruhm-haa"
+  Kailash: "Kai-laash"
+  Kurukshetra: "Koo-rook-shay-truh"
+  Ashwatthama: "Ush-wuht-thaa-maa"
+  Lanka: "Luhn-kaa"
+
+  # Hidden History
+  Pataliputra: "Paa-tuh-lee-poo-truh"
+  Nalanda: "Naa-luhn-daa"
+  Chanakya: "Chaa-nuhk-yuh"
+  Maurya: "Mow-ryuh"
+  Chola: "Cho-laa"
+  Vijayanagara: "Vee-juh-yuh-nuh-guh-ruh"
+  Mohenjo-daro: "Mo-hen-jo daa-ro"
+
+  # Science & Space (Common TTS Tripwires)
+  Schwarzschild: "Shvarts-shild"
+  Spaghettification: "Spuh-geh-tih-fih-kay-shuhn"
+  Quasar: "Kway-zaar"
+  Oumuamua: "Oh-moo-ah-moo-ah"
