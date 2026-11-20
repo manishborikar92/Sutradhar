@@ -31,7 +31,7 @@ Run `python scripts/db_manager.py --context` and parse the JSON output:
 - **Case B — `active_series` IS `null` (Previous series completed or first run):**
   1. Select a fresh pillar from `channel_config.pillars` (*Ancient Epics & Lore*, *Hidden History*, or *Cosmic & Scientific Paradoxes*), never repeating the immediately preceding series' pillar or any topic in `completed_series_history`.
   2. Design a tight **3-to-6-episode mini-series** (`total_planned_episodes` between 3 and 6) structured for **YouTube Shorts Series**: every episode must make immediate sense to a cold Shorts-feed viewer while building an escalating season arc.
-  3. Write the full series roadmap (`series_title`, `pillar`, `tts_voice`, `bgm_track`, `total_planned_episodes`, and `series_bible_json` outlining all episodes, hooks, and planned bespoke diagrams/props) to `build/new_series_plan.json`, then run `python scripts/db_manager.py --create-series`.
+  3. Write the full series roadmap (`series_title`, `pillar`, `tts_voice`, `bgm_track`, `total_planned_episodes`, and `series_bible_json` containing `arc_summary` plus sequential `episodes` entries each with `episode_number`, `working_title`, `hook`, `narrative_direction`, unique `planned_bespoke_asset`, and `cliffhanger_or_payoff`) to `build/new_series_plan.json`, then run `python scripts/db_manager.py --create-series`.
 
 ---
 

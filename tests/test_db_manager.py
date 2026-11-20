@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""End-to-end CLI and state-machine test suite for scripts/db_manager.py."""
+"""Comprehensive specification-compliance test suite for scripts/db_manager.py."""
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import os
 import shutil
@@ -14,26 +15,75 @@ import unittest
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DB_MANAGER = REPO_ROOT / "scripts" / "db_manager.py"
 REAL_CONFIG = REPO_ROOT / "config.yaml"
+
+
+def load_db_manager_module() -> Any:
+    spec = importlib.util.spec_from_file_location("db_manager_mod", DB_MANAGER)
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def make_valid_bible(count: int = 3, prefix: str = "s1") -> dict[str, Any]:
+    return {
+        "arc_summary": "A multi-part scientific journey across gravitational horizons and deep time.",
+        "continuity_notes": "Maintain escalating visual tension from outer orbit to singularity.",
+        "episodes": [
+            {
+                "episode_number": i,
+                "working_title": f"Event Horizon Paradox Part {i}",
+                "hook": f"What breaks first when crossing boundary stage {i}?",
+                "narrative_direction": (
+                    f"Break down relativistic phenomenon {i} using escalating visual stakes."
+                ),
+                "planned_bespoke_asset": f"assets/svg/diagrams/{prefix}_ep{i}_diagram.svg",
+                "cliffhanger_or_payoff": (
+                    f"Plant the cliffhanger leading directly into part {i + 1}."
+                    if i < count
+                    else "Deliver the final evaporation payoff and subscribe invitation."
+                ),
+            }
+            for i in range(1, count + 1)
+        ],
+    }
+
+
+def make_valid_series_plan(
+    title: str = "Secrets of the Event Horizon",
+    pillar: str = "Cosmic & Scientific Paradoxes",
+    bgm_track: str = "cosmic_mystery.mp3",
+    count: int = 3,
+    prefix: str = "s1",
+) -> dict[str, Any]:
+    return {
+        "series_title": title,
+        "pillar": pillar,
+        "tts_voice": "am_fenrir:0.65+bm_george:0.35",
+        "bgm_track": bgm_track,
+        "total_planned_episodes": count,
+        "series_bible_json": make_valid_bible(count=count, prefix=prefix),
+    }
 
 
 def make_valid_scenes(bespoke_stem: str, count: int = 7) -> list[dict[str, Any]]:
     scenes: list[dict[str, Any]] = []
     for idx in range(1, count + 1):
         if idx == 1:
+            text = (
+                "Cross this invisible cosmic boundary and the universe outside "
+                "ages millions of years in a single heartbeat."
+            )
             scenes.append(
                 {
                     "scene_index": idx,
-                    "narration_text": (
-                        "Cross this invisible cosmic boundary and the universe outside "
-                        "ages millions of years in a single heartbeat."
-                    ),
-                    "caption_text": (
-                        "Cross this invisible cosmic boundary and the universe outside "
-                        "ages millions of years in a single heartbeat."
-                    ),
+                    "narration_text": text,
+                    "caption_text": text,
                     "visual_mode": "explainer_diagram",
                     "backdrop_rig": "deep_cosmos_nebula",
                     "diagram_rig": bespoke_stem,
@@ -51,17 +101,15 @@ def make_valid_scenes(bespoke_stem: str, count: int = 7) -> list[dict[str, Any]]
                 }
             )
         elif idx % 2 == 0:
+            text = (
+                "Gravity pulls harder on your feet than your head until "
+                "every atom stretches into a blazing cosmic thread."
+            )
             scenes.append(
                 {
                     "scene_index": idx,
-                    "narration_text": (
-                        "Gravity pulls harder on your feet than your head until "
-                        "every atom stretches into a blazing cosmic thread."
-                    ),
-                    "caption_text": (
-                        "Gravity pulls harder on your feet than your head until "
-                        "every atom stretches into a blazing cosmic thread."
-                    ),
+                    "narration_text": text,
+                    "caption_text": text,
                     "visual_mode": "character_drama",
                     "backdrop_rig": "deep_cosmos_nebula",
                     "diagram_rig": None,
@@ -79,17 +127,15 @@ def make_valid_scenes(bespoke_stem: str, count: int = 7) -> list[dict[str, Any]]
                 }
             )
         else:
+            text = (
+                "Inside that trapped region of space every path forward points "
+                "straight toward the singularity at the center."
+            )
             scenes.append(
                 {
                     "scene_index": idx,
-                    "narration_text": (
-                        "Inside that trapped region of space every path forward points "
-                        "straight toward the singularity at the center."
-                    ),
-                    "caption_text": (
-                        "Inside that trapped region of space every path forward points "
-                        "straight toward the singularity at the center."
-                    ),
+                    "narration_text": text,
+                    "caption_text": text,
                     "visual_mode": "kinetic_callout",
                     "backdrop_rig": "quantum_grid_void",
                     "diagram_rig": None,
@@ -109,7 +155,32 @@ def make_valid_scenes(bespoke_stem: str, count: int = 7) -> list[dict[str, Any]]
     return scenes
 
 
-class TestDbManager(unittest.TestCase):
+def make_valid_episode_plan(
+    series_id: int = 1,
+    ep_in_series: int = 1,
+    global_ep: int = 1,
+    total_eps: int = 3,
+    bespoke_stem: str = "s1_ep1_diagram",
+    title: str = "Time Stops at the Event Horizon (Part 1/3) #Shorts",
+) -> dict[str, Any]:
+    return {
+        "series_id": series_id,
+        "series_title": "Secrets of the Event Horizon",
+        "pillar": "Cosmic & Scientific Paradoxes",
+        "episode_number_in_series": ep_in_series,
+        "total_planned_episodes": total_eps,
+        "global_episode_number": global_ep,
+        "tts_voice": "am_fenrir:0.65+bm_george:0.35",
+        "bgm_track": "cosmic_mystery.mp3",
+        "bespoke_asset_path": f"assets/svg/diagrams/{bespoke_stem}.svg",
+        "youtube_title": title,
+        "youtube_description": "Part of the Event Horizon series on Sutradhar. #Space #Shorts",
+        "summary": "Explores extreme gravitational time dilation near an event horizon.",
+        "scenes": make_valid_scenes(bespoke_stem),
+    }
+
+
+class TestDbManagerCompliance(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name)
@@ -125,7 +196,6 @@ class TestDbManager(unittest.TestCase):
         ):
             (self.root / rel).mkdir(parents=True, exist_ok=True)
 
-        # Seed dummy asset files for --context inventory verification
         (self.root / "assets/svg/characters/sutradhar_narrator.svg").write_text("<svg/>", encoding="utf-8")
         (self.root / "assets/svg/backdrops/deep_cosmos_nebula.svg").write_text("<svg/>", encoding="utf-8")
         (self.root / "assets/svg/diagrams/black_hole_anatomy.svg").write_text("<svg/>", encoding="utf-8")
@@ -135,284 +205,681 @@ class TestDbManager(unittest.TestCase):
     def tearDown(self) -> None:
         self.tmp.cleanup()
 
-    def run_cli(self, flag: str) -> subprocess.CompletedProcess[str]:
+    def run_cli(self, *args: str) -> subprocess.CompletedProcess[str]:
         env = {**os.environ, "SUTRADHAR_ROOT": str(self.root)}
         return subprocess.run(
-            [sys.executable, str(DB_MANAGER), flag],
+            [sys.executable, str(DB_MANAGER), *args],
             capture_output=True,
             text=True,
             env=env,
             check=False,
         )
 
-    def write_build_json(self, filename: str, payload: dict[str, Any]) -> None:
+    def write_build_json(self, filename: str, payload: Any) -> None:
         (self.root / "build" / filename).write_text(
             json.dumps(payload, indent=2), encoding="utf-8"
         )
 
-    def test_full_lifecycle_and_guardrails(self) -> None:
-        # 1. --context before --init must fail loudly
-        res = self.run_cli("--context")
-        self.assertNotEqual(res.returncode, 0)
-        self.assertIn("--init", res.stderr)
+    def update_config(self, mutator: Any) -> None:
+        cfg_path = self.root / "config.yaml"
+        cfg = yaml.safe_load(cfg_path.read_text(encoding="utf-8"))
+        mutator(cfg)
+        cfg_path.write_text(yaml.safe_dump(cfg, sort_keys=False), encoding="utf-8")
 
-        # 2. --init (and idempotent re-run)
+    def init_and_create_default_series(self) -> None:
+        self.assertEqual(self.run_cli("--init").returncode, 0)
+        self.write_build_json("new_series_plan.json", make_valid_series_plan())
+        res = self.run_cli("--create-series")
+        self.assertEqual(res.returncode, 0, res.stderr)
+
+    # 1. CLI commands, malformed input, and stdout/stderr separation
+    def test_01_cli_error_cases_and_stdout_stderr_separation(self) -> None:
+        # Missing flag & mutually exclusive flags -> stderr only, stdout empty
+        for bad_args in ((), ("--init", "--context"), ("--unknown",)):
+            res = self.run_cli(*bad_args)
+            self.assertNotEqual(res.returncode, 0)
+            self.assertEqual(res.stdout.strip(), "")
+            self.assertTrue(len(res.stderr.strip()) > 0)
+
+        # Commands before --init fail cleanly to stderr
+        for flag in ("--context", "--create-series", "--record-published"):
+            res = self.run_cli(flag)
+            self.assertEqual(res.returncode, 1)
+            self.assertEqual(res.stdout.strip(), "")
+            self.assertIn("--init", res.stderr)
+
+        # --init succeeds with valid JSON on stdout and empty stderr
         res = self.run_cli("--init")
         self.assertEqual(res.returncode, 0, res.stderr)
-        init_out = json.loads(res.stdout)
-        self.assertEqual(init_out["status"], "ok")
-        self.assertTrue((self.root / "episodes.db").is_file())
+        self.assertEqual(res.stderr.strip(), "")
+        self.assertEqual(json.loads(res.stdout)["status"], "ok")
 
-        res_repeat = self.run_cli("--init")
-        self.assertEqual(res_repeat.returncode, 0, res_repeat.stderr)
-
-        # 3. Initial --context check
-        res = self.run_cli("--context")
-        self.assertEqual(res.returncode, 0, res.stderr)
-        ctx = json.loads(res.stdout)
-        self.assertIsNone(ctx["active_series"])
-        self.assertEqual(ctx["next_episode_number_in_series"], 1)
-        self.assertEqual(ctx["next_global_episode_number"], 1)
-        self.assertEqual(ctx["channel_config"]["primary_language"], "en")
-        self.assertEqual(ctx["channel_config"]["upload_mode"], "private_review")
-        self.assertIn("sutradhar_narrator", ctx["available_rigs"]["characters"])
-        self.assertIn("cosmic_mystery.mp3", ctx["available_rigs"]["bgm"])
-
-        # 4. Reject invalid new_series_plan.json (invalid pillar + wrong episode count)
-        self.write_build_json(
-            "new_series_plan.json",
-            {
-                "series_title": "Invalid Series",
-                "pillar": "Not A Real Pillar",
-                "tts_voice": "am_fenrir",
-                "bgm_track": "cosmic_mystery.mp3",
-                "total_planned_episodes": 2,
-                "series_bible_json": {"episodes": [{"ep": 1}, {"ep": 2}]},
-            },
-        )
+        # Missing input JSON files fail cleanly
         res = self.run_cli("--create-series")
-        self.assertNotEqual(res.returncode, 0)
-        self.assertIn("validation failed", res.stderr)
+        self.assertEqual(res.returncode, 1)
+        self.assertEqual(res.stdout.strip(), "")
+        self.assertIn("new_series_plan.json", res.stderr)
 
-        # 5. Create valid 3-episode Series #1
-        series1_plan = {
-            "series_title": "Secrets of the Event Horizon",
-            "pillar": "Cosmic & Scientific Paradoxes",
-            "tts_voice": "am_fenrir:0.65+bm_george:0.35",
-            "bgm_track": "cosmic_mystery.mp3",
-            "total_planned_episodes": 3,
-            "series_bible_json": {
-                "arc_summary": "A 3-part descent into black hole physics.",
+        # Malformed JSON file fails cleanly
+        (self.root / "build/new_series_plan.json").write_text("{broken json", encoding="utf-8")
+        res = self.run_cli("--create-series")
+        self.assertEqual(res.returncode, 1)
+        self.assertIn("Malformed JSON", res.stderr)
+
+    # 2. Invalid config.yaml handling
+    def test_02_invalid_config_handling(self) -> None:
+        self.assertEqual(self.run_cli("--init").returncode, 0)
+
+        # Non-English language lock violation
+        self.update_config(lambda c: c["channel"].__setitem__("primary_language", "hi"))
+        res = self.run_cli("--context")
+        self.assertEqual(res.returncode, 1)
+        self.assertIn("language lock violated", res.stderr)
+
+        # Restore and test invalid upload_mode
+        shutil.copy2(REAL_CONFIG, self.root / "config.yaml")
+        self.update_config(lambda c: c["publishing"].__setitem__("upload_mode", "public_yolo"))
+        res = self.run_cli("--context")
+        self.assertEqual(res.returncode, 1)
+        self.assertIn("upload_mode", res.stderr)
+
+        # Restore and test non-boolean allow_public_or_scheduled
+        shutil.copy2(REAL_CONFIG, self.root / "config.yaml")
+        self.update_config(lambda c: c["publishing"].__setitem__("allow_public_or_scheduled", "false"))
+        res = self.run_cli("--context")
+        self.assertEqual(res.returncode, 1)
+        self.assertIn("must be a boolean", res.stderr)
+
+        # Missing config.yaml
+        (self.root / "config.yaml").unlink()
+        res = self.run_cli("--context")
+        self.assertEqual(res.returncode, 1)
+        self.assertIn("Missing configuration file", res.stderr)
+
+    # 3. Complete vs incomplete Series Bible validation
+    def test_03_series_bible_completeness_validation(self) -> None:
+        self.assertEqual(self.run_cli("--init").returncode, 0)
+
+        invalid_bibles = [
+            {},  # Empty dict
+            {"notes": "Only free text, no episodes"},  # Missing arc_summary & episodes
+            {"arc_summary": "Valid summary long enough for check.", "episodes": [{}, {}, {}]},  # Incomplete ep dicts
+            {
+                "arc_summary": "Valid summary long enough for check.",
+                "episodes": make_valid_bible(count=2)["episodes"],  # Wrong length (2 vs 3)
+            },
+            {
+                # Non-sequential episode numbers [1, 3, 2]
+                "arc_summary": "Valid summary long enough for check.",
                 "episodes": [
-                    {"part": 1, "hook": "Time freezes at the edge."},
-                    {"part": 2, "hook": "Spaghettification tears matter apart."},
-                    {"part": 3, "hook": "Hawking radiation erases the black hole."},
+                    {**ep, "episode_number": num}
+                    for ep, num in zip(make_valid_bible(count=3)["episodes"], [1, 3, 2])
                 ],
             },
-        }
-        self.write_build_json("new_series_plan.json", series1_plan)
+            {
+                # Missing required hook field
+                "arc_summary": "Valid summary long enough for check.",
+                "episodes": [
+                    {k: v for k, v in ep.items() if k != "hook"}
+                    for ep in make_valid_bible(count=3)["episodes"]
+                ],
+            },
+            {
+                # Duplicate planned_bespoke_asset across episodes
+                "arc_summary": "Valid summary long enough for check.",
+                "episodes": [
+                    {**ep, "planned_bespoke_asset": "assets/svg/diagrams/same_asset.svg"}
+                    for ep in make_valid_bible(count=3)["episodes"]
+                ],
+            },
+            {
+                # Invalid asset path (nested subdirectory)
+                "arc_summary": "Valid summary long enough for check.",
+                "episodes": [
+                    {**ep, "planned_bespoke_asset": f"assets/svg/diagrams/nested/ep{i}.svg"}
+                    for i, ep in enumerate(make_valid_bible(count=3)["episodes"], start=1)
+                ],
+            },
+        ]
+
+        for idx, bad_bible in enumerate(invalid_bibles):
+            plan = make_valid_series_plan()
+            plan["series_bible_json"] = bad_bible
+            self.write_build_json("new_series_plan.json", plan)
+            res = self.run_cli("--create-series")
+            self.assertEqual(res.returncode, 1, f"Case {idx} should have failed: {bad_bible}")
+            self.assertIn("validation failed", res.stderr)
+
+        # Valid bible passed as JSON string must succeed
+        str_plan = make_valid_series_plan()
+        str_plan["series_bible_json"] = json.dumps(make_valid_bible(count=3))
+        self.write_build_json("new_series_plan.json", str_plan)
         res = self.run_cli("--create-series")
         self.assertEqual(res.returncode, 0, res.stderr)
-        created = json.loads(res.stdout)
-        self.assertEqual(created["series_id"], 1)
-        self.assertEqual(created["series_status"], "ACTIVE")
+        self.assertEqual(json.loads(res.stdout)["series_id"], 1)
 
-        # 6. Reject creating a second series while Series #1 is ACTIVE
-        self.write_build_json(
-            "new_series_plan.json",
-            {
-                **series1_plan,
-                "series_title": "Competing Series",
-                "pillar": "Hidden History",
-            },
-        )
-        res = self.run_cli("--create-series")
-        self.assertNotEqual(res.returncode, 0)
-        self.assertIn("still ACTIVE", res.stderr)
+    # 4. Narration & Caption consistency enforcement
+    def test_04_narration_and_caption_consistency(self) -> None:
+        self.init_and_create_default_series()
 
-        # 7. Reject invalid episode_plan.json (unfeatured bespoke asset)
-        bad_ep1 = {
-            "series_id": 1,
-            "series_title": "Secrets of the Event Horizon",
-            "pillar": "Cosmic & Scientific Paradoxes",
-            "episode_number_in_series": 1,
-            "total_planned_episodes": 3,
-            "global_episode_number": 1,
-            "tts_voice": "am_fenrir:0.65+bm_george:0.35",
-            "bgm_track": "cosmic_mystery.mp3",
-            "bespoke_asset_path": "assets/svg/diagrams/unused_diagram.svg",
-            "youtube_title": "Time Stops at the Event Horizon (Part 1/3) #Shorts",
-            "youtube_description": "Part 1 of 3 on Sutradhar. #Space #Shorts",
-            "summary": "Explores extreme gravitational time dilation near an event horizon.",
-            "scenes": make_valid_scenes("horizon_clock_dilation"),
-        }
-        self.write_build_json("episode_plan.json", bad_ep1)
+        ep = make_valid_episode_plan()
+        ep["scenes"][0]["caption_text"] = "Completely different caption wording than the spoken narration."
+        self.write_build_json("episode_plan.json", ep)
         self.write_build_json(
             "publish_result.json",
-            {
-                "video_id": "vid_001",
-                "playlist_id": "PL_SERIES_001",
-                "upload_status": "PRIVATE_REVIEW",
-                "scheduled_publish_at": None,
-            },
+            {"video_id": "vid_cap_01", "playlist_id": "PL_CAP", "upload_status": "PRIVATE_REVIEW"},
         )
         res = self.run_cli("--record-published")
-        self.assertNotEqual(res.returncode, 0)
-        self.assertIn("must be actively featured", res.stderr)
+        self.assertEqual(res.returncode, 1)
+        self.assertIn("narration_text and caption_text must be identical", res.stderr)
 
-        # 8. Record a FAILED upload on Part 1 -> must NOT advance completed_episodes
-        ep1 = {**bad_ep1, "bespoke_asset_path": "assets/svg/diagrams/horizon_clock_dilation.svg"}
-        self.write_build_json("episode_plan.json", ep1)
-        self.write_build_json(
-            "publish_result.json",
+        # Ensure DB remained untouched (0 completed episodes)
+        ctx = json.loads(self.run_cli("--context").stdout)
+        self.assertEqual(ctx["active_series"]["completed_episodes"], 0)
+
+        # Fixing caption_text to match narration_text succeeds
+        ep["scenes"][0]["caption_text"] = ep["scenes"][0]["narration_text"]
+        self.write_build_json("episode_plan.json", ep)
+        res = self.run_cli("--record-published")
+        self.assertEqual(res.returncode, 0, res.stderr)
+        self.assertEqual(json.loads(res.stdout)["completed_episodes"], 1)
+
+    # 5. Publishing safety & private_review lock enforcement
+    def test_05_publishing_safety_private_review_lock(self) -> None:
+        self.init_and_create_default_series()
+        ep = make_valid_episode_plan()
+        self.write_build_json("episode_plan.json", ep)
+
+        # Under default config (upload_mode=private_review, allow_public_or_scheduled=false):
+        forbidden_payloads = [
+            # Attempt 1: PUBLISHED status
+            {
+                "video_id": "vid_pub_01",
+                "playlist_id": "PL_LOCK",
+                "upload_status": "PUBLISHED",
+                "scheduled_publish_at": None,
+            },
+            # Attempt 2: PRIVATE_REVIEW carrying a scheduled_publish_at timestamp
+            {
+                "video_id": "vid_pub_02",
+                "playlist_id": "PL_LOCK",
+                "upload_status": "PRIVATE_REVIEW",
+                "scheduled_publish_at": "2026-11-25T13:00:00Z",
+            },
+            # Attempt 3: Manually spoofed upload_mode="scheduled"
+            {
+                "video_id": "vid_pub_03",
+                "playlist_id": "PL_LOCK",
+                "upload_status": "PRIVATE_REVIEW",
+                "upload_mode": "scheduled",
+            },
+            # Attempt 4: Manually spoofed privacy_status="public"
+            {
+                "video_id": "vid_pub_04",
+                "playlist_id": "PL_LOCK",
+                "upload_status": "PRIVATE_REVIEW",
+                "privacy_status": "public",
+            },
+            # Attempt 5: Unknown extra key trying to sneak publishAt
+            {
+                "video_id": "vid_pub_05",
+                "playlist_id": "PL_LOCK",
+                "upload_status": "PRIVATE_REVIEW",
+                "publishAt": "2026-11-25T13:00:00Z",
+            },
+            # Attempt 6: FAILED carrying a scheduled timestamp while locked
             {
                 "video_id": None,
-                "playlist_id": "PL_SERIES_001",
+                "playlist_id": "PL_LOCK",
                 "upload_status": "FAILED",
-                "error_message": "Simulated network timeout",
+                "scheduled_publish_at": "2026-11-25T13:00:00Z",
             },
-        )
-        res = self.run_cli("--record-published")
-        self.assertEqual(res.returncode, 0, res.stderr)
-        fail_out = json.loads(res.stdout)
-        self.assertEqual(fail_out["completed_episodes"], 0)
-        self.assertEqual(fail_out["series_status"], "ACTIVE")
+        ]
 
-        # Verify context still asks for Part 1 / Global 1
-        ctx_after_fail = json.loads(self.run_cli("--context").stdout)
-        self.assertEqual(ctx_after_fail["next_episode_number_in_series"], 1)
-        self.assertEqual(ctx_after_fail["next_global_episode_number"], 1)
-        self.assertEqual(ctx_after_fail["active_series"]["youtube_playlist_id"], "PL_SERIES_001")
+        for idx, payload in enumerate(forbidden_payloads):
+            self.write_build_json("publish_result.json", payload)
+            res = self.run_cli("--record-published")
+            self.assertEqual(res.returncode, 1, f"Payload #{idx} bypassed safety lock: {payload}")
+            self.assertIn("publish_result.json validation failed", res.stderr)
 
-        # 9. Retry Part 1 as PRIVATE_REVIEW -> succeeds cleanly, replaces FAILED row
+        # Verify zero partial DB mutations occurred across all 6 rejected attempts
+        ctx = json.loads(self.run_cli("--context").stdout)
+        self.assertEqual(ctx["active_series"]["completed_episodes"], 0)
+        self.assertIsNone(ctx["active_series"]["youtube_playlist_id"])
+
+        # Even if upload_mode is flipped to 'scheduled', allow_public_or_scheduled=false MUST still block PUBLISHED
+        self.update_config(lambda c: c["publishing"].__setitem__("upload_mode", "scheduled"))
         self.write_build_json(
             "publish_result.json",
             {
-                "video_id": "vid_001",
-                "playlist_id": "PL_SERIES_001",
+                "video_id": "vid_pub_06",
+                "playlist_id": "PL_LOCK",
+                "upload_status": "PUBLISHED",
+                "scheduled_publish_at": "2026-11-25T13:00:00Z",
+            },
+        )
+        res = self.run_cli("--record-published")
+        self.assertEqual(res.returncode, 1)
+        self.assertIn("Publishing safety lock active", res.stderr)
+
+        # Restore private_review config -> valid PRIVATE_REVIEW succeeds
+        shutil.copy2(REAL_CONFIG, self.root / "config.yaml")
+        self.write_build_json(
+            "publish_result.json",
+            {
+                "video_id": "vid_priv_01",
+                "playlist_id": "PL_LOCK",
                 "upload_status": "PRIVATE_REVIEW",
+                "upload_mode": "private_review",
+                "privacy_status": "private",
                 "scheduled_publish_at": None,
             },
         )
         res = self.run_cli("--record-published")
         self.assertEqual(res.returncode, 0, res.stderr)
-        rec1 = json.loads(res.stdout)
-        self.assertEqual(rec1["completed_episodes"], 1)
-        self.assertEqual(rec1["series_status"], "ACTIVE")
-        self.assertEqual(rec1["youtube_playlist_id"], "PL_SERIES_001")
+        self.assertEqual(json.loads(res.stdout)["episode_status"], "PRIVATE_REVIEW")
 
-        # 10. Reject mismatched playlist_id on Part 2 (transaction rollback check)
-        ep2 = {
-            **ep1,
-            "episode_number_in_series": 2,
-            "global_episode_number": 2,
-            "bespoke_asset_path": "assets/svg/diagrams/spaghettification_gradient.svg",
-            "youtube_title": "Why Black Holes Stretch You Into Atoms (Part 2/3) #Shorts",
-            "scenes": make_valid_scenes("spaghettification_gradient"),
-        }
+        # When BOTH upload_mode='scheduled' AND allow_public_or_scheduled=True -> PUBLISHED with ISO-8601 succeeds
+        self.update_config(
+            lambda c: c["publishing"].update(
+                {"upload_mode": "scheduled", "allow_public_or_scheduled": True}
+            )
+        )
+        ep2 = make_valid_episode_plan(ep_in_series=2, global_ep=2, bespoke_stem="s1_ep2_diagram")
         self.write_build_json("episode_plan.json", ep2)
         self.write_build_json(
             "publish_result.json",
             {
-                "video_id": "vid_002",
-                "playlist_id": "PL_WRONG_PLAYLIST",
-                "upload_status": "PRIVATE_REVIEW",
+                "video_id": "vid_sched_02",
+                "playlist_id": "PL_LOCK",
+                "upload_status": "PUBLISHED",
+                "upload_mode": "scheduled",
+                "privacy_status": "private",
+                "scheduled_publish_at": "2026-11-25T13:00:00Z",
             },
         )
         res = self.run_cli("--record-published")
-        self.assertNotEqual(res.returncode, 0)
-        self.assertIn("Playlist mismatch", res.stderr)
+        self.assertEqual(res.returncode, 0, res.stderr)
+        self.assertEqual(json.loads(res.stdout)["episode_status"], "PUBLISHED")
 
-        # Confirm rollback left completed_episodes at 1
-        ctx_mid = json.loads(self.run_cli("--context").stdout)
-        self.assertEqual(ctx_mid["active_series"]["completed_episodes"], 1)
+    # 6. Failed upload recording & gapless retry
+    def test_06_failed_upload_and_gapless_retry(self) -> None:
+        self.init_and_create_default_series()
+        ep1 = make_valid_episode_plan()
+        self.write_build_json("episode_plan.json", ep1)
 
-        # 11. Record Part 2 & Part 3 cleanly -> Series #1 transitions ACTIVE -> COMPLETED
+        # Record FAILED (even with whitespace video_id, normalized cleanly to NULL)
         self.write_build_json(
             "publish_result.json",
             {
-                "video_id": "vid_002",
-                "playlist_id": "PL_SERIES_001",
+                "video_id": "   ",
+                "playlist_id": "PL_RETRY",
+                "upload_status": "FAILED",
+                "error_message": "Simulated 503 upload failure",
+            },
+        )
+        res = self.run_cli("--record-published")
+        self.assertEqual(res.returncode, 0, res.stderr)
+        out = json.loads(res.stdout)
+        self.assertEqual(out["episode_status"], "FAILED")
+        self.assertIsNone(out["youtube_video_id"])
+        self.assertEqual(out["completed_episodes"], 0)
+        self.assertEqual(out["series_status"], "ACTIVE")
+
+        # Context must still point to Part 1 / Global 1
+        ctx = json.loads(self.run_cli("--context").stdout)
+        self.assertEqual(ctx["next_episode_number_in_series"], 1)
+        self.assertEqual(ctx["next_global_episode_number"], 1)
+        self.assertEqual(ctx["active_series"]["youtube_playlist_id"], "PL_RETRY")
+
+        # Retry Part 1 as PRIVATE_REVIEW replaces FAILED row atomically
+        self.write_build_json(
+            "publish_result.json",
+            {
+                "video_id": "vid_retry_ok",
+                "playlist_id": "PL_RETRY",
                 "upload_status": "PRIVATE_REVIEW",
             },
         )
         res = self.run_cli("--record-published")
         self.assertEqual(res.returncode, 0, res.stderr)
-        self.assertEqual(json.loads(res.stdout)["completed_episodes"], 2)
+        out2 = json.loads(res.stdout)
+        self.assertEqual(out2["completed_episodes"], 1)
+        self.assertEqual(out2["global_episode_number"], 1)
 
-        ep3 = {
-            **ep1,
-            "episode_number_in_series": 3,
-            "global_episode_number": 3,
-            "bespoke_asset_path": "assets/svg/diagrams/hawking_radiation_evaporation.svg",
-            "youtube_title": "How Black Holes Slowly Die (Part 3/3) #Shorts",
-            "scenes": make_valid_scenes("hawking_radiation_evaporation"),
-        }
+        conn = sqlite3.connect(str(self.root / "episodes.db"))
+        try:
+            rows = conn.execute("SELECT status, youtube_video_id FROM episodes").fetchall()
+        finally:
+            conn.close()
+        self.assertEqual(rows, [("PRIVATE_REVIEW", "vid_retry_ok")])
+
+    # 7. Granular field, voice, BGM/SFX, rig, visual-mode, title & ISO timestamp validators
+    def test_07_field_and_visual_mode_validators(self) -> None:
+        self.assertEqual(self.run_cli("--init").returncode, 0)
+
+        # Invalid Kokoro blend weights (sum = 0.50)
+        bad_voice = make_valid_series_plan()
+        bad_voice["tts_voice"] = "am_fenrir:0.25+bm_george:0.25"
+        self.write_build_json("new_series_plan.json", bad_voice)
+        self.assertEqual(self.run_cli("--create-series").returncode, 1)
+
+        # Unconfigured BGM track
+        bad_bgm = make_valid_series_plan(bgm_track="unlisted_track.mp3")
+        self.write_build_json("new_series_plan.json", bad_bgm)
+        res = self.run_cli("--create-series")
+        self.assertEqual(res.returncode, 1)
+        self.assertIn("not in configured BGM tracks", res.stderr)
+
+        # Create valid series to test episode validators
+        self.write_build_json("new_series_plan.json", make_valid_series_plan())
+        self.assertEqual(self.run_cli("--create-series").returncode, 0)
+        self.write_build_json(
+            "publish_result.json",
+            {"video_id": "vid_val", "playlist_id": "PL_VAL", "upload_status": "PRIVATE_REVIEW"},
+        )
+
+        def assert_ep_rejected(mutator: Any, expected_msg: str) -> None:
+            ep = make_valid_episode_plan()
+            mutator(ep)
+            self.write_build_json("episode_plan.json", ep)
+            r = self.run_cli("--record-published")
+            self.assertEqual(r.returncode, 1, f"Expected failure containing '{expected_msg}'")
+            self.assertIn(expected_msg, r.stderr)
+
+        # Unconfigured SFX
+        assert_ep_rejected(lambda e: e["scenes"][0].__setitem__("transition_sfx", "laser.wav"), "sfx_tracks")
+        # Scene count too low (6)
+        assert_ep_rejected(lambda e: e.__setitem__("scenes", e["scenes"][:6]), "scenes count")
+        # Non-sequential scene_index
+        assert_ep_rejected(lambda e: e["scenes"][2].__setitem__("scene_index", 9), "strictly sequential")
+        # character_drama missing primary_character
+        assert_ep_rejected(lambda e: e["scenes"][1].__setitem__("primary_character", None), "primary_character")
+        # character_drama duplicate secondary_character
+        assert_ep_rejected(
+            lambda e: e["scenes"][1].__setitem__("secondary_character", "sutradhar_narrator"),
+            "cannot duplicate primary_character",
+        )
+        # character_drama stray active_diagram_stage
+        assert_ep_rejected(lambda e: e["scenes"][1].__setitem__("active_diagram_stage", 2), "must be null")
+        # explainer_diagram missing active_diagram_stage
+        assert_ep_rejected(lambda e: e["scenes"][0].__setitem__("active_diagram_stage", None), "active_diagram_stage")
+        # kinetic_callout missing callout_headline
+        assert_ep_rejected(lambda e: e["scenes"][2].__setitem__("callout_headline", None), "callout_headline")
+        # YouTube title > 100 chars
+        assert_ep_rejected(lambda e: e.__setitem__("youtube_title", "A" * 101), "100")
+        # YouTube title with forbidden angle bracket
+        assert_ep_rejected(lambda e: e.__setitem__("youtube_title", "Black <Hole> Mystery #Shorts"), "'<' or '>'")
+        # Rig naming convention violation (.svg suffix in slug)
+        assert_ep_rejected(lambda e: e["scenes"][0].__setitem__("backdrop_rig", "bad_rig.svg"), "lowercase slug")
+        # Bespoke asset category mismatch (diagram path used only as backdrop_rig)
+        def set_category_mismatch(e: dict[str, Any]) -> None:
+            e["bespoke_asset_path"] = "assets/svg/backdrops/s1_ep1_diagram.svg"
+        assert_ep_rejected(set_category_mismatch, "backdrop_rig")
+
+        # Naive ISO-8601 timestamp (no timezone) rejected even when unlocked
+        self.update_config(
+            lambda c: c["publishing"].update({"upload_mode": "scheduled", "allow_public_or_scheduled": True})
+        )
+        self.write_build_json("episode_plan.json", make_valid_episode_plan())
+        self.write_build_json(
+            "publish_result.json",
+            {
+                "video_id": "vid_ts",
+                "playlist_id": "PL_VAL",
+                "upload_status": "PUBLISHED",
+                "scheduled_publish_at": "2026-11-25T13:00:00",
+            },
+        )
+        res = self.run_cli("--record-published")
+        self.assertEqual(res.returncode, 1)
+        self.assertIn("explicit timezone", res.stderr)
+
+    # 8. Transaction rollback on validation & SQLite IntegrityError
+    def test_08_transaction_rollback_on_validation_and_db_errors(self) -> None:
+        self.init_and_create_default_series()
+
+        # Record Part 1 with playlist_id=None so series.youtube_playlist_id stays NULL
+        ep1 = make_valid_episode_plan(ep_in_series=1, global_ep=1, bespoke_stem="s1_ep1_diagram")
+        self.write_build_json("episode_plan.json", ep1)
+        self.write_build_json(
+            "publish_result.json",
+            {"video_id": "vid_unique_001", "playlist_id": None, "upload_status": "PRIVATE_REVIEW"},
+        )
+        self.assertEqual(self.run_cli("--record-published").returncode, 0)
+
+        # Part 2 attempts duplicate youtube_video_id WHILE also passing a new playlist_id.
+        # SQLite IntegrityError on INSERT must roll back the prior UPDATE series.youtube_playlist_id!
+        ep2 = make_valid_episode_plan(ep_in_series=2, global_ep=2, bespoke_stem="s1_ep2_diagram")
+        self.write_build_json("episode_plan.json", ep2)
+        self.write_build_json(
+            "publish_result.json",
+            {
+                "video_id": "vid_unique_001",
+                "playlist_id": "PL_MUST_ROLLBACK",
+                "upload_status": "PRIVATE_REVIEW",
+            },
+        )
+        res = self.run_cli("--record-published")
+        self.assertEqual(res.returncode, 1)
+        self.assertIn("SQLite integrity error", res.stderr)
+
+        ctx = json.loads(self.run_cli("--context").stdout)
+        self.assertEqual(ctx["active_series"]["completed_episodes"], 1)
+        self.assertIsNone(ctx["active_series"]["youtube_playlist_id"])
+
+        # Now set valid playlist on Part 2, then verify playlist mismatch on Part 3 rolls back cleanly
+        self.write_build_json(
+            "publish_result.json",
+            {"video_id": "vid_unique_002", "playlist_id": "PL_REAL", "upload_status": "PRIVATE_REVIEW"},
+        )
+        self.assertEqual(self.run_cli("--record-published").returncode, 0)
+
+        ep3 = make_valid_episode_plan(ep_in_series=3, global_ep=3, bespoke_stem="s1_ep3_diagram")
         self.write_build_json("episode_plan.json", ep3)
         self.write_build_json(
             "publish_result.json",
-            {
-                "video_id": "vid_003",
-                "playlist_id": "PL_SERIES_001",
-                "upload_status": "PRIVATE_REVIEW",
-            },
+            {"video_id": "vid_unique_003", "playlist_id": "PL_WRONG", "upload_status": "PRIVATE_REVIEW"},
         )
         res = self.run_cli("--record-published")
-        self.assertEqual(res.returncode, 0, res.stderr)
-        rec3 = json.loads(res.stdout)
-        self.assertEqual(rec3["completed_episodes"], 3)
-        self.assertEqual(rec3["series_status"], "COMPLETED")
+        self.assertEqual(res.returncode, 1)
+        self.assertIn("Playlist mismatch", res.stderr)
 
-        # 12. Verify --context after completion
-        ctx_done = json.loads(self.run_cli("--context").stdout)
-        self.assertIsNone(ctx_done["active_series"])
-        self.assertEqual(ctx_done["next_episode_number_in_series"], 1)
-        self.assertEqual(ctx_done["next_global_episode_number"], 4)
-        self.assertEqual(ctx_done["last_completed_pillar"], "Cosmic & Scientific Paradoxes")
-        self.assertEqual(len(ctx_done["completed_series_history"]), 1)
-        self.assertEqual(len(ctx_done["previous_bespoke_assets"]), 3)
+        ctx2 = json.loads(self.run_cli("--context").stdout)
+        self.assertEqual(ctx2["active_series"]["completed_episodes"], 2)
+        self.assertEqual(ctx2["active_series"]["youtube_playlist_id"], "PL_REAL")
 
-        # 13. Pillar rotation enforcement: same pillar must be rejected
+    # 9. Duplicate episode, bespoke asset reuse & continuity checks
+    def test_09_duplicate_episode_and_bespoke_asset_protection(self) -> None:
+        self.init_and_create_default_series()
+
+        ep1 = make_valid_episode_plan(ep_in_series=1, global_ep=1, bespoke_stem="s1_ep1_diagram")
+        self.write_build_json("episode_plan.json", ep1)
         self.write_build_json(
-            "new_series_plan.json",
-            {
-                **series1_plan,
-                "series_title": "Dark Matter Enigmas",
-                "pillar": "Cosmic & Scientific Paradoxes",
-            },
+            "publish_result.json",
+            {"video_id": "vid_d1", "playlist_id": "PL_D", "upload_status": "PRIVATE_REVIEW"},
         )
-        res = self.run_cli("--create-series")
-        self.assertNotEqual(res.returncode, 0)
-        self.assertIn("Pillar rotation violation", res.stderr)
+        self.assertEqual(self.run_cli("--record-published").returncode, 0)
 
-        # 14. Different pillar succeeds for Series #2
+        # Re-recording Episode 1 slot must be rejected
         self.write_build_json(
-            "new_series_plan.json",
-            {
-                **series1_plan,
-                "series_title": "The Lost Library of Nalanda",
-                "pillar": "Hidden History",
-                "bgm_track": "epic_history.mp3",
-            },
+            "publish_result.json",
+            {"video_id": "vid_d1_dup", "playlist_id": "PL_D", "upload_status": "PRIVATE_REVIEW"},
         )
-        res = self.run_cli("--create-series")
-        self.assertEqual(res.returncode, 0, res.stderr)
-        s2 = json.loads(res.stdout)
-        self.assertEqual(s2["series_id"], 2)
-        self.assertEqual(s2["series_status"], "ACTIVE")
+        res = self.run_cli("--record-published")
+        self.assertEqual(res.returncode, 1)
+        self.assertIn("Expected episode_number_in_series=2", res.stderr)
 
-        # 15. Direct SQLite persistence check
-        conn = sqlite3.connect(str(self.root / "episodes.db"))
+        # Reusing Part 1's bespoke_asset_path on Part 2 must be rejected
+        ep2_dup_asset = make_valid_episode_plan(ep_in_series=2, global_ep=2, bespoke_stem="s1_ep1_diagram")
+        self.write_build_json("episode_plan.json", ep2_dup_asset)
+        self.write_build_json(
+            "publish_result.json",
+            {"video_id": "vid_d2", "playlist_id": "PL_D", "upload_status": "PRIVATE_REVIEW"},
+        )
+        res = self.run_cli("--record-published")
+        self.assertEqual(res.returncode, 1)
+        self.assertIn("was already used", res.stderr)
+
+        # Continuity mismatch on tts_voice must be rejected
+        ep2_bad_voice = make_valid_episode_plan(ep_in_series=2, global_ep=2, bespoke_stem="s1_ep2_diagram")
+        ep2_bad_voice["tts_voice"] = "am_michael"
+        self.write_build_json("episode_plan.json", ep2_bad_voice)
+        res = self.run_cli("--record-published")
+        self.assertEqual(res.returncode, 1)
+        self.assertIn("does not match ACTIVE series tts_voice", res.stderr)
+
+    # 10. Direct SQLite constraints, foreign keys & partial unique indexes
+    def test_10_database_constraints_and_foreign_keys(self) -> None:
+        self.init_and_create_default_series()
+        mod = load_db_manager_module()
+        conn = mod.connect_db(self.root / "episodes.db")
         try:
-            series_rows = conn.execute(
-                "SELECT series_id, status, completed_episodes, youtube_playlist_id FROM series ORDER BY series_id"
-            ).fetchall()
-            ep_count = conn.execute("SELECT COUNT(*) FROM episodes").fetchone()[0]
+            fk_enabled = conn.execute("PRAGMA foreign_keys;").fetchone()[0]
+            self.assertEqual(fk_enabled, 1)
+
+            # Foreign key violation: episode referencing non-existent series_id=999
+            with self.assertRaises(sqlite3.IntegrityError):
+                conn.execute(
+                    """
+                    INSERT INTO episodes (
+                        series_id, episode_number_in_series, global_episode_number,
+                        youtube_title, summary, bespoke_asset_path, script_json,
+                        youtube_video_id, scheduled_publish_at, status
+                    ) VALUES (999, 1, 1, 'T', 'S', 'assets/svg/diagrams/x.svg', '{}', 'v999', NULL, 'PRIVATE_REVIEW')
+                    """
+                )
+
+            # Single ACTIVE series partial unique index enforcement
+            with self.assertRaises(sqlite3.IntegrityError):
+                conn.execute(
+                    """
+                    INSERT INTO series (
+                        series_title, pillar, tts_voice, bgm_track,
+                        total_planned_episodes, completed_episodes, series_bible_json, status
+                    ) VALUES ('Rogue Active', 'Hidden History', 'am_fenrir', 'epic_history.mp3', 3, 0, '{}', 'ACTIVE')
+                    """
+                )
+
+            # Insert valid episode for series 1, then test ON DELETE RESTRICT & unique non-failed slot
+            conn.execute(
+                """
+                INSERT INTO episodes (
+                    series_id, episode_number_in_series, global_episode_number,
+                    youtube_title, summary, bespoke_asset_path, script_json,
+                    youtube_video_id, scheduled_publish_at, status
+                ) VALUES (1, 1, 1, 'T1', 'S1', 'assets/svg/diagrams/a.svg', '{}', 'v1', NULL, 'PRIVATE_REVIEW')
+                """
+            )
+
+            with self.assertRaises(sqlite3.IntegrityError):
+                conn.execute("DELETE FROM series WHERE series_id = 1")
+
+            with self.assertRaises(sqlite3.IntegrityError):
+                conn.execute(
+                    """
+                    INSERT INTO episodes (
+                        series_id, episode_number_in_series, global_episode_number,
+                        youtube_title, summary, bespoke_asset_path, script_json,
+                        youtube_video_id, scheduled_publish_at, status
+                    ) VALUES (1, 1, 2, 'T1 Dup', 'S1', 'assets/svg/diagrams/b.svg', '{}', 'v2', NULL, 'PRIVATE_REVIEW')
+                    """
+                )
         finally:
             conn.close()
 
-        self.assertEqual(series_rows, [(1, "COMPLETED", 3, "PL_SERIES_001"), (2, "ACTIVE", 0, None)])
-        self.assertEqual(ep_count, 3)
+    # 11. End-to-end series completion, pillar rotation & Series #2 creation
+    def test_11_full_series_lifecycle_completion_and_pillar_rotation(self) -> None:
+        self.init_and_create_default_series()
+
+        # Cannot create another series while Series #1 is ACTIVE
+        self.write_build_json(
+            "new_series_plan.json",
+            make_valid_series_plan(
+                title="Competing Series",
+                pillar="Hidden History",
+                bgm_track="epic_history.mp3",
+                prefix="s2",
+            ),
+        )
+        res = self.run_cli("--create-series")
+        self.assertEqual(res.returncode, 1)
+        self.assertIn("still ACTIVE", res.stderr)
+
+        # Complete all 3 episodes under PRIVATE_REVIEW
+        for part in (1, 2, 3):
+            ep = make_valid_episode_plan(
+                series_id=1,
+                ep_in_series=part,
+                global_ep=part,
+                total_eps=3,
+                bespoke_stem=f"s1_ep{part}_diagram",
+                title=f"Event Horizon Secret (Part {part}/3) #Shorts",
+            )
+            self.write_build_json("episode_plan.json", ep)
+            self.write_build_json(
+                "publish_result.json",
+                {
+                    "video_id": f"vid_s1_p{part}",
+                    "playlist_id": "PL_S1",
+                    "upload_status": "PRIVATE_REVIEW",
+                },
+            )
+            res = self.run_cli("--record-published")
+            self.assertEqual(res.returncode, 0, res.stderr)
+            out = json.loads(res.stdout)
+            self.assertEqual(out["completed_episodes"], part)
+            self.assertEqual(out["series_status"], "COMPLETED" if part == 3 else "ACTIVE")
+
+        # Verify --context after completion
+        ctx = json.loads(self.run_cli("--context").stdout)
+        self.assertIsNone(ctx["active_series"])
+        self.assertEqual(ctx["next_episode_number_in_series"], 1)
+        self.assertEqual(ctx["next_global_episode_number"], 4)
+        self.assertEqual(ctx["last_completed_pillar"], "Cosmic & Scientific Paradoxes")
+        self.assertEqual(ctx["channel_config"]["completed_private_review_episodes"], 3)
+        self.assertEqual(len(ctx["completed_series_history"]), 1)
+        self.assertEqual(len(ctx["previous_bespoke_assets"]), 3)
+
+        # Pillar rotation violation: repeating Cosmic & Scientific Paradoxes must fail
+        self.write_build_json(
+            "new_series_plan.json",
+            make_valid_series_plan(
+                title="Dark Matter Enigmas",
+                pillar="Cosmic & Scientific Paradoxes",
+                bgm_track="cosmic_mystery.mp3",
+                prefix="s2a",
+            ),
+        )
+        res = self.run_cli("--create-series")
+        self.assertEqual(res.returncode, 1)
+        self.assertIn("Pillar rotation violation", res.stderr)
+
+        # Reusing a bespoke asset from Series #1 inside Series #2's bible must fail
+        s2_reuse = make_valid_series_plan(
+            title="The Lost Library of Nalanda",
+            pillar="Hidden History",
+            bgm_track="epic_history.mp3",
+            prefix="s1",  # Collides with s1_ep1_diagram.svg
+        )
+        self.write_build_json("new_series_plan.json", s2_reuse)
+        res = self.run_cli("--create-series")
+        self.assertEqual(res.returncode, 1)
+        self.assertIn("already used", res.stderr)
+
+        # Valid Series #2 on rotated pillar with fresh bespoke assets succeeds
+        s2_valid = make_valid_series_plan(
+            title="The Lost Library of Nalanda",
+            pillar="Hidden History",
+            bgm_track="epic_history.mp3",
+            prefix="s2",
+        )
+        self.write_build_json("new_series_plan.json", s2_valid)
+        res = self.run_cli("--create-series")
+        self.assertEqual(res.returncode, 0, res.stderr)
+        s2_out = json.loads(res.stdout)
+        self.assertEqual(s2_out["series_id"], 2)
+        self.assertEqual(s2_out["series_status"], "ACTIVE")
 
 
 if __name__ == "__main__":

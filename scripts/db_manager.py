@@ -18,7 +18,7 @@ import re
 import sqlite3
 import sys
 from datetime import datetime
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Iterator, Literal, Optional
 
 import yaml
@@ -40,19 +40,12 @@ VOICE_ID_RE = re.compile(r"^[a-z]{2}_[a-z0-9_]+$")
 RIG_SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9_-]*$")
 SNAKE_CASE_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 AUDIO_FILENAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*\.(mp3|wav|ogg|flac)$")
-BESPOKE_ASSET_PREFIXES = (
-    "assets/svg/diagrams/",
-    "assets/svg/backdrops/",
-    "assets/svg/characters/",
-)
+YOUTUBE_ID_RE = re.compile(r"^[A-Za-z0-9_-]{3,128}$")
 
-ALLOWED_EMOTIONS = ("calm", "wrath", "shock", "smirk", "meditating")
-ALLOWED_GESTURES = (
-    "idle_breathe",
-    "raise_weapon",
-    "point_accuse",
-    "bless_hand",
-    "tremble",
+BESPOKE_ASSET_DIRS = (
+    "assets/svg/diagrams",
+    "assets/svg/backdrops",
+    "assets/svg/characters",
 )
 
 SCHEMA_SQL = """
@@ -101,7 +94,7 @@ CREATE INDEX IF NOT EXISTS idx_episodes_series_id
 
 
 class StateError(RuntimeError):
-    """Raised when a database invariant or state-machine transition is violated."""
+    """Raised when a database invariant, config check, or state transition fails."""
 
 
 # ---------------------------------------------------------------------------
@@ -116,19 +109,86 @@ def get_project_root() -> Path:
     return Path(__file__).resolve().parent.parent
 
 
+def validate_config(cfg: Any, config_path: Path) -> dict[str, Any]:
+    """Validate config.yaml structure and critical safety invariants."""
+    if not isinstance(cfg, dict):
+        raise StateError(f"Invalid YAML structure in {config_path}")
+
+    required_sections = (
+        "channel",
+        "series",
+        "episode_pacing",
+        "tts",
+        "assets",
+        "publishing",
+        "paths",
+    )
+    missing = [sec for sec in required_sections if not isinstance(cfg.get(sec), dict)]
+    if missing:
+        raise StateError(f"config.yaml missing or invalid sections: {', '.join(missing)}")
+
+    channel = cfg["channel"]
+    if channel.get("language_mode") != "global_english" or channel.get("primary_language") != "en":
+        raise StateError(
+            "config.yaml language lock violated: Sutradhar requires "
+            "channel.language_mode='global_english' and channel.primary_language='en'."
+        )
+    pillars = channel.get("pillars")
+    if not isinstance(pillars, list) or not pillars or not all(isinstance(p, str) and p.strip() for p in pillars):
+        raise StateError("config.yaml channel.pillars must be a non-empty list of strings.")
+
+    series_cfg = cfg["series"]
+    min_ep = series_cfg.get("min_episodes")
+    max_ep = series_cfg.get("max_episodes")
+    if not isinstance(min_ep, int) or not isinstance(max_ep, int) or not (1 <= min_ep <= max_ep):
+        raise StateError("config.yaml series.min_episodes/max_episodes must be valid integers with min <= max.")
+
+    pacing = cfg["episode_pacing"]
+    for key in ("min_scenes", "max_scenes", "min_words_per_scene", "max_words_per_scene"):
+        if not isinstance(pacing.get(key), int) or pacing[key] < 1:
+            raise StateError(f"config.yaml episode_pacing.{key} must be a positive integer.")
+    if pacing["min_scenes"] > pacing["max_scenes"]:
+        raise StateError("config.yaml episode_pacing.min_scenes cannot exceed max_scenes.")
+
+    tts = cfg["tts"]
+    if not isinstance(tts.get("engine"), str) or not isinstance(tts.get("default_voice"), str):
+        raise StateError("config.yaml tts.engine and tts.default_voice must be strings.")
+
+    assets = cfg["assets"]
+    bgm_map = assets.get("bgm_by_pillar")
+    if not isinstance(bgm_map, dict) or not bgm_map:
+        raise StateError("config.yaml assets.bgm_by_pillar must be a non-empty mapping.")
+    for key in ("sfx_tracks", "mood_palettes", "particle_themes"):
+        if not isinstance(assets.get(key), list) or not assets[key]:
+            raise StateError(f"config.yaml assets.{key} must be a non-empty list.")
+
+    pub = cfg["publishing"]
+    upload_mode = pub.get("upload_mode")
+    if upload_mode not in ("private_review", "scheduled"):
+        raise StateError(
+            f"config.yaml publishing.upload_mode must be 'private_review' or 'scheduled' (got {upload_mode!r})."
+        )
+    if not isinstance(pub.get("allow_public_or_scheduled"), bool):
+        raise StateError("config.yaml publishing.allow_public_or_scheduled must be a boolean.")
+
+    paths = cfg["paths"]
+    for key in ("db_file", "build_dir", "assets_dir"):
+        if not isinstance(paths.get(key), str) or not paths[key].strip():
+            raise StateError(f"config.yaml paths.{key} must be a non-empty string.")
+
+    return cfg
+
+
 def load_config(root: Path) -> dict[str, Any]:
     config_path = root / "config.yaml"
     if not config_path.is_file():
         raise StateError(f"Missing configuration file: {config_path}")
-    with config_path.open("r", encoding="utf-8") as fh:
-        cfg = yaml.safe_load(fh)
-    if not isinstance(cfg, dict):
-        raise StateError(f"Invalid YAML structure in {config_path}")
-    required_sections = ("channel", "series", "episode_pacing", "tts", "assets", "publishing", "paths")
-    missing = [sec for sec in required_sections if sec not in cfg]
-    if missing:
-        raise StateError(f"config.yaml missing required sections: {', '.join(missing)}")
-    return cfg
+    try:
+        with config_path.open("r", encoding="utf-8") as fh:
+            cfg = yaml.safe_load(fh)
+    except yaml.YAMLError as exc:
+        raise StateError(f"Malformed YAML in {config_path}: {exc}") from exc
+    return validate_config(cfg, config_path)
 
 
 def resolve_paths(root: Path, cfg: dict[str, Any]) -> dict[str, Path]:
@@ -163,6 +223,7 @@ def _validate_kokoro_voice(value: str) -> str:
         if len(parts) < 2:
             raise ValueError(f"Invalid voice blend syntax: '{voice}'")
         total_weight = 0.0
+        seen_voices: set[str] = set()
         for part in parts:
             if ":" not in part:
                 raise ValueError(
@@ -171,6 +232,9 @@ def _validate_kokoro_voice(value: str) -> str:
             vid, raw_weight = part.split(":", 1)
             if not VOICE_ID_RE.match(vid):
                 raise ValueError(f"Invalid Kokoro voice ID '{vid}' in blend '{voice}'")
+            if vid in seen_voices:
+                raise ValueError(f"Duplicate voice ID '{vid}' in blend '{voice}'")
+            seen_voices.add(vid)
             try:
                 weight = float(raw_weight)
             except ValueError as exc:
@@ -203,6 +267,17 @@ def _validate_audio_filename(value: str, field_name: str) -> str:
     return cleaned
 
 
+def _validate_configured_bgm(value: str, cfg: Optional[dict[str, Any]]) -> str:
+    cleaned = _validate_audio_filename(value, "bgm_track")
+    if cfg:
+        allowed_bgms = sorted(set(cfg["assets"]["bgm_by_pillar"].values()))
+        if cleaned not in allowed_bgms:
+            raise ValueError(
+                f"bgm_track '{cleaned}' is not in configured BGM tracks: {allowed_bgms}"
+            )
+    return cleaned
+
+
 def _validate_rig_slug(value: str, field_name: str) -> str:
     cleaned = value.strip()
     if not RIG_SLUG_RE.match(cleaned):
@@ -212,9 +287,66 @@ def _validate_rig_slug(value: str, field_name: str) -> str:
     return cleaned
 
 
+def _validate_bespoke_asset_path(value: str) -> str:
+    normalized = value.strip().replace("\\", "/")
+    while normalized.startswith("./"):
+        normalized = normalized[2:]
+    posix = PurePosixPath(normalized)
+    if ".." in posix.parts or posix.is_absolute():
+        raise ValueError(f"bespoke asset path '{value}' must be a relative path without '..'")
+    parent_dir = posix.parent.as_posix()
+    if parent_dir not in BESPOKE_ASSET_DIRS:
+        raise ValueError(
+            f"bespoke asset path '{normalized}' must sit directly inside one of "
+            f"{BESPOKE_ASSET_DIRS} (got '{parent_dir}')"
+        )
+    if posix.suffix.lower() != ".svg":
+        raise ValueError(f"bespoke asset path '{normalized}' must end with '.svg'")
+    if not RIG_SLUG_RE.match(posix.stem):
+        raise ValueError(
+            f"bespoke asset filename stem '{posix.stem}' must be lowercase alphanumeric/underscore/hyphen"
+        )
+    return posix.as_posix()
+
+
+def _blank_to_none(v: Any) -> Any:
+    if isinstance(v, str) and v.strip() == "":
+        return None
+    return v
+
+
 # ---------------------------------------------------------------------------
 # Pydantic Schemas
 # ---------------------------------------------------------------------------
+
+class SeriesBibleEpisode(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    episode_number: int = Field(..., ge=1)
+    working_title: str = Field(..., min_length=3, max_length=120)
+    hook: str = Field(..., min_length=10, max_length=300)
+    narrative_direction: str = Field(..., min_length=15, max_length=1000)
+    planned_bespoke_asset: str = Field(..., min_length=10, max_length=255)
+    cliffhanger_or_payoff: str = Field(..., min_length=10, max_length=400)
+
+    @field_validator("planned_bespoke_asset")
+    @classmethod
+    def check_planned_asset(cls, v: str) -> str:
+        return _validate_bespoke_asset_path(v)
+
+
+class SeriesBible(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    arc_summary: str = Field(..., min_length=15, max_length=1500)
+    continuity_notes: Optional[str] = Field(default=None, max_length=1000)
+    episodes: list[SeriesBibleEpisode] = Field(..., min_length=1)
+
+    @field_validator("continuity_notes", mode="before")
+    @classmethod
+    def clean_continuity_notes(cls, v: Any) -> Any:
+        return _blank_to_none(v)
+
 
 class NewSeriesPlan(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
@@ -224,7 +356,7 @@ class NewSeriesPlan(BaseModel):
     tts_voice: str = Field(..., min_length=4, max_length=120)
     bgm_track: str = Field(..., min_length=5, max_length=120)
     total_planned_episodes: int
-    series_bible_json: dict[str, Any] | list[Any] | str
+    series_bible_json: SeriesBible
 
     @field_validator("pillar")
     @classmethod
@@ -243,8 +375,9 @@ class NewSeriesPlan(BaseModel):
 
     @field_validator("bgm_track")
     @classmethod
-    def check_bgm_track(cls, v: str) -> str:
-        return _validate_audio_filename(v, "bgm_track")
+    def check_bgm_track(cls, v: str, info: ValidationInfo) -> str:
+        cfg = (info.context or {}).get("config")
+        return _validate_configured_bgm(v, cfg)
 
     @field_validator("total_planned_episodes")
     @classmethod
@@ -258,39 +391,41 @@ class NewSeriesPlan(BaseModel):
             )
         return v
 
-    @field_validator("series_bible_json")
+    @field_validator("series_bible_json", mode="before")
     @classmethod
-    def parse_series_bible(cls, v: dict[str, Any] | list[Any] | str) -> dict[str, Any] | list[Any]:
-        parsed: Any = v
+    def decode_series_bible_str(cls, v: Any) -> Any:
         if isinstance(v, str):
             try:
                 parsed = json.loads(v)
             except json.JSONDecodeError as exc:
                 raise ValueError(f"series_bible_json string is not valid JSON: {exc}") from exc
-        if not isinstance(parsed, (dict, list)) or len(parsed) == 0:
-            raise ValueError("series_bible_json must be a non-empty JSON object or array")
-        return parsed
+            return parsed
+        return v
 
     @model_validator(mode="after")
     def validate_bible_episode_alignment(self) -> "NewSeriesPlan":
-        bible = self.series_bible_json
-        if isinstance(bible, list):
-            if len(bible) != self.total_planned_episodes:
-                raise ValueError(
-                    f"series_bible_json array length ({len(bible)}) must match "
-                    f"total_planned_episodes ({self.total_planned_episodes})"
-                )
-        elif isinstance(bible, dict) and "episodes" in bible:
-            episodes_list = bible["episodes"]
-            if not isinstance(episodes_list, list) or len(episodes_list) != self.total_planned_episodes:
-                raise ValueError(
-                    "series_bible_json['episodes'] must be a list matching "
-                    f"total_planned_episodes ({self.total_planned_episodes})"
-                )
+        episodes = self.series_bible_json.episodes
+        if len(episodes) != self.total_planned_episodes:
+            raise ValueError(
+                f"series_bible_json.episodes length ({len(episodes)}) must match "
+                f"total_planned_episodes ({self.total_planned_episodes})"
+            )
+        expected_nums = list(range(1, self.total_planned_episodes + 1))
+        actual_nums = [ep.episode_number for ep in episodes]
+        if actual_nums != expected_nums:
+            raise ValueError(
+                f"series_bible_json episode_number values must be strictly sequential "
+                f"{expected_nums} (got {actual_nums})"
+            )
+        planned_assets = [ep.planned_bespoke_asset for ep in episodes]
+        if len(planned_assets) != len(set(planned_assets)):
+            raise ValueError(
+                "series_bible_json planned_bespoke_asset values must be unique across all episodes"
+            )
         return self
 
     def serialized_bible(self) -> str:
-        return json.dumps(self.series_bible_json, ensure_ascii=False)
+        return json.dumps(self.series_bible_json.model_dump(exclude_none=True), ensure_ascii=False)
 
 
 class ScenePlan(BaseModel):
@@ -315,6 +450,19 @@ class ScenePlan(BaseModel):
     particle_theme: str = Field(..., min_length=2, max_length=60)
     camera_motion: str = Field(..., min_length=2, max_length=60)
     transition_sfx: Optional[str] = None
+
+    @field_validator(
+        "diagram_rig",
+        "primary_character",
+        "secondary_character",
+        "callout_headline",
+        "callout_subtext",
+        "transition_sfx",
+        mode="before",
+    )
+    @classmethod
+    def clean_optional_strings(cls, v: Any) -> Any:
+        return _blank_to_none(v)
 
     @field_validator("backdrop_rig")
     @classmethod
@@ -363,21 +511,36 @@ class ScenePlan(BaseModel):
         cleaned = _validate_audio_filename(v, "transition_sfx")
         cfg = (info.context or {}).get("config")
         if cfg:
-            allowed = cfg["assets"].get("sfx_tracks", [])
-            if allowed and cleaned not in allowed:
-                raise ValueError(f"transition_sfx '{cleaned}' not in configured sfx_tracks: {allowed}")
+            allowed = cfg["assets"]["sfx_tracks"]
+            if cleaned not in allowed:
+                raise ValueError(
+                    f"transition_sfx '{cleaned}' not in configured sfx_tracks: {allowed}"
+                )
         return cleaned
 
     @model_validator(mode="after")
-    def validate_mode_requirements(self) -> "ScenePlan":
+    def validate_mode_and_text_requirements(self) -> "ScenePlan":
+        if self.narration_text != self.caption_text:
+            raise ValueError(
+                f"Scene {self.scene_index}: narration_text and caption_text must be identical"
+            )
         if len(self.narration_text.split()) < 3:
             raise ValueError(
                 f"Scene {self.scene_index}: narration_text must contain at least 3 words"
             )
+
         if self.visual_mode == "character_drama":
             if not self.primary_character:
                 raise ValueError(
                     f"Scene {self.scene_index}: primary_character is required for character_drama"
+                )
+            if self.secondary_character and self.secondary_character == self.primary_character:
+                raise ValueError(
+                    f"Scene {self.scene_index}: secondary_character cannot duplicate primary_character"
+                )
+            if self.active_diagram_stage is not None:
+                raise ValueError(
+                    f"Scene {self.scene_index}: active_diagram_stage must be null for character_drama"
                 )
         elif self.visual_mode == "explainer_diagram":
             if not self.diagram_rig:
@@ -390,9 +553,13 @@ class ScenePlan(BaseModel):
                     "for explainer_diagram"
                 )
         elif self.visual_mode == "kinetic_callout":
-            if not self.callout_headline:
+            if not self.callout_headline or len(self.callout_headline) < 2:
                 raise ValueError(
                     f"Scene {self.scene_index}: callout_headline is required for kinetic_callout"
+                )
+            if self.active_diagram_stage is not None:
+                raise ValueError(
+                    f"Scene {self.scene_index}: active_diagram_stage must be null for kinetic_callout"
                 )
         return self
 
@@ -424,6 +591,18 @@ class EpisodePlan(BaseModel):
                 raise ValueError(f"pillar '{v}' is not in configured pillars: {allowed}")
         return v
 
+    @field_validator("total_planned_episodes")
+    @classmethod
+    def check_total_planned(cls, v: int, info: ValidationInfo) -> int:
+        cfg = (info.context or {}).get("config")
+        min_ep = cfg["series"]["min_episodes"] if cfg else 3
+        max_ep = cfg["series"]["max_episodes"] if cfg else 6
+        if not (min_ep <= v <= max_ep):
+            raise ValueError(
+                f"total_planned_episodes must be between {min_ep} and {max_ep} (got {v})"
+            )
+        return v
+
     @field_validator("tts_voice")
     @classmethod
     def check_tts_voice(cls, v: str) -> str:
@@ -431,28 +610,21 @@ class EpisodePlan(BaseModel):
 
     @field_validator("bgm_track")
     @classmethod
-    def check_bgm_track(cls, v: str) -> str:
-        return _validate_audio_filename(v, "bgm_track")
+    def check_bgm_track(cls, v: str, info: ValidationInfo) -> str:
+        cfg = (info.context or {}).get("config")
+        return _validate_configured_bgm(v, cfg)
 
     @field_validator("bespoke_asset_path")
     @classmethod
     def check_bespoke_asset_path(cls, v: str) -> str:
-        normalized = v.replace("\\", "/").lstrip("./")
-        if ".." in normalized.split("/"):
-            raise ValueError("bespoke_asset_path must not contain '..'")
-        if not normalized.startswith(BESPOKE_ASSET_PREFIXES):
-            raise ValueError(
-                f"bespoke_asset_path must start with one of {BESPOKE_ASSET_PREFIXES} "
-                f"(got '{normalized}')"
-            )
-        if not normalized.endswith(".svg"):
-            raise ValueError("bespoke_asset_path must end with '.svg'")
-        stem = Path(normalized).stem
-        if not RIG_SLUG_RE.match(stem):
-            raise ValueError(
-                f"bespoke_asset_path filename stem '{stem}' must be lowercase alphanumeric/underscore/hyphen"
-            )
-        return normalized
+        return _validate_bespoke_asset_path(v)
+
+    @field_validator("youtube_title")
+    @classmethod
+    def check_youtube_title_chars(cls, v: str) -> str:
+        if "<" in v or ">" in v:
+            raise ValueError("youtube_title must not contain '<' or '>' characters")
+        return v
 
     @model_validator(mode="after")
     def validate_scenes_and_originality(self, info: ValidationInfo) -> "EpisodePlan":
@@ -484,35 +656,56 @@ class EpisodePlan(BaseModel):
             )
 
         if require_bespoke:
-            bespoke_stem = Path(self.bespoke_asset_path).stem
-            referenced_stems: set[str] = set()
-            for scene in self.scenes:
-                for rig in (
-                    scene.diagram_rig,
-                    scene.backdrop_rig,
-                    scene.primary_character,
-                    scene.secondary_character,
-                ):
-                    if rig:
-                        referenced_stems.add(rig)
-            if bespoke_stem not in referenced_stems:
+            bespoke_posix = PurePosixPath(self.bespoke_asset_path)
+            bespoke_dir = bespoke_posix.parent.as_posix()
+            bespoke_stem = bespoke_posix.stem
+
+            if bespoke_dir == "assets/svg/diagrams":
+                featured = any(s.diagram_rig == bespoke_stem for s in self.scenes)
+                expected_field = "diagram_rig"
+            elif bespoke_dir == "assets/svg/backdrops":
+                featured = any(s.backdrop_rig == bespoke_stem for s in self.scenes)
+                expected_field = "backdrop_rig"
+            else:
+                featured = any(
+                    s.primary_character == bespoke_stem or s.secondary_character == bespoke_stem
+                    for s in self.scenes
+                )
+                expected_field = "primary_character/secondary_character"
+
+            if not featured:
                 raise ValueError(
                     f"bespoke_asset_path '{self.bespoke_asset_path}' (stem '{bespoke_stem}') "
-                    "must be actively featured in at least one scene"
+                    f"must be actively featured in at least one scene's {expected_field}"
                 )
         return self
 
 
 class PublishResult(BaseModel):
-    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     video_id: Optional[str] = None
     playlist_id: Optional[str] = None
     upload_status: Literal["PUBLISHED", "PRIVATE_REVIEW", "FAILED"]
     scheduled_publish_at: Optional[str] = None
-    upload_mode: Optional[str] = None
+    upload_mode: Optional[Literal["private_review", "scheduled"]] = None
+    privacy_status: Optional[Literal["private", "unlisted", "public"]] = None
     video_url: Optional[str] = None
     error_message: Optional[str] = None
+
+    @field_validator(
+        "video_id",
+        "playlist_id",
+        "scheduled_publish_at",
+        "upload_mode",
+        "privacy_status",
+        "video_url",
+        "error_message",
+        mode="before",
+    )
+    @classmethod
+    def normalize_blanks(cls, v: Any) -> Any:
+        return _blank_to_none(v)
 
     @field_validator("upload_status", mode="before")
     @classmethod
@@ -521,23 +714,77 @@ class PublishResult(BaseModel):
             return v.strip().upper()
         return v
 
+    @field_validator("upload_mode", "privacy_status", mode="before")
+    @classmethod
+    def normalize_lower(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            cleaned = v.strip().lower()
+            return cleaned if cleaned else None
+        return v
+
+    @field_validator("video_id", "playlist_id")
+    @classmethod
+    def check_youtube_id(cls, v: Optional[str], info: ValidationInfo) -> Optional[str]:
+        if v is None:
+            return None
+        if not YOUTUBE_ID_RE.match(v):
+            raise ValueError(f"{info.field_name} '{v}' contains invalid characters")
+        return v
+
     @field_validator("scheduled_publish_at")
     @classmethod
     def validate_iso_timestamp(cls, v: Optional[str]) -> Optional[str]:
-        if v is None or v == "":
+        if v is None:
             return None
+        if "T" not in v and "t" not in v:
+            raise ValueError(
+                f"scheduled_publish_at '{v}' must include a time component (ISO-8601 RFC 3339)"
+            )
         try:
-            datetime.fromisoformat(v.replace("Z", "+00:00"))
+            dt = datetime.fromisoformat(v.replace("Z", "+00:00").replace("z", "+00:00"))
         except ValueError as exc:
             raise ValueError(
                 f"scheduled_publish_at '{v}' is not a valid ISO-8601 timestamp"
             ) from exc
+        if dt.tzinfo is None:
+            raise ValueError(
+                f"scheduled_publish_at '{v}' must include an explicit timezone ('Z' or '±HH:MM')"
+            )
         return v
 
     @model_validator(mode="after")
-    def validate_status_fields(self) -> "PublishResult":
+    def validate_status_and_publishing_policy(self, info: ValidationInfo) -> "PublishResult":
         if self.upload_status in ("PUBLISHED", "PRIVATE_REVIEW") and not self.video_id:
             raise ValueError(f"video_id is required when upload_status is '{self.upload_status}'")
+
+        cfg = (info.context or {}).get("config")
+        if cfg:
+            pub_cfg = cfg["publishing"]
+            cfg_mode = pub_cfg["upload_mode"]
+            allow_pub = bool(pub_cfg["allow_public_or_scheduled"])
+            private_lock_active = (cfg_mode == "private_review") or (not allow_pub)
+
+            if private_lock_active:
+                if self.upload_status == "PUBLISHED":
+                    raise ValueError(
+                        "Publishing safety lock active (upload_mode='private_review' or "
+                        "allow_public_or_scheduled=false): PUBLISHED status is forbidden."
+                    )
+                if self.scheduled_publish_at is not None:
+                    raise ValueError(
+                        "Publishing safety lock active: scheduled_publish_at is forbidden "
+                        "while private_review lock is active or allow_public_or_scheduled is false."
+                    )
+                if self.upload_mode is not None and self.upload_mode != "private_review":
+                    raise ValueError(
+                        f"Publishing safety lock active: upload_mode '{self.upload_mode}' "
+                        "is forbidden (only 'private_review' is permitted)."
+                    )
+                if self.privacy_status is not None and self.privacy_status != "private":
+                    raise ValueError(
+                        f"Publishing safety lock active: privacy_status '{self.privacy_status}' "
+                        "is forbidden (only 'private' is permitted)."
+                    )
         return self
 
 
@@ -718,6 +965,11 @@ def cmd_context(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
             "SELECT bespoke_asset_path FROM episodes WHERE status != 'FAILED' ORDER BY episode_id ASC"
         ).fetchall()
         previous_bespoke_assets = [r["bespoke_asset_path"] for r in bespoke_rows]
+
+        private_review_count_row = conn.execute(
+            "SELECT COUNT(*) AS cnt FROM episodes WHERE status = 'PRIVATE_REVIEW'"
+        ).fetchone()
+        private_review_count = int(private_review_count_row["cnt"])
     finally:
         conn.close()
 
@@ -730,7 +982,9 @@ def cmd_context(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
             "tts_voice": cfg["tts"]["default_voice"],
             "voice_provisional": cfg["tts"].get("voice_provisional", True),
             "upload_mode": cfg["publishing"]["upload_mode"],
-            "allow_public_or_scheduled": cfg["publishing"].get("allow_public_or_scheduled", False),
+            "allow_public_or_scheduled": cfg["publishing"]["allow_public_or_scheduled"],
+            "calibration_episodes_required": cfg["publishing"].get("calibration_episodes_required", 3),
+            "completed_private_review_episodes": private_review_count,
             "min_episodes": cfg["series"]["min_episodes"],
             "max_episodes": cfg["series"]["max_episodes"],
             "bgm_by_pillar": cfg["assets"]["bgm_by_pillar"],
@@ -800,6 +1054,17 @@ def cmd_create_series(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
                         f"completed series pillar '{plan.pillar}' (series_id={last_completed['series_id']})."
                     )
 
+            for ep in plan.series_bible_json.episodes:
+                used = cur.execute(
+                    "SELECT episode_id FROM episodes WHERE bespoke_asset_path = ? AND status != 'FAILED'",
+                    (ep.planned_bespoke_asset,),
+                ).fetchone()
+                if used is not None:
+                    raise StateError(
+                        f"Series bible episode {ep.episode_number} planned_bespoke_asset "
+                        f"'{ep.planned_bespoke_asset}' was already used by episode_id={used['episode_id']}."
+                    )
+
             cur.execute(
                 """
                 INSERT INTO series (
@@ -818,6 +1083,8 @@ def cmd_create_series(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
                 ),
             )
             new_series_id = int(cur.lastrowid)
+    except sqlite3.IntegrityError as exc:
+        raise StateError(f"SQLite integrity error while creating series: {exc}") from exc
     finally:
         conn.close()
 
@@ -849,7 +1116,7 @@ def cmd_record_published(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
         raise StateError(f"episode_plan.json validation failed:\n{exc}") from exc
 
     try:
-        pub_res = PublishResult.model_validate(raw_pub)
+        pub_res = PublishResult.model_validate(raw_pub, context={"config": cfg})
     except ValidationError as exc:
         raise StateError(f"publish_result.json validation failed:\n{exc}") from exc
 

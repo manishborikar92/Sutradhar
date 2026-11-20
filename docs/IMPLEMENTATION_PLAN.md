@@ -22,7 +22,7 @@ This specification defines **Sutradhar**, a **100% Antigravity-native, zero-recu
    - **Kokoro-82M (`kokoro-onnx`, Apache-2.0)** synthesizes studio-grade English narration locally on CPU with a consistent signature narrator preset (or weighted blend of `am_fenrir` + `bm_george`).
    - **`faster-whisper` (`base`, `int8` CPU)** produces deterministic word-level timestamps for exact `#FFD700` active-word karaoke highlighting.
 5. **YPP Originality-First Visual Pipeline + Pre-Render Snapshot Gate:**
-   - Visuals render deterministically in `1080x1920` (30fps) via **HyperFrames** (`@hyperframes/cli`) + **GSAP**, combining modular SVG character rigs, **at least 1 newly authored bespoke SVG per episode**, kinetic callout cards, sidechain-ducked BGM, and transition SFX to stay fully compliant with YouTube’s **"Inauthentic Content"** policy.
+   - Visuals render deterministically in `1080x1920` (30fps) via **HyperFrames** (`hyperframes` `^0.9.19`) + **GSAP**, combining modular SVG character rigs, **at least 1 newly authored bespoke SVG per episode**, kinetic callout cards, sidechain-ducked BGM, and transition SFX to stay fully compliant with YouTube’s **"Inauthentic Content"** policy.
    - A fast **pre-render snapshot QA gate** (`preview_frames.py`) verifies layout, safe zones, and SVG integrity before full `--quality high` rendering.
 6. **Zero-Argument Pre-Whitelisted Commands:**
    - All stateful handoffs occur via JSON files inside `build/`, enabling unattended Antigravity `/automation` runs with **7 static, zero-argument whitelisted commands**.
@@ -34,10 +34,10 @@ This specification defines **Sutradhar**, a **100% Antigravity-native, zero-recu
 | Pipeline Layer | Tool / Service | Config / Version | License / Tier | Free Quota & Ceiling | External Cost |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Orchestrator, Writer & Vision QA** | Google Antigravity IDE + `/automation` | Built-in frontier models | Developer's Antigravity plan | Runs locally via Antigravity Desktop / CLI | **$0 extra** |
-| **Agent Skills** | `hyperframes` + `svg-character-animation` | `.agents/skills/` | Apache 2.0 / Open Skills | Local `SKILL.md` rules + HyperFrames registry blocks | **$0.00** |
+| **Agent Skills** | `hyperframes` + `svg-character-animation` | Global: `$HOME/.agent/skills/` (`npx skills add -g`) | Apache 2.0 / Open Skills | Global `SKILL.md` rules + HyperFrames registry blocks | **$0.00** |
 | **Local Neural TTS (English)** | `kokoro-onnx` (Kokoro-82M v1.0) | Signature voice: `am_fenrir` (or `0.65*am_fenrir + 0.35*bm_george`), fallback `am_michael` | **Apache 2.0** (Commercial-safe) | Unlimited offline CPU synthesis; zero API keys | **$0.00** |
 | **Word-Level Caption Alignment** | `faster-whisper` (CTranslate2) | `base` (`compute_type="int8"`, CPU, `language="en"`) | MIT | Unlimited offline forced word timestamps (~2–4s per Short on CPU) | **$0.00** |
-| **2.5D SVG & Shader Renderer** | `@hyperframes/cli` + GSAP | Node.js 22+ + Chromium + FFmpeg | Apache 2.0 | Unlimited local `1080x1920` 30fps renders; **no watermark** | **$0.00** |
+| **2.5D SVG & Shader Renderer** | `hyperframes` (`^0.9.19`) + GSAP | Node.js 22+ + Chromium + FFmpeg | Apache 2.0 | Unlimited local `1080x1920` 30fps renders; **no watermark** | **$0.00** |
 | **Audio Mastering & Tech QA** | `kinocut` + `ffmpeg` | `kinocut==2.0.1` | Apache 2.0 / LGPL | Unlimited `-14.0 LUFS` mastering, sidechain ducking, quality gate (`>=80`) | **$0.00** |
 | **Series & Episode Database** | SQLite3 | `episodes.db` | Public Domain | Local relational DB enforcing strict series completion & playlist sync | **$0.00** |
 | **YouTube Publishing & Series** | `google-api-python-client` | YouTube Data API v3 | Google Cloud Free Quota | **100 `videos.insert` calls/day** (Uploads bucket) + **10,000 units/day** other (`playlists.insert`: 50, `playlistItems.insert`: 50) | **$0.00** |
@@ -51,8 +51,7 @@ sutradhar/
 ├── docs/
 │   ├── IMPLEMENTATION_PLAN.md          # This architectural specification
 │   └── MASTER_AUTOMATION_PROMPT.md     # Daily prompt executed by Antigravity /automation
-├── .agents/
-│   └── skills/                         # Installed HyperFrames & SVG character skills
+│                                       # (Agent skills installed globally: $HOME/.agent/skills/ via npx skills add -g)
 ├── assets/
 │   ├── bgm/
 │   │   ├── dramatic_mythology.mp3      # Royalty-free CC0 / YouTube Audio Library bed
@@ -99,7 +98,7 @@ sutradhar/
 ├── config.yaml                         # Locked EN voice/blend, 3 pillars, BGM/SFX, upload_mode, publish hour
 ├── pronunciations.yaml                 # Phonetic overrides for Sanskrit, historical & scientific terms
 ├── episodes.db                         # SQLite series & episode ledger
-├── package.json                        # @hyperframes/cli & gsap dependencies
+├── package.json                        # hyperframes (^0.9.19) & gsap dependencies
 ├── requirements.txt                    # kokoro-onnx, faster-whisper, kinocut==2.0.1, google-api-python-client, pyyaml, pydantic, pillow, soundfile, numpy
 └── .env.youtube.example                # Dedicated YouTube OAuth2 env file (isolated from HyperFrames .env)
 
@@ -261,7 +260,48 @@ CREATE TABLE IF NOT EXISTS episodes (
     }
   ]
 }
+```
 
+#### 6.3 `build/new_series_plan.json` Schema
+
+```json
+{
+  "series_title": "Secrets of the Event Horizon",
+  "pillar": "Cosmic & Scientific Paradoxes",
+  "tts_voice": "am_fenrir",
+  "bgm_track": "cosmic_mystery.mp3",
+  "total_planned_episodes": 3,
+  "series_bible_json": {
+    "arc_summary": "Overarching multi-episode season arc (>=15 chars).",
+    "continuity_notes": "Optional visual/narrative continuity guidance.",
+    "episodes": [
+      {
+        "episode_number": 1,
+        "working_title": "Event Horizon Paradox Part 1",
+        "hook": "Opening 0-2.5s curiosity hook (>=10 chars).",
+        "narrative_direction": "Core story/explanation beats for this episode (>=15 chars).",
+        "planned_bespoke_asset": "assets/svg/diagrams/horizon_clock_dilation.svg",
+        "cliffhanger_or_payoff": "Bridge to Part 2 or finale payoff (>=10 chars)."
+      }
+    ]
+  }
+}
+```
+
+#### 6.4 `build/publish_result.json` Schema
+
+```json
+// build/publish_result.json (extra keys forbidden; locked to PRIVATE_REVIEW/FAILED while private_review lock is active)
+{
+  "video_id": "abc123XYZ",
+  "playlist_id": "PL_SERIES_001",
+  "upload_status": "PRIVATE_REVIEW",
+  "upload_mode": "private_review",
+  "privacy_status": "private",
+  "scheduled_publish_at": null,
+  "video_url": "https://youtube.com/shorts/abc123XYZ",
+  "error_message": null
+}
 ```
 
 ---
