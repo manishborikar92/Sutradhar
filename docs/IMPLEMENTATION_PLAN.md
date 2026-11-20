@@ -437,3 +437,21 @@ python scripts/db_manager.py --init
 - **Operations Manual:** Created `docs/MANUAL_SETUP_AND_OPERATIONS.md` covering Google Cloud setup, OAuth token generation script, Studio Auto-Dubbing, voice/sample approval decisions, routine 6-step operations, and troubleshooting.
 - **Repository-Wide Test Discovery:** `python -m unittest discover -s tests -v` — **Ran 35 tests ... OK** (35 passed, 0 failed, 0 skipped).
 - **Database Immutability Re-Verification:** Root `episodes.db` confirmed identical to initial baseline (SHA-256: `729acce0cd4f31cc69ceca61470d331abcbce5e62b51728ab372cd28f83f8011`, size: 36,864 bytes).
+
+#### Quality Overhaul & Clean-Canvas Visual/Audio Production: COMPLETED
+- **Clean-Canvas Video Format:** Completely eliminated on-screen subtitles and top episode badges from `index.html`, `styles.css`, `engine.js`, `preview_frames.py`, and docs. Spoken audio alone drives the narrative while YouTube generates closed captions automatically. Removed redundant `caption_text` from schema; made `narration_text` the canonical source of truth. Retained Whisper word alignment strictly for audio-synced visual choreography.
+- **Broadcast Audio Mastering & Resilient Vocal Chain:**
+  - Implemented 5-stage FFmpeg vocal chain: `highpass=f=80`, warmth `+2dB @ 175Hz`, harshness tame `-2dB @ 5kHz`, air `+1.5dB @ 10kHz`, 2.5:1 `acompressor` with `asplit=2` dual-stream routing for sidechain ducking.
+  - Rebuilt `pronunciations.yaml` with smooth unhyphenated respellings (`Sootradaar`, `Kylaash`, `Raavana`, `Raamaayana`, `Mahaabhaarata`, `Naalanda`, `Patalipootra`).
+  - Generated restrained cinematic SFX (`whoosh_soft.wav`, `sub_hit.wav`, `tension_swell.wav`) and ambient BGM pads low-passed at 620Hz (`cosmic_mystery.mp3`, `dramatic_mythology.mp3`, `epic_history.mp3`).
+  - Fixed final-word cutoff bug (`FINAL_SCENE_PAD_SEC = 0.75`, `TRIM_MARGIN_SEC = 0.10`, HyperFrames duration sync `+0.30s`). Verified 0.00000 peak silence in final 400ms buffer across both samples.
+- **Illuminated Obsidian & Gold Visual Redesign:**
+  - Strict palette: Obsidian `#07090F`, Deep Indigo `#111827`, Burnished Gold `#E5B869`, Warm Ivory `#F8F4EC`, Ember Crimson `#C84B31` (strictly zero teal).
+  - Sculptural backlit silhouette rigs (`sutradhar_narrator.svg`, `ravana.svg`), multi-plane atmospheric backdrops (`deep_cosmos_nebula.svg`, `mount_kailash.svg`, `ancient_temple_ruins.svg`), and technical infographic diagrams with GSAP `DrawSVGPlugin` paths (`black_hole_anatomy.svg`, `gravitational_time_dilation_clock.svg`, `kailash_axis_alignments.svg`).
+  - Open-canvas editorial typography for callouts (hairline gold rules, no boxed slide cards).
+  - HyperFrames lint: 0 errors.
+- **End-to-End Sample Production (Clean-Canvas & Broadcast Mastering):**
+  - **Sample 1 (`sample_01_cosmos`):** 43.10s, 1080x1920 @ 30fps, H.264/AAC, -14.0 LUFS, KinoCut Score: **95.2 / 100**, voice: `am_fenrir:0.60+am_onyx:0.40`.
+  - **Sample 2 (`sample_02_epics`):** 44.50s, 1080x1920 @ 30fps, H.264/AAC, -14.0 LUFS, KinoCut Score: **98.3 / 100**, voice: `bm_george:0.60+am_fenrir:0.40`.
+- **Full Test Suite Verification:** `python -m unittest discover -s tests -v` — **Ran 35 tests ... OK** (100% pass rate).
+- **Database Immutability Verified:** Root `episodes.db` confirmed untouched (SHA-256: `729acce0...`, size: 36,864 bytes).

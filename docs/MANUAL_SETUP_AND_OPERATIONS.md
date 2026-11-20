@@ -115,56 +115,58 @@ Before flipping the autonomous pipeline into live scheduled uploads, three creat
 
 ### 1. Final Voice Selection Review
 
-Milestone 3 generated 20 voice audition samples in `build/audition/` using Kokoro ONNX v1.0, evaluated against Indian historical and philosophical terminology (*Sutradhar*, *Brahmanda*, *Kailash*, *Varanasi*, *Kurukshetra*, *Dharma*, *Moksha*, *Aryabhata*).
+Milestone 3 and the Quality Overhaul generated 16 focused documentary voice audition samples in `build/audition/` across candidate voices and blends at `0.90x` and `0.94x` speed, evaluated against Indian historical, mythic, and philosophical terminology (*Sutradhar*, *Mount Kailash*, *Ravana*, *Ramayana*, *Nalanda*, *Pataliputra*).
 
-Inspect the audition results table below:
+Inspect the top audition results table below:
 
-| Voice / Blend ID | Words Per Minute (WPM) | Alignment Match Ratio | RMS dBFS | Recommended Persona |
-| :--- | :--- | :--- | :--- | :--- |
-| **`bm_daniel`** | **155.7** | **1.0000** | -18.7 dB | **Deep, authoritative historical narrator** |
-| `am_michael` | 160.7 | 1.0000 | -18.3 dB | Energetic, modern scientific presenter |
-| `am_adam` | 158.4 | 1.0000 | -18.5 dB | Crisp, analytical explainer |
-| `bm_george` | 152.1 | 1.0000 | -19.1 dB | Traditional BBC-style documentary voice |
-| `am_fenrir` *(Provisional)* | 132.8 | 0.9905 | -18.9 dB | Deep mythical voice (slightly slower tempo) |
-| `blend:bm_daniel*0.7+am_michael*0.3` | 157.2 | 1.0000 | -18.5 dB | Balanced mythic-authoritative timbre |
+| Voice / Blend ID | Speed | Duration | Words Per Minute (WPM) | Alignment Match Ratio | RMS dBFS | Recommended Persona |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **`am_fenrir:0.60+am_onyx:0.40`** | **0.90x** | **30.68s** | **133.0** | **1.0000** | **-21.2 dB** | **Deep, resonant documentary baritone (Sample 1 Narrator)** |
+| **`bm_george:0.60+am_fenrir:0.40`** | **0.90x** | **33.11s** | **123.2** | **1.0000** | **-21.0 dB** | **Prestigious BBC-style historical authority (Sample 2 Narrator)** |
+| `bm_george` | 0.94x | 33.86s | 120.5 | 0.9853 | -21.3 dB | Measured, reflective traditional documentary narrator |
+| `am_fenrir` *(Provisional)* | 0.94x | 31.30s | 130.4 | 0.9853 | -19.6 dB | Gravitas-heavy mythic storyteller |
+| `am_onyx` | 0.94x | 27.77s | 146.9 | 0.9853 | -24.2 dB | Analytical, crisp modern scientific narrator |
 
 #### How to Listen to Auditions Locally:
 Open PowerShell and listen to any WAV in `build/audition/` using Windows Media Player:
 ```powershell
-start wmplayer "c:\Users\manis\Projects\Sutradhar\build\audition\bm_daniel.wav"
-start wmplayer "c:\Users\manis\Projects\Sutradhar\build\audition\am_michael.wav"
-start wmplayer "c:\Users\manis\Projects\Sutradhar\build\audition\am_fenrir.wav"
+start wmplayer "c:\Users\manis\Projects\Sutradhar\build\audition\am_fenrir_0p60__am_onyx_0p40_s0p90.wav"
+start wmplayer "c:\Users\manis\Projects\Sutradhar\build\audition\bm_george_0p60__am_fenrir_0p40_s0p90.wav"
+start wmplayer "c:\Users\manis\Projects\Sutradhar\build\audition\am_fenrir_s0p94.wav"
 ```
 
 #### How to Lock Your Selected Voice:
-Once you decide on your favorite voice (e.g., `bm_daniel`), update `config.yaml`:
+Once you decide on your favorite voice (e.g., `am_fenrir:0.60+am_onyx:0.40`), update `config.yaml`:
 ```yaml
 tts:
   engine: "kokoro"
-  default_voice: "bm_daniel"     # Change from "am_fenrir"
+  default_voice: "am_fenrir:0.60+am_onyx:0.40"
+  speed: 0.92
   voice_provisional: false       # Set to false to lock the voice
 ```
 
-### 2. Local Sample Videos Review
+### 2. Local Sample Videos Review (Clean-Canvas & Broadcast Mastering)
 
-Two full-length, master-quality local sample videos have been rendered and verified under `build/samples/`:
+Two master-quality local sample videos have been rendered in the **Clean-Canvas format** (zero on-screen captions, zero top badges, open-canvas editorial typography, and full 5-stage FFmpeg broadcast vocal mastering) under `build/samples/`:
 
 #### Sample 1: Cosmic & Scientific Paradoxes
 - **Directory:** `build/samples/sample_01_cosmos/`
 - **Video:** `build/samples/sample_01_cosmos/final_short.mp4`
 - **Title:** *What Happens The Second You Cross an Event Horizon? (Part 1/3) #Shorts*
-- **Specs:** 1080x1920 (9:16), 30 fps, H.264 / AAC, 40.70s duration, 18.1 MB
-- **Bespoke Asset:** `assets/svg/diagrams/gravitational_time_dilation_clock.svg`
-- **KinoCut Mastering:** -14.0 LUFS, Checkpoint Score: **90.6 / 100**
+- **Specs:** 1080x1920 (9:16), 30 fps, H.264 / AAC, 43.10s duration, 30.4 MB
+- **Voice Blend:** `am_fenrir:0.60+am_onyx:0.40` @ 0.92x speed (100% word alignment)
+- **Bespoke Asset:** `assets/svg/diagrams/gravitational_time_dilation_clock.svg` (DrawSVG spacetime curvature & precision dial)
+- **KinoCut Mastering:** -14.0 LUFS, Checkpoint Score: **95.2 / 100**
 - **QA Contact Sheet:** `build/samples/sample_01_cosmos/final_qa_grid.jpg`
 
 #### Sample 2: Ancient Epics & Lore
 - **Directory:** `build/samples/sample_02_epics/`
 - **Video:** `build/samples/sample_02_epics/final_short.mp4`
 - **Title:** *The Secret Geometry Beneath Mount Kailash (Part 1/3) #Shorts*
-- **Specs:** 1080x1920 (9:16), 30 fps, H.264 / AAC, 46.60s duration, 19.8 MB
-- **Bespoke Asset:** `assets/svg/diagrams/kailash_axis_alignments.svg`
-- **KinoCut Mastering:** -14.0 LUFS, Checkpoint Score: **90.8 / 100**
+- **Specs:** 1080x1920 (9:16), 30 fps, H.264 / AAC, 44.50s duration, 32.7 MB
+- **Voice Blend:** `bm_george:0.60+am_fenrir:0.40` @ 0.92x speed (98.98% word alignment)
+- **Bespoke Character & Asset:** `assets/svg/characters/ravana.svg` (ten-crowned shadow titan) & `assets/svg/diagrams/kailash_axis_alignments.svg`
+- **KinoCut Mastering:** -14.0 LUFS, Checkpoint Score: **98.3 / 100**
 - **QA Contact Sheet:** `build/samples/sample_02_epics/final_qa_grid.jpg`
 
 To play either video locally:
@@ -177,13 +179,13 @@ start "build\samples\sample_02_epics\final_short.mp4"
 
 Royalty-free procedural/cinematic audio beds and transitions are located under:
 - `assets/bgm/`:
-  - `cosmic_mystery.mp3` (Ambient space drone with synth pads)
-  - `dramatic_mythology.mp3` (Ethnic Indian percussion and tanpura drone)
+  - `cosmic_mystery.mp3` (Ambient space drone, low-passed <620Hz, sidechain ducked)
+  - `dramatic_mythology.mp3` (Ethnic Indian tanpura and deep harmonic resonance)
   - `epic_history.mp3` (Low-frequency cinematic pulse)
 - `assets/sfx/`:
-  - `sub_hit.wav` (Deep 40Hz cinematic sub bass drop)
-  - `whoosh_soft.wav` (Fast stereo whoosh for scene cuts)
-  - `riser_tension.wav` (Exponential rising Shepard tone)
+  - `sub_hit.wav` (Deep 55Hz cinematic sub bass drop)
+  - `whoosh_soft.wav` (Gentle pink-noise stereo whoosh for scene cuts)
+  - `tension_swell.wav` (Restrained analog chord swell for key reveals)
 
 You can replace any track with your own licensed `.mp3` or `.wav` by keeping the same filename or referencing new filenames in `episode_plan.json`.
 

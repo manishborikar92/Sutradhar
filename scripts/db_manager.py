@@ -433,7 +433,6 @@ class ScenePlan(BaseModel):
 
     scene_index: int = Field(..., ge=1)
     narration_text: str = Field(..., min_length=5)
-    caption_text: str = Field(..., min_length=5)
     visual_mode: Literal["character_drama", "explainer_diagram", "kinetic_callout"]
     backdrop_rig: str = Field(..., min_length=2, max_length=100)
     diagram_rig: Optional[str] = None
@@ -450,6 +449,8 @@ class ScenePlan(BaseModel):
     particle_theme: str = Field(..., min_length=2, max_length=60)
     camera_motion: str = Field(..., min_length=2, max_length=60)
     transition_sfx: Optional[str] = None
+    pause_after_ms: Optional[int] = Field(default=None, ge=50, le=1200)
+    emphasis_word: Optional[str] = None
 
     @field_validator(
         "diagram_rig",
@@ -458,6 +459,7 @@ class ScenePlan(BaseModel):
         "callout_headline",
         "callout_subtext",
         "transition_sfx",
+        "emphasis_word",
         mode="before",
     )
     @classmethod
@@ -520,10 +522,6 @@ class ScenePlan(BaseModel):
 
     @model_validator(mode="after")
     def validate_mode_and_text_requirements(self) -> "ScenePlan":
-        if self.narration_text != self.caption_text:
-            raise ValueError(
-                f"Scene {self.scene_index}: narration_text and caption_text must be identical"
-            )
         if len(self.narration_text.split()) < 3:
             raise ValueError(
                 f"Scene {self.scene_index}: narration_text must contain at least 3 words"

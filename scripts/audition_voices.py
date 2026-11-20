@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Sutradhar Kokoro-82M Voice Audition Utility (Milestone 3 Calibration).
+"""Sutradhar Focused Documentary Voice Audition Utility.
 
-Inspects the installed Kokoro ONNX voice archive, synthesizes a consistent
-English + Sanskrit/Indian history documentary passage across suitable voices
-and blends, runs faster-whisper lexical verification, and saves WAVs + JSON
-report under build/audition/.
+Synthesizes an authentic English + Sanskrit historical passage across top
+warm, authoritative documentary voices and blends at 0.90x and 0.94x speeds.
+Evaluates WPM, RMS dBFS, and Whisper lexical alignment accuracy.
+Saves candidate WAVs and audition_report.json under build/audition/.
 
-Does NOT modify config.yaml or episodes.db.
+Strictly read-only with respect to config.yaml and episodes.db.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from build_audio import (  # noqa: E402
-    align_caption_words,
+    align_narration_words,
     apply_pronunciations,
     default_kokoro_factory,
     default_whisper_factory,
@@ -38,22 +38,30 @@ from build_audio import (  # noqa: E402
 )
 from db_manager import get_project_root, load_config  # noqa: E402
 
-# Consistent 2-part documentary passage with repeated Sanskrit & historical nouns
+# Punchy documentary passage featuring Sanskrit terms and natural rhetorical pauses
 AUDITION_PASSAGE = (
-    "Welcome to Sutradhar. Long before telescopes mapped the Schwarzschild radius, "
-    "ancient scholars at Nalanda and Pataliputra debated time itself. "
-    "From Ravana beneath Mount Kailash to Ashwatthama on the plains of Kurukshetra, "
-    "the Mahabharata asks a chilling question. "
-    "Listen closely as Chanakya, Ravana, and the lost halls of Nalanda return—"
-    "because Sutradhar reveals the hidden pattern connecting myth and cosmos."
+    "What if the most sacred peak on Earth... is not a natural mountain at all? "
+    "Ancient Sanskrit scrolls describe Mount Kailash as four faces aligned precisely to true cardinal directions. "
+    "In the Ramayana, Ravana shook the very roots of the peak—testing forces modern geologists still cannot explain. "
+    "At Nalanda and Pataliputra, astronomers calculated celestial cycles centuries before the West. "
+    "Welcome to Sutradhar... where ancient mystery meets cosmic reality."
 )
 
-# Candidate blends to audition only if both component voices exist in voices-v1.0.bin
-CANDIDATE_BLENDS = [
-    "am_fenrir:0.65+bm_george:0.35",
-    "am_michael:0.60+bm_george:0.40",
-    "am_onyx:0.55+bm_george:0.45",
+FOCUSED_VOICES = [
+    "bm_daniel",
+    "bm_george",
+    "am_fenrir",
+    "am_onyx",
+    "am_michael",
 ]
+
+CANDIDATE_BLENDS = [
+    "am_fenrir:0.60+am_onyx:0.40",
+    "bm_george:0.60+am_fenrir:0.40",
+    "am_michael:0.55+bm_george:0.45",
+]
+
+SPEEDS = [0.90, 0.94]
 
 
 def _slugify_voice(voice_spec: str) -> str:
@@ -74,25 +82,17 @@ def main() -> int:
     model_path, voices_path = ensure_kokoro_models(root, cfg)
 
     kokoro = default_kokoro_factory(model_path, voices_path)
-    all_voices = sorted(kokoro.get_voices())
-    english_voices = [v for v in all_voices if v.startswith(("am_", "bm_", "af_", "bf_"))]
-    # Documentary narrator shortlist: all available male US/UK voices + top female US/UK voices
-    shortlist = [v for v in english_voices if v.startswith(("am_", "bm_"))]
-    for female_pick in ("af_heart", "af_bella", "bf_emma", "bf_isabella"):
-        if female_pick in english_voices and female_pick not in shortlist:
-            shortlist.append(female_pick)
+    all_voices = set(kokoro.get_voices())
 
-    # Add blends only when every component exists in the installed model
-    available_set = set(all_voices)
+    candidates: list[str] = [v for v in FOCUSED_VOICES if v in all_voices]
     for blend in CANDIDATE_BLENDS:
         parts = [p.split(":", 1)[0] for p in blend.split("+")]
-        if all(p in available_set for p in parts):
-            shortlist.append(blend)
+        if all(p in all_voices for p in parts):
+            candidates.append(blend)
 
     whisper_model = default_whisper_factory(cfg)
     tts_text = apply_pronunciations(AUDITION_PASSAGE, replacements)
     tts_lang = cfg["tts"].get("language", "en-us")
-    tts_speed = float(cfg["tts"].get("speed", 1.0))
 
     audition_dir = root / cfg["paths"]["build_dir"] / "audition"
     audition_dir.mkdir(parents=True, exist_ok=True)
@@ -100,64 +100,83 @@ def main() -> int:
     word_count = len(AUDITION_PASSAGE.split())
     results: list[dict[str, Any]] = []
 
-    print(f"[INFO] Installed voices total: {len(all_voices)} (English: {len(english_voices)})", file=sys.stderr)
-    print(f"[INFO] Auditioning {len(shortlist)} voice candidates -> {audition_dir}", file=sys.stderr)
+    print(
+        f"[INFO] Auditioning {len(candidates)} candidates across {len(SPEEDS)} speeds "
+        f"({len(candidates) * len(SPEEDS)} total evaluations)...",
+        file=sys.stderr,
+    )
 
-    for voice_spec in shortlist:
-        resolved = resolve_kokoro_voice(kokoro, voice_spec)
-        # Use British G2P for pure British voices, US G2P otherwise
-        lang_code = "en-gb" if (isinstance(resolved, str) and resolved.startswith(("bm_", "bf_"))) else tts_lang
-        samples, sr = kokoro.create(tts_text, voice=resolved, speed=tts_speed, lang=lang_code)
-        processed = trim_and_pad_audio(samples, int(sr), pad_tail_sec=0.2)
+    for speed in SPEEDS:
+        for voice_spec in candidates:
+            voice_slug = f"{_slugify_voice(voice_spec)}_spd{int(round(speed * 100))}"
+            wav_path = audition_dir / f"{voice_slug}.wav"
 
-        wav_name = f"audition_{_slugify_voice(voice_spec)}.wav"
-        wav_path = audition_dir / wav_name
-        write_wav_atomic(wav_path, processed, int(sr))
-        dur = probe_duration_sec(wav_path)
+            try:
+                voice_data = resolve_kokoro_voice(kokoro, voice_spec)
+                samples, sr = kokoro.create(
+                    tts_text,
+                    voice=voice_data,
+                    speed=speed,
+                    lang=tts_lang,
+                )
+            except Exception as exc:
+                print(f"[WARN] Failed to synthesize '{voice_spec}' @ {speed}x: {exc}", file=sys.stderr)
+                continue
 
-        whisper_words = transcribe_scene_words(
-            whisper_model=whisper_model,
-            wav_path=wav_path,
-            caption_text=AUDITION_PASSAGE,
-            language="en",
-        )
-        _, match_ratio = align_caption_words(
-            caption_text=AUDITION_PASSAGE,
-            whisper_words=whisper_words,
-            scene_duration=dur,
-            global_offset=0.0,
-        )
-        wpm = round((word_count / dur) * 60.0, 1)
-        transcript_preview = " ".join(w["word"].strip() for w in whisper_words)
+            processed = trim_and_pad_audio(samples, sr, pad_tail_sec=0.50)
+            write_wav_atomic(wav_path, processed, sr)
+            dur = probe_duration_sec(wav_path)
+            wpm = round((word_count / max(dur, 0.1)) * 60.0, 1)
+            rms = _rms_dbfs(processed)
 
-        entry = {
-            "voice_spec": voice_spec,
-            "lang_code": lang_code,
-            "wav_path": f"build/audition/{wav_name}",
-            "duration_sec": dur,
-            "wpm": wpm,
-            "rms_dbfs": _rms_dbfs(processed),
-            "whisper_match_ratio": match_ratio,
-            "whisper_transcript": transcript_preview,
-        }
-        results.append(entry)
-        print(
-            f"  - {voice_spec:<32} | {dur:5.2f}s | {wpm:5.1f} WPM | match={match_ratio:.2f} | {wav_name}",
-            file=sys.stderr,
-        )
+            try:
+                whisper_words = transcribe_scene_words(
+                    whisper_model=whisper_model,
+                    wav_path=wav_path,
+                    narration_text=AUDITION_PASSAGE,
+                    language="en",
+                )
+                _, match_ratio = align_narration_words(
+                    narration_text=AUDITION_PASSAGE,
+                    whisper_words=whisper_words,
+                    scene_duration=dur,
+                    global_offset=0.0,
+                )
+            except Exception as w_exc:
+                print(f"[WARN] Whisper alignment failed for {voice_slug}: {w_exc}", file=sys.stderr)
+                match_ratio = 0.0
 
-    report = {
-        "config_default_voice": cfg["tts"]["default_voice"],
-        "config_voice_provisional": cfg["tts"]["voice_provisional"],
-        "installed_english_voices": english_voices,
-        "audition_passage_canonical": AUDITION_PASSAGE,
-        "audition_passage_tts_phonetic": tts_text,
-        "samples_generated": len(results),
-        "results": sorted(results, key=lambda r: (-r["whisper_match_ratio"], abs(r["wpm"] - 155.0))),
+            entry = {
+                "voice_spec": voice_spec,
+                "speed": speed,
+                "slug": voice_slug,
+                "wav_file": str(wav_path.relative_to(root)).replace("\\", "/"),
+                "duration_sec": dur,
+                "wpm": wpm,
+                "rms_dbfs": rms,
+                "lexical_match_ratio": match_ratio,
+            }
+            results.append(entry)
+            print(
+                f"[AUDITION] {voice_spec:<28} spd={speed:.2f}x | {dur:.2f}s | {wpm:5.1f} WPM | "
+                f"RMS={rms:6.1f} dBFS | Match={match_ratio:.4f}",
+                file=sys.stderr,
+            )
+
+    results.sort(key=lambda r: (r["lexical_match_ratio"], -abs(r["wpm"] - 148.0)), reverse=True)
+
+    report_payload = {
+        "status": "ok",
+        "action": "audition_voices",
+        "speed_evaluated": SPEEDS,
+        "audition_passage": AUDITION_PASSAGE,
+        "tts_text_applied": tts_text,
+        "results": results,
     }
+
     report_path = audition_dir / "audition_report.json"
-    write_text_atomic(report_path, json.dumps(report, indent=2, ensure_ascii=False))
-    print(json.dumps(report, indent=2, ensure_ascii=False))
+    write_text_atomic(report_path, json.dumps(report_payload, indent=2, ensure_ascii=False))
+    print(json.dumps(report_payload, indent=2))
     return 0
 
 

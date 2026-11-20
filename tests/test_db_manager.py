@@ -83,7 +83,6 @@ def make_valid_scenes(bespoke_stem: str, count: int = 7) -> list[dict[str, Any]]
                 {
                     "scene_index": idx,
                     "narration_text": text,
-                    "caption_text": text,
                     "visual_mode": "explainer_diagram",
                     "backdrop_rig": "deep_cosmos_nebula",
                     "diagram_rig": bespoke_stem,
@@ -109,7 +108,6 @@ def make_valid_scenes(bespoke_stem: str, count: int = 7) -> list[dict[str, Any]]
                 {
                     "scene_index": idx,
                     "narration_text": text,
-                    "caption_text": text,
                     "visual_mode": "character_drama",
                     "backdrop_rig": "deep_cosmos_nebula",
                     "diagram_rig": None,
@@ -135,7 +133,6 @@ def make_valid_scenes(bespoke_stem: str, count: int = 7) -> list[dict[str, Any]]
                 {
                     "scene_index": idx,
                     "narration_text": text,
-                    "caption_text": text,
                     "visual_mode": "kinetic_callout",
                     "backdrop_rig": "quantum_grid_void",
                     "diagram_rig": None,
@@ -149,7 +146,7 @@ def make_valid_scenes(bespoke_stem: str, count: int = 7) -> list[dict[str, Any]]
                     "mood_palette": "obsidian_amber",
                     "particle_theme": "starfield_warp",
                     "camera_motion": "slow_pull",
-                    "transition_sfx": "riser_tension.wav",
+                    "transition_sfx": "tension_swell.wav",
                 }
             )
     return scenes
@@ -358,12 +355,13 @@ class TestDbManagerCompliance(unittest.TestCase):
         self.assertEqual(res.returncode, 0, res.stderr)
         self.assertEqual(json.loads(res.stdout)["series_id"], 1)
 
-    # 4. Narration & Caption consistency enforcement
+    # 4. Narration single source & clean canvas schema enforcement
     def test_04_narration_and_caption_consistency(self) -> None:
         self.init_and_create_default_series()
 
         ep = make_valid_episode_plan()
-        ep["scenes"][0]["caption_text"] = "Completely different caption wording than the spoken narration."
+        # Passing forbidden legacy caption_text must fail validation
+        ep["scenes"][0]["caption_text"] = "Forbidden redundant caption."
         self.write_build_json("episode_plan.json", ep)
         self.write_build_json(
             "publish_result.json",
@@ -371,14 +369,16 @@ class TestDbManagerCompliance(unittest.TestCase):
         )
         res = self.run_cli("--record-published")
         self.assertEqual(res.returncode, 1)
-        self.assertIn("narration_text and caption_text must be identical", res.stderr)
+        self.assertIn("Extra inputs are not permitted", res.stderr)
 
         # Ensure DB remained untouched (0 completed episodes)
         ctx = json.loads(self.run_cli("--context").stdout)
         self.assertEqual(ctx["active_series"]["completed_episodes"], 0)
 
-        # Fixing caption_text to match narration_text succeeds
-        ep["scenes"][0]["caption_text"] = ep["scenes"][0]["narration_text"]
+        # Removing caption_text and setting pause_after_ms & emphasis_word succeeds
+        del ep["scenes"][0]["caption_text"]
+        ep["scenes"][0]["pause_after_ms"] = 250
+        ep["scenes"][0]["emphasis_word"] = "boundary"
         self.write_build_json("episode_plan.json", ep)
         res = self.run_cli("--record-published")
         self.assertEqual(res.returncode, 0, res.stderr)

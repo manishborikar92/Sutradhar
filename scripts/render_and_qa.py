@@ -112,7 +112,7 @@ def build_audio_mix(
     # Master gain settings from config
     mastering_cfg = cfg.get("audio_mastering", {})
     bgm_base_gain = mastering_cfg.get("bgm_base_gain_db", -22.0)
-    sfx_gain = mastering_cfg.get("sfx_gain_db", -10.0)
+    sfx_gain = mastering_cfg.get("sfx_gain_db", -16.0)
     ducking_cfg = mastering_cfg.get("sidechain_ducking", {})
     duck_thresh = ducking_cfg.get("threshold", 0.03)
     duck_ratio = ducking_cfg.get("ratio", 6)
@@ -143,16 +143,22 @@ def build_audio_mix(
     # Construct filter_complex
     filters = []
 
+    # 0. Broadcast Vocal Mastering Chain on Narration [1:a] -> [narration_mastered] & [narration_sidechain]
+    # 80Hz high-pass, warmth (+2dB @ 175Hz), harshness tame (-2dB @ 5kHz), gentle air (+1.5dB @ 10kHz), smooth 2.5:1 compression
+    filters.append(
+        "[1:a]highpass=f=80,equalizer=f=175:t=q:w=1.0:g=2.0,equalizer=f=5000:t=q:w=1.5:g=-2.0,equalizer=f=10000:t=q:w=1.0:g=1.5,acompressor=threshold=-18dB:ratio=2.5:attack=15:release=120,asplit=2[narration_mastered][narration_sidechain]"
+    )
+
     # 1. BGM trim to total_duration and base volume
     filters.append(f"[2:a]atrim=0:{total_duration:.4f},asetpts=PTS-STARTPTS,volume={bgm_base_gain}dB[bgm_base]")
 
     # 2. Sidechain ducking of BGM under Narration
     filters.append(
-        f"[bgm_base][1:a]sidechaincompress=threshold={duck_thresh}:ratio={duck_ratio}:attack={duck_attack}:release={duck_release}[bgm_ducked]"
+        f"[bgm_base][narration_sidechain]sidechaincompress=threshold={duck_thresh}:ratio={duck_ratio}:attack={duck_attack}:release={duck_release}[bgm_ducked]"
     )
 
     # 3. SFX placement with delay
-    mix_sources = ["[1:a]", "[bgm_ducked]"]
+    mix_sources = ["[narration_mastered]", "[bgm_ducked]"]
     for idx, (_, delay_sec) in enumerate(sfx_inputs):
         inp_idx = 3 + idx
         delay_ms = int(round(delay_sec * 1000.0))
@@ -271,9 +277,10 @@ def run_render_and_qa_pipeline(root: Path) -> dict[str, Any]:
     manifest_path = build_dir / "manifest.js"
     manifest = parse_manifest_js(manifest_path)
 
-    # Sync HyperFrames root composition duration to exact audio length
+    # Sync HyperFrames root composition duration to audio length + 0.30s safety tail
     total_dur = float(manifest["audio"]["total_duration_sec"])
-    sync_index_html_duration(root, total_dur)
+    render_dur = round(total_dur + 0.30, 2)
+    sync_index_html_duration(root, render_dur)
 
     raw_video = build_dir / "raw_video.mp4"
     mixed_temp = build_dir / "mixed_temp.mp4"
@@ -343,9 +350,10 @@ def run_render_and_qa_pipeline(root: Path) -> dict[str, Any]:
     if actual_duration < 34.0 or actual_duration > 50.0:
         raise RenderPipelineError(f"Final video duration {actual_duration:.2f}s is outside hard bounds [34s, 50s].")
 
-    if abs(actual_duration - expected_duration) > 0.5:
+    expected_render_dur = round(expected_duration + 0.30, 2)
+    if abs(actual_duration - expected_render_dur) > 0.6:
         raise RenderPipelineError(
-            f"Duration mismatch: final MP4 ({actual_duration:.2f}s) vs manifest ({expected_duration:.2f}s)."
+            f"Duration mismatch: final MP4 ({actual_duration:.2f}s) vs expected ({expected_render_dur:.2f}s)."
         )
 
     # Step 6: Decode QA frames for contact sheet

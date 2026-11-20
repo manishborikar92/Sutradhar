@@ -1,47 +1,60 @@
 /* Sutradhar Master Stylesheet (1080x1920 YouTube Shorts) */
+/* Clean-Canvas & Editorial High-Craft Design System */
 
 :root {
   /* Default Mood: Golden Imperial */
-  --sky-top: #1A1208;
-  --sky-bottom: #3D2B14;
-  --accent-glow: #FFD700;
-  --shadow-tint: #0D0803;
+  --sky-top: #07090F;
+  --sky-bottom: #1B150A;
+  --accent-glow: #E5B869;
+  --accent-crimson: #C84B31;
+  --ivory-text: #F8F4EC;
+  --shadow-tint: #040508;
 }
 
-/* Mood Palettes */
+/* Mood Palettes (Strictly Obsidian, Indigo, Burnished Gold, Ivory, Ember Crimson - NO TEAL) */
 .mood-golden_imperial {
-  --sky-top: #1A1208;
-  --sky-bottom: #3D2B14;
-  --accent-glow: #FFD700;
-  --shadow-tint: #0D0803;
+  --sky-top: #07090F;
+  --sky-bottom: #1B150A;
+  --accent-glow: #E5B869;
+  --accent-crimson: #C84B31;
+  --ivory-text: #F8F4EC;
+  --shadow-tint: #040508;
 }
 
 .mood-cosmic_indigo {
-  --sky-top: #0F0E1A;
-  --sky-bottom: #221D38;
-  --accent-glow: #9D8DF1;
-  --shadow-tint: #0A0912;
+  --sky-top: #07090F;
+  --sky-bottom: #111827;
+  --accent-glow: #E5B869;
+  --accent-crimson: #C84B31;
+  --ivory-text: #F8F4EC;
+  --shadow-tint: #030407;
 }
 
 .mood-crimson_wrath {
-  --sky-top: #1F0505;
-  --sky-bottom: #4A0E0E;
-  --accent-glow: #FF3333;
-  --shadow-tint: #100202;
+  --sky-top: #07090F;
+  --sky-bottom: #240C0A;
+  --accent-glow: #C84B31;
+  --accent-crimson: #E5B869;
+  --ivory-text: #F8F4EC;
+  --shadow-tint: #040202;
 }
 
 .mood-mystic_slate {
-  --sky-top: #0A1118;
-  --sky-bottom: #1A2634;
-  --accent-glow: #38BDF8;
-  --shadow-tint: #05080C;
+  --sky-top: #07090F;
+  --sky-bottom: #151D28;
+  --accent-glow: #E5B869;
+  --accent-crimson: #C84B31;
+  --ivory-text: #F8F4EC;
+  --shadow-tint: #040609;
 }
 
 .mood-obsidian_amber {
-  --sky-top: #120D08;
-  --sky-bottom: #2B1D10;
-  --accent-glow: #FFA500;
-  --shadow-tint: #080503;
+  --sky-top: #07090F;
+  --sky-bottom: #1E140B;
+  --accent-glow: #E5B869;
+  --accent-crimson: #C84B31;
+  --ivory-text: #F8F4EC;
+  --shadow-tint: #040302;
 }
 
 * {
@@ -54,9 +67,9 @@ body {
   width: 1080px;
   height: 1920px;
   overflow: hidden;
-  background-color: #000000;
+  background-color: #07090F;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  color: #FFFFFF;
+  color: #F8F4EC;
   user-select: none;
 }
 
@@ -65,7 +78,7 @@ body {
   width: 1080px;
   height: 1920px;
   overflow: hidden;
-  background-color: #050208;
+  background-color: #07090F;
 }
 
 .layer-fullscreen {
@@ -87,55 +100,13 @@ body {
   overflow: hidden;
 }
 
-/* Safe Zone Bounded Series Badge (Top: 300px, Left: 64px, Clears top 288px) */
-.safe-zone-badge {
-  position: absolute;
-  top: 300px;
-  left: 64px;
-  max-width: 816px;
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: rgba(10, 8, 16, 0.85);
-  border: 1.5px solid var(--accent-glow, #FFD700);
-  border-radius: 30px;
-  padding: 10px 24px;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
-}
-
-.badge-pill-part {
-  color: var(--accent-glow, #FFD700);
-  font-size: 28px;
-  font-weight: 800;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-}
-
-.badge-divider {
-  color: rgba(255, 255, 255, 0.4);
-  font-size: 24px;
-}
-
-.badge-series-title {
-  color: #F8FAFC;
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Primary Visual Focal Area (y: 380px..1220px, x: 64px..880px) */
+/* Primary Visual Focal Area (Comfortably clears bottom ~420px title/channel area and right ~170px UI stack) */
 .scene-focal-stage {
   position: absolute;
-  top: 380px;
-  left: 64px;
+  top: 300px;
+  left: 80px;
   width: 880px;
-  height: 840px;
+  height: 1120px;
   z-index: 20;
   display: flex;
   justify-content: center;
@@ -156,12 +127,12 @@ body {
   height: 1920px;
 }
 
-/* Mode A: Character Drama */
+/* Mode A: Character Drama (Sculptural Gilded Silhouette) */
 .character-host {
   position: absolute;
-  bottom: -60px;
-  width: 720px;
-  height: 1080px;
+  bottom: -40px;
+  width: 760px;
+  height: 1140px;
   display: flex;
   justify-content: center;
   align-items: flex-end;
@@ -170,13 +141,13 @@ body {
 .character-host svg {
   width: 100%;
   height: 100%;
-  filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.8));
+  filter: drop-shadow(0 14px 40px rgba(0, 0, 0, 0.95));
 }
 
-/* Mode B: Explainer Diagram */
+/* Mode B: Explainer Diagram (DrawSVG animated technical infographics) */
 .diagram-host {
-  width: 820px;
-  height: 820px;
+  width: 860px;
+  height: 860px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -185,76 +156,64 @@ body {
 .diagram-host svg {
   width: 100%;
   height: 100%;
-  filter: drop-shadow(0 8px 32px rgba(0, 0, 0, 0.85));
+  filter: drop-shadow(0 12px 36px rgba(0, 0, 0, 0.9));
 }
 
-/* Mode C: Kinetic Callout Card */
+/* Mode C: Open-Canvas Editorial Typography (No boxed cards, full-bleed cinematic elegance) */
 .callout-card {
-  width: 800px;
-  padding: 48px 40px;
-  background: rgba(15, 12, 24, 0.92);
-  border: 2px solid var(--accent-glow, #FFD700);
-  border-radius: 24px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.9);
+  width: 820px;
+  padding: 60px 40px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
   text-align: center;
-  backdrop-filter: blur(12px);
+  backdrop-filter: none;
+  position: relative;
+}
+
+.callout-card::before {
+  content: "";
+  position: absolute;
+  top: 20px;
+  left: 15%;
+  right: 15%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #E5B869, transparent);
+  opacity: 0.8;
+}
+
+.callout-card::after {
+  content: "";
+  position: absolute;
+  bottom: 20px;
+  left: 25%;
+  right: 25%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #E5B869, transparent);
+  opacity: 0.5;
 }
 
 .callout-card-headline {
-  color: var(--accent-glow, #FFD700);
-  font-size: 46px;
-  font-weight: 900;
-  line-height: 1.2;
+  color: var(--accent-glow, #E5B869);
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 54px;
+  font-weight: 800;
+  line-height: 1.25;
   text-transform: uppercase;
-  letter-spacing: 1.5px;
-  margin-bottom: 24px;
-  text-shadow: 0 0 24px rgba(255, 215, 0, 0.4);
+  letter-spacing: 3px;
+  margin-bottom: 28px;
+  text-shadow: 0 0 30px rgba(229, 184, 105, 0.45);
 }
 
 .callout-card-subtext {
-  color: #E2E8F0;
+  color: var(--ivory-text, #F8F4EC);
+  font-family: 'Inter', system-ui, sans-serif;
   font-size: 32px;
-  font-weight: 600;
-  line-height: 1.35;
-}
-
-/* Safe Zone Subtitles (Bottom: 560px, Left: 64px, Right: 200px, Clears bottom 520px and right 192px) */
-.safe-zone-subtitles {
-  position: absolute;
-  bottom: 560px;
-  left: 64px;
-  right: 200px;
-  z-index: 50;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  align-items: center;
-  text-align: center;
-  pointer-events: none;
-}
-
-.caption-line {
-  background: rgba(5, 3, 10, 0.82);
-  border-left: 4px solid var(--accent-glow, #FFD700);
-  border-radius: 12px;
-  padding: 16px 24px;
-  font-size: 38px;
-  font-weight: 800;
-  line-height: 1.35;
-  color: #FFFFFF;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
-  backdrop-filter: blur(6px);
-  max-width: 100%;
-}
-
-.caption-word {
-  display: inline-block;
-}
-
-.caption-word.active {
-  color: #FFD700 !important;
-  transform: scale(1.08);
-  text-shadow: 0 0 16px rgba(255, 215, 0, 0.9), 0 0 30px rgba(255, 215, 0, 0.5) !important;
+  font-weight: 500;
+  line-height: 1.45;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
 }
 
 /* Canvas overlay for frame-locked particles */

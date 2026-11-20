@@ -40,24 +40,25 @@ Create `build/episode_plan.json` for today's episode targeting **36–46 seconds
 1. **Scene 1 Pattern-Interrupt Hook (0–2.5s):** Open immediately with a shocking paradox, dramatic confrontation, or high-stakes reveal. Zero slow intros or greetings.
 2. **Spoken-Natural English & Kokoro Sweet Spot:**
    - Write **12–22 spoken words per scene** (hitting Kokoro-82M's optimal prosody range—never ultra-short 3-word fragments or runaway 40-word paragraphs).
-   - Keep `narration_text` and `caption_text` identical in clean English.
-   - **Pronunciation Check:** If today's script introduces any Sanskrit, Indian epic, or uncommon historical proper noun not already present in `pronunciations.yaml` (e.g., *Ashwatthama*, *Pataliputra*, *Kurukshetra*), append a clear phonetic entry to `pronunciations.yaml` so Kokoro pronounces it naturally without altering on-screen captions.
+   - Write clean, evocative spoken English in `narration_text` (the single canonical source of truth; do NOT provide any `caption_text` field). The video canvas remains 100% clean without burned-in subtitles or title badges; YouTube generates closed captions automatically from spoken narration.
+   - Use `pause_after_ms` (150–400ms) on key scenes for natural rhetorical breathing room, and optional `emphasis_word` for audio-synced visual pulses.
+   - **Pronunciation Check:** If today's script introduces any Sanskrit, Indian epic, or uncommon historical proper noun not already present in `pronunciations.yaml` (e.g., *Ashwatthama*, *Pataliputra*, *Kurukshetra*), append a smooth unhyphenated phonetic entry to `pronunciations.yaml` so Kokoro pronounces it naturally.
 3. **Final Scene Payoff + Open-Loop CTA:**
    - If `episode_number_in_series < total_planned_episodes`: deliver a crisp micro-payoff for today's episode and end with a tight cliffhanger teasing `Part {episode_number_in_series + 1}` tomorrow.
    - If `episode_number_in_series == total_planned_episodes`: deliver a memorable series finale payoff and invite viewers to subscribe to Sutradhar for tomorrow's new series.
 4. **Triple-Mode Visual Variety & Originality (YPP Compliance):**
-   - Vary `visual_mode` intentionally across scenes—combining `"character_drama"`, `"explainer_diagram"`, and `"kinetic_callout"` (bold stat/date/comparison cards) so consecutive scenes never look static or templated.
-   - Assign `transition_sfx` (`whoosh_soft.wav`, `sub_hit.wav`, `riser_tension.wav`, or `null` on quiet beats), `mood_palette`, `particle_theme`, and `camera_motion`.
+   - Vary `visual_mode` intentionally across scenes—combining `"character_drama"`, `"explainer_diagram"`, and `"kinetic_callout"` (open-canvas editorial typography with hairline gold rules) so consecutive scenes never look static or templated.
+   - Assign `transition_sfx` (`whoosh_soft.wav`, `sub_hit.wav`, `tension_swell.wav`, or `null` on quiet beats), `mood_palette`, `particle_theme`, and `camera_motion`.
    - **Mandatory Bespoke Asset Rule:** Specify a **brand-new, episode-specific SVG path** in `bespoke_asset_path` (under `assets/svg/diagrams/` or `assets/svg/backdrops/`) and actively feature it in today's scenes.
 
 ---
 
 ### Step 4: Verify & Author Modular SVG Rigs (`assets/svg/`)
 1. Verify every `backdrop_rig`, `primary_character`, `secondary_character`, and `diagram_rig` referenced in `build/episode_plan.json` exists in `assets/svg/`, including today's mandatory new `bespoke_asset_path`.
-2. **Author all missing or new bespoke SVG rigs** directly inside `assets/svg/characters/`, `assets/svg/backdrops/`, or `assets/svg/diagrams/` using your `svg-character-animation` and `hyperframes` skills, strictly following `docs/IMPLEMENTATION_PLAN.md` Section 5:
-   - **Character SVGs (`viewBox="0 0 800 1200"`):** `#char_aura`, `#char_body`, `#arm_left`, `#char_head`, `#eyes_open`, `#eyes_closed`, `#brows`, `#arm_right`, `#prop_weapon`, with `data-pivot-x` and `data-pivot-y` attributes on articulated parts.
-   - **Backdrop SVGs (`viewBox="0 0 1080 1920"`):** `#bg_far_sky`, `#bg_mid_architecture`, `#bg_fg_pillars` using CSS variables `var(--sky-top)`, `var(--sky-bottom)`, `var(--accent-glow)`, `var(--shadow-tint)`.
-   - **Diagram SVGs (`viewBox="0 0 900 900"`):** `#diagram_base`, progressive reveal groups `#stage_1` through `#stage_4`, and `#highlight_pulse`.
+2. **Author all missing or new bespoke SVG rigs** directly inside `assets/svg/characters/`, `assets/svg/backdrops/`, or `assets/svg/diagrams/` using your `svg-character-animation` and `hyperframes` skills, strictly following the Illuminated Obsidian & Gold aesthetic (`#07090F`, `#111827`, `#E5B869`, `#F8F4EC`, `#C84B31` - strictly zero teal):
+   - **Character SVGs (`viewBox="0 0 800 1200"`):** Sculptural backlit gilded silhouettes (`#char_aura`, `#char_mandala`, `#char_body`, `#arm_left`, `#char_head`, `#eyes_open`, `#eyes_closed`, `#arm_right`, `#prop_weapon`, with `data-pivot-x` and `data-pivot-y` attributes).
+   - **Backdrop SVGs (`viewBox="0 0 1080 1920"`):** Volumetric atmospheric light shafts and deep cosmic/architectural layers.
+   - **Diagram SVGs (`viewBox="0 0 900 900"`):** Technical infographic geometry with `class="draw-path"` on lines and circles for GSAP `DrawSVGPlugin` animations, large legible typography (`>=30px`, bounds `x: 90..910`), progressive reveal groups `#stage_1` through `#stage_4`, and `#highlight_pulse`.
 
 ---
 
@@ -66,7 +67,7 @@ Create `build/episode_plan.json` for today's episode targeting **36–46 seconds
 2. Run `python scripts/preview_frames.py` to execute `hyperframes lint`, `hyperframes check --json`, and fast mid-scene `hyperframes snapshot` captures stitched into `build/qa_grid.jpg`.
 3. **Inspect `build/qa_grid.jpg` visually alongside `build/episode_plan.json`:**
    - **Visual Integrity:** All SVG characters, diagrams, and kinetic callouts render cleanly with connected pivots, crisp contrast, and zero broken/clipped paths.
-   - **2026 Safe-Zone Compliance:** Top series badge stays below `y = 288px` (at `top: 300px`); subtitles stay above `bottom: 520px` (at `bottom: 560px`) and clear of the right `192px` icon column without overlapping faces or key diagram callouts.
+   - **Clean-Canvas Compliance:** The canvas is 100% clean of on-screen subtitle boxes, karaoke words, and top badges. Focal stage visuals clear the bottom ~420px YouTube title/channel area and right ~170px action button stack.
    - **Pacing & Visual Diversity:** Consecutive scenes show distinct framing, diagram stages, emotions, or visual modes (zero static/duplicate frames).
 4. **Self-Healing Loop (Pre-Render):** If any lint/check error or visual defect appears, fix `build/episode_plan.json`, `pronunciations.yaml`, or the faulty `.svg` file, re-run `python scripts/build_audio.py` (only if text/pronunciation changed) and `python scripts/preview_frames.py`, and re-inspect `build/qa_grid.jpg` (up to 2 repair attempts). Do NOT proceed to full rendering if defects remain.
 

@@ -36,7 +36,7 @@ tts:
   engine: "kokoro_onnx"
   language: "en-us"
   sample_rate: 24000
-  speed: 1.0
+  speed: 0.92
   # PROVISIONAL: Lock final voice after completing Milestone 3 voice audition
   voice_provisional: true
   default_voice: "am_fenrir"
@@ -91,7 +91,7 @@ assets:
   sfx_tracks:
     - "whoosh_soft.wav"
     - "sub_hit.wav"
-    - "riser_tension.wav"
+    - "tension_swell.wav"
   mood_palettes:
     - "golden_imperial"
     - "cosmic_indigo"

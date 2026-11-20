@@ -1,75 +1,92 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900" width="900" height="900">
   <defs>
-    <radialGradient id="dilation_core" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#0F172A" />
-      <stop offset="60%" stop-color="#1E1B4B" />
-      <stop offset="100%" stop-color="#020617" />
+    <radialGradient id="dilation_core_gold" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#07090F" />
+      <stop offset="70%" stop-color="#111827" />
+      <stop offset="100%" stop-color="#C84B31" stop-opacity="0.8" />
     </radialGradient>
-    <linearGradient id="time_flow_grad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#38BDF8" />
-      <stop offset="50%" stop-color="#818CF8" />
-      <stop offset="100%" stop-color="#F43F5E" />
+    <linearGradient id="gold_curvature_grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E5B869" />
+      <stop offset="50%" stop-color="#F8F4EC" />
+      <stop offset="100%" stop-color="#C84B31" />
     </linearGradient>
+    <filter id="gold_glow_clock" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
   </defs>
 
-  <!-- Base: Spacetime Metric Grid & Gravitational Well Axis -->
+  <!-- Base: Spacetime Curvature Grid & Gravitational Well Axis -->
   <g id="diagram_base">
-    <!-- Concentric Spacetime Funnel Mesh -->
-    <ellipse cx="450" cy="500" rx="380" ry="140" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 6" opacity="0.6" />
-    <ellipse cx="450" cy="560" rx="280" ry="100" fill="none" stroke="#475569" stroke-width="1.5" stroke-dasharray="6 6" opacity="0.7" />
-    <ellipse cx="450" cy="620" rx="180" ry="60" fill="none" stroke="#64748B" stroke-width="2" stroke-dasharray="8 8" opacity="0.8" />
-    <!-- Funnel Curvature Profile -->
-    <path d="M 70,500 Q 300,520 450,720 Q 600,520 830,500" fill="none" stroke="#475569" stroke-width="2" opacity="0.5" />
-    <!-- Central Mass Horizon -->
-    <circle cx="450" cy="720" r="45" fill="url(#dilation_core)" stroke="#F43F5E" stroke-width="3" />
-    <!-- Coordinate Axis -->
-    <line x1="450" y1="100" x2="450" y2="720" stroke="#64748B" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.5" />
-    <text x="450" y="800" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="14" font-weight="700" text-anchor="middle">SPACETIME CURVATURE GRADIENT</text>
+    <!-- Outer Astronomical Calibration Ring -->
+    <circle class="draw-path" cx="450" cy="450" r="390" fill="none" stroke="#E5B869" stroke-width="1.5" stroke-dasharray="4 8" opacity="0.4" />
+    <!-- Spacetime Metric Ellipses -->
+    <ellipse class="draw-path" cx="450" cy="470" rx="350" ry="120" fill="none" stroke="#E5B869" stroke-width="2" opacity="0.5" />
+    <ellipse class="draw-path" cx="450" cy="520" rx="260" ry="85" fill="none" stroke="#E5B869" stroke-width="2" opacity="0.6" stroke-dasharray="8 6" />
+    <ellipse class="draw-path" cx="450" cy="580" rx="170" ry="55" fill="none" stroke="#C84B31" stroke-width="2.5" opacity="0.7" />
+
+    <!-- Geodesic Funnel Curvature Profile -->
+    <path class="draw-path" d="M 100,470 Q 300,500 450,660 Q 600,500 800,470" fill="none" stroke="url(#gold_curvature_grad)" stroke-width="3" opacity="0.75" />
+
+    <!-- Central Singularity Mass Horizon -->
+    <circle cx="450" cy="660" r="42" fill="url(#dilation_core_gold)" stroke="#C84B31" stroke-width="3" />
+    <circle class="draw-path" cx="450" cy="660" r="42" fill="none" stroke="#E5B869" stroke-width="2" stroke-dasharray="6 4" />
+
+    <!-- Header Typography -->
+    <text x="450" y="80" fill="#E5B869" font-family="'Playfair Display', Georgia, serif" font-size="36" font-weight="800" text-anchor="middle" letter-spacing="3">TIME DILATION</text>
+    <text x="450" y="125" fill="#F8F4EC" font-family="'Inter', system-ui, sans-serif" font-size="28" font-weight="600" text-anchor="middle" opacity="0.9">1 SECOND = 1,000 YEARS</text>
   </g>
 
-  <!-- Stage 1: Distant Observer Clock (Normal Proper Time t_infinity) -->
+  <!-- Stage 1: Distant Observer Clock (Normal Proper Time) -->
   <g id="stage_1">
-    <!-- Normal Time Dial (Top Right) -->
-    <circle cx="700" cy="220" r="75" fill="#0B132B" stroke="#38BDF8" stroke-width="3.5" />
-    <!-- Clock Hands (12:00 ticking fast) -->
-    <line x1="700" y1="220" x2="700" y2="165" stroke="#38BDF8" stroke-width="4" stroke-linecap="round" />
-    <line x1="700" y1="220" x2="740" y2="220" stroke="#38BDF8" stroke-width="3" stroke-linecap="round" />
-    <!-- Radiating Fast Frequency Waves -->
-    <circle cx="700" cy="220" r="95" fill="none" stroke="#38BDF8" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.7" />
-    <text x="700" y="325" fill="#38BDF8" font-family="system-ui, sans-serif" font-size="15" font-weight="700" text-anchor="middle">OBSERVER CLOCK (t∞)</text>
-    <text x="700" y="345" fill="#7DD3FC" font-family="system-ui, sans-serif" font-size="12" text-anchor="middle">dt / dτ = 1.0 (Normal Flow)</text>
+    <!-- Observer Precision Clock Face -->
+    <circle class="draw-path" cx="700" cy="240" r="75" fill="#07090F" stroke="#E5B869" stroke-width="3.5" filter="url(#gold_glow_clock)" />
+    <!-- Clock Dial Marks -->
+    <line class="draw-path" x1="700" y1="170" x2="700" y2="185" stroke="#E5B869" stroke-width="3" />
+    <line class="draw-path" x1="770" y1="240" x2="755" y2="240" stroke="#E5B869" stroke-width="3" />
+    <line class="draw-path" x1="700" y1="310" x2="700" y2="295" stroke="#E5B869" stroke-width="3" />
+    <line class="draw-path" x1="630" y1="240" x2="645" y2="240" stroke="#E5B869" stroke-width="3" />
+    <!-- Rapid Hands -->
+    <line class="draw-path" x1="700" y1="240" x2="700" y2="185" stroke="#F8F4EC" stroke-width="4" stroke-linecap="round" />
+    <line class="draw-path" x1="700" y1="240" x2="738" y2="240" stroke="#E5B869" stroke-width="3.5" stroke-linecap="round" />
+    <circle cx="700" cy="240" r="5" fill="#E5B869" />
+
+    <text x="700" y="350" fill="#E5B869" font-family="'Inter', system-ui, sans-serif" font-size="22" font-weight="700" text-anchor="middle">OBSERVER TIME</text>
+    <text x="700" y="378" fill="#F8F4EC" font-family="'Inter', system-ui, sans-serif" font-size="18" font-weight="500" text-anchor="middle" opacity="0.8">Normal Proper Flow</text>
   </g>
 
-  <!-- Stage 2: Gravitational Well Gradient Lines -->
+  <!-- Stage 2: Spacetime Gravitational Curvature Gradient -->
   <g id="stage_2">
-    <!-- Gravitational Acceleration Vector Gradient -->
-    <path d="M 250,300 C 350,450 420,600 450,720" fill="none" stroke="url(#time_flow_grad)" stroke-width="4" stroke-linecap="round" />
-    <polygon points="450,720 440,700 455,705" fill="#F43F5E" />
-    <text x="210" y="290" fill="#818CF8" font-family="system-ui, sans-serif" font-size="15" font-weight="700">INWARD GRAVITATIONAL WELL</text>
-    <text x="210" y="310" fill="#A5B4FC" font-family="system-ui, sans-serif" font-size="12">g(r) = GM / r²</text>
+    <!-- Inward Geodesic Trajectory -->
+    <path class="draw-path" d="M 240,240 C 340,360 410,540 450,660" fill="none" stroke="url(#gold_curvature_grad)" stroke-width="4.5" stroke-linecap="round" />
+    <polygon points="450,660 442,640 458,644" fill="#C84B31" />
+    <text x="210" y="210" fill="#E5B869" font-family="'Inter', system-ui, sans-serif" font-size="24" font-weight="700">GRAVITY GRADIENT</text>
+    <text x="210" y="240" fill="#F8F4EC" font-family="'Inter', system-ui, sans-serif" font-size="18" font-weight="500" opacity="0.85">Spacetime Warping</text>
   </g>
 
-  <!-- Stage 3: Infalling Clock (Severe Time Dilation d_tau -> 0) -->
+  <!-- Stage 3: Infalling Clock (Frozen Proper Time Near Horizon) -->
   <g id="stage_3">
-    <!-- Dilated Slow Clock (Near Horizon) -->
-    <circle cx="280" cy="560" r="65" fill="#1C0A15" stroke="#F43F5E" stroke-width="3.5" />
+    <!-- Dilated Slow Clock -->
+    <circle class="draw-path" cx="260" cy="520" r="68" fill="#07090F" stroke="#C84B31" stroke-width="3.5" />
     <!-- Clock Hands (Frozen almost at standstill) -->
-    <line x1="280" y1="560" x2="280" y2="510" stroke="#F43F5E" stroke-width="4" stroke-linecap="round" />
-    <line x1="280" y1="560" x2="295" y2="550" stroke="#F43F5E" stroke-width="3" stroke-linecap="round" />
-    <text x="280" y="650" fill="#F43F5E" font-family="system-ui, sans-serif" font-size="15" font-weight="700" text-anchor="middle">INFALLING CLOCK (dτ)</text>
-    <text x="280" y="670" fill="#FDA4AF" font-family="system-ui, sans-serif" font-size="12" text-anchor="middle">dτ = dt √(1 - 2GM/rc²)</text>
+    <line class="draw-path" x1="260" y1="520" x2="260" y2="470" stroke="#C84B31" stroke-width="4" stroke-linecap="round" />
+    <line class="draw-path" x1="260" y1="520" x2="278" y2="510" stroke="#E5B869" stroke-width="3" stroke-linecap="round" />
+    <circle cx="260" cy="520" r="5" fill="#C84B31" />
+
+    <text x="260" y="625" fill="#C84B31" font-family="'Inter', system-ui, sans-serif" font-size="22" font-weight="700" text-anchor="middle">FROZEN TIME</text>
+    <text x="260" y="652" fill="#F8F4EC" font-family="'Inter', system-ui, sans-serif" font-size="18" font-weight="500" text-anchor="middle" opacity="0.85">dτ → 0 at Horizon</text>
   </g>
 
-  <!-- Stage 4: Frozen Asymptotic Boundary -->
+  <!-- Stage 4: Asymptotic Horizon Boundary -->
   <g id="stage_4">
-    <!-- Asymptote Light Cone Freeze Line -->
-    <line x1="120" y1="720" x2="780" y2="720" stroke="#FBBF24" stroke-width="3" stroke-dasharray="8 6" />
-    <polygon points="450,700 460,720 440,720" fill="#FBBF24" />
-    <text x="450" y="690" fill="#FBBF24" font-family="system-ui, sans-serif" font-size="15" font-weight="700" text-anchor="middle">FROZEN TIME HORIZON (dτ → 0)</text>
+    <!-- Asymptotic Horizon Line -->
+    <line class="draw-path" x1="100" y1="660" x2="800" y2="660" stroke="#E5B869" stroke-width="3" stroke-dasharray="10 8" />
+    <text x="450" y="730" fill="#E5B869" font-family="'Playfair Display', Georgia, serif" font-size="34" font-weight="800" text-anchor="middle" letter-spacing="2">EVENT HORIZON</text>
+    <text x="450" y="770" fill="#F8F4EC" font-family="'Inter', system-ui, sans-serif" font-size="22" font-weight="600" text-anchor="middle" opacity="0.9">Boundary of Infinite Dilation</text>
   </g>
 
   <!-- Highlight Pulse Energy Ring -->
   <g id="highlight_pulse">
-    <circle cx="450" cy="720" r="48" fill="none" stroke="#FFD700" stroke-width="5" opacity="0.9" filter="drop-shadow(0 0 14px #FFD700)" />
+    <circle cx="450" cy="660" r="48" fill="none" stroke="#E5B869" stroke-width="4" opacity="0.9" filter="url(#gold_glow_clock)" />
   </g>
 </svg>

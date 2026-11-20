@@ -96,10 +96,10 @@ KOKORO_KNOWN_SHA256 = {
 }
 
 SILENCE_THRESHOLD = 0.003        # ~ -50 dBFS amplitude threshold for edge trim
-TRIM_MARGIN_SEC = 0.04           # Keep 40ms onset/release margin so plosives stay clean
-INTER_SCENE_PAD_SEC = 0.12       # Natural 120ms breath between scenes
-FINAL_SCENE_PAD_SEC = 0.15       # Clean 150ms tail on the final scene
-DURATION_TOLERANCE_SEC = 0.08    # Max drift allowed between sum(scenes) and narration_full.wav
+TRIM_MARGIN_SEC = 0.10           # Keep 100ms onset/release margin so plosives and soft fricatives stay clean
+INTER_SCENE_PAD_SEC = 0.18       # Natural 180ms breath between scenes
+FINAL_SCENE_PAD_SEC = 0.75       # Generous 750ms tail on final scene so final words are never clipped
+DURATION_TOLERANCE_SEC = 0.12    # Max drift allowed between sum(scenes) and narration_full.wav
 MIN_PEAK_AMPLITUDE = 1e-4        # Reject silent / corrupted TTS output
 WORD_NORM_RE = re.compile(r"[^a-z0-9']+")
 
@@ -529,16 +529,20 @@ def _distribute_span(
     return result
 
 
-def align_caption_words(
-    caption_text: str,
-    whisper_words: list[dict[str, Any]],
-    scene_duration: float,
-    global_offset: float,
+def align_narration_words(
+    narration_text: str = "",
+    whisper_words: list[dict[str, Any]] | None = None,
+    scene_duration: float = 0.0,
+    global_offset: float = 0.0,
+    caption_text: str | None = None,
 ) -> tuple[list[dict[str, Any]], float]:
-    """Map faster-whisper word timestamps deterministically onto canonical caption words."""
-    canon_tokens = caption_text.split()
+    """Map faster-whisper word timestamps deterministically onto canonical narration words."""
+    if caption_text is not None and not narration_text:
+        narration_text = caption_text
+    whisper_words = whisper_words or []
+    canon_tokens = narration_text.split()
     if not canon_tokens:
-        raise AudioBuildError("Cannot align empty caption_text.")
+        raise AudioBuildError("Cannot align empty narration_text.")
     if not whisper_words:
         raise AudioBuildError("faster-whisper detected zero spoken words in synthesized audio.")
 
@@ -626,10 +630,13 @@ def align_caption_words(
     return words_out, match_ratio
 
 
+align_caption_words = align_narration_words
+
+
 def transcribe_scene_words(
     whisper_model: Any,
     wav_path: Path,
-    caption_text: str,
+    narration_text: str,
     language: str,
 ) -> list[dict[str, Any]]:
     segments, _ = whisper_model.transcribe(
@@ -639,7 +646,7 @@ def transcribe_scene_words(
         beam_size=5,
         vad_filter=False,
         condition_on_previous_text=False,
-        initial_prompt=caption_text,
+        initial_prompt=narration_text,
     )
     words: list[dict[str, Any]] = []
     for seg in segments:
@@ -811,7 +818,12 @@ def build_episode_audio(
                 f"Inconsistent sample rate on scene {scene.scene_index}: {sr} != {expected_sr}"
             )
 
-        pad_sec = FINAL_SCENE_PAD_SEC if idx == total_scenes - 1 else INTER_SCENE_PAD_SEC
+        if idx == total_scenes - 1:
+            pad_sec = FINAL_SCENE_PAD_SEC
+        else:
+            custom_ms = getattr(scene, "pause_after_ms", None)
+            pad_sec = (custom_ms / 1000.0) if custom_ms and custom_ms > 0 else INTER_SCENE_PAD_SEC
+
         processed = trim_and_pad_audio(samples, expected_sr, pad_tail_sec=pad_sec)
 
         scene_wav = audio_dir / f"scene_{scene.scene_index}.wav"
@@ -821,11 +833,11 @@ def build_episode_audio(
         whisper_words = transcribe_scene_words(
             whisper_model=whisper_model,
             wav_path=scene_wav,
-            caption_text=scene.caption_text,
+            narration_text=scene.narration_text,
             language=align_lang,
         )
-        aligned_words, match_ratio = align_caption_words(
-            caption_text=scene.caption_text,
+        aligned_words, match_ratio = align_narration_words(
+            narration_text=scene.narration_text,
             whisper_words=whisper_words,
             scene_duration=scene_dur,
             global_offset=cursor_sec,

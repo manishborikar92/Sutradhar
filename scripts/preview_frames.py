@@ -152,9 +152,10 @@ def run_preview_pipeline(root: Path) -> dict[str, Any]:
     manifest_path = build_dir / "manifest.js"
     manifest = parse_manifest_js(manifest_path)
 
-    # Sync HyperFrames root composition duration to exact audio length
+    # Sync HyperFrames root composition duration to audio length + 0.30s safety tail
     total_dur = float(manifest.get("audio", {}).get("total_duration_sec", 45.0))
-    sync_index_html_duration(root, total_dur)
+    render_dur = round(total_dur + 0.30, 2)
+    sync_index_html_duration(root, render_dur)
 
     scenes = manifest.get("scenes", [])
     if not scenes:

@@ -67,8 +67,8 @@ class TestAuditionVoices(unittest.TestCase):
             if all(p in available_set for p in parts):
                 blends_tested.append(blend)
 
-        # "am_fenrir:0.65+bm_george:0.35" has both voices present
-        self.assertIn("am_fenrir:0.65+bm_george:0.35", blends_tested)
+        # "bm_george:0.60+am_fenrir:0.40" has both voices present
+        self.assertIn("bm_george:0.60+am_fenrir:0.40", blends_tested)
         # "am_michael:0.60+bm_george:0.40" has am_michael missing
         self.assertNotIn("am_michael:0.60+bm_george:0.40", blends_tested)
 
@@ -83,7 +83,7 @@ class TestAuditionVoices(unittest.TestCase):
         # Verify audition passage is well-formed
         self.assertIn("Sutradhar", audition_voices.AUDITION_PASSAGE)
         self.assertIn("Nalanda", audition_voices.AUDITION_PASSAGE)
-        self.assertIn("Kurukshetra", audition_voices.AUDITION_PASSAGE)
+        self.assertIn("Pataliputra", audition_voices.AUDITION_PASSAGE)
 
         cfg_mtime_after = real_config.stat().st_mtime
         self.assertEqual(cfg_mtime_before, cfg_mtime_after)

@@ -1,78 +1,79 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900" width="900" height="900">
   <defs>
-    <radialGradient id="singularity_grad" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#000000" />
-      <stop offset="85%" stop-color="#000000" />
-      <stop offset="100%" stop-color="#1A0033" />
+    <radialGradient id="bh_singularity_grad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#07090F" />
+      <stop offset="80%" stop-color="#07090F" />
+      <stop offset="100%" stop-color="#111827" />
     </radialGradient>
-    <radialGradient id="accretion_grad" cx="50%" cy="50%" r="50%">
-      <stop offset="40%" stop-color="#FFA500" stop-opacity="0.85" />
-      <stop offset="70%" stop-color="#FF4500" stop-opacity="0.5" />
-      <stop offset="100%" stop-color="#8B0000" stop-opacity="0" />
+    <radialGradient id="bh_accretion_gold" cx="50%" cy="50%" r="50%">
+      <stop offset="35%" stop-color="#F8F4EC" stop-opacity="0.9" />
+      <stop offset="60%" stop-color="#E5B869" stop-opacity="0.8" />
+      <stop offset="85%" stop-color="#C84B31" stop-opacity="0.5" />
+      <stop offset="100%" stop-color="#07090F" stop-opacity="0" />
     </radialGradient>
-    <linearGradient id="jet_grad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#00FFFF" stop-opacity="0.9" />
-      <stop offset="50%" stop-color="#7B68EE" stop-opacity="0.6" />
-      <stop offset="100%" stop-color="#00008B" stop-opacity="0" />
+    <linearGradient id="bh_jet_gold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F8F4EC" stop-opacity="0.9" />
+      <stop offset="50%" stop-color="#E5B869" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="#C84B31" stop-opacity="0" />
     </linearGradient>
+    <filter id="bh_gold_glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
   </defs>
 
-  <!-- Stage 0 / Base: Coordinate Spacetime Grid & Frame -->
+  <!-- Base: Spacetime Coordinate Grid -->
   <g id="diagram_base">
-    <!-- Concentric Spacetime Curvature Coordinate Rings -->
-    <circle cx="450" cy="450" r="380" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 6" opacity="0.5" />
-    <circle cx="450" cy="450" r="280" fill="none" stroke="#475569" stroke-width="1.5" stroke-dasharray="6 6" opacity="0.6" />
-    <circle cx="450" cy="450" r="190" fill="none" stroke="#64748B" stroke-width="2" stroke-dasharray="8 8" opacity="0.7" />
-    <!-- Polar & Equatorial Axes -->
-    <line x1="450" y1="50" x2="450" y2="850" stroke="#334155" stroke-width="1" stroke-dasharray="4 4" opacity="0.4" />
-    <line x1="50" y1="450" x2="850" y2="450" stroke="#334155" stroke-width="1" stroke-dasharray="4 4" opacity="0.4" />
-    <!-- Central Black Hole Singularity Sphere -->
-    <circle cx="450" cy="450" r="100" fill="url(#singularity_grad)" stroke="#1E1B4B" stroke-width="4" />
-    <text x="450" y="455" fill="#E2E8F0" font-family="system-ui, sans-serif" font-size="14" font-weight="700" text-anchor="middle" letter-spacing="1">SINGULARITY</text>
+    <circle class="draw-path" cx="450" cy="450" r="380" fill="none" stroke="#E5B869" stroke-width="1.5" stroke-dasharray="4 8" opacity="0.4" />
+    <circle class="draw-path" cx="450" cy="450" r="280" fill="none" stroke="#E5B869" stroke-width="2" stroke-dasharray="6 6" opacity="0.5" />
+    <circle class="draw-path" cx="450" cy="450" r="190" fill="none" stroke="#E5B869" stroke-width="2" stroke-dasharray="8 8" opacity="0.6" />
+
+    <line class="draw-path" x1="450" y1="60" x2="450" y2="840" stroke="#E5B869" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.4" />
+    <line class="draw-path" x1="60" y1="450" x2="840" y2="450" stroke="#E5B869" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.4" />
+
+    <!-- Central Singularity -->
+    <circle cx="450" cy="450" r="100" fill="url(#bh_singularity_grad)" stroke="#111827" stroke-width="4" />
+    <text x="450" y="458" fill="#F8F4EC" font-family="'Playfair Display', Georgia, serif" font-size="24" font-weight="800" text-anchor="middle" letter-spacing="3">SINGULARITY</text>
   </g>
 
-  <!-- Stage 1: Accretion Disc (Inflowing Superheated Plasma) -->
+  <!-- Stage 1: Accretion Disc -->
   <g id="stage_1">
-    <!-- Torus of Swirling Gas -->
-    <ellipse cx="450" cy="450" rx="340" ry="110" fill="url(#accretion_grad)" />
-    <!-- Doppler Asymmetry Flow Rings -->
-    <ellipse cx="450" cy="450" rx="270" ry="85" fill="none" stroke="#FFD700" stroke-width="3" opacity="0.75" />
-    <ellipse cx="450" cy="450" rx="210" ry="65" fill="none" stroke="#FF4500" stroke-width="4" opacity="0.85" />
-    <text x="210" y="380" fill="#FFD700" font-family="system-ui, sans-serif" font-size="16" font-weight="700">ACCRETION DISC</text>
+    <ellipse cx="450" cy="450" rx="340" ry="110" fill="url(#bh_accretion_gold)" />
+    <ellipse class="draw-path" cx="450" cy="450" rx="270" ry="85" fill="none" stroke="#E5B869" stroke-width="3" opacity="0.85" />
+    <ellipse class="draw-path" cx="450" cy="450" rx="210" ry="65" fill="none" stroke="#C84B31" stroke-width="3.5" opacity="0.9" />
+    <text x="450" y="320" fill="#E5B869" font-family="'Playfair Display', Georgia, serif" font-size="32" font-weight="800" text-anchor="middle" letter-spacing="2">ACCRETION DISC</text>
   </g>
 
-  <!-- Stage 2: Event Horizon Boundary (Schwarzschild Radius Rs = 2GM/c^2) -->
+  <!-- Stage 2: Event Horizon & Photon Sphere -->
   <g id="stage_2">
-    <!-- Photon Sphere Ring (1.5 Rs) -->
-    <circle cx="450" cy="450" r="150" fill="none" stroke="#38BDF8" stroke-width="3.5" stroke-dasharray="8 4" />
-    <text x="620" y="360" fill="#38BDF8" font-family="system-ui, sans-serif" font-size="15" font-weight="700">PHOTON SPHERE (1.5 Rs)</text>
-    <!-- Event Horizon Boundary (Rs) -->
-    <circle cx="450" cy="450" r="102" fill="none" stroke="#F43F5E" stroke-width="4" />
-    <text x="450" y="580" fill="#F43F5E" font-family="system-ui, sans-serif" font-size="16" font-weight="700" text-anchor="middle">EVENT HORIZON (Rs = 2GM/c²)</text>
+    <!-- Photon Sphere Ring -->
+    <circle class="draw-path" cx="450" cy="450" r="150" fill="none" stroke="#E5B869" stroke-width="3.5" stroke-dasharray="8 6" filter="url(#bh_gold_glow)" />
+    <text x="450" y="270" fill="#F8F4EC" font-family="'Inter', system-ui, sans-serif" font-size="22" font-weight="700" text-anchor="middle">PHOTON SPHERE (1.5 Rs)</text>
+
+    <!-- Event Horizon Boundary -->
+    <circle class="draw-path" cx="450" cy="450" r="102" fill="none" stroke="#C84B31" stroke-width="4" />
+    <text x="450" y="590" fill="#C84B31" font-family="'Playfair Display', Georgia, serif" font-size="30" font-weight="800" text-anchor="middle" letter-spacing="2">EVENT HORIZON</text>
+    <text x="450" y="625" fill="#F8F4EC" font-family="'Inter', system-ui, sans-serif" font-size="20" font-weight="600" text-anchor="middle" opacity="0.9">Rs = 2GM / c²</text>
   </g>
 
-  <!-- Stage 3: Relativistic Astrophysical Jets -->
+  <!-- Stage 3: Relativistic Jets -->
   <g id="stage_3">
-    <!-- North Jet -->
-    <polygon points="450,450 425,50 475,50" fill="url(#jet_grad)" transform="rotate(180 450 250)" />
-    <!-- South Jet -->
-    <polygon points="450,450 420,850 480,850" fill="url(#jet_grad)" />
-    <!-- Magnetic Collimation Coils -->
-    <ellipse cx="450" cy="240" rx="40" ry="12" fill="none" stroke="#00FFFF" stroke-width="2.5" />
-    <ellipse cx="450" cy="660" rx="40" ry="12" fill="none" stroke="#00FFFF" stroke-width="2.5" />
-    <text x="490" y="140" fill="#00FFFF" font-family="system-ui, sans-serif" font-size="15" font-weight="700">RELATIVISTIC JET</text>
+    <polygon points="450,450 425,70 475,70" fill="url(#bh_jet_gold)" transform="rotate(180 450 260)" />
+    <polygon points="450,450 420,830 480,830" fill="url(#bh_jet_gold)" />
+    <ellipse class="draw-path" cx="450" cy="240" rx="40" ry="12" fill="none" stroke="#E5B869" stroke-width="2.5" />
+    <ellipse class="draw-path" cx="450" cy="660" rx="40" ry="12" fill="none" stroke="#E5B869" stroke-width="2.5" />
+    <text x="450" y="110" fill="#E5B869" font-family="'Playfair Display', Georgia, serif" font-size="28" font-weight="800" text-anchor="middle" letter-spacing="2">RELATIVISTIC JETS</text>
   </g>
 
-  <!-- Stage 4: Gravitational Lensing & Warped Light Paths -->
+  <!-- Stage 4: Gravitational Lensing -->
   <g id="stage_4">
-    <!-- Warped Einstein Ring Light Paths -->
-    <path d="M 120,250 Q 450,300 780,250" fill="none" stroke="#FCD34D" stroke-width="3" stroke-dasharray="6 6" />
-    <path d="M 120,650 Q 450,600 780,650" fill="none" stroke="#FCD34D" stroke-width="3" stroke-dasharray="6 6" />
-    <text x="450" y="270" fill="#FCD34D" font-family="system-ui, sans-serif" font-size="15" font-weight="700" text-anchor="middle">GRAVITATIONAL LENSING</text>
+    <path class="draw-path" d="M 100,240 Q 450,300 800,240" fill="none" stroke="#E5B869" stroke-width="3" stroke-dasharray="6 6" />
+    <path class="draw-path" d="M 100,660 Q 450,600 800,660" fill="none" stroke="#E5B869" stroke-width="3" stroke-dasharray="6 6" />
+    <text x="450" y="710" fill="#E5B869" font-family="'Playfair Display', Georgia, serif" font-size="28" font-weight="700" text-anchor="middle">GRAVITATIONAL LENSING</text>
   </g>
 
   <!-- Highlight Pulse Energy Ring -->
   <g id="highlight_pulse">
-    <circle cx="450" cy="450" r="102" fill="none" stroke="#FFD700" stroke-width="6" opacity="0.9" filter="drop-shadow(0 0 16px #FFD700)" />
+    <circle cx="450" cy="450" r="102" fill="none" stroke="#E5B869" stroke-width="5" opacity="0.9" filter="url(#bh_gold_glow)" />
   </g>
 </svg>

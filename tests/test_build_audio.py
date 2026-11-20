@@ -109,7 +109,6 @@ class FakeWhisper:
 def make_episode_plan(
     voice: str = "am_fenrir:0.65+bm_george:0.35",
     scene_count: int = 7,
-    mismatch_caption: bool = False,
 ) -> dict[str, Any]:
     scenes: list[dict[str, Any]] = []
     for idx in range(1, scene_count + 1):
@@ -117,13 +116,11 @@ def make_episode_plan(
             f"Scene {idx}: Sutradhar reveals how Ravana faced Mount Kailash while "
             "ancient astronomers at Nalanda measured cosmic cycles."
         )
-        caption = "Mismatched caption text." if (mismatch_caption and idx == 1) else narration
         if idx == 1:
             scenes.append(
                 {
                     "scene_index": idx,
                     "narration_text": narration,
-                    "caption_text": caption,
                     "visual_mode": "explainer_diagram",
                     "backdrop_rig": "deep_cosmos_nebula",
                     "diagram_rig": "kailash_axis_diagram",
@@ -138,6 +135,8 @@ def make_episode_plan(
                     "particle_theme": "starfield_warp",
                     "camera_motion": "dramatic_zoom",
                     "transition_sfx": "sub_hit.wav",
+                    "pause_after_ms": 200,
+                    "emphasis_word": "Kailash",
                 }
             )
         else:
@@ -145,7 +144,6 @@ def make_episode_plan(
                 {
                     "scene_index": idx,
                     "narration_text": narration,
-                    "caption_text": caption,
                     "visual_mode": "character_drama",
                     "backdrop_rig": "mount_kailash",
                     "diagram_rig": None,
@@ -160,6 +158,8 @@ def make_episode_plan(
                     "particle_theme": "golden_embers",
                     "camera_motion": "slow_push",
                     "transition_sfx": "whoosh_soft.wav",
+                    "pause_after_ms": 150,
+                    "emphasis_word": "Ravana",
                 }
             )
     return {
@@ -280,9 +280,9 @@ class TestBuildAudio(unittest.TestCase):
         self.assertIsNone(result["duration_warning"])
         self.assertTrue(36.0 <= result["total_duration_sec"] <= 46.0)
 
-        # Verify pronunciation was applied to TTS input while captions remained canonical
-        self.assertIn("Soo-truh-dhaar", fake_kokoro.calls[0]["text"])
-        self.assertIn("Raa-vuh-nuh", fake_kokoro.calls[0]["text"])
+        # Verify pronunciation was applied to TTS input while narration remained canonical
+        self.assertIn("Sootradaar", fake_kokoro.calls[0]["text"])
+        self.assertIn("Raavana", fake_kokoro.calls[0]["text"])
 
         # Verify files on disk
         for idx in range(1, 8):
@@ -297,11 +297,11 @@ class TestBuildAudio(unittest.TestCase):
         manifest = json.loads(json_body)
         self.assertEqual(len(manifest["scenes"]), 7)
         self.assertEqual(manifest["audio"]["narration_full_path"], "build/audio/narration_full.wav")
-        self.assertIn("Sutradhar", manifest["scenes"][0]["caption_text"])
-        self.assertIn("Soo-truh-dhaar", manifest["scenes"][0]["tts_text_applied"])
+        self.assertIn("Sutradhar", manifest["scenes"][0]["narration_text"])
+        self.assertIn("Sootradaar", manifest["scenes"][0]["tts_text_applied"])
         self.assertEqual(
             [w["word"] for w in manifest["scenes"][0]["words"]],
-            manifest["scenes"][0]["caption_text"].split(),
+            manifest["scenes"][0]["narration_text"].split(),
         )
 
     # 5. Duration bounds enforcement (hard <34s / >50s fail; 35s warns cleanly)
@@ -312,7 +312,7 @@ class TestBuildAudio(unittest.TestCase):
         with self.assertRaises(self.mod.AudioBuildError) as ctx_short:
             self.mod.build_episode_audio(
                 root=self.root,
-                kokoro_factory=lambda m, v: FakeKokoro(sec_per_scene=2.9),
+                kokoro_factory=lambda m, v: FakeKokoro(sec_per_scene=2.5),
                 whisper_factory=lambda c: FakeWhisper(),
             )
         self.assertIn("violates hard bounds", str(ctx_short.exception))
@@ -321,29 +321,31 @@ class TestBuildAudio(unittest.TestCase):
         with self.assertRaises(self.mod.AudioBuildError) as ctx_long:
             self.mod.build_episode_audio(
                 root=self.root,
-                kokoro_factory=lambda m, v: FakeKokoro(sec_per_scene=7.8),
+                kokoro_factory=lambda m, v: FakeKokoro(sec_per_scene=7.5),
                 whisper_factory=lambda c: FakeWhisper(),
             )
         self.assertIn("violates hard bounds", str(ctx_long.exception))
 
-        # Between hard & target (~35.1s) -> succeeds with duration_warning
+        # Between hard & target (~34.8s) -> succeeds with duration_warning
         res_warn = self.mod.build_episode_audio(
             root=self.root,
-            kokoro_factory=lambda m, v: FakeKokoro(sec_per_scene=4.9),
+            kokoro_factory=lambda m, v: FakeKokoro(sec_per_scene=4.7),
             whisper_factory=lambda c: FakeWhisper(),
         )
         self.assertIsNotNone(res_warn["duration_warning"])
 
-    # 6. Milestone 2 contract enforcement (reject narration/caption mismatch)
+    # 6. Clean-Canvas contract enforcement (reject empty narration and validate pauses)
     def test_06_rejects_narration_caption_mismatch(self) -> None:
-        self.write_plan(make_episode_plan(mismatch_caption=True))
+        plan = make_episode_plan()
+        plan["scenes"][0]["narration_text"] = "   "
+        self.write_plan(plan)
         with self.assertRaises(self.mod.AudioBuildError) as ctx:
             self.mod.build_episode_audio(
                 root=self.root,
                 kokoro_factory=lambda m, v: FakeKokoro(),
                 whisper_factory=lambda c: FakeWhisper(),
             )
-        self.assertIn("narration_text and caption_text must be identical", str(ctx.exception))
+        self.assertIn("scenes.0.narration_text", str(ctx.exception))
 
     # 7. Graceful error handling: missing models, silent TTS, synthesis error, empty Whisper
     def test_07_graceful_failure_modes(self) -> None:

@@ -1,70 +1,112 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
   <defs>
-    <linearGradient id="kailash_sky" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="var(--sky-top, #0E1626)" />
-      <stop offset="50%" stop-color="var(--sky-bottom, #1E2D4A)" />
-      <stop offset="100%" stop-color="var(--accent-glow, #D4AF37)" stop-opacity="0.3" />
+    <!-- Sky Gradient: Obsidian to Twilight Indigo -->
+    <linearGradient id="himalayan_sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#05070B" />
+      <stop offset="30%" stop-color="#0B0F19" />
+      <stop offset="55%" stop-color="#141B2D" />
+      <stop offset="75%" stop-color="#1E2738" />
+      <stop offset="100%" stop-color="#07090F" />
     </linearGradient>
-    <linearGradient id="snow_peak" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FFFFFF" />
-      <stop offset="50%" stop-color="#E2E8F0" />
-      <stop offset="100%" stop-color="#94A3B8" />
+
+    <!-- Golden Dawn Summit Radiance -->
+    <radialGradient id="summit_dawn_glow" cx="50%" cy="32%" r="48%">
+      <stop offset="0%" stop-color="#FFF8E7" stop-opacity="0.95" />
+      <stop offset="15%" stop-color="#E5B869" stop-opacity="0.65" />
+      <stop offset="45%" stop-color="#C8963E" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#07090F" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Volumetric Dawn Light Shafts -->
+    <linearGradient id="kailash_ray" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E5B869" stop-opacity="0.30" />
+      <stop offset="50%" stop-color="#E5B869" stop-opacity="0.10" />
+      <stop offset="100%" stop-color="#E5B869" stop-opacity="0" />
     </linearGradient>
-    <linearGradient id="rock_shadow" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#1E293B" />
-      <stop offset="100%" stop-color="#0F172A" />
+
+    <!-- Faceted Rock Stratum Gradients -->
+    <linearGradient id="rock_facet_lit" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2D3748" />
+      <stop offset="50%" stop-color="#1A202C" />
+      <stop offset="100%" stop-color="#0F141C" />
     </linearGradient>
+    <linearGradient id="rock_facet_shadow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141B27" />
+      <stop offset="100%" stop-color="#07090F" />
+    </linearGradient>
+
+    <filter id="summit-bloom" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
   </defs>
 
-  <!-- Layer 1: Far Sky (High Himalayan Dawn & Cosmic Meridian) -->
+  <!-- Layer 1: Himalayan Sky & Celestial Stars -->
   <g id="bg_far_sky">
-    <rect width="1080" height="1920" fill="url(#kailash_sky)" />
-    <!-- Golden Celestial Halo around Summit -->
-    <circle cx="540" cy="550" r="320" fill="var(--accent-glow, #FFD700)" opacity="0.12" />
-    <!-- Distant Stars at High Altitude -->
-    <g fill="#FFF" opacity="0.75">
-      <circle cx="180" cy="150" r="1.5" />
-      <circle cx="340" cy="220" r="1.2" />
-      <circle cx="540" cy="90" r="2.2" />
-      <circle cx="780" cy="170" r="1.8" />
-      <circle cx="920" cy="280" r="1.2" />
-      <circle cx="860" cy="80" r="1.5" />
+    <rect width="1080" height="1920" fill="url(#himalayan_sky)" />
+    <!-- Distant Cosmic Stars -->
+    <g opacity="0.8">
+      <circle cx="150" cy="120" r="1.5" fill="#FFF4DC" />
+      <circle cx="340" cy="80" r="2.0" fill="#E5B869" />
+      <circle cx="560" cy="60" r="1.2" fill="#FFF4DC" />
+      <circle cx="780" cy="110" r="2.4" fill="#E5B869" />
+      <circle cx="940" cy="95" r="1.6" fill="#FFF4DC" />
+      <circle cx="210" cy="240" r="1.4" fill="#E5B869" />
+      <circle cx="890" cy="220" r="1.8" fill="#FFF4DC" />
     </g>
   </g>
 
-  <!-- Layer 2: Midground Architecture (The 4-Faceted Stepped Pyramid Peak of Kailash) -->
+  <!-- Layer 2: Golden Dawn Radiance & Volumetric Rays Behind Peak -->
   <g id="bg_mid_architecture">
-    <!-- Flanking Himalayan Ridge (Left) -->
-    <polygon points="0,950 280,680 480,820 0,1150" fill="url(#rock_shadow)" opacity="0.8" />
-    <!-- Flanking Himalayan Ridge (Right) -->
-    <polygon points="1080,950 820,670 600,830 1080,1180" fill="url(#rock_shadow)" opacity="0.9" />
+    <!-- Sunburst behind peak -->
+    <circle cx="540" cy="620" r="420" fill="url(#summit_dawn_glow)" filter="url(#summit-bloom)" />
 
-    <!-- Central Symmetrical Diamond Pyramid of Mount Kailash -->
-    <!-- East Sunlit Face -->
-    <polygon points="540,420 540,880 760,820" fill="url(#snow_peak)" />
-    <!-- West Shadow Face -->
-    <polygon points="540,420 320,820 540,880" fill="url(#rock_shadow)" />
-    <!-- Horizontal Strata Couloirs (Horizontal Fissure Rings forming the Sacred Stairway) -->
-    <path d="M 490,520 L 590,520 M 440,610 L 640,610 M 390,700 L 690,700 M 350,790 L 730,790"
-          stroke="#0F172A" stroke-width="4" opacity="0.65" stroke-linecap="round" />
-    <!-- Vertical Chasm (The Great Stairway / Axis Line) -->
-    <line x1="540" y1="420" x2="540" y2="880" stroke="#CBD5E1" stroke-width="3" />
-    <!-- Summit Golden Glint -->
-    <circle cx="540" cy="420" r="8" fill="#FFF" />
-    <circle cx="540" cy="420" r="16" fill="var(--accent-glow, #FFD700)" opacity="0.6" />
+    <!-- Volumetric Dawn Beams -->
+    <polygon points="540,620 180,0 320,0" fill="url(#kailash_ray)" />
+    <polygon points="540,620 760,0 900,0" fill="url(#kailash_ray)" />
+    <polygon points="540,620 0,350 0,500" fill="url(#kailash_ray)" opacity="0.6" />
+    <polygon points="540,620 1080,350 1080,500" fill="url(#kailash_ray)" opacity="0.6" />
+
+    <!-- Sacred Golden Halo Ring Around Summit -->
+    <circle cx="540" cy="620" r="220" fill="none" stroke="#E5B869" stroke-width="2" stroke-dasharray="12 8" opacity="0.5" />
+    <circle cx="540" cy="620" r="180" fill="none" stroke="#FFF8E7" stroke-width="1.5" opacity="0.7" />
+
+    <!-- Faceted Sacred Pyramid Mountain (Mount Kailash Four-Sided Peak) -->
+    <!-- Lit Face (Eastern Facet) -->
+    <polygon points="540,620 540,980 240,1180" fill="url(#rock_facet_lit)" stroke="#E5B869" stroke-width="1.2" />
+    <!-- Shadow Face (Western Facet) -->
+    <polygon points="540,620 540,980 840,1180" fill="url(#rock_facet_shadow)" stroke="#E5B869" stroke-width="1.2" />
+    <!-- Central Ridge Spine (Golden Line) -->
+    <line x1="540" y1="620" x2="540" y2="980" stroke="#FFF4DC" stroke-width="3" filter="url(#summit-bloom)" />
+
+    <!-- Horizontal Rocky Strata Bands (The Famous Kailash Horizontal Staircase) -->
+    <path d="M 450,720 L 540,700 L 630,720" fill="none" stroke="#E5B869" stroke-width="2" opacity="0.8" />
+    <path d="M 390,810 L 540,780 L 690,810" fill="none" stroke="#E5B869" stroke-width="2" opacity="0.75" />
+    <path d="M 330,900 L 540,860 L 750,900" fill="none" stroke="#E5B869" stroke-width="2" opacity="0.7" />
+    <path d="M 280,990 L 540,940 L 800,990" fill="none" stroke="#E5B869" stroke-width="2" opacity="0.65" />
+
+    <!-- Peak Summit Glow Point -->
+    <circle cx="540" cy="620" r="8" fill="#FFF8E7" filter="url(#summit-bloom)" />
   </g>
 
-  <!-- Layer 3: Foreground Pillars (Ancient Temple Ruins / Stone Stupas Silhouette) -->
+  <!-- Layer 3: Foreground Himalayan Ridges & Atmospheric Mist -->
   <g id="bg_fg_pillars">
-    <!-- Stone Base Mountain Plateau -->
-    <polygon points="0,1100 1080,1100 1080,1920 0,1920" fill="var(--shadow-tint, #080D1A)" />
-    <!-- Left Sacred Stone Pillar -->
-    <rect x="60" y="1150" width="80" height="770" fill="#050811" />
-    <polygon points="40,1150 160,1150 100,1080" fill="#050811" />
-    <!-- Right Sacred Stone Pillar -->
-    <rect x="940" y="1120" width="80" height="800" fill="#050811" />
-    <polygon points="920,1120 1040,1120 980,1050" fill="#050811" />
-    <!-- Base Altar Silhouette -->
-    <rect x="0" y="1680" width="1080" height="240" fill="#020408" />
+    <!-- Mid-ground Ridge Silhouette -->
+    <path d="M 0,1100 Q 280,980 540,1120 Q 820,1020 1080,1140 L 1080,1920 L 0,1920 Z" fill="#0C101A" />
+    <path d="M 0,1100 Q 280,980 540,1120 Q 820,1020 1080,1140" fill="none" stroke="#E5B869" stroke-width="1.5" opacity="0.5" />
+
+    <!-- Foreground Mountain Silhouette (Obsidian Monolith Base) -->
+    <path d="M 0,1320 Q 380,1220 620,1350 Q 880,1260 1080,1380 L 1080,1920 L 0,1920 Z" fill="#07090F" />
+    <path d="M 0,1320 Q 380,1220 620,1350 Q 880,1260 1080,1380" fill="none" stroke="#E5B869" stroke-width="1.2" opacity="0.35" />
+
+    <!-- Atmospheric Valley Mist Bands -->
+    <path d="M 0,1250 Q 540,1200 1080,1260" stroke="#FFF4DC" stroke-width="6" opacity="0.12" filter="url(#summit-bloom)" />
+    <path d="M 0,1420 Q 540,1380 1080,1440" stroke="#E5B869" stroke-width="8" opacity="0.08" filter="url(#summit-bloom)" />
+
+    <!-- Bottom Action Safe Grounding -->
+    <rect x="0" y="1500" width="1080" height="420" fill="#07090F" opacity="0.94" />
   </g>
 </svg>

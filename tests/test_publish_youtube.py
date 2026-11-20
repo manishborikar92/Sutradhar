@@ -59,7 +59,6 @@ class TestPublishYouTube(unittest.TestCase):
                 {
                     "scene_index": i,
                     "narration_text": f"What happens when you cross event horizon stage {i}?",
-                    "caption_text": f"What happens when you cross event horizon stage {i}?",
                     "visual_mode": "character_drama" if i % 2 == 1 else "explainer_diagram",
                     "backdrop_rig": "deep_cosmos_nebula",
                     "diagram_rig": None if i % 2 == 1 else "black_hole_anatomy",
