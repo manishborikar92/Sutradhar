@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1200" width="800" height="1200">
+  <defs>
+    <radialGradient id="sutra_aura_grad" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#FFD700" stop-opacity="0.45" />
+      <stop offset="60%" stop-color="#FF8C00" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#FF8C00" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="robe_grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#DAA520" />
+      <stop offset="50%" stop-color="#B8860B" />
+      <stop offset="100%" stop-color="#8B6508" />
+    </linearGradient>
+    <linearGradient id="skin_grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#EEDAA2" />
+      <stop offset="100%" stop-color="#D2B48C" />
+    </linearGradient>
+  </defs>
+
+  <!-- Aura / Halos -->
+  <g id="char_aura">
+    <circle cx="400" cy="350" r="280" fill="url(#sutra_aura_grad)" />
+    <circle cx="400" cy="350" r="210" fill="none" stroke="#FFD700" stroke-width="2" stroke-dasharray="8 6" opacity="0.6" />
+  </g>
+
+  <!-- Torso / Robes -->
+  <g id="char_body" data-pivot-x="400" data-pivot-y="700">
+    <!-- Inner Tunic -->
+    <path d="M 310,480 L 490,480 L 530,920 L 270,920 Z" fill="#2C1D11" />
+    <!-- Golden Draped Robe -->
+    <path d="M 330,480 Q 400,600 300,900 L 480,920 Q 460,650 490,480 Z" fill="url(#robe_grad)" />
+    <!-- Shawl Collar -->
+    <path d="M 320,470 Q 400,560 480,470 L 450,450 Q 400,520 350,450 Z" fill="#FFD700" />
+    <!-- Belt with Jewel -->
+    <rect x="340" y="700" width="120" height="24" rx="4" fill="#8B0000" />
+    <circle cx="400" cy="712" r="8" fill="#FFD700" stroke="#FFF" stroke-width="1.5" />
+  </g>
+
+  <!-- Left Arm (Viewer's Left) -->
+  <g id="arm_left" data-pivot-x="300" data-pivot-y="480">
+    <path d="M 300,480 Q 230,590 270,700 Q 290,700 310,650 Q 300,570 330,500 Z" fill="url(#robe_grad)" />
+    <!-- Left Hand holding Palm-leaf Manuscript -->
+    <ellipse cx="270" cy="710" rx="18" ry="14" fill="url(#skin_grad)" />
+    <rect x="230" y="695" width="80" height="20" rx="3" transform="rotate(-15 270 705)" fill="#F5DEB3" stroke="#8B4513" stroke-width="2" />
+  </g>
+
+  <!-- Head & Facial Features -->
+  <g id="char_head" data-pivot-x="400" data-pivot-y="340">
+    <!-- Neck -->
+    <rect x="375" y="410" width="50" height="60" fill="url(#skin_grad)" />
+    <!-- Face Contour -->
+    <path d="M 340,300 C 340,430 460,430 460,300 C 460,240 340,240 340,300 Z" fill="url(#skin_grad)" />
+    <!-- Tilak on Forehead -->
+    <path d="M 396,260 Q 400,240 404,260 L 402,295 L 398,295 Z" fill="#B22222" />
+    <circle cx="400" cy="275" r="3" fill="#FFD700" />
+    <!-- Eyes Open -->
+    <g id="eyes_open">
+      <ellipse cx="370" cy="325" rx="14" ry="7" fill="#FFFFFF" />
+      <circle cx="370" cy="325" r="4.5" fill="#1C1B1A" />
+      <circle cx="371.5" cy="323.5" r="1.5" fill="#FFFFFF" />
+      <ellipse cx="430" cy="325" rx="14" ry="7" fill="#FFFFFF" />
+      <circle cx="430" cy="325" r="4.5" fill="#1C1B1A" />
+      <circle cx="431.5" cy="323.5" r="1.5" fill="#FFFFFF" />
+    </g>
+    <!-- Eyes Closed (Blink state) -->
+    <g id="eyes_closed" style="opacity: 0;">
+      <path d="M 356,325 Q 370,332 384,325" fill="none" stroke="#3D2B1F" stroke-width="3" stroke-linecap="round" />
+      <path d="M 416,325 Q 430,332 444,325" fill="none" stroke="#3D2B1F" stroke-width="3" stroke-linecap="round" />
+    </g>
+    <!-- Eyebrows -->
+    <g id="brows" data-pivot-x="400" data-pivot-y="290">
+      <path d="M 355,312 Q 370,306 385,312" fill="none" stroke="#2B1D14" stroke-width="3.5" stroke-linecap="round" />
+      <path d="M 415,312 Q 430,306 445,312" fill="none" stroke="#2B1D14" stroke-width="3.5" stroke-linecap="round" />
+    </g>
+    <!-- Nose & Serene Smile -->
+    <path d="M 400,320 L 395,350 L 405,350 Z" fill="#CBB28D" />
+    <path d="M 388,375 Q 400,383 412,375" fill="none" stroke="#8B3A3A" stroke-width="3" stroke-linecap="round" />
+    <!-- Ascetic Topknot / Mukuta (Crown) -->
+    <path d="M 350,250 Q 400,160 450,250 Z" fill="#3D2B1F" />
+    <path d="M 380,180 Q 400,130 420,180 Z" fill="#2B1D14" />
+    <circle cx="400" cy="180" r="8" fill="#FFD700" />
+    <!-- Earrings (Kundalas) -->
+    <circle cx="334" cy="350" r="7" fill="#FFD700" stroke="#B8860B" stroke-width="2" />
+    <circle cx="466" cy="350" r="7" fill="#FFD700" stroke="#B8860B" stroke-width="2" />
+  </g>
+
+  <!-- Right Arm (Viewer's Right) -->
+  <g id="arm_right" data-pivot-x="500" data-pivot-y="480">
+    <path d="M 490,480 Q 560,570 530,680 Q 510,680 480,630 Q 490,560 470,500 Z" fill="url(#robe_grad)" />
+    <!-- Right Hand (Chin-Mudra Gesture of Wisdom) -->
+    <g transform="translate(530, 680)">
+      <ellipse cx="0" cy="0" rx="16" ry="14" fill="url(#skin_grad)" />
+      <!-- Thumb & Index touching -->
+      <path d="M -6,-4 Q 0,-14 6,-4 Q 0,4 -6,-4 Z" fill="url(#skin_grad)" stroke="#CBB28D" stroke-width="1.5" />
+      <path d="M 2,-10 Q 12,-16 16,-8 Q 12,-2 4,-6" fill="url(#skin_grad)" />
+      <!-- Golden Bangle -->
+      <rect x="-14" y="-18" width="28" height="6" rx="2" fill="#FFD700" />
+    </g>
+  </g>
+
+  <!-- Prop / Sutradhar Golden Pointer Wand -->
+  <g id="prop_weapon" transform="translate(550, 650)">
+    <line x1="0" y1="20" x2="60" y2="-120" stroke="#FFD700" stroke-width="4" stroke-linecap="round" />
+    <circle cx="60" cy="-120" r="7" fill="#FFF" stroke="#FFD700" stroke-width="2" />
+  </g>
+</svg>

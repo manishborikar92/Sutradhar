@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1200" width="800" height="1200">
+  <defs>
+    <radialGradient id="ravana_aura" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#FF2400" stop-opacity="0.5" />
+      <stop offset="60%" stop-color="#8B0000" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="armor_gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE066" />
+      <stop offset="50%" stop-color="#D4AF37" />
+      <stop offset="100%" stop-color="#996515" />
+    </linearGradient>
+    <linearGradient id="ravana_skin" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#8B5A2B" />
+      <stop offset="100%" stop-color="#5C3A21" />
+    </linearGradient>
+    <linearGradient id="sword_blade" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="30%" stop-color="#B0C4DE" />
+      <stop offset="100%" stop-color="#4682B4" />
+    </linearGradient>
+  </defs>
+
+  <!-- Fiery Crimson Aura -->
+  <g id="char_aura">
+    <circle cx="400" cy="350" r="300" fill="url(#ravana_aura)" />
+    <!-- Radiating Blades of Energy -->
+    <path d="M 400,50 L 405,120 L 395,120 Z" fill="#FF4500" opacity="0.8" />
+    <path d="M 580,180 L 530,230 L 520,220 Z" fill="#FF4500" opacity="0.8" />
+    <path d="M 220,180 L 270,230 L 280,220 Z" fill="#FF4500" opacity="0.8" />
+  </g>
+
+  <!-- Armored Torso -->
+  <g id="char_body" data-pivot-x="400" data-pivot-y="700">
+    <!-- Dark Royal Cape -->
+    <path d="M 240,460 L 560,460 L 620,1050 L 180,1050 Z" fill="#3B0910" />
+    <!-- Chest Armor -->
+    <path d="M 280,470 L 520,470 L 480,780 L 320,780 Z" fill="url(#armor_gold)" stroke="#5C3A21" stroke-width="3" />
+    <!-- Pectoral & Abdominal Plates -->
+    <path d="M 330,500 Q 400,530 470,500 L 460,620 Q 400,660 340,620 Z" fill="#B8860B" />
+    <path d="M 350,640 Q 400,670 450,640 L 440,750 Q 400,770 360,750 Z" fill="#996515" />
+    <!-- Ornate Girdle / Belt -->
+    <rect x="310" y="770" width="180" height="30" rx="4" fill="#B22222" stroke="#FFD700" stroke-width="2" />
+    <polygon points="400,775 415,815 385,815" fill="#FFD700" />
+  </g>
+
+  <!-- Left Arm (Viewer's Left - Gripping / Balustrade) -->
+  <g id="arm_left" data-pivot-x="270" data-pivot-y="480">
+    <!-- Shoulder Pauldron -->
+    <ellipse cx="260" cy="480" rx="45" ry="32" fill="url(#armor_gold)" stroke="#5C3A21" stroke-width="2" />
+    <circle cx="260" cy="480" r="10" fill="#B22222" />
+    <!-- Arm -->
+    <path d="M 270,490 Q 210,600 240,720 Q 260,720 280,680 Q 260,600 290,520 Z" fill="url(#ravana_skin)" />
+    <!-- Vambrace (Forearm Armor) -->
+    <rect x="220" y="610" width="36" height="60" rx="4" fill="url(#armor_gold)" transform="rotate(-10 240 640)" />
+    <!-- Left Hand Clenched Fist -->
+    <circle cx="240" cy="735" r="22" fill="url(#ravana_skin)" />
+  </g>
+
+  <!-- Head & Multi-Crowned Majestic Helm -->
+  <g id="char_head" data-pivot-x="400" data-pivot-y="340">
+    <!-- Muscular Neck -->
+    <rect x="365" y="410" width="70" height="70" fill="url(#ravana_skin)" />
+    <!-- Royal Necklace (Harams) -->
+    <path d="M 340,460 Q 400,510 460,460" fill="none" stroke="#FFD700" stroke-width="8" stroke-linecap="round" />
+    <!-- Fierce Jaw & Face -->
+    <path d="M 330,300 C 330,440 470,440 470,300 C 470,230 330,230 330,300 Z" fill="url(#ravana_skin)" />
+    <!-- Royal Moustache -->
+    <path d="M 345,380 Q 400,365 400,385 Q 400,365 455,380 Q 430,410 400,395 Q 370,410 345,380 Z" fill="#1A110B" />
+    <!-- Fierce Mouth with Fangs -->
+    <path d="M 380,400 Q 400,415 420,400" fill="#4A0E17" stroke="#1A110B" stroke-width="2" />
+    <polygon points="388,400 392,408 394,400" fill="#FFF" />
+    <polygon points="412,400 408,408 406,400" fill="#FFF" />
+    <!-- Eyes Open (Fierce Red-Glinting) -->
+    <g id="eyes_open">
+      <ellipse cx="365" cy="325" rx="15" ry="9" fill="#FFF" />
+      <circle cx="365" cy="325" r="5" fill="#B22222" />
+      <circle cx="365" cy="325" r="2" fill="#000" />
+      <ellipse cx="435" cy="325" rx="15" ry="9" fill="#FFF" />
+      <circle cx="435" cy="325" r="5" fill="#B22222" />
+      <circle cx="435" cy="325" r="2" fill="#000" />
+    </g>
+    <!-- Eyes Closed -->
+    <g id="eyes_closed" style="opacity: 0;">
+      <path d="M 350,325 Q 365,335 380,325" fill="none" stroke="#1A110B" stroke-width="3.5" stroke-linecap="round" />
+      <path d="M 420,325 Q 435,335 450,325" fill="none" stroke="#1A110B" stroke-width="3.5" stroke-linecap="round" />
+    </g>
+    <!-- Angered Eyebrows -->
+    <g id="brows" data-pivot-x="400" data-pivot-y="290">
+      <path d="M 350,318 L 385,310" stroke="#1A110B" stroke-width="4.5" stroke-linecap="round" />
+      <path d="M 450,318 L 415,310" stroke="#1A110B" stroke-width="4.5" stroke-linecap="round" />
+    </g>
+    <!-- Sharp Aquiline Nose -->
+    <polygon points="400,310 392,360 408,360" fill="#4A2E1B" />
+    <!-- Ten-Headed Mukuta (Grand Imperial Crown) -->
+    <path d="M 310,250 L 400,100 L 490,250 Z" fill="url(#armor_gold)" stroke="#5C3A21" stroke-width="3" />
+    <!-- Flanking Crown Crests (Symbolizing the Dashanana 10 heads) -->
+    <path d="M 320,240 L 260,190 L 310,180 Z" fill="url(#armor_gold)" />
+    <path d="M 480,240 L 540,190 L 490,180 Z" fill="url(#armor_gold)" />
+    <!-- Central Ruby in Crown -->
+    <polygon points="400,160 415,190 400,220 385,190" fill="#E60000" stroke="#FFF" stroke-width="1.5" />
+    <!-- Golden Kundalas (Earrings) -->
+    <circle cx="320" cy="360" r="10" fill="#FFD700" stroke="#B8860B" stroke-width="3" />
+    <circle cx="480" cy="360" r="10" fill="#FFD700" stroke="#B8860B" stroke-width="3" />
+  </g>
+
+  <!-- Right Arm (Viewer's Right - Wielding Chandrahas) -->
+  <g id="arm_right" data-pivot-x="530" data-pivot-y="480">
+    <!-- Right Pauldron -->
+    <ellipse cx="540" cy="480" rx="45" ry="32" fill="url(#armor_gold)" stroke="#5C3A21" stroke-width="2" />
+    <circle cx="540" cy="480" r="10" fill="#B22222" />
+    <!-- Arm -->
+    <path d="M 530,490 Q 610,580 570,680 Q 550,680 530,640 Q 550,560 510,510 Z" fill="url(#ravana_skin)" />
+    <!-- Vambrace -->
+    <rect x="545" y="580" width="36" height="60" rx="4" fill="url(#armor_gold)" transform="rotate(15 560 610)" />
+    <!-- Right Hand -->
+    <circle cx="570" cy="690" r="22" fill="url(#ravana_skin)" />
+    <!-- The Divine Chandrahas Sword -->
+    <g id="prop_weapon" transform="translate(570, 690) rotate(-35)">
+      <!-- Hilt / Guard -->
+      <rect x="-10" y="-8" width="20" height="30" rx="4" fill="#D4AF37" />
+      <rect x="-30" y="-12" width="60" height="8" rx="2" fill="#B8860B" />
+      <!-- Curved Demonic Crescent Blade -->
+      <path d="M -8,-12 Q 10,-200 -40,-380 Q 15,-220 8,-12 Z" fill="url(#sword_blade)" stroke="#FFFFFF" stroke-width="2" />
+      <circle cx="-35" cy="-360" r="6" fill="#00FFFF" opacity="0.8" />
+    </g>
+  </g>
+</svg>

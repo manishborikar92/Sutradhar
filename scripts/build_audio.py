@@ -18,7 +18,9 @@ Writes (atomically):
 
 from __future__ import annotations
 
+import datetime
 import difflib
+import hashlib
 import json
 import os
 import re
@@ -26,10 +28,27 @@ import shutil
 import sqlite3
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.request
+import zipfile
 from pathlib import Path, PurePosixPath
 from typing import Any, Callable, Optional
+
+# Compatibility shim: PyAV 19+ removed metadata_errors parameter from av.open,
+# but faster-whisper 1.2.1 still passes metadata_errors="ignore".
+try:
+    import av
+
+    _orig_av_open = av.open
+
+    def _safe_av_open(*args: Any, **kwargs: Any) -> Any:
+        kwargs.pop("metadata_errors", None)
+        return _orig_av_open(*args, **kwargs)
+
+    av.open = _safe_av_open
+except Exception:
+    pass
 
 import numpy as np
 import soundfile as sf
@@ -61,6 +80,19 @@ KOKORO_RELEASE_BASE = (
 KOKORO_MODEL_URLS = {
     "kokoro-v1.0.onnx": f"{KOKORO_RELEASE_BASE}/kokoro-v1.0.onnx",
     "voices-v1.0.bin": f"{KOKORO_RELEASE_BASE}/voices-v1.0.bin",
+}
+
+KOKORO_EXPECTED_SIZES = {
+    "kokoro-v1.0.onnx": 325532387,
+    "voices-v1.0.bin": 28214398,
+}
+KOKORO_MODEL_MIN_SIZES = {
+    "kokoro-v1.0.onnx": 250 * 1024 * 1024,
+    "voices-v1.0.bin": 10 * 1024 * 1024,
+}
+KOKORO_KNOWN_SHA256 = {
+    "kokoro-v1.0.onnx": "7d5df8ecf7d4b1878015a32686053fd0eebe2bc377234608764cc0ef3636a6c5",
+    "voices-v1.0.bin": "bca610b8308e8d99f32e6fe4197e7ec01679264efed0cac9140fe9c29f1fbf7d",
 }
 
 SILENCE_THRESHOLD = 0.003        # ~ -50 dBFS amplitude threshold for edge trim
@@ -116,33 +148,125 @@ def probe_duration_sec(audio_path: Path) -> float:
     return round(duration, 4)
 
 
-def _download_file_atomic(url: str, dest: Path) -> None:
+def _compute_sha256(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as fh:
+        while chunk := fh.read(1024 * 1024):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _quarantine_corrupt_file(file_path: Path, reason: str) -> Path:
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    quarantine_dir = file_path.parent / "_quarantine" / timestamp
+    quarantine_dir.mkdir(parents=True, exist_ok=True)
+    target = quarantine_dir / file_path.name
+    shutil.move(str(file_path), str(target))
+    print(
+        f"[WARN] Quarantined invalid model file '{file_path.name}' -> '{target}' (Reason: {reason})",
+        file=sys.stderr,
+    )
+    return target
+
+
+def _validate_file_structural(file_path: Path) -> None:
+    """Check that ONNX models load without protobuf parse errors and voice bins are valid archives."""
+    if file_path.name.endswith(".onnx"):
+        try:
+            import onnxruntime as ort
+
+            opts = ort.SessionOptions()
+            opts.log_severity_level = 3  # Error only
+            ort.InferenceSession(str(file_path), sess_options=opts)
+        except Exception as exc:
+            raise AudioBuildError(
+                f"ONNX model '{file_path.name}' failed structural Protobuf parsing: {exc}"
+            ) from exc
+    elif file_path.name.endswith(".bin"):
+        try:
+            with zipfile.ZipFile(str(file_path), "r") as z:
+                names = z.namelist()
+                if not names or not any(n.endswith(".npy") for n in names):
+                    raise AudioBuildError(f"Voice archive '{file_path.name}' contains no .npy voice vectors.")
+        except Exception as exc:
+            raise AudioBuildError(
+                f"Voice archive '{file_path.name}' failed structural ZIP validation: {exc}"
+            ) from exc
+
+
+def _download_file_atomic(
+    url: str,
+    dest: Path,
+    expected_size: Optional[int] = None,
+    expected_sha: Optional[str] = None,
+    min_size: int = 0,
+    max_retries: int = 3,
+) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     part_path = dest.with_suffix(dest.suffix + ".part")
-    print(f"[INFO] Downloading missing Kokoro asset: {dest.name} ...", file=sys.stderr)
-    try:
-        req = urllib.request.Request(url, headers={"User-Agent": "Sutradhar/0.1"})
-        with urllib.request.urlopen(req, timeout=120) as resp, part_path.open("wb") as out_fh:
-            while True:
-                chunk = resp.read(1024 * 1024)
-                if not chunk:
-                    break
-                out_fh.write(chunk)
-        if part_path.stat().st_size == 0:
-            raise AudioBuildError(f"Downloaded file '{dest.name}' is empty.")
-        os.replace(part_path, dest)
-        print(f"[INFO] Cached {dest.name} ({dest.stat().st_size:,} bytes).", file=sys.stderr)
-    except BaseException as exc:
-        if part_path.exists():
-            try:
-                part_path.unlink()
-            except OSError:
-                pass
-        if isinstance(exc, KeyboardInterrupt):
-            raise
-        raise AudioBuildError(
-            f"Failed to download '{dest.name}' from {url}: {exc}"
-        ) from exc
+    print(f"[INFO] Downloading Kokoro asset: {dest.name} from {url} ...", file=sys.stderr)
+
+    last_error: Optional[Exception] = None
+    for attempt in range(1, max_retries + 1):
+        try:
+            existing_size = part_path.stat().st_size if part_path.is_file() else 0
+            req = urllib.request.Request(url, headers={"User-Agent": "Sutradhar/0.1"})
+            mode = "wb"
+            if existing_size > 0:
+                req.add_header("Range", f"bytes={existing_size}-")
+                mode = "ab"
+
+            with urllib.request.urlopen(req, timeout=120) as resp:
+                status = getattr(resp, "status", 200)
+                if status == 200 and existing_size > 0:
+                    mode = "wb"
+                    existing_size = 0
+
+                with part_path.open(mode) as out_fh:
+                    downloaded = existing_size
+                    while True:
+                        chunk = resp.read(1024 * 1024)
+                        if not chunk:
+                            break
+                        out_fh.write(chunk)
+                        downloaded += len(chunk)
+
+            part_size = part_path.stat().st_size
+            if part_size == 0:
+                raise AudioBuildError(f"Downloaded file '{dest.name}' is empty.")
+            if min_size > 0 and part_size < min_size:
+                raise AudioBuildError(
+                    f"Downloaded file '{dest.name}' size ({part_size:,} bytes) is below minimum {min_size:,} bytes."
+                )
+            if expected_size is not None and part_size != expected_size:
+                raise AudioBuildError(
+                    f"Downloaded file '{dest.name}' size mismatch: got {part_size:,} bytes, expected {expected_size:,} bytes."
+                )
+
+            if expected_sha:
+                actual_sha = _compute_sha256(part_path)
+                if actual_sha.lower() != expected_sha.lower():
+                    raise AudioBuildError(
+                        f"Checksum mismatch for '{dest.name}': got {actual_sha}, expected {expected_sha}."
+                    )
+
+            _validate_file_structural(part_path)
+
+            os.replace(part_path, dest)
+            print(f"[INFO] Cached and verified {dest.name} ({dest.stat().st_size:,} bytes).", file=sys.stderr)
+            return
+        except (AudioBuildError, Exception) as exc:
+            last_error = exc
+            print(f"[WARN] Download attempt {attempt}/{max_retries} failed for '{dest.name}': {exc}", file=sys.stderr)
+            if attempt < max_retries:
+                time.sleep(2.0 * attempt)
+
+    if part_path.exists():
+        try:
+            part_path.unlink()
+        except OSError:
+            pass
+    raise AudioBuildError(f"Failed to download and verify '{dest.name}' from {url}: {last_error}")
 
 
 def ensure_kokoro_models(root: Path, cfg: dict[str, Any]) -> tuple[Path, Path]:
@@ -156,16 +280,63 @@ def ensure_kokoro_models(root: Path, cfg: dict[str, Any]) -> tuple[Path, Path]:
     allow_download = os.environ.get("SUTRADHAR_ALLOW_MODEL_DOWNLOAD", "1").strip() != "0"
 
     for fname, fpath in ((model_name, model_path), (voices_name, voices_path)):
-        if fpath.is_file() and fpath.stat().st_size > 0:
-            continue
-        url = KOKORO_MODEL_URLS.get(fname)
-        if not allow_download or not url:
-            raise AudioBuildError(
-                f"Missing Kokoro model file: {fpath}. "
-                f"Download from {url or 'Kokoro-ONNX v1.0 release'} or set "
-                "SUTRADHAR_ALLOW_MODEL_DOWNLOAD=1."
+        min_sz = KOKORO_MODEL_MIN_SIZES.get(fname, 0)
+        exp_sz = KOKORO_EXPECTED_SIZES.get(fname)
+        exp_sha = KOKORO_KNOWN_SHA256.get(fname)
+
+        is_valid = False
+        if fpath.is_file():
+            actual_sz = fpath.stat().st_size
+            if actual_sz >= min_sz and (exp_sz is None or actual_sz == exp_sz):
+                try:
+                    if exp_sha:
+                        actual_sha = _compute_sha256(fpath)
+                        if actual_sha.lower() != exp_sha.lower():
+                            raise AudioBuildError(f"SHA-256 mismatch: {actual_sha} != {exp_sha}")
+                    _validate_file_structural(fpath)
+                    is_valid = True
+                except Exception as val_exc:
+                    if allow_download:
+                        _quarantine_corrupt_file(fpath, str(val_exc))
+                    else:
+                        raise AudioBuildError(
+                            f"Model file '{fpath}' is corrupt/invalid ({val_exc}) and "
+                            "SUTRADHAR_ALLOW_MODEL_DOWNLOAD=0."
+                        ) from val_exc
+            else:
+                reason = f"File size {actual_sz:,} bytes below min {min_sz:,} bytes"
+                if allow_download:
+                    _quarantine_corrupt_file(fpath, reason)
+                else:
+                    raise AudioBuildError(f"Model file '{fpath}' invalid: {reason} and SUTRADHAR_ALLOW_MODEL_DOWNLOAD=0.")
+
+        if not is_valid:
+            url = KOKORO_MODEL_URLS.get(fname)
+            if not allow_download or not url:
+                raise AudioBuildError(
+                    f"Missing or invalid Kokoro model file: {fpath}. "
+                    f"Download from {url or 'Kokoro-ONNX v1.0 release'} or set "
+                    "SUTRADHAR_ALLOW_MODEL_DOWNLOAD=1."
+                )
+            _download_file_atomic(
+                url=url,
+                dest=fpath,
+                expected_size=exp_sz,
+                expected_sha=exp_sha,
+                min_size=min_sz,
             )
-        _download_file_atomic(url, fpath)
+
+    try:
+        from kokoro_onnx import Kokoro
+
+        test_kokoro = Kokoro(str(model_path), str(voices_path))
+        installed_voices = test_kokoro.get_voices()
+        if not installed_voices:
+            raise AudioBuildError("Kokoro model loaded but get_voices() returned empty list.")
+    except Exception as joint_exc:
+        raise AudioBuildError(
+            f"Joint Kokoro model/voices validation failed for ({model_path.name}, {voices_path.name}): {joint_exc}"
+        ) from joint_exc
 
     return model_path, voices_path
 

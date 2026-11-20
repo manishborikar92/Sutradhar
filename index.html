@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1080, height=1920, initial-scale=1.0">
+  <title>Sutradhar Shorts Composition</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Master Composition Root (1080x1920 @ 30fps) -->
+  <div id="root" data-composition-id="main" class="composition" data-fps="30" data-width="1080" data-height="1920" data-duration="45">
+    <!-- Inline SVG Filter Graphs -->
+    <svg style="position: absolute; width: 0; height: 0; overflow: hidden;" aria-hidden="true">
+      <defs>
+        <!-- Divine Bloom Filter -->
+        <filter id="divine-bloom" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+
+        <!-- Fire Haze Filter (feTurbulence Displacement) -->
+        <filter id="fire-haze" x="-20%" y="-20%" width="140%" height="140%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.04 0.08" numOctaves="2" result="noise" />
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="12" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+
+        <!-- Parchment Grain Filter -->
+        <filter id="parchment-grain">
+          <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" result="noise" />
+          <feColorMatrix type="matrix" values="0 0 0 0 0.8  0 0 0 0 0.7  0 0 0 0 0.5  0 0 0 0.15 0" />
+          <feComposite in="SourceGraphic" in2="noise" operator="arithmetic" k1="0" k2="1" k3="0.2" k4="0" />
+        </filter>
+
+        <!-- Cosmic Glow Filter -->
+        <filter id="cosmic-glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="14" result="glow" />
+          <feMerge>
+            <feMergeNode in="glow" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+    </svg>
+
+    <!-- Synchronous SVG Asset Store (Instant Preload, Zero Async Latency) -->
+    <div id="svg-asset-store" style="display: none;">
+    <template id="tmpl-char_sutradhar_narrator">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1200" width="800" height="1200">
+  <defs>
+    <radialGradient id="sutra_aura_grad" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#FFD700" stop-opacity="0.45" />
+      <stop offset="60%" stop-color="#FF8C00" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#FF8C00" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="robe_grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#DAA520" />
+      <stop offset="50%" stop-color="#B8860B" />
+      <stop offset="100%" stop-color="#8B6508" />
+    </linearGradient>
+    <linearGradient id="skin_grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#EEDAA2" />
+      <stop offset="100%" stop-color="#D2B48C" />
+    </linearGradient>
+  </defs>
+
+  <!-- Aura / Halos -->
+  <g id="char_aura">
+    <circle cx="400" cy="350" r="280" fill="url(#sutra_aura_grad)" />
+    <circle cx="400" cy="350" r="210" fill="none" stroke="#FFD700" stroke-width="2" stroke-dasharray="8 6" opacity="0.6" />
+  </g>
+
+  <!-- Torso / Robes -->
+  <g id="char_body" data-pivot-x="400" data-pivot-y="700">
+    <!-- Inner Tunic -->
+    <path d="M 310,480 L 490,480 L 530,920 L 270,920 Z" fill="#2C1D11" />
+    <!-- Golden Draped Robe -->
+    <path d="M 330,480 Q 400,600 300,900 L 480,920 Q 460,650 490,480 Z" fill="url(#robe_grad)" />
+    <!-- Shawl Collar -->
+    <path d="M 320,470 Q 400,560 480,470 L 450,450 Q 400,520 350,450 Z" fill="#FFD700" />
+    <!-- Belt with Jewel -->
+    <rect x="340" y="700" width="120" height="24" rx="4" fill="#8B0000" />
+    <circle cx="400" cy="712" r="8" fill="#FFD700" stroke="#FFF" stroke-width="1.5" />
+  </g>
+
+  <!-- Left Arm (Viewer's Left) -->
+  <g id="arm_left" data-pivot-x="300" data-pivot-y="480">
+    <path d="M 300,480 Q 230,590 270,700 Q 290,700 310,650 Q 300,570 330,500 Z" fill="url(#robe_grad)" />
+    <!-- Left Hand holding Palm-leaf Manuscript -->
+    <ellipse cx="270" cy="710" rx="18" ry="14" fill="url(#skin_grad)" />
+    <rect x="230" y="695" width="80" height="20" rx="3" transform="rotate(-15 270 705)" fill="#F5DEB3" stroke="#8B4513" stroke-width="2" />
+  </g>
+
+  <!-- Head & Facial Features -->
+  <g id="char_head" data-pivot-x="400" data-pivot-y="340">
+    <!-- Neck -->
+    <rect x="375" y="410" width="50" height="60" fill="url(#skin_grad)" />
+    <!-- Face Contour -->
+    <path d="M 340,300 C 340,430 460,430 460,300 C 460,240 340,240 340,300 Z" fill="url(#skin_grad)" />
+    <!-- Tilak on Forehead -->
+    <path d="M 396,260 Q 400,240 404,260 L 402,295 L 398,295 Z" fill="#B22222" />
+    <circle cx="400" cy="275" r="3" fill="#FFD700" />
+    <!-- Eyes Open -->
+    <g id="eyes_open">
+      <ellipse cx="370" cy="325" rx="14" ry="7" fill="#FFFFFF" />
+      <circle cx="370" cy="325" r="4.5" fill="#1C1B1A" />
+      <circle cx="371.5" cy="323.5" r="1.5" fill="#FFFFFF" />
+      <ellipse cx="430" cy="325" rx="14" ry="7" fill="#FFFFFF" />
+      <circle cx="430" cy="325" r="4.5" fill="#1C1B1A" />
+      <circle cx="431.5" cy="323.5" r="1.5" fill="#FFFFFF" />
+    </g>
+    <!-- Eyes Closed (Blink state) -->
+    <g id="eyes_closed" style="opacity: 0;">
+      <path d="M 356,325 Q 370,332 384,325" fill="none" stroke="#3D2B1F" stroke-width="3" stroke-linecap="round" />
+      <path d="M 416,325 Q 430,332 444,325" fill="none" stroke="#3D2B1F" stroke-width="3" stroke-linecap="round" />
+    </g>
+    <!-- Eyebrows -->
+    <g id="brows" data-pivot-x="400" data-pivot-y="290">
+      <path d="M 355,312 Q 370,306 385,312" fill="none" stroke="#2B1D14" stroke-width="3.5" stroke-linecap="round" />
+      <path d="M 415,312 Q 430,306 445,312" fill="none" stroke="#2B1D14" stroke-width="3.5" stroke-linecap="round" />
+    </g>
+    <!-- Nose & Serene Smile -->
+    <path d="M 400,320 L 395,350 L 405,350 Z" fill="#CBB28D" />
+    <path d="M 388,375 Q 400,383 412,375" fill="none" stroke="#8B3A3A" stroke-width="3" stroke-linecap="round" />
+    <!-- Ascetic Topknot / Mukuta (Crown) -->
+    <path d="M 350,250 Q 400,160 450,250 Z" fill="#3D2B1F" />
+    <path d="M 380,180 Q 400,130 420,180 Z" fill="#2B1D14" />
+    <circle cx="400" cy="180" r="8" fill="#FFD700" />
+    <!-- Earrings (Kundalas) -->
+    <circle cx="334" cy="350" r="7" fill="#FFD700" stroke="#B8860B" stroke-width="2" />
+    <circle cx="466" cy="350" r="7" fill="#FFD700" stroke="#B8860B" stroke-width="2" />
+  </g>
+
+  <!-- Right Arm (Viewer's Right) -->
+  <g id="arm_right" data-pivot-x="500" data-pivot-y="480">
+    <path d="M 490,480 Q 560,570 530,680 Q 510,680 480,630 Q 490,560 470,500 Z" fill="url(#robe_grad)" />
+    <!-- Right Hand (Chin-Mudra Gesture of Wisdom) -->
+    <g transform="translate(530, 680)">
+      <ellipse cx="0" cy="0" rx="16" ry="14" fill="url(#skin_grad)" />
+      <!-- Thumb & Index touching -->
+      <path d="M -6,-4 Q 0,-14 6,-4 Q 0,4 -6,-4 Z" fill="url(#skin_grad)" stroke="#CBB28D" stroke-width="1.5" />
+      <path d="M 2,-10 Q 12,-16 16,-8 Q 12,-2 4,-6" fill="url(#skin_grad)" />
+      <!-- Golden Bangle -->
+      <rect x="-14" y="-18" width="28" height="6" rx="2" fill="#FFD700" />
+    </g>
+  </g>
+
+  <!-- Prop / Sutradhar Golden Pointer Wand -->
+  <g id="prop_weapon" transform="translate(550, 650)">
+    <line x1="0" y1="20" x2="60" y2="-120" stroke="#FFD700" stroke-width="4" stroke-linecap="round" />
+    <circle cx="60" cy="-120" r="7" fill="#FFF" stroke="#FFD700" stroke-width="2" />
+  </g>
+</svg>
+
+    </template>
+    <template id="tmpl-char_ravana">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1200" width="800" height="1200">
+  <defs>
+    <radialGradient id="ravana_aura" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#FF2400" stop-opacity="0.5" />
+      <stop offset="60%" stop-color="#8B0000" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="armor_gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE066" />
+      <stop offset="50%" stop-color="#D4AF37" />
+      <stop offset="100%" stop-color="#996515" />
+    </linearGradient>
+    <linearGradient id="ravana_skin" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#8B5A2B" />
+      <stop offset="100%" stop-color="#5C3A21" />
+    </linearGradient>
+    <linearGradient id="sword_blade" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="30%" stop-color="#B0C4DE" />
+      <stop offset="100%" stop-color="#4682B4" />
+    </linearGradient>
+  </defs>
+
+  <!-- Fiery Crimson Aura -->
+  <g id="char_aura">
+    <circle cx="400" cy="350" r="300" fill="url(#ravana_aura)" />
+    <!-- Radiating Blades of Energy -->
+    <path d="M 400,50 L 405,120 L 395,120 Z" fill="#FF4500" opacity="0.8" />
+    <path d="M 580,180 L 530,230 L 520,220 Z" fill="#FF4500" opacity="0.8" />
+    <path d="M 220,180 L 270,230 L 280,220 Z" fill="#FF4500" opacity="0.8" />
+  </g>
+
+  <!-- Armored Torso -->
+  <g id="char_body" data-pivot-x="400" data-pivot-y="700">
+    <!-- Dark Royal Cape -->
+    <path d="M 240,460 L 560,460 L 620,1050 L 180,1050 Z" fill="#3B0910" />
+    <!-- Chest Armor -->
+    <path d="M 280,470 L 520,470 L 480,780 L 320,780 Z" fill="url(#armor_gold)" stroke="#5C3A21" stroke-width="3" />
+    <!-- Pectoral & Abdominal Plates -->
+    <path d="M 330,500 Q 400,530 470,500 L 460,620 Q 400,660 340,620 Z" fill="#B8860B" />
+    <path d="M 350,640 Q 400,670 450,640 L 440,750 Q 400,770 360,750 Z" fill="#996515" />
+    <!-- Ornate Girdle / Belt -->
+    <rect x="310" y="770" width="180" height="30" rx="4" fill="#B22222" stroke="#FFD700" stroke-width="2" />
+    <polygon points="400,775 415,815 385,815" fill="#FFD700" />
+  </g>
+
+  <!-- Left Arm (Viewer's Left - Gripping / Balustrade) -->
+  <g id="arm_left" data-pivot-x="270" data-pivot-y="480">
+    <!-- Shoulder Pauldron -->
+    <ellipse cx="260" cy="480" rx="45" ry="32" fill="url(#armor_gold)" stroke="#5C3A21" stroke-width="2" />
+    <circle cx="260" cy="480" r="10" fill="#B22222" />
+    <!-- Arm -->
+    <path d="M 270,490 Q 210,600 240,720 Q 260,720 280,680 Q 260,600 290,520 Z" fill="url(#ravana_skin)" />
+    <!-- Vambrace (Forearm Armor) -->
+    <rect x="220" y="610" width="36" height="60" rx="4" fill="url(#armor_gold)" transform="rotate(-10 240 640)" />
+    <!-- Left Hand Clenched Fist -->
+    <circle cx="240" cy="735" r="22" fill="url(#ravana_skin)" />
+  </g>
+
+  <!-- Head & Multi-Crowned Majestic Helm -->
+  <g id="char_head" data-pivot-x="400" data-pivot-y="340">
+    <!-- Muscular Neck -->
+    <rect x="365" y="410" width="70" height="70" fill="url(#ravana_skin)" />
+    <!-- Royal Necklace (Harams) -->
+    <path d="M 340,460 Q 400,510 460,460" fill="none" stroke="#FFD700" stroke-width="8" stroke-linecap="round" />
+    <!-- Fierce Jaw & Face -->
+    <path d="M 330,300 C 330,440 470,440 470,300 C 470,230 330,230 330,300 Z" fill="url(#ravana_skin)" />
+    <!-- Royal Moustache -->
+    <path d="M 345,380 Q 400,365 400,385 Q 400,365 455,380 Q 430,410 400,395 Q 370,410 345,380 Z" fill="#1A110B" />
+    <!-- Fierce Mouth with Fangs -->
+    <path d="M 380,400 Q 400,415 420,400" fill="#4A0E17" stroke="#1A110B" stroke-width="2" />
+    <polygon points="388,400 392,408 394,400" fill="#FFF" />
+    <polygon points="412,400 408,408 406,400" fill="#FFF" />
+    <!-- Eyes Open (Fierce Red-Glinting) -->
+    <g id="eyes_open">
+      <ellipse cx="365" cy="325" rx="15" ry="9" fill="#FFF" />
+      <circle cx="365" cy="325" r="5" fill="#B22222" />
+      <circle cx="365" cy="325" r="2" fill="#000" />
+      <ellipse cx="435" cy="325" rx="15" ry="9" fill="#FFF" />
+      <circle cx="435" cy="325" r="5" fill="#B22222" />
+      <circle cx="435" cy="325" r="2" fill="#000" />
+    </g>
+    <!-- Eyes Closed -->
+    <g id="eyes_closed" style="opacity: 0;">
+      <path d="M 350,325 Q 365,335 380,325" fill="none" stroke="#1A110B" stroke-width="3.5" stroke-linecap="round" />
+      <path d="M 420,325 Q 435,335 450,325" fill="none" stroke="#1A110B" stroke-width="3.5" stroke-linecap="round" />
+    </g>
+    <!-- Angered Eyebrows -->
+    <g id="brows" data-pivot-x="400" data-pivot-y="290">
+      <path d="M 350,318 L 385,310" stroke="#1A110B" stroke-width="4.5" stroke-linecap="round" />
+      <path d="M 450,318 L 415,310" stroke="#1A110B" stroke-width="4.5" stroke-linecap="round" />
+    </g>
+    <!-- Sharp Aquiline Nose -->
+    <polygon points="400,310 392,360 408,360" fill="#4A2E1B" />
+    <!-- Ten-Headed Mukuta (Grand Imperial Crown) -->
+    <path d="M 310,250 L 400,100 L 490,250 Z" fill="url(#armor_gold)" stroke="#5C3A21" stroke-width="3" />
+    <!-- Flanking Crown Crests (Symbolizing the Dashanana 10 heads) -->
+    <path d="M 320,240 L 260,190 L 310,180 Z" fill="url(#armor_gold)" />
+    <path d="M 480,240 L 540,190 L 490,180 Z" fill="url(#armor_gold)" />
+    <!-- Central Ruby in Crown -->
+    <polygon points="400,160 415,190 400,220 385,190" fill="#E60000" stroke="#FFF" stroke-width="1.5" />
+    <!-- Golden Kundalas (Earrings) -->
+    <circle cx="320" cy="360" r="10" fill="#FFD700" stroke="#B8860B" stroke-width="3" />
+    <circle cx="480" cy="360" r="10" fill="#FFD700" stroke="#B8860B" stroke-width="3" />
+  </g>
+
+  <!-- Right Arm (Viewer's Right - Wielding Chandrahas) -->
+  <g id="arm_right" data-pivot-x="530" data-pivot-y="480">
+    <!-- Right Pauldron -->
+    <ellipse cx="540" cy="480" rx="45" ry="32" fill="url(#armor_gold)" stroke="#5C3A21" stroke-width="2" />
+    <circle cx="540" cy="480" r="10" fill="#B22222" />
+    <!-- Arm -->
+    <path d="M 530,490 Q 610,580 570,680 Q 550,680 530,640 Q 550,560 510,510 Z" fill="url(#ravana_skin)" />
+    <!-- Vambrace -->
+    <rect x="545" y="580" width="36" height="60" rx="4" fill="url(#armor_gold)" transform="rotate(15 560 610)" />
+    <!-- Right Hand -->
+    <circle cx="570" cy="690" r="22" fill="url(#ravana_skin)" />
+    <!-- The Divine Chandrahas Sword -->
+    <g id="prop_weapon" transform="translate(570, 690) rotate(-35)">
+      <!-- Hilt / Guard -->
+      <rect x="-10" y="-8" width="20" height="30" rx="4" fill="#D4AF37" />
+      <rect x="-30" y="-12" width="60" height="8" rx="2" fill="#B8860B" />
+      <!-- Curved Demonic Crescent Blade -->
+      <path d="M -8,-12 Q 10,-200 -40,-380 Q 15,-220 8,-12 Z" fill="url(#sword_blade)" stroke="#FFFFFF" stroke-width="2" />
+      <circle cx="-35" cy="-360" r="6" fill="#00FFFF" opacity="0.8" />
+    </g>
+  </g>
+</svg>
+
+    </template>
+    <template id="tmpl-bg_deep_cosmos_nebula">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
+  <defs>
+    <radialGradient id="nebula_core" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="var(--accent-glow, #9D8DF1)" stop-opacity="0.6" />
+      <stop offset="35%" stop-color="#C49B76" stop-opacity="0.25" />
+      <stop offset="65%" stop-color="var(--sky-bottom, #2B2144)" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="var(--sky-top, #0F0E1A)" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="cosmic_sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="var(--sky-top, #0F0E1A)" />
+      <stop offset="60%" stop-color="var(--sky-bottom, #221D38)" />
+      <stop offset="100%" stop-color="var(--sky-top, #0F0E1A)" />
+    </linearGradient>
+    <linearGradient id="dust_pillar_grad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="var(--shadow-tint, #0A0912)" stop-opacity="0.95" />
+      <stop offset="70%" stop-color="var(--shadow-tint, #171326)" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="var(--accent-glow, #A797F8)" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+
+  <!-- Layer 1: Far Sky (Deep Starfield & Galactic Core) -->
+  <g id="bg_far_sky">
+    <!-- Base Deep Space Void -->
+    <rect width="1080" height="1920" fill="url(#cosmic_sky)" />
+    <!-- Distant Stars (Balanced Warm & Cool Stellar Points) -->
+    <g opacity="0.85">
+      <circle cx="120" cy="180" r="1.5" fill="#FFEBB3" />
+      <circle cx="280" cy="340" r="2.0" fill="#FFFFFF" />
+      <circle cx="450" cy="120" r="1.2" fill="#FFD285" />
+      <circle cx="680" cy="240" r="2.5" fill="#FFFFFF" />
+      <circle cx="890" cy="160" r="1.8" fill="#FFE8C2" />
+      <circle cx="980" cy="390" r="1.2" fill="#FFFFFF" />
+      <circle cx="150" cy="620" r="2.2" fill="#FFDA9E" />
+      <circle cx="840" cy="710" r="1.5" fill="#FFFFFF" />
+      <circle cx="210" cy="980" r="1.8" fill="#FFE4B5" />
+      <circle cx="920" cy="1150" r="2.0" fill="#FFFFFF" />
+      <circle cx="110" cy="1420" r="1.5" fill="#FFDFB0" />
+      <circle cx="760" cy="1580" r="2.2" fill="#FFFFFF" />
+      <circle cx="340" cy="1780" r="1.2" fill="#FFEBB3" />
+      <circle cx="880" cy="1820" r="1.8" fill="#FFFFFF" />
+    </g>
+    <!-- Distant Quasar / Core Glow -->
+    <circle cx="540" cy="750" r="450" fill="url(#nebula_core)" />
+  </g>
+
+  <!-- Layer 2: Midground Architecture (Cosmic Dust Filaments & Accretion Halo) -->
+  <g id="bg_mid_architecture">
+    <!-- Tangled Relativistic Filaments -->
+    <path d="M 0,600 Q 300,500 540,750 Q 780,1000 1080,900 L 1080,1200 Q 700,1300 540,1050 Q 380,800 0,950 Z" fill="var(--accent-glow, #8A2BE2)" opacity="0.18" />
+    <path d="M 1080,450 Q 750,600 540,750 Q 330,900 0,800 L 0,1050 Q 400,1150 540,950 Q 680,750 1080,700 Z" fill="var(--sky-bottom, #4B0082)" opacity="0.25" />
+    <!-- Stellar Nursery Knot -->
+    <circle cx="540" cy="750" r="120" fill="none" stroke="var(--accent-glow, #BA55D3)" stroke-width="3" stroke-dasharray="12 8" opacity="0.5" />
+    <circle cx="540" cy="750" r="40" fill="#FFF" opacity="0.8" />
+  </g>
+
+  <!-- Layer 3: Foreground Pillars (Interstellar Gas Pillars & Silhouette Framing) -->
+  <g id="bg_fg_pillars">
+    <!-- Left Gas Monolith -->
+    <path d="M 0,900 Q 140,1100 110,1400 Q 80,1650 0,1920 L 0,1920 Z" fill="url(#dust_pillar_grad)" />
+    <!-- Right Gas Monolith -->
+    <path d="M 1080,850 Q 940,1150 970,1450 Q 1000,1700 1080,1920 L 1080,1920 Z" fill="url(#dust_pillar_grad)" />
+    <!-- Bottom Vignette Arch -->
+    <rect x="0" y="1650" width="1080" height="270" fill="var(--shadow-tint, #020005)" opacity="0.85" />
+  </g>
+</svg>
+
+    </template>
+    <template id="tmpl-bg_mount_kailash">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
+  <defs>
+    <linearGradient id="kailash_sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="var(--sky-top, #0E1626)" />
+      <stop offset="50%" stop-color="var(--sky-bottom, #1E2D4A)" />
+      <stop offset="100%" stop-color="var(--accent-glow, #D4AF37)" stop-opacity="0.3" />
+    </linearGradient>
+    <linearGradient id="snow_peak" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="50%" stop-color="#E2E8F0" />
+      <stop offset="100%" stop-color="#94A3B8" />
+    </linearGradient>
+    <linearGradient id="rock_shadow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1E293B" />
+      <stop offset="100%" stop-color="#0F172A" />
+    </linearGradient>
+  </defs>
+
+  <!-- Layer 1: Far Sky (High Himalayan Dawn & Cosmic Meridian) -->
+  <g id="bg_far_sky">
+    <rect width="1080" height="1920" fill="url(#kailash_sky)" />
+    <!-- Golden Celestial Halo around Summit -->
+    <circle cx="540" cy="550" r="320" fill="var(--accent-glow, #FFD700)" opacity="0.12" />
+    <!-- Distant Stars at High Altitude -->
+    <g fill="#FFF" opacity="0.75">
+      <circle cx="180" cy="150" r="1.5" />
+      <circle cx="340" cy="220" r="1.2" />
+      <circle cx="540" cy="90" r="2.2" />
+      <circle cx="780" cy="170" r="1.8" />
+      <circle cx="920" cy="280" r="1.2" />
+      <circle cx="860" cy="80" r="1.5" />
+    </g>
+  </g>
+
+  <!-- Layer 2: Midground Architecture (The 4-Faceted Stepped Pyramid Peak of Kailash) -->
+  <g id="bg_mid_architecture">
+    <!-- Flanking Himalayan Ridge (Left) -->
+    <polygon points="0,950 280,680 480,820 0,1150" fill="url(#rock_shadow)" opacity="0.8" />
+    <!-- Flanking Himalayan Ridge (Right) -->
+    <polygon points="1080,950 820,670 600,830 1080,1180" fill="url(#rock_shadow)" opacity="0.9" />
+
+    <!-- Central Symmetrical Diamond Pyramid of Mount Kailash -->
+    <!-- East Sunlit Face -->
+    <polygon points="540,420 540,880 760,820" fill="url(#snow_peak)" />
+    <!-- West Shadow Face -->
+    <polygon points="540,420 320,820 540,880" fill="url(#rock_shadow)" />
+    <!-- Horizontal Strata Couloirs (Horizontal Fissure Rings forming the Sacred Stairway) -->
+    <path d="M 490,520 L 590,520 M 440,610 L 640,610 M 390,700 L 690,700 M 350,790 L 730,790"
+          stroke="#0F172A" stroke-width="4" opacity="0.65" stroke-linecap="round" />
+    <!-- Vertical Chasm (The Great Stairway / Axis Line) -->
+    <line x1="540" y1="420" x2="540" y2="880" stroke="#CBD5E1" stroke-width="3" />
+    <!-- Summit Golden Glint -->
+    <circle cx="540" cy="420" r="8" fill="#FFF" />
+    <circle cx="540" cy="420" r="16" fill="var(--accent-glow, #FFD700)" opacity="0.6" />
+  </g>
+
+  <!-- Layer 3: Foreground Pillars (Ancient Temple Ruins / Stone Stupas Silhouette) -->
+  <g id="bg_fg_pillars">
+    <!-- Stone Base Mountain Plateau -->
+    <polygon points="0,1100 1080,1100 1080,1920 0,1920" fill="var(--shadow-tint, #080D1A)" />
+    <!-- Left Sacred Stone Pillar -->
+    <rect x="60" y="1150" width="80" height="770" fill="#050811" />
+    <polygon points="40,1150 160,1150 100,1080" fill="#050811" />
+    <!-- Right Sacred Stone Pillar -->
+    <rect x="940" y="1120" width="80" height="800" fill="#050811" />
+    <polygon points="920,1120 1040,1120 980,1050" fill="#050811" />
+    <!-- Base Altar Silhouette -->
+    <rect x="0" y="1680" width="1080" height="240" fill="#020408" />
+  </g>
+</svg>
+
+    </template>
+    <template id="tmpl-bg_ancient_temple_ruins">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
+  <defs>
+    <linearGradient id="temple_sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="var(--sky-top, #1A0D00)" />
+      <stop offset="60%" stop-color="var(--sky-bottom, #4D2600)" />
+      <stop offset="100%" stop-color="var(--accent-glow, #FF8C00)" stop-opacity="0.4" />
+    </linearGradient>
+    <linearGradient id="sandstone_grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8C531B" />
+      <stop offset="50%" stop-color="#59320C" />
+      <stop offset="100%" stop-color="#261404" />
+    </linearGradient>
+  </defs>
+
+  <!-- Layer 1: Far Sky (Twilight Horizon over Forgotten Empire) -->
+  <g id="bg_far_sky">
+    <rect width="1080" height="1920" fill="url(#temple_sky)" />
+    <!-- Distant Setting Solar Disc -->
+    <circle cx="540" cy="720" r="160" fill="var(--accent-glow, #FF4500)" opacity="0.35" />
+    <circle cx="540" cy="720" r="90" fill="#FFF" opacity="0.75" />
+  </g>
+
+  <!-- Layer 2: Midground Architecture (Vimana Spire & Colonnade of Hampi/Nalanda) -->
+  <g id="bg_mid_architecture">
+    <!-- Great Vimana Temple Spire -->
+    <polygon points="540,580 440,980 640,980" fill="url(#sandstone_grad)" />
+    <!-- Stepped Tiers on Vimana -->
+    <rect x="470" y="660" width="140" height="16" fill="#1A0D00" opacity="0.6" />
+    <rect x="450" y="740" width="180" height="18" fill="#1A0D00" opacity="0.6" />
+    <rect x="430" y="820" width="220" height="22" fill="#1A0D00" opacity="0.6" />
+    <rect x="410" y="900" width="260" height="26" fill="#1A0D00" opacity="0.6" />
+    <!-- Kalasha (Pinnacle Urn) -->
+    <circle cx="540" cy="565" r="14" fill="var(--accent-glow, #FFD700)" />
+    <!-- Flanking Shrines -->
+    <polygon points="260,820 180,1050 340,1050" fill="url(#sandstone_grad)" opacity="0.85" />
+    <polygon points="820,820 740,1050 900,1050" fill="url(#sandstone_grad)" opacity="0.85" />
+  </g>
+
+  <!-- Layer 3: Foreground Pillars (Carved Monolithic Stone Pillars & Lintels) -->
+  <g id="bg_fg_pillars">
+    <!-- Grand Left Carved Pillar -->
+    <rect x="40" y="850" width="140" height="1070" fill="var(--shadow-tint, #140A02)" />
+    <!-- Yali (Mythic Beast) Bracket Silhouette -->
+    <polygon points="180,950 250,1020 180,1100" fill="var(--shadow-tint, #140A02)" />
+    <!-- Grand Right Carved Pillar -->
+    <rect x="900" y="850" width="140" height="1070" fill="var(--shadow-tint, #140A02)" />
+    <polygon points="900,950 830,1020 900,1100" fill="var(--shadow-tint, #140A02)" />
+    <!-- Foreground Arch Lintel -->
+    <rect x="0" y="800" width="1080" height="70" fill="var(--shadow-tint, #140A02)" />
+    <!-- Basal Flagstone Platform -->
+    <rect x="0" y="1650" width="1080" height="270" fill="#0A0501" />
+  </g>
+</svg>
+
+    </template>
+    <template id="tmpl-diag_black_hole_anatomy">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900" width="900" height="900">
+  <defs>
+    <radialGradient id="singularity_grad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000000" />
+      <stop offset="85%" stop-color="#000000" />
+      <stop offset="100%" stop-color="#1A0033" />
+    </radialGradient>
+    <radialGradient id="accretion_grad" cx="50%" cy="50%" r="50%">
+      <stop offset="40%" stop-color="#FFA500" stop-opacity="0.85" />
+      <stop offset="70%" stop-color="#FF4500" stop-opacity="0.5" />
+      <stop offset="100%" stop-color="#8B0000" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="jet_grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#00FFFF" stop-opacity="0.9" />
+      <stop offset="50%" stop-color="#7B68EE" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="#00008B" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+
+  <!-- Stage 0 / Base: Coordinate Spacetime Grid & Frame -->
+  <g id="diagram_base">
+    <!-- Concentric Spacetime Curvature Coordinate Rings -->
+    <circle cx="450" cy="450" r="380" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 6" opacity="0.5" />
+    <circle cx="450" cy="450" r="280" fill="none" stroke="#475569" stroke-width="1.5" stroke-dasharray="6 6" opacity="0.6" />
+    <circle cx="450" cy="450" r="190" fill="none" stroke="#64748B" stroke-width="2" stroke-dasharray="8 8" opacity="0.7" />
+    <!-- Polar & Equatorial Axes -->
+    <line x1="450" y1="50" x2="450" y2="850" stroke="#334155" stroke-width="1" stroke-dasharray="4 4" opacity="0.4" />
+    <line x1="50" y1="450" x2="850" y2="450" stroke="#334155" stroke-width="1" stroke-dasharray="4 4" opacity="0.4" />
+    <!-- Central Black Hole Singularity Sphere -->
+    <circle cx="450" cy="450" r="100" fill="url(#singularity_grad)" stroke="#1E1B4B" stroke-width="4" />
+    <text x="450" y="455" fill="#E2E8F0" font-family="system-ui, sans-serif" font-size="14" font-weight="700" text-anchor="middle" letter-spacing="1">SINGULARITY</text>
+  </g>
+
+  <!-- Stage 1: Accretion Disc (Inflowing Superheated Plasma) -->
+  <g id="stage_1">
+    <!-- Torus of Swirling Gas -->
+    <ellipse cx="450" cy="450" rx="340" ry="110" fill="url(#accretion_grad)" />
+    <!-- Doppler Asymmetry Flow Rings -->
+    <ellipse cx="450" cy="450" rx="270" ry="85" fill="none" stroke="#FFD700" stroke-width="3" opacity="0.75" />
+    <ellipse cx="450" cy="450" rx="210" ry="65" fill="none" stroke="#FF4500" stroke-width="4" opacity="0.85" />
+    <text x="210" y="380" fill="#FFD700" font-family="system-ui, sans-serif" font-size="16" font-weight="700">ACCRETION DISC</text>
+  </g>
+
+  <!-- Stage 2: Event Horizon Boundary (Schwarzschild Radius Rs = 2GM/c^2) -->
+  <g id="stage_2">
+    <!-- Photon Sphere Ring (1.5 Rs) -->
+    <circle cx="450" cy="450" r="150" fill="none" stroke="#38BDF8" stroke-width="3.5" stroke-dasharray="8 4" />
+    <text x="620" y="360" fill="#38BDF8" font-family="system-ui, sans-serif" font-size="15" font-weight="700">PHOTON SPHERE (1.5 Rs)</text>
+    <!-- Event Horizon Boundary (Rs) -->
+    <circle cx="450" cy="450" r="102" fill="none" stroke="#F43F5E" stroke-width="4" />
+    <text x="450" y="580" fill="#F43F5E" font-family="system-ui, sans-serif" font-size="16" font-weight="700" text-anchor="middle">EVENT HORIZON (Rs = 2GM/c²)</text>
+  </g>
+
+  <!-- Stage 3: Relativistic Astrophysical Jets -->
+  <g id="stage_3">
+    <!-- North Jet -->
+    <polygon points="450,450 425,50 475,50" fill="url(#jet_grad)" transform="rotate(180 450 250)" />
+    <!-- South Jet -->
+    <polygon points="450,450 420,850 480,850" fill="url(#jet_grad)" />
+    <!-- Magnetic Collimation Coils -->
+    <ellipse cx="450" cy="240" rx="40" ry="12" fill="none" stroke="#00FFFF" stroke-width="2.5" />
+    <ellipse cx="450" cy="660" rx="40" ry="12" fill="none" stroke="#00FFFF" stroke-width="2.5" />
+    <text x="490" y="140" fill="#00FFFF" font-family="system-ui, sans-serif" font-size="15" font-weight="700">RELATIVISTIC JET</text>
+  </g>
+
+  <!-- Stage 4: Gravitational Lensing & Warped Light Paths -->
+  <g id="stage_4">
+    <!-- Warped Einstein Ring Light Paths -->
+    <path d="M 120,250 Q 450,300 780,250" fill="none" stroke="#FCD34D" stroke-width="3" stroke-dasharray="6 6" />
+    <path d="M 120,650 Q 450,600 780,650" fill="none" stroke="#FCD34D" stroke-width="3" stroke-dasharray="6 6" />
+    <text x="450" y="270" fill="#FCD34D" font-family="system-ui, sans-serif" font-size="15" font-weight="700" text-anchor="middle">GRAVITATIONAL LENSING</text>
+  </g>
+
+  <!-- Highlight Pulse Energy Ring -->
+  <g id="highlight_pulse">
+    <circle cx="450" cy="450" r="102" fill="none" stroke="#FFD700" stroke-width="6" opacity="0.9" filter="drop-shadow(0 0 16px #FFD700)" />
+  </g>
+</svg>
+
+    </template>
+    <template id="tmpl-diag_gravitational_time_dilation_clock">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900" width="900" height="900">
+  <defs>
+    <radialGradient id="dilation_core" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0F172A" />
+      <stop offset="60%" stop-color="#1E1B4B" />
+      <stop offset="100%" stop-color="#020617" />
+    </radialGradient>
+    <linearGradient id="time_flow_grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="50%" stop-color="#818CF8" />
+      <stop offset="100%" stop-color="#F43F5E" />
+    </linearGradient>
+  </defs>
+
+  <!-- Base: Spacetime Metric Grid & Gravitational Well Axis -->
+  <g id="diagram_base">
+    <!-- Concentric Spacetime Funnel Mesh -->
+    <ellipse cx="450" cy="500" rx="380" ry="140" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 6" opacity="0.6" />
+    <ellipse cx="450" cy="560" rx="280" ry="100" fill="none" stroke="#475569" stroke-width="1.5" stroke-dasharray="6 6" opacity="0.7" />
+    <ellipse cx="450" cy="620" rx="180" ry="60" fill="none" stroke="#64748B" stroke-width="2" stroke-dasharray="8 8" opacity="0.8" />
+    <!-- Funnel Curvature Profile -->
+    <path d="M 70,500 Q 300,520 450,720 Q 600,520 830,500" fill="none" stroke="#475569" stroke-width="2" opacity="0.5" />
+    <!-- Central Mass Horizon -->
+    <circle cx="450" cy="720" r="45" fill="url(#dilation_core)" stroke="#F43F5E" stroke-width="3" />
+    <!-- Coordinate Axis -->
+    <line x1="450" y1="100" x2="450" y2="720" stroke="#64748B" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.5" />
+    <text x="450" y="800" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="14" font-weight="700" text-anchor="middle">SPACETIME CURVATURE GRADIENT</text>
+  </g>
+
+  <!-- Stage 1: Distant Observer Clock (Normal Proper Time t_infinity) -->
+  <g id="stage_1">
+    <!-- Normal Time Dial (Top Right) -->
+    <circle cx="700" cy="220" r="75" fill="#0B132B" stroke="#38BDF8" stroke-width="3.5" />
+    <!-- Clock Hands (12:00 ticking fast) -->
+    <line x1="700" y1="220" x2="700" y2="165" stroke="#38BDF8" stroke-width="4" stroke-linecap="round" />
+    <line x1="700" y1="220" x2="740" y2="220" stroke="#38BDF8" stroke-width="3" stroke-linecap="round" />
+    <!-- Radiating Fast Frequency Waves -->
+    <circle cx="700" cy="220" r="95" fill="none" stroke="#38BDF8" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.7" />
+    <text x="700" y="325" fill="#38BDF8" font-family="system-ui, sans-serif" font-size="15" font-weight="700" text-anchor="middle">OBSERVER CLOCK (t∞)</text>
+    <text x="700" y="345" fill="#7DD3FC" font-family="system-ui, sans-serif" font-size="12" text-anchor="middle">dt / dτ = 1.0 (Normal Flow)</text>
+  </g>
+
+  <!-- Stage 2: Gravitational Well Gradient Lines -->
+  <g id="stage_2">
+    <!-- Gravitational Acceleration Vector Gradient -->
+    <path d="M 250,300 C 350,450 420,600 450,720" fill="none" stroke="url(#time_flow_grad)" stroke-width="4" stroke-linecap="round" />
+    <polygon points="450,720 440,700 455,705" fill="#F43F5E" />
+    <text x="210" y="290" fill="#818CF8" font-family="system-ui, sans-serif" font-size="15" font-weight="700">INWARD GRAVITATIONAL WELL</text>
+    <text x="210" y="310" fill="#A5B4FC" font-family="system-ui, sans-serif" font-size="12">g(r) = GM / r²</text>
+  </g>
+
+  <!-- Stage 3: Infalling Clock (Severe Time Dilation d_tau -> 0) -->
+  <g id="stage_3">
+    <!-- Dilated Slow Clock (Near Horizon) -->
+    <circle cx="280" cy="560" r="65" fill="#1C0A15" stroke="#F43F5E" stroke-width="3.5" />
+    <!-- Clock Hands (Frozen almost at standstill) -->
+    <line x1="280" y1="560" x2="280" y2="510" stroke="#F43F5E" stroke-width="4" stroke-linecap="round" />
+    <line x1="280" y1="560" x2="295" y2="550" stroke="#F43F5E" stroke-width="3" stroke-linecap="round" />
+    <text x="280" y="650" fill="#F43F5E" font-family="system-ui, sans-serif" font-size="15" font-weight="700" text-anchor="middle">INFALLING CLOCK (dτ)</text>
+    <text x="280" y="670" fill="#FDA4AF" font-family="system-ui, sans-serif" font-size="12" text-anchor="middle">dτ = dt √(1 - 2GM/rc²)</text>
+  </g>
+
+  <!-- Stage 4: Frozen Asymptotic Boundary -->
+  <g id="stage_4">
+    <!-- Asymptote Light Cone Freeze Line -->
+    <line x1="120" y1="720" x2="780" y2="720" stroke="#FBBF24" stroke-width="3" stroke-dasharray="8 6" />
+    <polygon points="450,700 460,720 440,720" fill="#FBBF24" />
+    <text x="450" y="690" fill="#FBBF24" font-family="system-ui, sans-serif" font-size="15" font-weight="700" text-anchor="middle">FROZEN TIME HORIZON (dτ → 0)</text>
+  </g>
+
+  <!-- Highlight Pulse Energy Ring -->
+  <g id="highlight_pulse">
+    <circle cx="450" cy="720" r="48" fill="none" stroke="#FFD700" stroke-width="5" opacity="0.9" filter="drop-shadow(0 0 14px #FFD700)" />
+  </g>
+</svg>
+
+    </template>
+    <template id="tmpl-diag_kailash_axis_alignments">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900" width="900" height="900">
+  <defs>
+    <radialGradient id="kailash_bindu_grad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFD700" />
+      <stop offset="60%" stop-color="#D4AF37" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#8B6508" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="meridian_grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+  </defs>
+
+  <!-- Base: 4-Faceted Cardinal Grid Axis (0°, 90°, 180°, 270°) -->
+  <g id="diagram_base">
+    <!-- Cosmic Orientation Compass Dial -->
+    <circle cx="450" cy="450" r="380" fill="none" stroke="#475569" stroke-width="1.5" stroke-dasharray="6 6" opacity="0.6" />
+    <circle cx="450" cy="450" r="280" fill="none" stroke="#64748B" stroke-width="2" stroke-dasharray="8 8" opacity="0.7" />
+    <!-- Cardinal Axes -->
+    <line x1="450" y1="50" x2="450" y2="850" stroke="#94A3B8" stroke-width="2" />
+    <line x1="50" y1="450" x2="850" y2="450" stroke="#94A3B8" stroke-width="2" />
+    <!-- Cardinal Direction Labels -->
+    <text x="450" y="40" fill="#F8FAFC" font-family="system-ui, sans-serif" font-size="18" font-weight="800" text-anchor="middle">NORTH (0°)</text>
+    <text x="450" y="880" fill="#F8FAFC" font-family="system-ui, sans-serif" font-size="18" font-weight="800" text-anchor="middle">SOUTH (180°)</text>
+    <text x="880" y="456" fill="#F8FAFC" font-family="system-ui, sans-serif" font-size="18" font-weight="800">EAST (90°)</text>
+    <text x="20" y="456" fill="#F8FAFC" font-family="system-ui, sans-serif" font-size="18" font-weight="800">WEST (270°)</text>
+    <!-- Central Cardinal Diamond of Kailash Base -->
+    <polygon points="450,310 590,450 450,590 310,450" fill="#0F172A" stroke="#E2E8F0" stroke-width="3" />
+    <text x="450" y="455" fill="#FFD700" font-family="system-ui, sans-serif" font-size="15" font-weight="700" text-anchor="middle">AXIS MUNDI</text>
+  </g>
+
+  <!-- Stage 1: Planetary Geographic Alignments (Stonehenge, Easter Island, North Pole) -->
+  <g id="stage_1">
+    <!-- Great Circle Alignment Vectors -->
+    <line x1="450" y1="450" x2="200" y2="200" stroke="#38BDF8" stroke-width="2.5" stroke-dasharray="8 4" />
+    <circle cx="200" cy="200" r="10" fill="#38BDF8" />
+    <text x="110" y="190" fill="#38BDF8" font-family="system-ui, sans-serif" font-size="14" font-weight="700">STONEHENGE (6,666 km)</text>
+
+    <line x1="450" y1="450" x2="700" y2="700" stroke="#38BDF8" stroke-width="2.5" stroke-dasharray="8 4" />
+    <circle cx="700" cy="700" r="10" fill="#38BDF8" />
+    <text x="590" y="730" fill="#38BDF8" font-family="system-ui, sans-serif" font-size="14" font-weight="700">EASTER ISLAND (13,332 km)</text>
+  </g>
+
+  <!-- Stage 2: Subterranean Stepped Granite Pyramid Contours -->
+  <g id="stage_2">
+    <!-- Concentric Stepped Pyramid Tiers -->
+    <polygon points="450,340 560,450 450,560 340,450" fill="none" stroke="#F59E0B" stroke-width="3" />
+    <polygon points="450,380 520,450 450,520 380,450" fill="none" stroke="#FBBF24" stroke-width="2.5" />
+    <polygon points="450,410 490,450 450,490 410,450" fill="none" stroke="#FDE68A" stroke-width="2" />
+    <text x="450" y="280" fill="#F59E0B" font-family="system-ui, sans-serif" font-size="15" font-weight="700" text-anchor="middle">STEPPED GRANITE PYRAMID CORE</text>
+  </g>
+
+  <!-- Stage 3: Four Sacred Radial River Outflows -->
+  <g id="stage_3">
+    <!-- Indus (North/West) -->
+    <path d="M 380,380 Q 250,320 180,260" fill="none" stroke="#06B6D4" stroke-width="4" stroke-linecap="round" />
+    <text x="150" y="300" fill="#06B6D4" font-family="system-ui, sans-serif" font-size="14" font-weight="700">INDUS RIVER</text>
+    <!-- Brahmaputra (East) -->
+    <path d="M 520,450 Q 640,480 780,470" fill="none" stroke="#06B6D4" stroke-width="4" stroke-linecap="round" />
+    <text x="650" y="440" fill="#06B6D4" font-family="system-ui, sans-serif" font-size="14" font-weight="700">BRAHMAPUTRA</text>
+    <!-- Sutlej (West) -->
+    <path d="M 380,450 Q 260,490 140,510" fill="none" stroke="#06B6D4" stroke-width="4" stroke-linecap="round" />
+    <text x="140" y="540" fill="#06B6D4" font-family="system-ui, sans-serif" font-size="14" font-weight="700">SUTLEJ RIVER</text>
+    <!-- Karnali / Ganges Tributary (South) -->
+    <path d="M 450,520 Q 480,650 490,780" fill="none" stroke="#06B6D4" stroke-width="4" stroke-linecap="round" />
+    <text x="500" y="760" fill="#06B6D4" font-family="system-ui, sans-serif" font-size="14" font-weight="700">KARNALI (GANGES)</text>
+  </g>
+
+  <!-- Stage 4: Geomagnetic Energy Flux Vectors -->
+  <g id="stage_4">
+    <!-- Radiant Flux Vectors from Center -->
+    <circle cx="450" cy="450" r="180" fill="none" stroke="#EC4899" stroke-width="2" stroke-dasharray="10 6" />
+    <path d="M 450,230 L 450,200 M 670,450 L 700,450 M 450,670 L 450,700 M 230,450 L 200,450" stroke="#EC4899" stroke-width="4" stroke-linecap="round" />
+    <text x="450" y="640" fill="#EC4899" font-family="system-ui, sans-serif" font-size="15" font-weight="700" text-anchor="middle">GEOMAGNETIC ENERGY FLUX</text>
+  </g>
+
+  <!-- Central Highlight Pulse / Bindu Point -->
+  <g id="highlight_pulse">
+    <circle cx="450" cy="450" r="24" fill="url(#kailash_bindu_grad)" filter="drop-shadow(0 0 16px #FFD700)" />
+    <circle cx="450" cy="450" r="6" fill="#FFF" />
+  </g>
+</svg>
+
+    </template>
+    </div>
+
+    <!-- Scene Container (Clips mounted here) -->
+    <div id="scene-container" class="layer-fullscreen"></div>
+
+    <!-- Frame-Locked FX Canvas (Particles) -->
+    <canvas id="fx-canvas" width="1080" height="1920" class="layer-fullscreen" data-layout-allow-overflow="true" data-layout-ignore="true"></canvas>
+
+    <!-- Top Series Badge (Safe Zone Compliant) -->
+    <div id="top-badge" class="safe-zone-badge" data-layout-allow-safe-zone="true">
+      <span class="badge-pill-part" id="badge-part">PART 1 OF 3</span>
+      <span class="badge-divider">•</span>
+      <span class="badge-series-title" id="badge-series">SERIES TITLE</span>
+    </div>
+
+    <!-- Subtitle Container (Safe Zone Compliant) -->
+    <div id="subtitle-box" class="safe-zone-subtitles" data-layout-allow-safe-zone="true">
+      <div class="caption-line" id="caption-text" data-layout-allow-safe-zone="true">Welcome to Sutradhar.</div>
+    </div>
+  </div>
+
+  <!-- Dependencies & Core Engine -->
+  <script src="build/manifest.js"></script>
+  <script src="assets/js/gsap.min.js"></script>
+  <script src="engine.js"></script>
+</body>
+</html>

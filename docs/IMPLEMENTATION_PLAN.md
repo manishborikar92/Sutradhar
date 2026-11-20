@@ -403,3 +403,37 @@ python scripts/db_manager.py --init
   - Physical `.svg`, BGM, and SFX file existence on disk is validated in Milestones 3–5 rather than `db_manager.py`.
   - Audio runtime bounds (`34–50s` hard, `36–46s` target) are enforced in Milestone 3 (`scripts/build_audio.py`).
   - Zero Milestone 2 requirements remain incomplete.
+
+#### Milestone 3 — Audio Synthesis & Forced Alignment (`scripts/build_audio.py`, `scripts/audition_voices.py`): COMPLETED
+- **Kokoro ONNX Model Integrity:** Quarantined corrupt 158.5MB model; downloaded authoritative 325,532,387-byte model (SHA-256: `7d5df8ecf7d4b1878015a32686053fd0eebe2bc377234608764cc0ef3636a6c5`). Verified `voices-v1.0.bin` (28,214,398 bytes, SHA-256: `bca610b8308e8d99f32e6fe4197e7ec01679264efed0cac9140fe9c29f1fbf7d`, 54 voices).
+- **Hardened Resilient Download:** Added HTTP Range resume, size bounds (250MB/10MB), SHA-256 checksum pins, and structural `onnxruntime.InferenceSession` validation in `scripts/build_audio.py`.
+- **Voice Auditions:** Auditioned 20 candidate voices and blends via `scripts/audition_voices.py`. Generated 20 WAVs in `build/audition/` and `audition_report.json`. Top performer: `bm_daniel` (155.7 WPM, 1.0000 match ratio). Held `tts.default_voice: "am_fenrir"` and `voice_provisional: true` unchanged in `config.yaml` for user signoff.
+- **Forced Alignment Integration:** Added PyAV 19 compatibility shim for `faster-whisper 1.2.1`. Validated word-level alignment, monotonically increasing timestamps, and exact `build/manifest.js` emission.
+- **Automated Tests:** `python -m unittest tests/test_audition_voices.py tests/test_build_audio.py -v` — **Ran 14 tests ... OK**.
+
+#### Milestone 4 — Visual Composition Engine & Starter Assets: COMPLETED
+- **Visual Composition Engine:** Authored `index.html`, `styles.css`, and `engine.js` complying with HyperFrames 0.9.70 contract. Built-in 2026 YouTube Shorts safe zones (130px top, 560px bottom, 120px right), 5 mood palettes (`golden_imperial`, `cosmic_indigo`, `crimson_wrath`, `mystic_slate`, `obsidian_amber`), 4 particle themes, and word-level karaoke subtitles.
+- **HyperFrames Lint Cleanliness:** Verified `npx hyperframes lint` passes with 0 errors.
+- **Procedural BGM & SFX:** Generated `cosmic_mystery.mp3`, `dramatic_mythology.mp3`, `epic_history.mp3` in `assets/bgm/`; generated `sub_hit.wav`, `whoosh_soft.wav`, `riser_tension.wav` in `assets/sfx/`.
+- **Starter SVG Rigs:** Authored characters (`sutradhar_narrator.svg`, `ravana.svg`), backdrops (`deep_cosmos_nebula.svg`, `mount_kailash.svg`, `ancient_temple_ruins.svg`), and bespoke diagrams (`black_hole_anatomy.svg`, `gravitational_time_dilation_clock.svg`, `kailash_axis_alignments.svg`).
+
+#### Milestone 5 — Snapshot QA, Render Pipeline & Sample Production: COMPLETED
+- **Preview & QA Pipeline:** Implemented zero-argument `scripts/preview_frames.py` capturing 2x3 contact sheets (`qa_grid.jpg`, `qa_grid_safezones.jpg`) with visual safe-zone overlay guides.
+- **Master Render & Audio Engineering:** Implemented zero-argument `scripts/render_and_qa.py`: HyperFrames CLI 1080x1920 render, FFmpeg dynamic sidechain ducking (`sidechaincompress`), KinoCut loudness normalization to `-14.0 LUFS`, and release checkpoint gate (`min_score=80.0`).
+- **End-to-End Local Sample Videos (Verified in Isolated Environments):**
+  - **Sample 1 (`sample_01_cosmos`):** 40.70s, 1080x1920 @ 30fps, H.264/AAC, -14.0 LUFS, KinoCut Score: **90.6 / 100**, archived with all QA contact sheets under `build/samples/sample_01_cosmos/`.
+  - **Sample 2 (`sample_02_epics`):** 46.60s, 1080x1920 @ 30fps, H.264/AAC, -14.0 LUFS, KinoCut Score: **90.8 / 100**, archived with all QA contact sheets under `build/samples/sample_02_epics/`.
+- **Automated Tests:** `python -m unittest tests/test_render_pipeline.py -v` — **Ran 4 tests ... OK**.
+
+#### Milestone 6 — Offline YouTube Publisher & Safeguards (`scripts/publish_youtube.py`): COMPLETED (Offline Engine Verified; Live Publishing Pending User OAuth)
+- **Zero-Argument Publisher CLI:** Implemented `scripts/publish_youtube.py` strictly enforcing `upload_mode: "private_review"`, `allow_public_or_scheduled: false`, and `containsSyntheticMedia=True`.
+- **Isolated `.env.youtube` Credential Discovery:** Loads credentials without leaking into parent environment; falls back gracefully to offline dry-run stub mode when credentials are absent or `SUTRADHAR_OFFLINE_STUB=1`.
+- **Strict Schema Compliance:** Emits `build/publish_result.json` validating against `db_manager.PublishResult` (`extra="forbid"`).
+- **Cross-Module Contract Verification:** Successfully piped `publish_youtube.py` output directly into `db_manager.py --record-published` in isolated temp workspace.
+- **Automated Tests:** `python -m unittest tests/test_publish_youtube.py -v` — **Ran 6 tests ... OK**.
+- **Live Publishing Status:** Marked as **Pending User OAuth Setup & Voice/Sample Approval** per non-negotiable safety guardrails.
+
+#### Milestone 7 — User Handoff Guide & Comprehensive Verification: COMPLETED
+- **Operations Manual:** Created `docs/MANUAL_SETUP_AND_OPERATIONS.md` covering Google Cloud setup, OAuth token generation script, Studio Auto-Dubbing, voice/sample approval decisions, routine 6-step operations, and troubleshooting.
+- **Repository-Wide Test Discovery:** `python -m unittest discover -s tests -v` — **Ran 35 tests ... OK** (35 passed, 0 failed, 0 skipped).
+- **Database Immutability Re-Verification:** Root `episodes.db` confirmed identical to initial baseline (SHA-256: `729acce0cd4f31cc69ceca61470d331abcbce5e62b51728ab372cd28f83f8011`, size: 36,864 bytes).

@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
+  <defs>
+    <linearGradient id="temple_sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="var(--sky-top, #1A0D00)" />
+      <stop offset="60%" stop-color="var(--sky-bottom, #4D2600)" />
+      <stop offset="100%" stop-color="var(--accent-glow, #FF8C00)" stop-opacity="0.4" />
+    </linearGradient>
+    <linearGradient id="sandstone_grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8C531B" />
+      <stop offset="50%" stop-color="#59320C" />
+      <stop offset="100%" stop-color="#261404" />
+    </linearGradient>
+  </defs>
+
+  <!-- Layer 1: Far Sky (Twilight Horizon over Forgotten Empire) -->
+  <g id="bg_far_sky">
+    <rect width="1080" height="1920" fill="url(#temple_sky)" />
+    <!-- Distant Setting Solar Disc -->
+    <circle cx="540" cy="720" r="160" fill="var(--accent-glow, #FF4500)" opacity="0.35" />
+    <circle cx="540" cy="720" r="90" fill="#FFF" opacity="0.75" />
+  </g>
+
+  <!-- Layer 2: Midground Architecture (Vimana Spire & Colonnade of Hampi/Nalanda) -->
+  <g id="bg_mid_architecture">
+    <!-- Great Vimana Temple Spire -->
+    <polygon points="540,580 440,980 640,980" fill="url(#sandstone_grad)" />
+    <!-- Stepped Tiers on Vimana -->
+    <rect x="470" y="660" width="140" height="16" fill="#1A0D00" opacity="0.6" />
+    <rect x="450" y="740" width="180" height="18" fill="#1A0D00" opacity="0.6" />
+    <rect x="430" y="820" width="220" height="22" fill="#1A0D00" opacity="0.6" />
+    <rect x="410" y="900" width="260" height="26" fill="#1A0D00" opacity="0.6" />
+    <!-- Kalasha (Pinnacle Urn) -->
+    <circle cx="540" cy="565" r="14" fill="var(--accent-glow, #FFD700)" />
+    <!-- Flanking Shrines -->
+    <polygon points="260,820 180,1050 340,1050" fill="url(#sandstone_grad)" opacity="0.85" />
+    <polygon points="820,820 740,1050 900,1050" fill="url(#sandstone_grad)" opacity="0.85" />
+  </g>
+
+  <!-- Layer 3: Foreground Pillars (Carved Monolithic Stone Pillars & Lintels) -->
+  <g id="bg_fg_pillars">
+    <!-- Grand Left Carved Pillar -->
+    <rect x="40" y="850" width="140" height="1070" fill="var(--shadow-tint, #140A02)" />
+    <!-- Yali (Mythic Beast) Bracket Silhouette -->
+    <polygon points="180,950 250,1020 180,1100" fill="var(--shadow-tint, #140A02)" />
+    <!-- Grand Right Carved Pillar -->
+    <rect x="900" y="850" width="140" height="1070" fill="var(--shadow-tint, #140A02)" />
+    <polygon points="900,950 830,1020 900,1100" fill="var(--shadow-tint, #140A02)" />
+    <!-- Foreground Arch Lintel -->
+    <rect x="0" y="800" width="1080" height="70" fill="var(--shadow-tint, #140A02)" />
+    <!-- Basal Flagstone Platform -->
+    <rect x="0" y="1650" width="1080" height="270" fill="#0A0501" />
+  </g>
+</svg>

@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
+  <defs>
+    <radialGradient id="nebula_core" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="var(--accent-glow, #9D8DF1)" stop-opacity="0.6" />
+      <stop offset="35%" stop-color="#C49B76" stop-opacity="0.25" />
+      <stop offset="65%" stop-color="var(--sky-bottom, #2B2144)" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="var(--sky-top, #0F0E1A)" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="cosmic_sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="var(--sky-top, #0F0E1A)" />
+      <stop offset="60%" stop-color="var(--sky-bottom, #221D38)" />
+      <stop offset="100%" stop-color="var(--sky-top, #0F0E1A)" />
+    </linearGradient>
+    <linearGradient id="dust_pillar_grad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="var(--shadow-tint, #0A0912)" stop-opacity="0.95" />
+      <stop offset="70%" stop-color="var(--shadow-tint, #171326)" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="var(--accent-glow, #A797F8)" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+
+  <!-- Layer 1: Far Sky (Deep Starfield & Galactic Core) -->
+  <g id="bg_far_sky">
+    <!-- Base Deep Space Void -->
+    <rect width="1080" height="1920" fill="url(#cosmic_sky)" />
+    <!-- Distant Stars (Balanced Warm & Cool Stellar Points) -->
+    <g opacity="0.85">
+      <circle cx="120" cy="180" r="1.5" fill="#FFEBB3" />
+      <circle cx="280" cy="340" r="2.0" fill="#FFFFFF" />
+      <circle cx="450" cy="120" r="1.2" fill="#FFD285" />
+      <circle cx="680" cy="240" r="2.5" fill="#FFFFFF" />
+      <circle cx="890" cy="160" r="1.8" fill="#FFE8C2" />
+      <circle cx="980" cy="390" r="1.2" fill="#FFFFFF" />
+      <circle cx="150" cy="620" r="2.2" fill="#FFDA9E" />
+      <circle cx="840" cy="710" r="1.5" fill="#FFFFFF" />
+      <circle cx="210" cy="980" r="1.8" fill="#FFE4B5" />
+      <circle cx="920" cy="1150" r="2.0" fill="#FFFFFF" />
+      <circle cx="110" cy="1420" r="1.5" fill="#FFDFB0" />
+      <circle cx="760" cy="1580" r="2.2" fill="#FFFFFF" />
+      <circle cx="340" cy="1780" r="1.2" fill="#FFEBB3" />
+      <circle cx="880" cy="1820" r="1.8" fill="#FFFFFF" />
+    </g>
+    <!-- Distant Quasar / Core Glow -->
+    <circle cx="540" cy="750" r="450" fill="url(#nebula_core)" />
+  </g>
+
+  <!-- Layer 2: Midground Architecture (Cosmic Dust Filaments & Accretion Halo) -->
+  <g id="bg_mid_architecture">
+    <!-- Tangled Relativistic Filaments -->
+    <path d="M 0,600 Q 300,500 540,750 Q 780,1000 1080,900 L 1080,1200 Q 700,1300 540,1050 Q 380,800 0,950 Z" fill="var(--accent-glow, #8A2BE2)" opacity="0.18" />
+    <path d="M 1080,450 Q 750,600 540,750 Q 330,900 0,800 L 0,1050 Q 400,1150 540,950 Q 680,750 1080,700 Z" fill="var(--sky-bottom, #4B0082)" opacity="0.25" />
+    <!-- Stellar Nursery Knot -->
+    <circle cx="540" cy="750" r="120" fill="none" stroke="var(--accent-glow, #BA55D3)" stroke-width="3" stroke-dasharray="12 8" opacity="0.5" />
+    <circle cx="540" cy="750" r="40" fill="#FFF" opacity="0.8" />
+  </g>
+
+  <!-- Layer 3: Foreground Pillars (Interstellar Gas Pillars & Silhouette Framing) -->
+  <g id="bg_fg_pillars">
+    <!-- Left Gas Monolith -->
+    <path d="M 0,900 Q 140,1100 110,1400 Q 80,1650 0,1920 L 0,1920 Z" fill="url(#dust_pillar_grad)" />
+    <!-- Right Gas Monolith -->
+    <path d="M 1080,850 Q 940,1150 970,1450 Q 1000,1700 1080,1920 L 1080,1920 Z" fill="url(#dust_pillar_grad)" />
+    <!-- Bottom Vignette Arch -->
+    <rect x="0" y="1650" width="1080" height="270" fill="var(--shadow-tint, #020005)" opacity="0.85" />
+  </g>
+</svg>
