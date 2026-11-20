@@ -386,3 +386,20 @@ python scripts/db_manager.py --init
 * Switch `upload_mode: "scheduled"` in `config.yaml`.
 * Schedule `/automation` **Daily at 16:30 IST** pointing to `docs/MASTER_AUTOMATION_PROMPT.md` so each Short is scheduled for `18:30 IST` peak traffic.
 * On Episode 1–2 of each series, open **YouTube Studio → Content → Shows** and toggle the auto-created series playlist into a native **Shorts Series** (serial mode).
+
+---
+
+### 9. Milestone Status & Verification Log
+
+#### Milestone 1 — Repository Scaffold & Environment Setup: COMPLETED
+- **Environment:** Windows 11 (PowerShell), Node.js v24.22.1, Python 3.12.10 (`.venv`), FFmpeg/FFprobe 7.1, `hyperframes` 0.9.70 (Chromium verified via `npx hyperframes browser ensure` and `npx hyperframes doctor`), `kinocut==2.0.1` (`kino doctor` passed).
+- **Global Agent Skills:** Installed globally at `C:\Users\manis\.agents\skills\` (`hyperframes`, `svg-character-animation`, and companion skills; verified via `npx skills list -g`).
+
+#### Milestone 2 — Database & State Management (`scripts/db_manager.py`): COMPLETED
+- **Automated Compliance Tests:** `python -m unittest tests/test_db_manager.py -v` — **Ran 11 tests ... OK** (0 failures, 0 skips, executed in isolated temporary workspaces via `SUTRADHAR_ROOT`).
+- **Live Database Verification:** `python scripts/db_manager.py --context` verified against initialized `episodes.db`: `active_series: null`, `next_episode_number_in_series: 1`, `next_global_episode_number: 1`, `upload_mode: "private_review"`, `allow_public_or_scheduled: false`, `completed_private_review_episodes: 0`.
+- **Enforced Contracts:** Identical `narration_text`/`caption_text`, complete `series_bible_json` roadmap validation, strict `private_review` publishing lock (`PUBLISHED` and `scheduled_publish_at` rejected while locked), pillar rotation, bespoke asset uniqueness, and atomic `BEGIN IMMEDIATE` transactions with SQLite foreign keys and partial unique indexes.
+- **Remaining Limitations (By Design, Deferred to Later Milestones):**
+  - Physical `.svg`, BGM, and SFX file existence on disk is validated in Milestones 3–5 rather than `db_manager.py`.
+  - Audio runtime bounds (`34–50s` hard, `36–46s` target) are enforced in Milestone 3 (`scripts/build_audio.py`).
+  - Zero Milestone 2 requirements remain incomplete.
