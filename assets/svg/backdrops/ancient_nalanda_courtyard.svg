@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920" id="ancient_nalanda_courtyard">
+  <defs>
+    <!-- Sunset Sky Gradient -->
+    <linearGradient id="nalanda_sunset" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3d1209"/>
+      <stop offset="35%" stop-color="#802613"/>
+      <stop offset="65%" stop-color="#c95822"/>
+      <stop offset="100%" stop-color="#f59338"/>
+    </linearGradient>
+
+    <!-- Red Sandstone Brick Gradients -->
+    <linearGradient id="sandstone_red" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b84d31"/>
+      <stop offset="50%" stop-color="#8c331a"/>
+      <stop offset="100%" stop-color="#541b0b"/>
+    </linearGradient>
+    <linearGradient id="sandstone_shadow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#692411"/>
+      <stop offset="100%" stop-color="#300d04"/>
+    </linearGradient>
+
+    <!-- Warm Diya (Lamp) Glow -->
+    <radialGradient id="diya_flame" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fffbe6"/>
+      <stop offset="30%" stop-color="#ffcc00"/>
+      <stop offset="70%" stop-color="#e65100"/>
+      <stop offset="100%" stop-color="#e65100" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- LAYER 1: SUNSET SKY & DISTANT STUPA SILHOUETTES (#bg_sky) -->
+  <g id="bg_sky">
+    <rect width="1080" height="1920" fill="url(#nalanda_sunset)"/>
+    <!-- Distant Great Stupa Silhouettes -->
+    <path d="M 0 1150 L 0 920 Q 180 820 320 860 Q 420 890 540 820 Q 680 750 820 820 Q 960 880 1080 820 L 1080 1150 Z" 
+          fill="#47150a" opacity="0.6"/>
+    <!-- Main Stupa Mound Spire in distance -->
+    <path d="M 460 830 Q 540 680 620 830 Z" fill="#360e06"/>
+    <line x1="540" y1="680" x2="540" y2="610" stroke="#360e06" stroke-width="6"/>
+    <circle cx="540" cy="610" r="10" fill="#f59338"/>
+  </g>
+
+  <!-- LAYER 2: DISTANT MONASTERY MONUMENTAL ARCHES (#bg_far) -->
+  <g id="bg_far">
+    <!-- Colonnade row across horizon -->
+    <rect x="0" y="1050" width="1080" height="350" fill="url(#sandstone_shadow)"/>
+    <!-- Distant Arches -->
+    <path d="M 120 1200 Q 240 1080 360 1200" stroke="#b84d31" stroke-width="12" fill="none"/>
+    <path d="M 380 1200 Q 500 1080 620 1200" stroke="#b84d31" stroke-width="12" fill="none"/>
+    <path d="M 640 1200 Q 760 1080 880 1200" stroke="#b84d31" stroke-width="12" fill="none"/>
+  </g>
+
+  <!-- LAYER 3: MIDGROUND CARVED COLONNADES & RED BRICK ARCHWAY (#bg_mid) -->
+  <g id="bg_mid">
+    <!-- Classical Chaitya Horseshoe Grand Arch -->
+    <path d="M 160 1920 L 160 900 Q 540 450 920 900 L 920 1920" fill="none" stroke="url(#sandstone_red)" stroke-width="72"/>
+    <path d="M 195 1920 L 195 920 Q 540 490 885 920 L 885 1920" fill="none" stroke="#f59338" stroke-width="6" opacity="0.8"/>
+
+    <!-- Horizontal Carved Cornices -->
+    <rect x="120" y="880" width="840" height="28" fill="#541b0b" stroke="#f59338" stroke-width="2"/>
+    <rect x="140" y="840" width="800" height="20" fill="#541b0b"/>
+
+    <!-- Light Shafts streaming through archway from sunset -->
+    <polygon points="540,500 240,1920 840,1920" fill="url(#diya_flame)" opacity="0.12"/>
+  </g>
+
+  <!-- LAYER 4: NEAR COURT BALUSTRADE & CLAY DIYAS (#bg_near) -->
+  <g id="bg_near">
+    <!-- Massive Fluted Sandstone Pillar Left -->
+    <rect x="0" y="650" width="180" height="1270" fill="url(#sandstone_red)" stroke="#260a02" stroke-width="5"/>
+    <rect x="-10" y="700" width="200" height="35" fill="#f59338" opacity="0.85"/>
+    <rect x="-10" y="1520" width="200" height="40" fill="#f59338" opacity="0.85"/>
+
+    <!-- Massive Fluted Sandstone Pillar Right -->
+    <rect x="900" y="650" width="180" height="1270" fill="url(#sandstone_red)" stroke="#260a02" stroke-width="5"/>
+    <rect x="890" y="700" width="200" height="35" fill="#f59338" opacity="0.85"/>
+    <rect x="890" y="1520" width="200" height="40" fill="#f59338" opacity="0.85"/>
+
+    <!-- Terracotta Courtyard Floor -->
+    <rect x="0" y="1620" width="1080" height="300" fill="#300d04" stroke="#8c331a" stroke-width="4"/>
+    <line x1="0" y1="1680" x2="1080" y2="1680" stroke="#f59338" stroke-width="3" opacity="0.7"/>
+
+    <!-- Left Pillar Diya Bracket & Flame -->
+    <g id="diya_left" transform="translate(180, 1420)">
+      <path d="M 0 0 L 35 15 L 35 25 L 0 20 Z" fill="#260a02"/>
+      <ellipse cx="40" cy="18" rx="18" ry="7" fill="#8c331a" stroke="#260a02" stroke-width="1.5"/>
+      <!-- Glow Circle -->
+      <circle cx="40" cy="10" r="45" fill="url(#diya_flame)"/>
+      <ellipse cx="40" cy="10" rx="8" ry="14" fill="#ffec80"/>
+    </g>
+
+    <!-- Right Pillar Diya Bracket & Flame -->
+    <g id="diya_right" transform="translate(900, 1420)">
+      <path d="M 0 0 L -35 15 L -35 25 L 0 20 Z" fill="#260a02"/>
+      <ellipse cx="-40" cy="18" rx="18" ry="7" fill="#8c331a" stroke="#260a02" stroke-width="1.5"/>
+      <circle cx="-40" cy="10" r="45" fill="url(#diya_flame)"/>
+      <ellipse cx="-40" cy="10" rx="8" ry="14" fill="#ffec80"/>
+    </g>
+  </g>
+</svg>

@@ -63,6 +63,7 @@ Sutradhar/
 │   ├── MANUAL_SETUP_AND_OPERATIONS.md  # Operations manual, manual workflow guide & verification records
 │   └── schema.sql                      # Reference SQLite schema for episodes.db
 ├── assets/
+│   ├── AUDIO_LIBRARY_MANIFEST.md       # Audio specs, loudness criteria & CC0 search keywords
 │   ├── bgm/
 │   │   ├── dramatic_mythology.mp3      # Indian ethnic drone & tanpura resonance bed (<620Hz low-pass)
 │   │   ├── cosmic_mystery.mp3          # Ambient synth/space drone bed
@@ -70,20 +71,29 @@ Sutradhar/
 │   ├── sfx/
 │   │   ├── whoosh_soft.wav             # Scene-transition stereo whoosh
 │   │   ├── sub_hit.wav                 # 55Hz cinematic sub bass drop
-│   │   └── riser_tension.wav           # Restrained analog tension swell
+│   │   └── tension_swell.wav           # Restrained analog tension swell
 │   ├── js/
 │   │   └── gsap.min.js                 # GSAP 3.12.5 local runtime
 │   └── svg/
-│       ├── characters/                 # Hierarchical Kathputli character rigs
+│       ├── characters/                 # Hierarchical Kathputli character rigs (viewBox 0 0 800 1200)
 │       │   ├── ravana.svg              # 10-headed King Ravana (rivet rig, expressions, lip-sync, janeu)
+│       │   ├── shani_dev.svg           # Lord Shani (midnight indigo, dark mukut, piercing gaze, cosmic halo, danda)
+│       │   ├── narad_muni.svg          # Devarshi Narada (saffron/ivory robes, jasmine topknot, Mahati Veena)
+│       │   ├── hanuman.svg             # Mahavira Hanuman (vermilion athletic build, arched tail, golden Gada)
+│       │   ├── ancient_scholar.svg     # Master Polymath (ivory/ochre, palm-leaf manuscript, brass astrolabe)
 │       │   └── sutradhar_narrator.svg  # Signature host storyteller Kathputli rig
-│       └── backdrops/                  # Theatrical multi-plane environment SVGs
+│       └── backdrops/                  # Theatrical multi-plane environment SVGs (viewBox 0 0 1080 1920)
+│           ├── celestial_cosmos_court.svg # Midnight indigo starfield, golden astrolabe arch, stellar dust
+│           ├── ancient_nalanda_courtyard.svg # Terracotta sandstone colonnades, carved arches, clay diyas
+│           ├── forest_ashram_twilight.svg # Silhouette banyans, aerial roots, glowing havan kund fire
+│           ├── ocean_sky_horizon.svg   # Golden-crimson sunset, layered folk waves, misty cliffs
 │           ├── golden_lanka_citadel.svg # Full-bleed Lanka spires, twilight sky, courtyard waters
 │           ├── lanka_sandstone_throne.svg # Sandstone throne room backdrop
 │           ├── mount_kailash.svg       # Sacred summit with cosmic light shafts
 │           ├── crushed_atmosphere.svg  # Deep cosmic void with atmospheric pressure
 │           ├── granite_underside.svg   # Descending granite mountain underside
-│           └── ancient_temple_ruins.svg # Sandstone carved temple colonnades
+│           ├── ancient_temple_ruins.svg # Sandstone carved temple colonnades
+│           └── deep_cosmos_nebula.svg  # Deep purple/indigo interstellar nebula
 ├── models/
 │   └── kokoro/
 │       ├── kokoro-v1.0.onnx            # Authoritative 325.5MB ONNX model (SHA-256 pinned)
@@ -214,8 +224,9 @@ During `render_and_qa.py`, FFmpeg extracts a clean-canvas, high-impact JPEG thum
 flowchart LR
     P1["Phase 1: Pipeline & Model Fixes<br/>(COMPLETED)"] --> P2["Phase 2: Core V2 Migration<br/>(COMPLETED)"]
     P2 --> P3["Phase 3: Cleanup, Live Verification & Ops Docs<br/>(COMPLETED)"]
-    P3 --> P4["Phase 4: Kathputli Cast & Audio Library<br/>(NEXT)"]
-    P4 --> P5["Phase 5: Production Calibration & Unlock<br/>(FINAL)"]
+    P3 --> P4A["Phase 4A: Multi-Shot Engine & Cast Expansion<br/>(COMPLETED)"]
+    P4A --> P4B["Phase 4B: Multi-Series Production Prep<br/>(NEXT)"]
+    P4B --> P5["Phase 5: Production Calibration & Unlock<br/>(FINAL)"]
 ```
 
 #### Phase 1 — Environment & Audio Pipeline Fixes: COMPLETED
@@ -242,10 +253,44 @@ flowchart LR
 - **Stage 3C (Documentation):** Complete rewrite of `IMPLEMENTATION_PLAN.md`, `MASTER_AUTOMATION_PROMPT.md`, and `MANUAL_SETUP_AND_OPERATIONS.md`. Retired obsolete interim docs.
 - **Stage 3D (Operational Workflow Selection & Automation Documentation):** Established **Manual Daily Execution** on Gemini 2.5 Pro as Sutradhar's recommended primary daily workflow. Documented Antigravity App `/automation` as an optional future upgrade with verified local sidecar, machine-awake, Pro model, and Windows Terminal Sandbox permission requirements.
 
-#### Phase 4 — Kathputli Cast Expansion & Real Audio Library: NEXT
-- Expand Kathputli character roster in `assets/svg/characters/` (Lord Shiva, Narad Muni, Shani Dev, Ashwatthama) following the verified rivet rig standard.
-- Author diverse multi-plane backdrops (Vaikuntha, Kurukshetra, Pataliputra, Harappan Citadel).
-- Curate and master thematic acoustic BGM tracks (ancient Indian folk percussion, bamboo flute, sitar, veena) and transition SFX.
+#### Phase 4A — Generalized Multi-Shot Engine, Kathputli Cast Expansion & Real Audio Hardening: COMPLETED
+- **Generalized Multi-Shot Engine (`scripts/generate_composition.py` + `engine.js`):**
+  - Removed all hardcoded Phase 2 Ravana/Lanka/Kailash/Granite references.
+  - Implemented 100% manifest-driven generator supporting any 5–8 scene sequence across all 3 editorial pillars.
+  - Dynamic SVG injection: backdrops, diagrams, and characters resolved from `assets/svg/`.
+  - Universal Hierarchical Rivet Joint Controls in `styles.css`: stable `0px 0px` joint origins across all limbs and joints, full support for both two-armed and multi-armed puppet rigs.
+  - Declarative shot choreography in `engine.js`: 7 shot types (`curtain_establishing`, `character_medium`, `character_closeup_dialogue`, `two_character_confrontation`, `landscape_cutaway`, `bespoke_diagram_reveal`, `dramatic_climax`), 5 standardized puppet poses (`idle_royal`, `action_raised`, `wrath_dialogue`, `blessing_calm`, `humbled_braced`), camera motions, and 0.25–0.35s transitions.
+  - Validated with `npx hyperframes lint` (0 errors) and `npx hyperframes check --json` (0 errors, `ok: true`).
+- **Kathputli Cast Expansion (`assets/svg/characters/`):**
+  - Authored 4 new reusable Kathputli puppet rigs at `800×1200 viewBox`: `shani_dev.svg`, `narad_muni.svg`, `hanuman.svg`, `ancient_scholar.svg`.
+  - Built with local joint anchors (`transform-origin: 0px 0px !important`), `<clipPath>` for torso ornaments, and switchable facial states (`#mouth_calm`, `#mouth_talk`, `#mouth_shout`, `#eyes_normal`, `#eyes_wrath`, `#brows_neutral`, `#brows_angry`).
+  - Rendered 4-pose contact verification sheets under `build/phase4_qa/<char>_pose_sheet.png` (Idle, Action Raised inside `x: 90..990`, Close-up Dialogue, Alternate/Calm) and visually inspected each PNG.
+- **Theatrical Full-Bleed Backdrops (`assets/svg/backdrops/`):**
+  - Authored 4 new full-bleed `1080×1920` backdrops: `celestial_cosmos_court.svg`, `ancient_nalanda_courtyard.svg`, `forest_ashram_twilight.svg`, `ocean_sky_horizon.svg`.
+  - Structured with 4-plane depth layering (`#bg_sky`, `#bg_far`, `#bg_mid`, `#bg_near`). Strictly zero teal/cyan.
+  - Verified automatic discovery via `python scripts/db_manager.py --context`.
+- **Audio Pipeline Hardening (`scripts/render_and_qa.py` + `assets/AUDIO_LIBRARY_MANIFEST.md`):**
+  - Enforced explicit 24,000 Hz resampling (`aresample=24000:async=1`) across BGM and SFX inputs, eliminating sample-rate drift.
+  - Added smooth 1.20s tail fade-out (`afade=t=out:st={duration-1.2}:d=1.2`) on background music.
+  - Preserved procedural acoustic drone fallback (`aevalsrc`) when BGM files are absent.
+  - Authored `assets/AUDIO_LIBRARY_MANIFEST.md` documenting technical specs, loudness targets (-14.0 LUFS), and CC0 / YouTube Audio Library search keywords.
+- **Automated Test Suite:**
+  - Expanded test coverage in `tests/test_render_pipeline.py`.
+  - Full suite: **39/39 PASSED** (100% pass, 0 failures, 0 skips).
+- **End-to-End Cross-Cast Verification Short:**
+  - Rendered full isolated 38–44s short (*Shani Dev & Narad Muni: Cosmic Scales of Karma*) in an isolated temporary workspace.
+  - Duration: **39.10s** (target sweet spot [36s, 46s]).
+  - Resolution: **1080×1920 @ 30fps**.
+  - Loudness: **-14.3 LUFS** (target: -14.0 LUFS ± 0.5).
+  - KinoCut Score: **85.0 / 100.0** (target: $\ge 80.0$).
+  - Clean canvas: **100% verified** (zero captions, zero title/part badges).
+  - Archived to `build/samples_v2/phase4_crosscast_verify/` (`final_short.mp4`, `qa_grid.jpg`, `final_qa_grid.jpg`, `thumbnail.jpg`, `manifest.js`, `episode_plan.json`, `verification_report.json`).
+- **Database Immutability:**
+  - Root `episodes.db` confirmed bit-for-bit unchanged (SHA-256: `729ACCE0CD4F31CC69CECA61470D331ABCBCE5E62B51728AB372CD28F83F8011`).
+
+#### Phase 4B — Multi-Series Production Prep & Pillar Expansion: NEXT
+- Author bespoke diagrams and props for upcoming series across *Hidden History* and *Cosmic & Scientific Paradoxes*.
+- Prepare series bible templates and rotation schedules.
 
 #### Phase 5 — Production Calibration & Scheduled Publishing Unlock: FINAL
 - Run full 3-episode mini-series in `private_review` mode.

@@ -1,4 +1,4 @@
-/* Sutradhar v2.2 Master Theatrical Styles (Clean Canvas, Folk Art) */
+/* Sutradhar v4.0 Master Theatrical Styles (Clean Canvas, Folk Art) */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -24,7 +24,7 @@ body {
   transform-origin: 540px 960px;
 }
 
-/* Shot Containers */
+/* Modular Shot Containers */
 .shot-container {
   width: 1080px;
   height: 1920px;
@@ -34,6 +34,7 @@ body {
   overflow: hidden;
   opacity: 0;
   display: none;
+  transform-origin: 540px 960px;
 }
 
 .active-shot {
@@ -50,7 +51,7 @@ body {
   left: 0;
 }
 
-/* Velvet Theatrical Curtains (Shot 1) */
+/* Theatrical Velvet Curtains */
 .curtain {
   position: absolute;
   top: 0;
@@ -80,8 +81,8 @@ body {
   background: linear-gradient(90deg, rgba(180,30,30,0.35), rgba(45,10,10,0.7));
 }
 
-/* Puppet Wrapper */
-#puppet_wrapper {
+/* Puppet Wrappers (Kathputli Articulated Rigs) */
+.puppet-wrapper {
   position: absolute;
   top: 240px;
   left: 140px;
@@ -91,6 +92,30 @@ body {
   transform-origin: 400px 700px;
   display: none;
   opacity: 0;
+}
+
+/* Bespoke Diagram Wrapper */
+.diagram-wrapper {
+  position: absolute;
+  top: 320px;
+  left: 140px;
+  width: 800px;
+  height: 800px;
+  z-index: 45;
+  display: none;
+  opacity: 0;
+  transform-origin: 400px 400px;
+}
+
+/* Foreground Overlay Container */
+.foreground-wrapper {
+  position: absolute;
+  top: -80px;
+  left: 0;
+  width: 1080px;
+  height: 1920px;
+  z-index: 60;
+  pointer-events: none;
 }
 
 /* Floating Atmospheric Embers */
@@ -118,38 +143,63 @@ body {
   opacity: 0;
 }
 
-/* Shot 5 Granite Foregound Container */
-#foreground_mountain_container {
-  position: absolute;
-  top: -80px;
-  left: 0;
-  width: 1080px;
-  height: 1920px;
-  z-index: 60;
-  pointer-events: none;
-}
-
 /* ========================================================================= */
-/* HIERARCHICAL RIVET RIG (CSS Custom Properties with 0px 0px Joint Origins) */
+/* UNIVERSAL HIERARCHICAL RIVET RIG (0px 0px Stable Joint Origins)            */
 /* ========================================================================= */
-#leg_left_group {
-  transform: rotate(var(--rot-thigh-left, 0deg)) !important;
+#thigh_left_rot, #thigh_l_rot, #leg_left_group {
+  transform: rotate(var(--rot-thigh-l, var(--rot-thigh-left, 0deg))) !important;
   transform-origin: 0px 0px !important;
 }
-#shin_left_rot {
-  transform: rotate(var(--rot-shin-left, 0deg)) !important;
+#shin_left_rot, #calf_left_rot, #calf_l_rot {
+  transform: rotate(var(--rot-calf-l, var(--rot-shin-left, 0deg))) !important;
   transform-origin: 0px 0px !important;
 }
-
-#leg_right_group {
-  transform: rotate(var(--rot-thigh-right, 0deg)) !important;
-  transform-origin: 0px 0px !important;
-}
-#shin_right_rot {
-  transform: rotate(var(--rot-shin-right, 0deg)) !important;
+#foot_left_rot, #foot_l_rot {
+  transform: rotate(var(--rot-foot-l, 0deg)) !important;
   transform-origin: 0px 0px !important;
 }
 
+#thigh_right_rot, #thigh_r_rot, #leg_right_group {
+  transform: rotate(var(--rot-thigh-r, var(--rot-thigh-right, 0deg))) !important;
+  transform-origin: 0px 0px !important;
+}
+#shin_right_rot, #calf_right_rot, #calf_r_rot {
+  transform: rotate(var(--rot-calf-r, var(--rot-shin-right, 0deg))) !important;
+  transform-origin: 0px 0px !important;
+}
+#foot_right_rot, #foot_r_rot {
+  transform: rotate(var(--rot-foot-r, 0deg)) !important;
+  transform-origin: 0px 0px !important;
+}
+
+/* Universal Front/Primary Arms */
+#shoulder_front_left_rot, #shoulder_left_rot, #shoulder_l_rot {
+  transform: rotate(var(--rot-shoulder-l, var(--rot-shoulder-front-left, 0deg))) !important;
+  transform-origin: 0px 0px !important;
+}
+#elbow_front_left_rot, #elbow_left_rot, #elbow_l_rot {
+  transform: rotate(var(--rot-elbow-l, var(--rot-elbow-front-left, 0deg))) !important;
+  transform-origin: 0px 0px !important;
+}
+#wrist_front_left_rot, #wrist_left_rot, #wrist_l_rot {
+  transform: rotate(var(--rot-wrist-l, var(--rot-wrist-front-left, 0deg))) !important;
+  transform-origin: 0px 0px !important;
+}
+
+#shoulder_front_right_rot, #shoulder_right_rot, #shoulder_r_rot {
+  transform: rotate(var(--rot-shoulder-r, var(--rot-shoulder-front-right, 0deg))) !important;
+  transform-origin: 0px 0px !important;
+}
+#elbow_front_right_rot, #elbow_right_rot, #elbow_r_rot {
+  transform: rotate(var(--rot-elbow-r, var(--rot-elbow-front-right, 0deg))) !important;
+  transform-origin: 0px 0px !important;
+}
+#wrist_front_right_rot, #wrist_right_rot, #wrist_r_rot {
+  transform: rotate(var(--rot-wrist-r, var(--rot-wrist-front-right, 0deg))) !important;
+  transform-origin: 0px 0px !important;
+}
+
+/* Multi-arm Rigs (Rear Arms) */
 #shoulder_rear_left_rot {
   transform: rotate(var(--rot-shoulder-rear-left, 0deg)) !important;
   transform-origin: 0px 0px !important;
@@ -176,40 +226,12 @@ body {
   transform-origin: 0px 0px !important;
 }
 
-#shoulder_front_left_rot {
-  transform: rotate(var(--rot-shoulder-front-left, 0deg)) !important;
-  transform-origin: 0px 0px !important;
-}
-#elbow_front_left_rot {
-  transform: rotate(var(--rot-elbow-front-left, 0deg)) !important;
-  transform-origin: 0px 0px !important;
-}
-#wrist_front_left_rot {
-  transform: rotate(var(--rot-wrist-front-left, 0deg)) !important;
-  transform-origin: 0px 0px !important;
-}
-
-#shoulder_front_right_rot {
-  transform: rotate(var(--rot-shoulder-front-right, 0deg)) !important;
-  transform-origin: 0px 0px !important;
-}
-#elbow_front_right_rot {
-  transform: rotate(var(--rot-elbow-front-right, 0deg)) !important;
-  transform-origin: 0px 0px !important;
-}
-#wrist_front_right_rot {
-  transform: rotate(var(--rot-wrist-front-right, 0deg)) !important;
-  transform-origin: 0px 0px !important;
-}
-
-#torso_group {
+/* Torso, Waist & Head */
+#torso_group, .puppet-torso {
   transform: translate(var(--trans-torso-x, 0px), var(--trans-torso-y, 0px)) rotate(var(--rot-torso, 0deg)) !important;
   transform-origin: 400px 700px !important;
 }
-#kamarband {
-  transform: translate(var(--trans-torso-x, 0px), var(--trans-torso-y, 0px)) !important;
-}
-#dhoti_skirt {
+#kamarband, #dhoti_skirt {
   transform: translate(var(--trans-torso-x, 0px), var(--trans-torso-y, 0px)) !important;
 }
 #hip_left_joint {
@@ -218,12 +240,14 @@ body {
 #hip_right_joint {
   transform: translate(460px, calc(770px + var(--trans-torso-y, 0px))) !important;
 }
-#heads_fan_mount {
-  transform: translate(400px, calc(375px + var(--trans-torso-y, 0px))) rotate(var(--rot-torso, 0deg)) !important;
+#neck_rot {
+  transform: rotate(var(--rot-neck, 0deg)) !important;
+  transform-origin: 0px 0px !important;
 }
-#prabhavali_mount {
+#head_center, #head_group {
+  transform: rotate(var(--rot-head, 0deg)) !important;
+  transform-origin: 0px 0px !important;
+}
+#heads_fan_mount, #prabhavali_mount, #wrath_mount {
   transform: translate(400px, calc(345px + var(--trans-torso-y, 0px))) rotate(var(--rot-torso, 0deg)) !important;
-}
-#wrath_mount {
-  transform: translate(400px, calc(310px + var(--trans-torso-y, 0px))) !important;
 }

@@ -36,8 +36,9 @@
       <div class="ember" style="left: 840px;"></div>
     </div>
 
-    <!-- SHOT 1: FULL-BLEED LANKA CITADEL & VISTA (Beat 1) -->
-    <div id="shot_1_container" class="shot-container active-shot" data-layout-allow-overflow="true" data-layout-ignore="true">
+    <!-- DYNAMIC MANIFEST SHOT CONTAINERS -->
+    <!-- SHOT 1: (wide_establishing) -->
+    <div id="shot_1_container" class="shot-container active-shot" data-shot-type="wide_establishing" data-layout-allow-overflow="true" data-layout-ignore="true">
       <div class="bg-svg" data-layout-ignore="true">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920" id="lanka_fullbleed_svg">
   <defs>
@@ -272,10 +273,11 @@
         <div class="curtain-fold" style="right: 300px;"></div>
         <div class="curtain-fold" style="right: 420px;"></div>
       </div>
-    </div>
 
-    <!-- SHOT 2: ROYAL SANDSTONE COURT ADVANCE (Beat 2) -->
-    <div id="shot_2_container" class="shot-container" data-layout-allow-overflow="true" data-layout-ignore="true">
+
+    </div>
+    <!-- SHOT 2: (character_advance) -->
+    <div id="shot_2_container" class="shot-container" data-shot-type="character_advance" data-layout-allow-overflow="true" data-layout-ignore="true">
       <div class="bg-svg" data-layout-ignore="true">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920" id="lanka_fullbleed_svg">
   <defs>
@@ -497,10 +499,12 @@
   </g>
 </svg>
       </div>
-    </div>
 
-    <!-- SHOT 3: WRATHFUL CLOSE-UP & DIALOGUE (Beat 3) -->
-    <div id="shot_3_container" class="shot-container" data-layout-allow-overflow="true" data-layout-ignore="true">
+
+
+    </div>
+    <!-- SHOT 3: (close_up_wrath) -->
+    <div id="shot_3_container" class="shot-container" data-shot-type="close_up_wrath" data-layout-allow-overflow="true" data-layout-ignore="true">
       <div class="bg-svg" data-layout-ignore="true">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920" id="lanka_fullbleed_svg">
   <defs>
@@ -722,10 +726,12 @@
   </g>
 </svg>
       </div>
-    </div>
 
-    <!-- SHOT 4: MOUNT KAILASH COSMIC STRIKE (Beat 4) -->
-    <div id="shot_4_container" class="shot-container" data-layout-allow-overflow="true" data-layout-ignore="true">
+
+
+    </div>
+    <!-- SHOT 4: (cosmic_strike) -->
+    <div id="shot_4_container" class="shot-container" data-shot-type="cosmic_strike" data-layout-allow-overflow="true" data-layout-ignore="true">
       <div class="bg-svg" data-layout-ignore="true">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920" id="kailash_folk_art_svg">
   <defs>
@@ -918,10 +924,12 @@
   </g>
 </svg>
       </div>
-    </div>
 
-    <!-- SHOT 5: FOREGROUND GRANITE CRUSHING CROUCHED RAVANA (Beat 5) -->
-    <div id="shot_5_container" class="shot-container" data-layout-allow-overflow="true" data-layout-ignore="true">
+
+
+    </div>
+    <!-- SHOT 5: (crushed_submission) -->
+    <div id="shot_5_container" class="shot-container" data-shot-type="crushed_submission" data-layout-allow-overflow="true" data-layout-ignore="true">
       <div class="bg-svg" data-layout-ignore="true">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920" id="crushed_atmosphere_svg">
   <defs>
@@ -955,8 +963,9 @@
   </g>
 </svg>
       </div>
-      <!-- FOREGROUND GRANITE UNDERSIDE: Mountain physically presses DOWN -->
-      <div id="foreground_mountain_container" data-layout-ignore="true">
+
+
+      <div id="foreground_mountain_container" class="foreground-wrapper" data-layout-ignore="true">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 800" width="1080" height="800" id="granite_underside_svg">
   <defs>
     <!-- Dark Cosmic Granite Gradient -->
@@ -1028,8 +1037,8 @@
       </div>
     </div>
 
-    <!-- CENTRAL KATHPUTLI PUPPET RIG (Shared across Shots 2, 3, 5) -->
-    <div id="puppet_wrapper" data-layout-allow-overflow="true" data-layout-ignore="true">
+    <!-- KATHPUTLI PUPPET RIGS -->
+    <div id="puppet_wrapper" class="puppet-wrapper puppet-char" data-character="ravana" data-layout-allow-overflow="true" data-layout-ignore="true">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1200" width="800" height="1200" id="ravana_puppet_rig">
   <defs>
     <!-- Shaded Olive Skin Gradients -->

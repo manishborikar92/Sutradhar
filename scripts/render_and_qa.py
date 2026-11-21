@@ -96,8 +96,13 @@ def build_audio_mix(
 
     bgm_filename = manifest.get("bgm_track", "dramatic_mythology.mp3")
     bgm_path = root / "assets" / "bgm" / bgm_filename
+    use_procedural_bgm = False
     if not bgm_path.is_file():
-        raise RenderPipelineError(f"BGM track missing: {bgm_path}")
+        print(
+            f"[WARN] BGM track '{bgm_filename}' missing at '{bgm_path}'. Generating procedural acoustic drone fallback.",
+            file=sys.stderr,
+        )
+        use_procedural_bgm = True
 
     total_duration = float(manifest["audio"]["total_duration_sec"])
 
@@ -123,7 +128,7 @@ def build_audio_mix(
     # Build FFmpeg command inputs
     # Input 0: raw video
     # Input 1: narration
-    # Input 2: BGM
+    # Input 2: BGM (or procedural lavfi synth fallback)
     # Inputs 3..N: SFX
     cmd = [
         "ffmpeg",
@@ -132,11 +137,22 @@ def build_audio_mix(
         str(raw_video_path),
         "-i",
         str(narration_path),
-        "-stream_loop",
-        "-1",
-        "-i",
-        str(bgm_path),
     ]
+
+    if use_procedural_bgm:
+        cmd.extend([
+            "-f",
+            "lavfi",
+            "-i",
+            "aevalsrc=exprs='0.03*sin(2*PI*110*t)+0.02*sin(2*PI*165*t)':s=24000:c=stereo",
+        ])
+    else:
+        cmd.extend([
+            "-stream_loop",
+            "-1",
+            "-i",
+            str(bgm_path),
+        ])
 
     for sfx_file, _ in sfx_inputs:
         cmd.extend(["-i", str(sfx_file)])
@@ -147,24 +163,27 @@ def build_audio_mix(
     # 0. Broadcast Vocal Mastering Chain on Narration [1:a] -> [narration_mastered] & [narration_sidechain]
     # 80Hz high-pass, warmth (+2dB @ 175Hz), harshness tame (-2dB @ 5kHz), gentle air (+1.5dB @ 10kHz), smooth 2.5:1 compression
     filters.append(
-        "[1:a]highpass=f=80,equalizer=f=175:t=q:w=1.0:g=2.0,equalizer=f=5000:t=q:w=1.5:g=-2.0,equalizer=f=10000:t=q:w=1.0:g=1.5,acompressor=threshold=-18dB:ratio=2.5:attack=15:release=120,asplit=2[narration_mastered][narration_sidechain]"
+        "[1:a]aresample=24000:async=1,highpass=f=80,equalizer=f=175:t=q:w=1.0:g=2.0,equalizer=f=5000:t=q:w=1.5:g=-2.0,equalizer=f=10000:t=q:w=1.0:g=1.5,acompressor=threshold=-18dB:ratio=2.5:attack=15:release=120,asplit=2[narration_mastered][narration_sidechain]"
     )
 
-    # 1. BGM trim to total_duration and base volume
-    filters.append(f"[2:a]atrim=0:{total_duration:.4f},asetpts=PTS-STARTPTS,volume={bgm_base_gain}dB[bgm_base]")
+    # 1. BGM resample to 24kHz, trim to total_duration, 1.2s smooth fade-out, base volume
+    fade_start = max(0.0, total_duration - 1.2)
+    filters.append(
+        f"[2:a]aresample=24000:async=1,atrim=0:{total_duration:.4f},asetpts=PTS-STARTPTS,afade=t=out:st={fade_start:.4f}:d=1.2,volume={bgm_base_gain}dB[bgm_base]"
+    )
 
     # 2. Sidechain ducking of BGM under Narration
     filters.append(
         f"[bgm_base][narration_sidechain]sidechaincompress=threshold={duck_thresh}:ratio={duck_ratio}:attack={duck_attack}:release={duck_release}[bgm_ducked]"
     )
 
-    # 3. SFX placement with delay
+    # 3. SFX placement with resample and delay
     mix_sources = ["[narration_mastered]", "[bgm_ducked]"]
     for idx, (_, delay_sec) in enumerate(sfx_inputs):
         inp_idx = 3 + idx
         delay_ms = int(round(delay_sec * 1000.0))
         out_lbl = f"[sfx_{idx}]"
-        filters.append(f"[{inp_idx}:a]volume={sfx_gain}dB,adelay={delay_ms}|{delay_ms}[sfx_{idx}]")
+        filters.append(f"[{inp_idx}:a]aresample=24000:async=1,volume={sfx_gain}dB,adelay={delay_ms}|{delay_ms}[sfx_{idx}]")
         mix_sources.append(out_lbl)
 
     # 4. Amix all streams together

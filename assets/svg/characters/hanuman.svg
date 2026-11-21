@@ -1,0 +1,294 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1200" width="800" height="1200" id="hanuman_puppet_rig">
+  <defs>
+    <!-- Radiant Vermilion Skin Gradients -->
+    <linearGradient id="hanuman_skin_base" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff7b3d"/>
+      <stop offset="50%" stop-color="#e64a19"/>
+      <stop offset="100%" stop-color="#bf360c"/>
+    </linearGradient>
+    <linearGradient id="hanuman_skin_shadow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a62c07"/>
+      <stop offset="100%" stop-color="#6e1a00"/>
+    </linearGradient>
+    <linearGradient id="hanuman_skin_highlight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffa06d"/>
+      <stop offset="100%" stop-color="#e64a19"/>
+    </linearGradient>
+
+    <!-- Deep Crimson & Red Silk Dhoti -->
+    <linearGradient id="hanuman_dhoti" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b71c1c"/>
+      <stop offset="50%" stop-color="#7f0000"/>
+      <stop offset="100%" stop-color="#420000"/>
+    </linearGradient>
+    <linearGradient id="hanuman_dhoti_fold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d32f2f"/>
+      <stop offset="100%" stop-color="#5f0909"/>
+    </linearGradient>
+
+    <!-- Radiant Imperial Gold -->
+    <linearGradient id="hanuman_gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff5cc"/>
+      <stop offset="30%" stop-color="#f5c242"/>
+      <stop offset="70%" stop-color="#b8860b"/>
+      <stop offset="100%" stop-color="#5e4100"/>
+    </linearGradient>
+
+    <!-- Golden Gada Gradient -->
+    <radialGradient id="gada_gold" cx="40%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#fffbe6"/>
+      <stop offset="35%" stop-color="#f5c242"/>
+      <stop offset="80%" stop-color="#996c00"/>
+      <stop offset="100%" stop-color="#422e00"/>
+    </radialGradient>
+
+    <!-- Brass Rivet Pin -->
+    <radialGradient id="hanuman_rivet" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#fff9db"/>
+      <stop offset="30%" stop-color="#f59f00"/>
+      <stop offset="75%" stop-color="#975a16"/>
+      <stop offset="100%" stop-color="#3b2003"/>
+    </radialGradient>
+
+    <!-- Torso ClipPath -->
+    <clipPath id="hanuman_torso_clip">
+      <path d="M 260 460 Q 235 620 290 705 L 510 705 Q 565 620 540 460 Z"/>
+    </clipPath>
+
+    <!-- Puppet Pin -->
+    <g id="hanuman_pin">
+      <circle cx="0" cy="0" r="10" fill="#2b0d00"/>
+      <circle cx="0" cy="0" r="8" fill="url(#hanuman_rivet)" stroke="#421400" stroke-width="1.5"/>
+      <circle cx="-2.5" cy="-2.5" r="2.2" fill="#fffbe6" opacity="0.9"/>
+      <circle cx="0" cy="0" r="2" fill="#2b0d00"/>
+    </g>
+  </defs>
+
+  <style>
+    #hanuman_thigh_left_rot, #thigh_left_rot, #thigh_l_rot { transform: rotate(var(--rot-thigh-l, var(--rot-thigh-left, 0deg))); transform-origin: 0px 0px; }
+    #hanuman_shin_left_rot, #shin_left_rot, #calf_l_rot { transform: rotate(var(--rot-calf-l, var(--rot-shin-left, 0deg))); transform-origin: 0px 0px; }
+    #hanuman_thigh_right_rot, #thigh_right_rot, #thigh_r_rot { transform: rotate(var(--rot-thigh-r, var(--rot-thigh-right, 0deg))); transform-origin: 0px 0px; }
+    #hanuman_shin_right_rot, #shin_right_rot, #calf_r_rot { transform: rotate(var(--rot-calf-r, var(--rot-shin-right, 0deg))); transform-origin: 0px 0px; }
+
+    #hanuman_shoulder_left_rot, #shoulder_front_left_rot, #shoulder_l_rot { transform: rotate(var(--rot-shoulder-l, var(--rot-shoulder-front-left, 0deg))); transform-origin: 0px 0px; }
+    #hanuman_elbow_left_rot, #elbow_front_left_rot, #elbow_l_rot { transform: rotate(var(--rot-elbow-l, var(--rot-elbow-front-left, 0deg))); transform-origin: 0px 0px; }
+    #hanuman_wrist_left_rot, #wrist_front_left_rot, #wrist_l_rot { transform: rotate(var(--rot-wrist-l, var(--rot-wrist-front-left, 0deg))); transform-origin: 0px 0px; }
+
+    #hanuman_shoulder_right_rot, #shoulder_front_right_rot, #shoulder_r_rot { transform: rotate(var(--rot-shoulder-r, var(--rot-shoulder-front-right, 0deg))); transform-origin: 0px 0px; }
+    #hanuman_elbow_right_rot, #elbow_front_right_rot, #elbow_r_rot { transform: rotate(var(--rot-elbow-r, var(--rot-elbow-front-right, 0deg))); transform-origin: 0px 0px; }
+    #hanuman_wrist_right_rot, #wrist_front_right_rot, #wrist_r_rot { transform: rotate(var(--rot-wrist-r, var(--rot-wrist-front-right, 0deg))); transform-origin: 0px 0px; }
+
+    #hanuman_torso_group, #torso_group { transform: translate(var(--trans-torso-x, 0px), var(--trans-torso-y, 0px)) rotate(var(--rot-torso, 0deg)); transform-origin: 400px 700px; }
+    #hanuman_head_group, #head_center, #head_group { transform: rotate(var(--rot-head, 0deg)); transform-origin: 0px 0px; }
+  </style>
+
+  <!-- STYLIZED CELESTIAL TAIL (Arched behind back) -->
+  <g id="hanuman_tail">
+    <path d="M 370 730 C 220 700 120 480 180 300 C 220 180 320 160 350 210 C 370 250 330 280 290 270 C 240 260 200 350 230 480 C 260 600 360 670 410 720" 
+          stroke="url(#hanuman_skin_base)" stroke-width="26" stroke-linecap="round" fill="none"/>
+    <path d="M 370 730 C 220 700 120 480 180 300 C 220 180 320 160 350 210 C 370 250 330 280 290 270 C 240 260 200 350 230 480 C 260 600 360 670 410 720" 
+          stroke="#4a1500" stroke-width="4" stroke-linecap="round" fill="none"/>
+    <!-- Golden Bell Ornament at Tail Tip -->
+    <circle cx="345" cy="210" r="12" fill="url(#hanuman_gold)" stroke="#593c00" stroke-width="2"/>
+  </g>
+
+  <!-- LOWER BODY -->
+  <g id="hanuman_lower_body">
+    <!-- Left Leg -->
+    <g id="hip_left_joint" transform="translate(335, 770)">
+      <g id="thigh_left_rot">
+        <path d="M -26 -10 L -45 150 L 18 155 L 26 -10 Z" fill="url(#hanuman_skin_shadow)" stroke="#4a1500" stroke-width="2.5"/>
+        <g id="knee_left_joint" transform="translate(-15, 150)">
+          <g id="shin_left_rot">
+            <path d="M -20 0 Q -36 75 -24 160 L 26 160 Q 34 75 22 0 Z" fill="url(#hanuman_skin_base)" stroke="#4a1500" stroke-width="2.5"/>
+            <!-- Golden Ankle Ghungroo (Payal) -->
+            <ellipse cx="1" cy="155" rx="28" ry="10" fill="url(#hanuman_gold)" stroke="#593c00" stroke-width="2"/>
+            <path d="M -24 158 L -70 188 C -50 208 8 208 26 158 Z" fill="url(#hanuman_skin_shadow)" stroke="#4a1500" stroke-width="2.5"/>
+            <use href="#hanuman_pin" x="0" y="0"/>
+          </g>
+        </g>
+        <use href="#hanuman_pin" x="0" y="0"/>
+      </g>
+    </g>
+
+    <!-- Right Leg -->
+    <g id="hip_right_joint" transform="translate(465, 770)">
+      <g id="thigh_right_rot">
+        <path d="M -26 -10 L -18 155 L 45 150 L 26 -10 Z" fill="url(#hanuman_skin_shadow)" stroke="#4a1500" stroke-width="2.5"/>
+        <g id="knee_right_joint" transform="translate(15, 150)">
+          <g id="shin_right_rot">
+            <path d="M -22 0 Q -34 75 -26 160 L 24 160 Q 36 75 20 0 Z" fill="url(#hanuman_skin_base)" stroke="#4a1500" stroke-width="2.5"/>
+            <ellipse cx="-1" cy="155" rx="28" ry="10" fill="url(#hanuman_gold)" stroke="#593c00" stroke-width="2"/>
+            <path d="M 24 158 L 70 188 C 50 208 -8 208 -24 158 Z" fill="url(#hanuman_skin_shadow)" stroke="#4a1500" stroke-width="2.5"/>
+            <use href="#hanuman_pin" x="0" y="0"/>
+          </g>
+        </g>
+        <use href="#hanuman_pin" x="0" y="0"/>
+      </g>
+    </g>
+
+    <!-- Royal Crimson Pleated Dhoti -->
+    <g id="dhoti_skirt">
+      <path d="M 265 700 Q 400 735 535 700 L 575 925 Q 400 975 225 925 Z" fill="url(#hanuman_dhoti)" stroke="#2b0202" stroke-width="3"/>
+      <path d="M 310 715 L 265 920 M 350 722 L 325 940 M 400 728 L 400 962 M 450 722 L 475 940 M 490 715 L 535 920" stroke="url(#hanuman_dhoti_fold)" stroke-width="4" stroke-linecap="round"/>
+      <!-- Gold Brocade Border -->
+      <path d="M 225 925 Q 400 975 575 925 L 580 955 Q 400 1005 220 955 Z" fill="url(#hanuman_gold)" stroke="#593c00" stroke-width="2"/>
+      <!-- Central Gold & Crimson Sash -->
+      <path d="M 355 710 L 345 970 L 400 1015 L 455 970 L 445 710 Z" fill="url(#hanuman_dhoti_fold)" stroke="url(#hanuman_gold)" stroke-width="3"/>
+    </g>
+
+    <!-- Golden Kamarband (Waistband) -->
+    <g id="kamarband">
+      <rect x="260" y="685" width="280" height="36" rx="10" fill="url(#hanuman_gold)" stroke="#593c00" stroke-width="2.5"/>
+      <circle cx="400" cy="703" r="16" fill="#800000" stroke="url(#hanuman_gold)" stroke-width="3"/>
+      <circle cx="400" cy="703" r="6" fill="#fff5cc"/>
+      <use href="#hanuman_pin" x="300" y="703"/>
+      <use href="#hanuman_pin" x="500" y="703"/>
+    </g>
+  </g>
+
+  <!-- UPPER BODY / TORSO HIERARCHY -->
+  <g id="torso_group">
+    <!-- Athletic Vermilion Torso -->
+    <path d="M 260 460 Q 235 620 290 705 L 510 705 Q 565 620 540 460 Z" fill="url(#hanuman_skin_base)" stroke="#4a1500" stroke-width="3"/>
+
+    <!-- Clipped Torso Armor & Sacred Thread -->
+    <g clip-path="url(#hanuman_torso_clip)">
+      <!-- Powerful Pectoral Lines -->
+      <path d="M 320 515 Q 365 545 400 535 Q 435 545 480 515" stroke="url(#hanuman_skin_shadow)" stroke-width="4.5" fill="none"/>
+      <!-- Abdominal Contours -->
+      <line x1="400" y1="540" x2="400" y2="670" stroke="url(#hanuman_skin_shadow)" stroke-width="3.5"/>
+      <!-- Sacred Thread (Janeu) -->
+      <path d="M 285 465 Q 375 570 480 690" stroke="#ffffff" stroke-width="3.5" fill="none"/>
+      <path d="M 288 468 Q 378 573 483 693" stroke="url(#hanuman_gold)" stroke-width="1.8" fill="none"/>
+      <!-- Golden Chest Torc / Necklace -->
+      <path d="M 315 460 Q 400 530 485 460 L 475 490 Q 400 560 325 490 Z" fill="url(#hanuman_gold)" stroke="#593c00" stroke-width="2.5"/>
+    </g>
+
+    <!-- LEFT ARM (Viewer's Left - Action Flex / Blessing Gesture) -->
+    <g id="shoulder_front_left_joint" transform="translate(285, 475)">
+      <g id="shoulder_front_left_rot">
+        <path d="M 0 0 L -60 90 L -22 100 L 22 10 Z" fill="url(#hanuman_skin_shadow)" stroke="#4a1500" stroke-width="2.5"/>
+        <rect x="-50" y="65" width="28" height="16" rx="4" fill="url(#hanuman_gold)" stroke="#593c00" stroke-width="2"/>
+        <g id="elbow_front_left_joint" transform="translate(-45, 95)">
+          <g id="elbow_front_left_rot">
+            <path d="M 0 0 L -18 95 L 20 95 L 22 0 Z" fill="url(#hanuman_skin_base)" stroke="#4a1500" stroke-width="2.5"/>
+            <rect x="-12" y="70" width="26" height="15" rx="3" fill="url(#hanuman_gold)" stroke="#593c00" stroke-width="2"/>
+            <g id="wrist_front_left_joint" transform="translate(0, 95)">
+              <g id="wrist_front_left_rot">
+                <path d="M -12 0 L -15 35 L 15 35 L 12 0 Z" fill="url(#hanuman_skin_shadow)" stroke="#4a1500" stroke-width="2"/>
+                <use href="#hanuman_pin" x="0" y="0"/>
+              </g>
+            </g>
+            <use href="#hanuman_pin" x="0" y="0"/>
+          </g>
+        </g>
+        <use href="#hanuman_pin" x="0" y="0"/>
+      </g>
+    </g>
+
+    <!-- RIGHT ARM (Viewer's Right - Holding the Golden Gada) -->
+    <g id="shoulder_front_right_joint" transform="translate(515, 475)">
+      <g id="shoulder_front_right_rot">
+        <path d="M 0 0 L 60 90 L 22 100 L -22 10 Z" fill="url(#hanuman_skin_shadow)" stroke="#4a1500" stroke-width="2.5"/>
+        <rect x="22" y="65" width="28" height="16" rx="4" fill="url(#hanuman_gold)" stroke="#593c00" stroke-width="2"/>
+        <g id="elbow_front_right_joint" transform="translate(45, 95)">
+          <g id="elbow_front_right_rot">
+            <path d="M 0 0 L 18 95 L -20 95 L -22 0 Z" fill="url(#hanuman_skin_base)" stroke="#4a1500" stroke-width="2.5"/>
+            <rect x="-14" y="70" width="26" height="15" rx="3" fill="url(#hanuman_gold)" stroke="#593c00" stroke-width="2"/>
+            <g id="wrist_front_right_joint" transform="translate(0, 95)">
+              <g id="wrist_front_right_rot">
+                <path d="M -12 0 L -15 35 L 15 35 L 12 0 Z" fill="url(#hanuman_skin_shadow)" stroke="#4a1500" stroke-width="2"/>
+                <!-- Massive Golden Gada -->
+                <g id="hanuman_gada" transform="translate(0, 15)">
+                  <!-- Fluted Gold Handle -->
+                  <rect x="-9" y="-170" width="18" height="370" rx="5" fill="url(#hanuman_gold)" stroke="#593c00" stroke-width="2.5"/>
+                  <!-- Fluted Spherical Mace Head -->
+                  <circle cx="0" cy="-170" r="48" fill="url(#gada_gold)" stroke="#422e00" stroke-width="3.5"/>
+                  <!-- Mace Spikes / Petals -->
+                  <polygon points="0,-230 -15,-170 15,-170" fill="url(#hanuman_gold)" stroke="#593c00" stroke-width="2"/>
+                  <polygon points="0,-110 -15,-170 15,-170" fill="url(#hanuman_gold)" stroke="#593c00" stroke-width="2"/>
+                  <polygon points="-60,-170 -10,-185 -10,-155" fill="url(#hanuman_gold)" stroke="#593c00" stroke-width="2"/>
+                  <polygon points="60,-170 10,-185 10,-155" fill="url(#hanuman_gold)" stroke="#593c00" stroke-width="2"/>
+                  <!-- Lower Grip Knob -->
+                  <circle cx="0" cy="205" r="16" fill="url(#hanuman_gold)" stroke="#593c00" stroke-width="2.5"/>
+                </g>
+                <use href="#hanuman_pin" x="0" y="0"/>
+              </g>
+            </g>
+            <use href="#hanuman_pin" x="0" y="0"/>
+          </g>
+        </g>
+        <use href="#hanuman_pin" x="0" y="0"/>
+      </g>
+    </g>
+
+    <!-- HEAD & NECK -->
+    <g id="neck_mount" transform="translate(400, 460)">
+      <path d="M -24 0 L -26 -55 L 26 -55 L 24 0 Z" fill="url(#hanuman_skin_shadow)" stroke="#4a1500" stroke-width="2.5"/>
+      <g id="head_center" transform="translate(0, -50)">
+        <g id="hanuman_head_group">
+          <!-- Noble Monkey-God Facial Contour -->
+          <path d="M -44 -55 C -54 10 -42 50 0 58 C 42 50 54 10 44 -55 Z" fill="url(#hanuman_skin_base)" stroke="#4a1500" stroke-width="3"/>
+          <!-- Prominent Vanara Jaw/Muzzle -->
+          <path d="M -30 15 Q 0 42 30 15 Q 26 50 0 54 Q -26 50 -30 15 Z" fill="#ffab7a" stroke="#8c2e00" stroke-width="2"/>
+
+          <!-- Eyes -->
+          <g id="eyes_normal">
+            <ellipse cx="-20" cy="-10" rx="14" ry="8" fill="#ffffff" stroke="#4a1500" stroke-width="2"/>
+            <circle cx="-20" cy="-10" r="5" fill="#6e2200"/>
+            <circle cx="-21" cy="-11" r="1.8" fill="#ffffff"/>
+            <ellipse cx="20" cy="-10" rx="14" ry="8" fill="#ffffff" stroke="#4a1500" stroke-width="2"/>
+            <circle cx="20" cy="-10" r="5" fill="#6e2200"/>
+            <circle cx="19" cy="-11" r="1.8" fill="#ffffff"/>
+          </g>
+          <g id="eyes_wrath" opacity="0">
+            <ellipse cx="-20" cy="-10" rx="15" ry="9" fill="#ffecb3" stroke="#8a0000" stroke-width="2.5"/>
+            <circle cx="-20" cy="-10" r="6" fill="#c92a2a"/>
+            <ellipse cx="20" cy="-10" rx="15" ry="9" fill="#ffecb3" stroke="#8a0000" stroke-width="2.5"/>
+            <circle cx="20" cy="-10" r="6" fill="#c92a2a"/>
+          </g>
+
+          <!-- Brows -->
+          <g id="brows_neutral">
+            <path d="M -34 -22 Q -20 -30 -8 -22" stroke="#331000" stroke-width="4" stroke-linecap="round" fill="none"/>
+            <path d="M 34 -22 Q 20 -30 8 -22" stroke="#331000" stroke-width="4" stroke-linecap="round" fill="none"/>
+          </g>
+          <g id="brows_angry" opacity="0">
+            <path d="M -34 -18 L -8 -28" stroke="#800000" stroke-width="5" stroke-linecap="round"/>
+            <path d="M 34 -18 L 8 -28" stroke="#800000" stroke-width="5" stroke-linecap="round"/>
+          </g>
+
+          <!-- Nose -->
+          <ellipse cx="0" cy="14" rx="8" ry="4.5" fill="#4a1500"/>
+
+          <!-- Switchable Mouth -->
+          <g id="mouth_calm">
+            <path d="M -16 34 Q 0 40 16 34" stroke="#4a1500" stroke-width="3" stroke-linecap="round" fill="none"/>
+          </g>
+          <g id="mouth_talk" opacity="0">
+            <ellipse cx="0" cy="35" rx="10" ry="6" fill="#4d1200" stroke="#4a1500" stroke-width="2"/>
+            <path d="M -8 33 Q 0 35 8 33" stroke="#ffffff" stroke-width="2" fill="none"/>
+          </g>
+          <g id="mouth_shout" opacity="0">
+            <path d="M -16 30 Q 0 26 16 30 Q 12 45 0 45 Q -12 45 -16 30 Z" fill="#5c1000" stroke="#4a1500" stroke-width="2.5"/>
+            <path d="M -10 32 Q 0 34 10 32" stroke="#ffffff" stroke-width="2.5" fill="none"/>
+          </g>
+
+          <!-- Vermilion Tilak -->
+          <line x1="0" y1="-45" x2="0" y2="-15" stroke="#fff5cc" stroke-width="4"/>
+          <circle cx="0" cy="-22" r="3" fill="#8c0000"/>
+
+          <!-- Golden Mukut (Crown) -->
+          <path d="M -48 -50 L 48 -50 L 40 -130 L 0 -165 L -40 -130 Z" fill="url(#hanuman_gold)" stroke="#593c00" stroke-width="3"/>
+          <circle cx="0" cy="-85" r="10" fill="#800000" stroke="url(#hanuman_gold)" stroke-width="2"/>
+          <circle cx="0" cy="-85" r="4" fill="#fff5cc"/>
+
+          <!-- Ornate Golden Kundals -->
+          <circle cx="-48" cy="2" r="11" fill="url(#hanuman_gold)" stroke="#593c00" stroke-width="2.5"/>
+          <circle cx="48" cy="2" r="11" fill="url(#hanuman_gold)" stroke="#593c00" stroke-width="2.5"/>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

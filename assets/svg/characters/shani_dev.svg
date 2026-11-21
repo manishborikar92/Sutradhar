@@ -1,0 +1,295 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1200" width="800" height="1200" id="shani_dev_puppet_rig">
+  <defs>
+    <!-- Midnight Indigo Skin Gradients -->
+    <linearGradient id="shani_skin_base" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#323854"/>
+      <stop offset="50%" stop-color="#22273d"/>
+      <stop offset="100%" stop-color="#141829"/>
+    </linearGradient>
+    <linearGradient id="shani_skin_shadow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1b1f33"/>
+      <stop offset="100%" stop-color="#0c0e1a"/>
+    </linearGradient>
+    <linearGradient id="shani_skin_highlight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4a5278"/>
+      <stop offset="100%" stop-color="#2a304d"/>
+    </linearGradient>
+
+    <!-- Antique Tarnished Gold Gradients -->
+    <linearGradient id="shani_gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffe699"/>
+      <stop offset="30%" stop-color="#c99732"/>
+      <stop offset="70%" stop-color="#7a5410"/>
+      <stop offset="100%" stop-color="#3d2700"/>
+    </linearGradient>
+    <linearGradient id="shani_dark_iron" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4a4c57"/>
+      <stop offset="50%" stop-color="#272830"/>
+      <stop offset="100%" stop-color="#121317"/>
+    </linearGradient>
+
+    <!-- Deep Midnight Silk Dhoti -->
+    <linearGradient id="shani_dhoti" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#271b3d"/>
+      <stop offset="50%" stop-color="#171026"/>
+      <stop offset="100%" stop-color="#090512"/>
+    </linearGradient>
+    <linearGradient id="shani_dhoti_fold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#432f66"/>
+      <stop offset="100%" stop-color="#1c122e"/>
+    </linearGradient>
+
+    <!-- Dark Cosmic Prabhavali (Halo) -->
+    <radialGradient id="shani_halo_grad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffd56b" stop-opacity="0.85"/>
+      <stop offset="35%" stop-color="#b88614" stop-opacity="0.6"/>
+      <stop offset="70%" stop-color="#2d1d4d" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#0a0514" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Brass / Dark Gold Puppet Rivet -->
+    <radialGradient id="shani_rivet_metal" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#fff0b3"/>
+      <stop offset="35%" stop-color="#c99732"/>
+      <stop offset="75%" stop-color="#6e4604"/>
+      <stop offset="100%" stop-color="#2e1b00"/>
+    </radialGradient>
+
+    <!-- Torso ClipPath to lock ornaments inside torso -->
+    <clipPath id="shani_torso_clip">
+      <path d="M 270 465 Q 245 625 295 705 L 505 705 Q 555 625 530 465 Z"/>
+    </clipPath>
+
+    <!-- Joint Pin Template -->
+    <g id="shani_pin">
+      <circle cx="0" cy="0" r="10" fill="#181308"/>
+      <circle cx="0" cy="0" r="8" fill="url(#shani_rivet_metal)" stroke="#382405" stroke-width="1.5"/>
+      <circle cx="-2.5" cy="-2.5" r="2.2" fill="#fff9e6" opacity="0.9"/>
+      <circle cx="0" cy="0" r="2" fill="#181308"/>
+    </g>
+  </defs>
+
+  <style>
+    /* CSS Joint Rotations (Hierarchical Rivet Rig) */
+    #shani_thigh_left_rot, #thigh_left_rot, #thigh_l_rot { transform: rotate(var(--rot-thigh-l, var(--rot-thigh-left, 0deg))); transform-origin: 0px 0px; }
+    #shani_shin_left_rot, #shin_left_rot, #calf_l_rot { transform: rotate(var(--rot-calf-l, var(--rot-shin-left, 0deg))); transform-origin: 0px 0px; }
+    #shani_thigh_right_rot, #thigh_right_rot, #thigh_r_rot { transform: rotate(var(--rot-thigh-r, var(--rot-thigh-right, 0deg))); transform-origin: 0px 0px; }
+    #shani_shin_right_rot, #shin_right_rot, #calf_r_rot { transform: rotate(var(--rot-calf-r, var(--rot-shin-right, 0deg))); transform-origin: 0px 0px; }
+
+    #shani_shoulder_left_rot, #shoulder_front_left_rot, #shoulder_l_rot { transform: rotate(var(--rot-shoulder-l, var(--rot-shoulder-front-left, 0deg))); transform-origin: 0px 0px; }
+    #shani_elbow_left_rot, #elbow_front_left_rot, #elbow_l_rot { transform: rotate(var(--rot-elbow-l, var(--rot-elbow-front-left, 0deg))); transform-origin: 0px 0px; }
+    #shani_wrist_left_rot, #wrist_front_left_rot, #wrist_l_rot { transform: rotate(var(--rot-wrist-l, var(--rot-wrist-front-left, 0deg))); transform-origin: 0px 0px; }
+
+    #shani_shoulder_right_rot, #shoulder_front_right_rot, #shoulder_r_rot { transform: rotate(var(--rot-shoulder-r, var(--rot-shoulder-front-right, 0deg))); transform-origin: 0px 0px; }
+    #shani_elbow_right_rot, #elbow_front_right_rot, #elbow_r_rot { transform: rotate(var(--rot-elbow-r, var(--rot-elbow-front-right, 0deg))); transform-origin: 0px 0px; }
+    #shani_wrist_right_rot, #wrist_front_right_rot, #wrist_r_rot { transform: rotate(var(--rot-wrist-r, var(--rot-wrist-front-right, 0deg))); transform-origin: 0px 0px; }
+
+    #shani_torso_group, #torso_group { transform: translate(var(--trans-torso-x, 0px), var(--trans-torso-y, 0px)) rotate(var(--rot-torso, 0deg)); transform-origin: 400px 700px; }
+    #shani_head_group, #head_center, #head_group { transform: rotate(var(--rot-head, 0deg)); transform-origin: 0px 0px; }
+  </style>
+
+  <!-- COSMIC AURA / PRABHAVALI -->
+  <g id="shani_prabhavali_mount" transform="translate(400, 320)">
+    <circle cx="0" cy="0" r="280" fill="url(#shani_halo_grad)"/>
+    <circle cx="0" cy="0" r="220" fill="none" stroke="url(#shani_gold)" stroke-width="4" stroke-dasharray="14 10" opacity="0.75"/>
+    <circle cx="0" cy="0" r="170" fill="none" stroke="#ffe699" stroke-width="2" opacity="0.6"/>
+  </g>
+
+  <!-- LOWER BODY -->
+  <g id="shani_lower_body">
+    <!-- Left Leg -->
+    <g id="hip_left_joint" transform="translate(340, 770)">
+      <g id="thigh_left_rot">
+        <path d="M -24 -10 L -42 150 L 16 155 L 24 -10 Z" fill="url(#shani_skin_shadow)" stroke="#0d101a" stroke-width="2.5"/>
+        <g id="knee_left_joint" transform="translate(-14, 150)">
+          <g id="shin_left_rot">
+            <path d="M -18 0 Q -34 75 -22 160 L 24 160 Q 32 75 20 0 Z" fill="url(#shani_skin_base)" stroke="#0d101a" stroke-width="2.5"/>
+            <!-- Ornate Iron-Gold Ankle Guard -->
+            <ellipse cx="1" cy="155" rx="26" ry="10" fill="url(#shani_gold)" stroke="#382405" stroke-width="2"/>
+            <path d="M -22 158 L -68 188 C -48 208 8 208 24 158 Z" fill="url(#shani_skin_shadow)" stroke="#0d101a" stroke-width="2.5"/>
+            <use href="#shani_pin" x="0" y="0"/>
+          </g>
+        </g>
+        <use href="#shani_pin" x="0" y="0"/>
+      </g>
+    </g>
+
+    <!-- Right Leg -->
+    <g id="hip_right_joint" transform="translate(460, 770)">
+      <g id="thigh_right_rot">
+        <path d="M -24 -10 L -16 155 L 42 150 L 24 -10 Z" fill="url(#shani_skin_shadow)" stroke="#0d101a" stroke-width="2.5"/>
+        <g id="knee_right_joint" transform="translate(14, 150)">
+          <g id="shin_right_rot">
+            <path d="M -20 0 Q -32 75 -24 160 L 22 160 Q 34 75 18 0 Z" fill="url(#shani_skin_base)" stroke="#0d101a" stroke-width="2.5"/>
+            <ellipse cx="-1" cy="155" rx="26" ry="10" fill="url(#shani_gold)" stroke="#382405" stroke-width="2"/>
+            <path d="M 22 158 L 68 188 C 48 208 -8 208 -24 158 Z" fill="url(#shani_skin_shadow)" stroke="#0d101a" stroke-width="2.5"/>
+            <use href="#shani_pin" x="0" y="0"/>
+          </g>
+        </g>
+        <use href="#shani_pin" x="0" y="0"/>
+      </g>
+    </g>
+
+    <!-- Pleated Midnight Blue Silk Dhoti -->
+    <g id="dhoti_skirt">
+      <path d="M 268 700 Q 400 735 532 700 L 570 925 Q 400 975 230 925 Z" fill="url(#shani_dhoti)" stroke="#08040d" stroke-width="3"/>
+      <path d="M 312 715 L 270 920 M 352 722 L 330 940 M 400 728 L 400 962 M 448 722 L 470 940 M 488 715 L 530 920" stroke="url(#shani_dhoti_fold)" stroke-width="4" stroke-linecap="round"/>
+      <!-- Gold Embroidered Border -->
+      <path d="M 230 925 Q 400 975 570 925 L 575 955 Q 400 1005 225 955 Z" fill="url(#shani_gold)" stroke="#382405" stroke-width="2"/>
+      <!-- Central Antique Gold Sash -->
+      <path d="M 360 710 L 350 970 L 400 1010 L 450 970 L 440 710 Z" fill="url(#shani_dhoti_fold)" stroke="url(#shani_gold)" stroke-width="3"/>
+    </g>
+
+    <!-- Golden Waistband (Kamarband) -->
+    <g id="kamarband">
+      <rect x="264" y="685" width="272" height="36" rx="8" fill="url(#shani_gold)" stroke="#382405" stroke-width="2.5"/>
+      <circle cx="400" cy="703" r="16" fill="#1b1429" stroke="url(#shani_gold)" stroke-width="3"/>
+      <circle cx="400" cy="703" r="6" fill="#ffd56b"/>
+      <use href="#shani_pin" x="300" y="703"/>
+      <use href="#shani_pin" x="500" y="703"/>
+    </g>
+  </g>
+
+  <!-- UPPER BODY / TORSO HIERARCHY -->
+  <g id="torso_group">
+    <!-- Muscular Indigo Torso -->
+    <path d="M 270 465 Q 245 625 295 705 L 505 705 Q 555 625 530 465 Z" fill="url(#shani_skin_base)" stroke="#0d101a" stroke-width="3"/>
+
+    <!-- Clipped Torso Armor & Jewels -->
+    <g clip-path="url(#shani_torso_clip)">
+      <!-- Golden Sacred Thread (Janeu) -->
+      <path d="M 290 470 Q 375 575 480 690" stroke="url(#shani_gold)" stroke-width="4.5" fill="none"/>
+      <path d="M 294 473 Q 378 578 484 693" stroke="#fff0b3" stroke-width="1.5" fill="none"/>
+      <!-- Pectoral Musculature Shading -->
+      <path d="M 330 520 Q 370 545 400 535 Q 430 545 470 520" stroke="url(#shani_skin_shadow)" stroke-width="4" fill="none" opacity="0.6"/>
+      <!-- Heavy Iron-Gold Collar Necklace -->
+      <path d="M 320 465 Q 400 520 480 465 L 470 495 Q 400 550 330 495 Z" fill="url(#shani_gold)" stroke="#382405" stroke-width="2.5"/>
+    </g>
+
+    <!-- LEFT ARM (Viewer's Left / Character's Right) -->
+    <g id="shoulder_front_left_joint" transform="translate(290, 480)">
+      <g id="shoulder_front_left_rot">
+        <path d="M 0 0 L -55 90 L -20 100 L 20 10 Z" fill="url(#shani_skin_shadow)" stroke="#0d101a" stroke-width="2.5"/>
+        <rect x="-45" y="65" width="26" height="16" rx="4" fill="url(#shani_gold)" stroke="#382405" stroke-width="2"/>
+        <g id="elbow_front_left_joint" transform="translate(-40, 95)">
+          <g id="elbow_front_left_rot">
+            <path d="M 0 0 L -15 95 L 18 95 L 20 0 Z" fill="url(#shani_skin_base)" stroke="#0d101a" stroke-width="2.5"/>
+            <rect x="-10" y="70" width="24" height="14" rx="3" fill="url(#shani_gold)" stroke="#382405" stroke-width="2"/>
+            <g id="wrist_front_left_joint" transform="translate(0, 95)">
+              <g id="wrist_front_left_rot">
+                <path d="M -10 0 L -14 35 L 14 35 L 10 0 Z" fill="url(#shani_skin_shadow)" stroke="#0d101a" stroke-width="2"/>
+                <use href="#shani_pin" x="0" y="0"/>
+              </g>
+            </g>
+            <use href="#shani_pin" x="0" y="0"/>
+          </g>
+        </g>
+        <use href="#shani_pin" x="0" y="0"/>
+      </g>
+    </g>
+
+    <!-- RIGHT ARM (Viewer's Right - Holding Danda of Justice) -->
+    <g id="shoulder_front_right_joint" transform="translate(510, 480)">
+      <g id="shoulder_front_right_rot">
+        <path d="M 0 0 L 55 90 L 20 100 L -20 10 Z" fill="url(#shani_skin_shadow)" stroke="#0d101a" stroke-width="2.5"/>
+        <rect x="20" y="65" width="26" height="16" rx="4" fill="url(#shani_gold)" stroke="#382405" stroke-width="2"/>
+        <g id="elbow_front_right_joint" transform="translate(40, 95)">
+          <g id="elbow_front_right_rot">
+            <path d="M 0 0 L 15 95 L -18 95 L -20 0 Z" fill="url(#shani_skin_base)" stroke="#0d101a" stroke-width="2.5"/>
+            <rect x="-14" y="70" width="24" height="14" rx="3" fill="url(#shani_gold)" stroke="#382405" stroke-width="2"/>
+            <g id="wrist_front_right_joint" transform="translate(0, 95)">
+              <g id="wrist_front_right_rot">
+                <!-- Fist clutching heavy Danda -->
+                <path d="M -10 0 L -14 35 L 14 35 L 10 0 Z" fill="url(#shani_skin_shadow)" stroke="#0d101a" stroke-width="2"/>
+                <!-- Heavy Ornate Danda (Karmic Staff) -->
+                <g id="shani_danda" transform="translate(0, 15)">
+                  <!-- Iron Shaft -->
+                  <rect x="-8" y="-180" width="16" height="380" rx="4" fill="url(#shani_dark_iron)" stroke="#090512" stroke-width="2"/>
+                  <!-- Gold Bands and Head -->
+                  <circle cx="0" cy="-180" r="22" fill="url(#shani_gold)" stroke="#382405" stroke-width="3"/>
+                  <polygon points="0,-225 -16,-180 16,-180" fill="url(#shani_gold)" stroke="#382405" stroke-width="2"/>
+                  <rect x="-12" y="-120" width="24" height="14" rx="3" fill="url(#shani_gold)" stroke="#382405" stroke-width="1.5"/>
+                  <rect x="-12" y="140" width="24" height="14" rx="3" fill="url(#shani_gold)" stroke="#382405" stroke-width="1.5"/>
+                  <circle cx="0" cy="205" r="14" fill="url(#shani_gold)" stroke="#382405" stroke-width="2"/>
+                </g>
+                <use href="#shani_pin" x="0" y="0"/>
+              </g>
+            </g>
+            <use href="#shani_pin" x="0" y="0"/>
+          </g>
+        </g>
+        <use href="#shani_pin" x="0" y="0"/>
+      </g>
+    </g>
+
+    <!-- HEAD & NECK -->
+    <g id="neck_mount" transform="translate(400, 465)">
+      <path d="M -22 0 L -25 -55 L 25 -55 L 22 0 Z" fill="url(#shani_skin_shadow)" stroke="#0d101a" stroke-width="2.5"/>
+      <g id="head_center" transform="translate(0, -50)">
+        <g id="shani_head_group">
+          <!-- Head Base Contour -->
+          <path d="M -44 -60 C -52 10 -40 50 0 58 C 40 50 52 10 44 -60 Z" fill="url(#shani_skin_base)" stroke="#0d101a" stroke-width="3"/>
+
+          <!-- Piercing Folk-Art Eyes -->
+          <g id="eyes_normal">
+            <ellipse cx="-20" cy="-8" rx="14" ry="7" fill="#ffffff" stroke="#0d101a" stroke-width="2"/>
+            <circle cx="-20" cy="-8" r="4.5" fill="#ffd56b"/>
+            <circle cx="-20" cy="-8" r="2.5" fill="#141829"/>
+            <ellipse cx="20" cy="-8" rx="14" ry="7" fill="#ffffff" stroke="#0d101a" stroke-width="2"/>
+            <circle cx="20" cy="-8" r="4.5" fill="#ffd56b"/>
+            <circle cx="20" cy="-8" r="2.5" fill="#141829"/>
+          </g>
+          <g id="eyes_wrath" opacity="0">
+            <ellipse cx="-20" cy="-8" rx="15" ry="9" fill="#ffecb3" stroke="#8a0000" stroke-width="2.5"/>
+            <circle cx="-20" cy="-8" r="5.5" fill="#c92a2a"/>
+            <circle cx="-20" cy="-8" r="2.5" fill="#fffb00"/>
+            <ellipse cx="20" cy="-8" rx="15" ry="9" fill="#ffecb3" stroke="#8a0000" stroke-width="2.5"/>
+            <circle cx="20" cy="-8" r="5.5" fill="#c92a2a"/>
+            <circle cx="20" cy="-8" r="2.5" fill="#fffb00"/>
+          </g>
+
+          <!-- Eyebrows -->
+          <g id="brows_neutral">
+            <path d="M -34 -20 Q -20 -28 -8 -20" stroke="#0d101a" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+            <path d="M 34 -20 Q 20 -28 8 -20" stroke="#0d101a" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+          </g>
+          <g id="brows_angry" opacity="0">
+            <path d="M -34 -16 L -8 -26" stroke="#0d101a" stroke-width="4.5" stroke-linecap="round"/>
+            <path d="M 34 -16 L 8 -26" stroke="#0d101a" stroke-width="4.5" stroke-linecap="round"/>
+          </g>
+
+          <!-- Nose -->
+          <path d="M 0 -18 L 4 12 L -4 14" stroke="#0d101a" stroke-width="2.5" fill="none" stroke-linejoin="round"/>
+
+          <!-- Switchable Mouth -->
+          <g id="mouth_calm">
+            <path d="M -14 30 Q 0 35 14 30" stroke="#0d101a" stroke-width="3" stroke-linecap="round" fill="none"/>
+          </g>
+          <g id="mouth_talk" opacity="0">
+            <ellipse cx="0" cy="32" rx="10" ry="6" fill="#380d0d" stroke="#0d101a" stroke-width="2.5"/>
+            <path d="M -8 30 Q 0 32 8 30" stroke="#ffffff" stroke-width="2" fill="none"/>
+          </g>
+          <g id="mouth_shout" opacity="0">
+            <path d="M -15 28 Q 0 24 15 28 Q 12 42 0 42 Q -12 42 -15 28 Z" fill="#4d0a0a" stroke="#0d101a" stroke-width="2.5"/>
+            <path d="M -10 30 Q 0 32 10 30" stroke="#ffffff" stroke-width="2.5" fill="none"/>
+          </g>
+
+          <!-- Sandalwood Tilak & Third Eye Mark -->
+          <path d="M 0 -28 L 0 -8" stroke="#ffe699" stroke-width="3.5" stroke-linecap="round"/>
+          <circle cx="0" cy="-18" r="2.5" fill="#c92a2a"/>
+
+          <!-- Tarnished Gold Mukut (Crown) -->
+          <path d="M -50 -55 L 50 -55 L 42 -135 L 0 -170 L -42 -135 Z" fill="url(#shani_gold)" stroke="#382405" stroke-width="3"/>
+          <polygon points="0,-165 -12,-135 12,-135" fill="#1b1429" stroke="url(#shani_gold)" stroke-width="1.5"/>
+          <circle cx="0" cy="-90" r="10" fill="#1b1429" stroke="url(#shani_gold)" stroke-width="2"/>
+          <circle cx="0" cy="-90" r="4" fill="#ffd56b"/>
+          <line x1="-48" y1="-55" x2="48" y2="-55" stroke="#382405" stroke-width="3"/>
+
+          <!-- Ornate Kundals (Earrings) -->
+          <circle cx="-48" cy="0" r="10" fill="url(#shani_gold)" stroke="#382405" stroke-width="2"/>
+          <circle cx="48" cy="0" r="10" fill="url(#shani_gold)" stroke="#382405" stroke-width="2"/>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

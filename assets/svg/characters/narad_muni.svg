@@ -1,0 +1,292 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1200" width="800" height="1200" id="narad_muni_puppet_rig">
+  <defs>
+    <!-- Warm Golden-Wheat Skin Gradients -->
+    <linearGradient id="narad_skin_base" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f0be8b"/>
+      <stop offset="50%" stop-color="#dba067"/>
+      <stop offset="100%" stop-color="#b8783d"/>
+    </linearGradient>
+    <linearGradient id="narad_skin_shadow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ab6b32"/>
+      <stop offset="100%" stop-color="#6e3e14"/>
+    </linearGradient>
+
+    <!-- Glowing Saffron & Ochre Robes -->
+    <linearGradient id="narad_saffron" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff9933"/>
+      <stop offset="45%" stop-color="#e65c00"/>
+      <stop offset="100%" stop-color="#993d00"/>
+    </linearGradient>
+    <linearGradient id="narad_ivory_silk" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fffdf5"/>
+      <stop offset="50%" stop-color="#f7edd0"/>
+      <stop offset="100%" stop-color="#d6be87"/>
+    </linearGradient>
+
+    <!-- Warm Polished Wood Veena -->
+    <linearGradient id="veena_wood" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8c4b18"/>
+      <stop offset="50%" stop-color="#592e0e"/>
+      <stop offset="100%" stop-color="#2e1403"/>
+    </linearGradient>
+    <linearGradient id="narad_gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff5cc"/>
+      <stop offset="35%" stop-color="#f5c242"/>
+      <stop offset="75%" stop-color="#b8860b"/>
+      <stop offset="100%" stop-color="#5e4100"/>
+    </linearGradient>
+
+    <!-- Brass Rivet Pin -->
+    <radialGradient id="narad_rivet" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#fff9db"/>
+      <stop offset="30%" stop-color="#f59f00"/>
+      <stop offset="75%" stop-color="#975a16"/>
+      <stop offset="100%" stop-color="#3b2003"/>
+    </radialGradient>
+
+    <!-- Torso ClipPath -->
+    <clipPath id="narad_torso_clip">
+      <path d="M 275 465 Q 250 625 295 705 L 505 705 Q 550 625 525 465 Z"/>
+    </clipPath>
+
+    <!-- Puppet Pin -->
+    <g id="narad_pin">
+      <circle cx="0" cy="0" r="10" fill="#2d1d05"/>
+      <circle cx="0" cy="0" r="8" fill="url(#narad_rivet)" stroke="#442a08" stroke-width="1.5"/>
+      <circle cx="-2.5" cy="-2.5" r="2.2" fill="#fffbe6" opacity="0.9"/>
+      <circle cx="0" cy="0" r="2" fill="#2d1d05"/>
+    </g>
+  </defs>
+
+  <style>
+    #narad_thigh_left_rot, #thigh_left_rot, #thigh_l_rot { transform: rotate(var(--rot-thigh-l, var(--rot-thigh-left, 0deg))); transform-origin: 0px 0px; }
+    #narad_shin_left_rot, #shin_left_rot, #calf_l_rot { transform: rotate(var(--rot-calf-l, var(--rot-shin-left, 0deg))); transform-origin: 0px 0px; }
+    #narad_thigh_right_rot, #thigh_right_rot, #thigh_r_rot { transform: rotate(var(--rot-thigh-r, var(--rot-thigh-right, 0deg))); transform-origin: 0px 0px; }
+    #narad_shin_right_rot, #shin_right_rot, #calf_r_rot { transform: rotate(var(--rot-calf-r, var(--rot-shin-right, 0deg))); transform-origin: 0px 0px; }
+
+    #narad_shoulder_left_rot, #shoulder_front_left_rot, #shoulder_l_rot { transform: rotate(var(--rot-shoulder-l, var(--rot-shoulder-front-left, 0deg))); transform-origin: 0px 0px; }
+    #narad_elbow_left_rot, #elbow_front_left_rot, #elbow_l_rot { transform: rotate(var(--rot-elbow-l, var(--rot-elbow-front-left, 0deg))); transform-origin: 0px 0px; }
+    #narad_wrist_left_rot, #wrist_front_left_rot, #wrist_l_rot { transform: rotate(var(--rot-wrist-l, var(--rot-wrist-front-left, 0deg))); transform-origin: 0px 0px; }
+
+    #narad_shoulder_right_rot, #shoulder_front_right_rot, #shoulder_r_rot { transform: rotate(var(--rot-shoulder-r, var(--rot-shoulder-front-right, 0deg))); transform-origin: 0px 0px; }
+    #narad_elbow_right_rot, #elbow_front_right_rot, #elbow_r_rot { transform: rotate(var(--rot-elbow-r, var(--rot-elbow-front-right, 0deg))); transform-origin: 0px 0px; }
+    #narad_wrist_right_rot, #wrist_front_right_rot, #wrist_r_rot { transform: rotate(var(--rot-wrist-r, var(--rot-wrist-front-right, 0deg))); transform-origin: 0px 0px; }
+
+    #narad_torso_group, #torso_group { transform: translate(var(--trans-torso-x, 0px), var(--trans-torso-y, 0px)) rotate(var(--rot-torso, 0deg)); transform-origin: 400px 700px; }
+    #narad_head_group, #head_center, #head_group { transform: rotate(var(--rot-head, 0deg)); transform-origin: 0px 0px; }
+  </style>
+
+  <!-- CELESTIAL SOFT AURA -->
+  <g id="narad_aura" transform="translate(400, 310)">
+    <circle cx="0" cy="0" r="230" fill="url(#narad_gold)" opacity="0.25"/>
+    <circle cx="0" cy="0" r="180" fill="none" stroke="url(#narad_gold)" stroke-width="3" stroke-dasharray="10 8" opacity="0.6"/>
+  </g>
+
+  <!-- LOWER BODY -->
+  <g id="narad_lower_body">
+    <!-- Left Leg -->
+    <g id="hip_left_joint" transform="translate(340, 770)">
+      <g id="thigh_left_rot">
+        <path d="M -22 -10 L -38 150 L 16 155 L 22 -10 Z" fill="url(#narad_skin_shadow)" stroke="#4a2505" stroke-width="2.5"/>
+        <g id="knee_left_joint" transform="translate(-12, 150)">
+          <g id="shin_left_rot">
+            <path d="M -18 0 Q -30 75 -20 160 L 22 160 Q 30 75 18 0 Z" fill="url(#narad_skin_base)" stroke="#4a2505" stroke-width="2.5"/>
+            <!-- Wooden/Gold Ankle Ring (Kada) -->
+            <ellipse cx="1" cy="155" rx="24" ry="9" fill="url(#narad_gold)" stroke="#593c00" stroke-width="2"/>
+            <path d="M -20 158 L -65 188 C -45 208 6 208 22 158 Z" fill="url(#narad_skin_shadow)" stroke="#4a2505" stroke-width="2.5"/>
+            <use href="#narad_pin" x="0" y="0"/>
+          </g>
+        </g>
+        <use href="#narad_pin" x="0" y="0"/>
+      </g>
+    </g>
+
+    <!-- Right Leg -->
+    <g id="hip_right_joint" transform="translate(460, 770)">
+      <g id="thigh_right_rot">
+        <path d="M -22 -10 L -16 155 L 38 150 L 22 -10 Z" fill="url(#narad_skin_shadow)" stroke="#4a2505" stroke-width="2.5"/>
+        <g id="knee_right_joint" transform="translate(12, 150)">
+          <g id="shin_right_rot">
+            <path d="M -18 0 Q -30 75 -22 160 L 20 160 Q 30 75 18 0 Z" fill="url(#narad_skin_base)" stroke="#4a2505" stroke-width="2.5"/>
+            <ellipse cx="-1" cy="155" rx="24" ry="9" fill="url(#narad_gold)" stroke="#593c00" stroke-width="2"/>
+            <path d="M 20 158 L 65 188 C 45 208 -6 208 -22 158 Z" fill="url(#narad_skin_shadow)" stroke="#4a2505" stroke-width="2.5"/>
+            <use href="#narad_pin" x="0" y="0"/>
+          </g>
+        </g>
+        <use href="#narad_pin" x="0" y="0"/>
+      </g>
+    </g>
+
+    <!-- Saffron Pleated Dhoti -->
+    <g id="dhoti_skirt">
+      <path d="M 270 700 Q 400 735 530 700 L 565 925 Q 400 970 235 925 Z" fill="url(#narad_saffron)" stroke="#5c2000" stroke-width="3"/>
+      <path d="M 312 715 L 275 920 M 352 722 L 335 940 M 400 728 L 400 960 M 448 722 L 465 940 M 488 715 L 525 920" stroke="#ffb84d" stroke-width="3.5" stroke-linecap="round"/>
+      <!-- Ivory Border Hem -->
+      <path d="M 235 925 Q 400 970 565 925 L 570 955 Q 400 1000 230 955 Z" fill="url(#narad_ivory_silk)" stroke="#7a5400" stroke-width="2"/>
+      <path d="M 360 710 L 350 965 L 400 1005 L 450 965 L 440 710 Z" fill="url(#narad_ivory_silk)" stroke="#c69214" stroke-width="2.5"/>
+    </g>
+
+    <!-- Waistband -->
+    <g id="kamarband">
+      <rect x="268" y="685" width="264" height="34" rx="8" fill="url(#narad_gold)" stroke="#593c00" stroke-width="2.5"/>
+      <circle cx="400" cy="702" r="14" fill="#8c1d00" stroke="url(#narad_gold)" stroke-width="3"/>
+      <circle cx="400" cy="702" r="5" fill="#fff5cc"/>
+      <use href="#narad_pin" x="305" y="702"/>
+      <use href="#narad_pin" x="495" y="702"/>
+    </g>
+  </g>
+
+  <!-- UPPER BODY / TORSO -->
+  <g id="torso_group">
+    <!-- Wheat Skin Torso -->
+    <path d="M 275 465 Q 250 625 295 705 L 505 705 Q 550 625 525 465 Z" fill="url(#narad_skin_base)" stroke="#4a2505" stroke-width="3"/>
+
+    <!-- Clipped Angavastram & Janeu -->
+    <g clip-path="url(#narad_torso_clip)">
+      <!-- Sandalwood Paste Smear across Chest (Tripundra) -->
+      <path d="M 340 510 L 460 510" stroke="#fff4cc" stroke-width="5" stroke-linecap="round" opacity="0.8"/>
+      <path d="M 345 520 L 455 520" stroke="#fff4cc" stroke-width="3.5" stroke-linecap="round" opacity="0.8"/>
+      <!-- Saffron Angavastram draped across torso -->
+      <path d="M 265 470 Q 370 560 520 680 L 485 705 Q 350 590 250 495 Z" fill="url(#narad_saffron)" stroke="#802b00" stroke-width="2.5"/>
+      <!-- Sacred Thread (Janeu) -->
+      <path d="M 290 470 Q 380 575 480 690" stroke="#ffffff" stroke-width="3.5" fill="none"/>
+      <!-- Rudraksha Bead Mala -->
+      <path d="M 320 465 Q 400 550 480 465" stroke="#4a2105" stroke-width="6" stroke-dasharray="8 6" fill="none"/>
+    </g>
+
+    <!-- LEFT ARM (Viewer's Left - Holding Upper Neck of Tanpura/Veena) -->
+    <g id="shoulder_front_left_joint" transform="translate(290, 480)">
+      <g id="shoulder_front_left_rot">
+        <path d="M 0 0 L -50 85 L -18 95 L 18 10 Z" fill="url(#narad_skin_shadow)" stroke="#4a2505" stroke-width="2.5"/>
+        <g id="elbow_front_left_joint" transform="translate(-35, 90)">
+          <g id="elbow_front_left_rot">
+            <!-- Arm reaching gracefully towards instrument neck -->
+            <path d="M 0 0 L 25 85 L 55 75 L 18 0 Z" fill="url(#narad_skin_base)" stroke="#4a2505" stroke-width="2.5"/>
+            <g id="wrist_front_left_joint" transform="translate(35, 80)">
+              <g id="wrist_front_left_rot">
+                <path d="M -8 0 L -10 30 L 12 30 L 8 0 Z" fill="url(#narad_skin_shadow)" stroke="#4a2505" stroke-width="2"/>
+                <use href="#narad_pin" x="0" y="0"/>
+              </g>
+            </g>
+            <use href="#narad_pin" x="0" y="0"/>
+          </g>
+        </g>
+        <use href="#narad_pin" x="0" y="0"/>
+      </g>
+    </g>
+
+    <!-- RIGHT ARM (Viewer's Right - Plucking Veena Strings) -->
+    <g id="shoulder_front_right_joint" transform="translate(510, 480)">
+      <g id="shoulder_front_right_rot">
+        <path d="M 0 0 L 45 85 L 15 95 L -18 10 Z" fill="url(#narad_skin_shadow)" stroke="#4a2505" stroke-width="2.5"/>
+        <g id="elbow_front_right_joint" transform="translate(30, 90)">
+          <g id="elbow_front_right_rot">
+            <path d="M 0 0 L -30 80 L -55 70 L -18 0 Z" fill="url(#narad_skin_base)" stroke="#4a2505" stroke-width="2.5"/>
+            <g id="wrist_front_right_joint" transform="translate(-40, 75)">
+              <g id="wrist_front_right_rot">
+                <!-- Graceful hand with kartal or plucking thumb -->
+                <path d="M -8 0 L -10 30 L 12 30 L 8 0 Z" fill="url(#narad_skin_shadow)" stroke="#4a2505" stroke-width="2"/>
+                <use href="#narad_pin" x="0" y="0"/>
+              </g>
+            </g>
+            <use href="#narad_pin" x="0" y="0"/>
+          </g>
+        </g>
+        <use href="#narad_pin" x="0" y="0"/>
+      </g>
+    </g>
+
+    <!-- MAHATI VEENA / TANPURA (Held across chest) -->
+    <g id="narad_veena" transform="translate(410, 560) rotate(-35)">
+      <!-- Long Polished Wooden Dandi / Neck -->
+      <rect x="-10" y="-220" width="20" height="360" rx="6" fill="url(#veena_wood)" stroke="#261002" stroke-width="2.5"/>
+      <!-- Brass Tuning Pegs -->
+      <line x1="-28" y1="-190" x2="28" y2="-190" stroke="url(#narad_gold)" stroke-width="4"/>
+      <line x1="-28" y1="-160" x2="28" y2="-160" stroke="url(#narad_gold)" stroke-width="4"/>
+      <circle cx="-28" cy="-190" r="5" fill="url(#narad_gold)"/>
+      <circle cx="28" cy="-190" r="5" fill="url(#narad_gold)"/>
+      <!-- Carved Dragon/Swan Finial Head -->
+      <path d="M -15 -220 Q 0 -260 25 -250 Q 30 -230 15 -220 Z" fill="url(#narad_gold)" stroke="#593c00" stroke-width="2"/>
+      <!-- Lower Resonator Gourd (Tumba) -->
+      <circle cx="0" cy="140" r="55" fill="url(#veena_wood)" stroke="#261002" stroke-width="3"/>
+      <circle cx="0" cy="140" r="42" fill="#522405" stroke="url(#narad_gold)" stroke-width="2"/>
+      <!-- Golden Strings -->
+      <line x1="-4" y1="-180" x2="-4" y2="140" stroke="#fff5cc" stroke-width="1.5" opacity="0.85"/>
+      <line x1="0" y1="-180" x2="0" y2="140" stroke="#fff5cc" stroke-width="1.8" opacity="0.95"/>
+      <line x1="4" y1="-180" x2="4" y2="140" stroke="#fff5cc" stroke-width="1.5" opacity="0.85"/>
+    </g>
+
+    <!-- HEAD & NECK -->
+    <g id="neck_mount" transform="translate(400, 465)">
+      <path d="M -20 0 L -22 -50 L 22 -50 L 20 0 Z" fill="url(#narad_skin_shadow)" stroke="#4a2505" stroke-width="2.5"/>
+      <g id="head_center" transform="translate(0, -45)">
+        <g id="narad_head_group">
+          <!-- Gentle Face Outline -->
+          <path d="M -40 -50 C -48 10 -36 50 0 55 C 36 50 48 10 40 -50 Z" fill="url(#narad_skin_base)" stroke="#4a2505" stroke-width="3"/>
+
+          <!-- Expressive Eyes -->
+          <g id="eyes_normal">
+            <ellipse cx="-18" cy="-6" rx="13" ry="7" fill="#ffffff" stroke="#4a2505" stroke-width="2"/>
+            <circle cx="-18" cy="-6" r="4.5" fill="#592e0e"/>
+            <circle cx="-19" cy="-7" r="1.5" fill="#ffffff"/>
+            <ellipse cx="18" cy="-6" rx="13" ry="7" fill="#ffffff" stroke="#4a2505" stroke-width="2"/>
+            <circle cx="18" cy="-6" r="4.5" fill="#592e0e"/>
+            <circle cx="17" cy="-7" r="1.5" fill="#ffffff"/>
+          </g>
+          <g id="eyes_wrath" opacity="0">
+            <ellipse cx="-18" cy="-6" rx="14" ry="8" fill="#fff5cc" stroke="#8a0000" stroke-width="2.5"/>
+            <circle cx="-18" cy="-6" r="5" fill="#a82000"/>
+            <ellipse cx="18" cy="-6" rx="14" ry="8" fill="#fff5cc" stroke="#8a0000" stroke-width="2.5"/>
+            <circle cx="18" cy="-6" r="5" fill="#a82000"/>
+          </g>
+
+          <!-- Brows (Cheerful Arch) -->
+          <g id="brows_neutral">
+            <path d="M -30 -18 Q -18 -28 -6 -18" stroke="#331400" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+            <path d="M 30 -18 Q 18 -28 6 -18" stroke="#331400" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+          </g>
+          <g id="brows_angry" opacity="0">
+            <path d="M -30 -14 L -6 -24" stroke="#8a0000" stroke-width="4" stroke-linecap="round"/>
+            <path d="M 30 -14 L 6 -24" stroke="#8a0000" stroke-width="4" stroke-linecap="round"/>
+          </g>
+
+          <!-- Nose -->
+          <path d="M 0 -16 L 3 10 L -4 12" stroke="#4a2505" stroke-width="2.5" fill="none" stroke-linejoin="round"/>
+
+          <!-- Switchable Mouth with characteristic subtle smile -->
+          <g id="mouth_calm">
+            <path d="M -14 28 Q 0 36 14 28" stroke="#4a2505" stroke-width="3" stroke-linecap="round" fill="none"/>
+          </g>
+          <g id="mouth_talk" opacity="0">
+            <ellipse cx="0" cy="30" rx="9" ry="6" fill="#4d1200" stroke="#4a2505" stroke-width="2"/>
+            <path d="M -7 28 Q 0 30 7 28" stroke="#ffffff" stroke-width="1.8" fill="none"/>
+          </g>
+          <g id="mouth_shout" opacity="0">
+            <path d="M -14 26 Q 0 22 14 26 Q 10 40 0 40 Q -10 40 -14 26 Z" fill="#5c1000" stroke="#4a2505" stroke-width="2.5"/>
+            <path d="M -9 28 Q 0 30 9 28" stroke="#ffffff" stroke-width="2" fill="none"/>
+          </g>
+
+          <!-- Sandalwood Urdhva-Pundra Tilak -->
+          <path d="M -8 -45 L -4 -15 Q 0 -10 4 -15 L 8 -45" stroke="#ffffff" stroke-width="3" fill="none"/>
+          <line x1="0" y1="-40" x2="0" y2="-14" stroke="#d92600" stroke-width="2.5"/>
+          <circle cx="0" cy="-10" r="2.5" fill="#d92600"/>
+
+          <!-- Shikha (Ascetic Topknot) & Garland -->
+          <path d="M -25 -48 Q -35 -110 0 -125 Q 35 -110 25 -48 Z" fill="#240f00" stroke="#120700" stroke-width="2.5"/>
+          <!-- Floral Garland of Jasmine Flowers (Mogra) around Shikha -->
+          <g id="jasmine_garland">
+            <circle cx="-18" cy="-80" r="5" fill="#ffffff" stroke="#e6c200" stroke-width="1"/>
+            <circle cx="-10" cy="-90" r="5" fill="#ffffff" stroke="#e6c200" stroke-width="1"/>
+            <circle cx="0" cy="-95" r="5.5" fill="#ffffff" stroke="#e6c200" stroke-width="1"/>
+            <circle cx="10" cy="-90" r="5" fill="#ffffff" stroke="#e6c200" stroke-width="1"/>
+            <circle cx="18" cy="-80" r="5" fill="#ffffff" stroke="#e6c200" stroke-width="1"/>
+          </g>
+
+          <!-- Kundals (Ear Ornaments) -->
+          <circle cx="-42" cy="0" r="8" fill="url(#narad_gold)" stroke="#593c00" stroke-width="2"/>
+          <circle cx="42" cy="0" r="8" fill="url(#narad_gold)" stroke="#593c00" stroke-width="2"/>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

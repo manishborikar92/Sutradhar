@@ -143,6 +143,114 @@ class TestRenderPipeline(unittest.TestCase):
             self.assertEqual(im.size, (1080, 1920))
             self.assertEqual(im.format, "JPEG")
 
+    def test_06_multi_shot_composition_generation(self) -> None:
+        """Verify generate_root_composition dynamically builds manifest-driven compositions for new cast."""
+        import generate_composition
+
+        build_dir = self.root / "build"
+        build_dir.mkdir(parents=True, exist_ok=True)
+        manifest_p = build_dir / "manifest.js"
+
+        test_manifest = {
+            "schema_version": "2.0",
+            "language": "en",
+            "audio": {"total_duration_sec": 12.0, "total_frames": 360},
+            "scenes": [
+                {
+                    "scene_index": 1,
+                    "shot_type": "curtain_establishing",
+                    "backdrop_rig": "celestial_cosmos_court",
+                    "start_sec": 0.0,
+                    "end_sec": 4.0,
+                },
+                {
+                    "scene_index": 2,
+                    "shot_type": "character_medium",
+                    "backdrop_rig": "ancient_nalanda_courtyard",
+                    "primary_character": "ancient_scholar",
+                    "start_sec": 4.0,
+                    "end_sec": 8.0,
+                },
+                {
+                    "scene_index": 3,
+                    "shot_type": "two_character_confrontation",
+                    "backdrop_rig": "forest_ashram_twilight",
+                    "primary_character": "shani_dev",
+                    "secondary_character": "narad_muni",
+                    "start_sec": 8.0,
+                    "end_sec": 12.0,
+                },
+            ],
+        }
+        manifest_p.write_text(f"window.EPISODE_MANIFEST = {json.dumps(test_manifest)};\n", encoding="utf-8")
+
+        # Copy assets/ into self.root
+        shutil.copytree(REPO_ROOT / "assets", self.root / "assets")
+        shutil.copy(REPO_ROOT / "config.yaml", self.root / "config.yaml")
+
+        res = generate_composition.generate_root_composition(self.root)
+        self.assertEqual(res["status"], "ok")
+        self.assertEqual(res["scenes_count"], 3)
+        self.assertIn("ancient_scholar", res["characters"])
+        self.assertIn("shani_dev", res["characters"])
+        self.assertIn("narad_muni", res["characters"])
+
+        index_text = (self.root / "index.html").read_text(encoding="utf-8")
+        self.assertIn("shot_1_container", index_text)
+        self.assertIn("shot_2_container", index_text)
+        self.assertIn("shot_3_container", index_text)
+        self.assertIn("celestial_cosmos_court", index_text)
+        self.assertIn("ancient_nalanda_courtyard", index_text)
+        self.assertIn("forest_ashram_twilight", index_text)
+
+    def test_07_audio_mixing_resampling_and_synth_fallback(self) -> None:
+        """Verify audio mixing pipeline handles resampling, fade-out, and procedural fallback."""
+        build_dir = self.root / "build"
+        build_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy(REPO_ROOT / "config.yaml", self.root / "config.yaml")
+        (self.root / "assets" / "bgm").mkdir(parents=True, exist_ok=True)
+        (self.root / "assets" / "sfx").mkdir(parents=True, exist_ok=True)
+
+        raw_vid = build_dir / "raw_video.mp4"
+        subprocess.run(
+            ["ffmpeg", "-y", "-f", "lavfi", "-i", "testsrc=size=1080x1920:rate=30", "-t", "2", "-pix_fmt", "yuv420p", str(raw_vid)],
+            capture_output=True,
+            check=True,
+        )
+
+        narr_wav = build_dir / "narration.wav"
+        subprocess.run(
+            ["ffmpeg", "-y", "-f", "lavfi", "-i", "sine=frequency=440:sample_rate=24000", "-t", "2", str(narr_wav)],
+            capture_output=True,
+            check=True,
+        )
+
+        manifest = {
+            "bgm_track": "nonexistent_bgm_track.mp3",
+            "audio": {
+                "narration_full_path": "build/narration.wav",
+                "total_duration_sec": 2.0,
+            },
+            "scenes": [
+                {"scene_index": 1, "start_sec": 0.0, "end_sec": 2.0}
+            ],
+        }
+
+        cfg = render_and_qa.load_config(self.root)
+        out_vid = build_dir / "final_short.mp4"
+
+        # Should execute with procedural synth fallback without crashing
+        render_and_qa.build_audio_mix(
+            root=self.root,
+            manifest=manifest,
+            cfg=cfg,
+            raw_video_path=raw_vid,
+            output_video_path=out_vid,
+        )
+        self.assertTrue(out_vid.is_file())
+        info = render_and_qa.probe_media(out_vid)
+        self.assertIn("format", info)
+
 
 if __name__ == "__main__":
     unittest.main()
