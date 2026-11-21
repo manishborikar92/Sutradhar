@@ -189,9 +189,9 @@ def validate_config(cfg: Any, config_path: Path) -> dict[str, Any]:
 
     pub = cfg["publishing"]
     upload_mode = pub.get("upload_mode")
-    if upload_mode not in ("private_review", "scheduled"):
+    if upload_mode not in ("public", "private_review", "scheduled"):
         raise StateError(
-            f"config.yaml publishing.upload_mode must be 'private_review' or 'scheduled' (got {upload_mode!r})."
+            f"config.yaml publishing.upload_mode must be 'public', 'private_review', or 'scheduled' (got {upload_mode!r})."
         )
     if not isinstance(pub.get("allow_public_or_scheduled"), bool):
         raise StateError("config.yaml publishing.allow_public_or_scheduled must be a boolean.")
@@ -750,7 +750,7 @@ class PublishResult(BaseModel):
     playlist_id: Optional[str] = None
     upload_status: Literal["PUBLISHED", "PRIVATE_REVIEW", "FAILED"]
     scheduled_publish_at: Optional[str] = None
-    upload_mode: Optional[Literal["private_review", "scheduled"]] = None
+    upload_mode: Optional[Literal["public", "private_review", "scheduled"]] = None
     privacy_status: Optional[Literal["private", "unlisted", "public"]] = None
     video_url: Optional[str] = None
     error_message: Optional[str] = None
@@ -846,6 +846,15 @@ class PublishResult(BaseModel):
                     raise ValueError(
                         f"Publishing safety lock active: privacy_status '{self.privacy_status}' "
                         "is forbidden (only 'private' is permitted)."
+                    )
+            else:
+                if cfg_mode == "scheduled" and self.upload_status == "PUBLISHED" and not self.scheduled_publish_at:
+                    raise ValueError(
+                        "When upload_mode='scheduled', scheduled_publish_at timestamp is required for PUBLISHED status."
+                    )
+                if cfg_mode == "public" and self.scheduled_publish_at is not None:
+                    raise ValueError(
+                        "When upload_mode='public', scheduled_publish_at must be null (use 'scheduled' mode for delayed release)."
                     )
         return self
 

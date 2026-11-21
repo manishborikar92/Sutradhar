@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-"""Sutradhar YouTube Offline / Private-Review Publishing Pipeline.
+"""Sutradhar YouTube Automated Publishing Pipeline.
 
 Implements Milestone 6 YouTube Data API v3 publishing integration.
-Strictly adheres to:
+Supports:
 1. Zero CLI arguments (Antigravity 7-command whitelist).
-2. Hard configuration lock: upload_mode='private_review', privacy_status='private',
-   and allow_public_or_scheduled=false.
-3. Isolated .env.youtube credential discovery (never prints or leaks secrets).
-4. Resilient offline/stub execution when live credentials are absent or SUTRADHAR_OFFLINE_STUB=1.
-5. Custom thumbnail upload (build/thumbnail.jpg) with graceful 403 handling.
+2. Fully automated public uploading (upload_mode='public', privacy_status='public').
+3. Scheduled publishing (upload_mode='scheduled', publishAt timestamp).
+4. Private review calibration (upload_mode='private_review', privacy_status='private').
+5. Automated custom thumbnail generation and upload (build/thumbnail.jpg).
 6. Mandatory live API read-back verification (videos.list, playlistItems.list) -> build/publish_verification.json.
 7. Strict db_manager.PublishResult schema compliance (extra='forbid') -> build/publish_result.json.
 8. Mandatory YouTube AI disclosure (containsSyntheticMedia=True).
@@ -21,6 +20,7 @@ import os
 import re
 import sys
 import time
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any, Optional
 
@@ -55,21 +55,50 @@ def load_env_youtube(root: Path) -> dict[str, str]:
     return creds
 
 
+def compute_scheduled_publish_time(pub_cfg: dict[str, Any]) -> str:
+    """Calculate next upcoming scheduled publication timestamp in UTC (ISO-8601 RFC 3339)."""
+    now_utc = datetime.now(timezone.utc)
+    sched_time_str = pub_cfg.get("scheduled_publish_time_utc", "13:00")
+    try:
+        hh, mm = map(int, sched_time_str.split(":"))
+    except ValueError:
+        hh, mm = 13, 0
+
+    target_dt = now_utc.replace(hour=hh, minute=mm, second=0, microsecond=0)
+    # If the scheduled time for today has already elapsed, schedule for tomorrow
+    if target_dt <= now_utc + timedelta(minutes=15):
+        target_dt += timedelta(days=1)
+    return target_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 def run_publish_pipeline(root: Path) -> dict[str, Any]:
     cfg = load_config(root)
     pub_cfg = cfg.get("publishing", {})
 
-    upload_mode = pub_cfg.get("upload_mode", "private_review")
-    if upload_mode != "private_review":
+    upload_mode = pub_cfg.get("upload_mode", "public")
+    if upload_mode not in ("public", "private_review", "scheduled"):
         raise PublishPipelineError(
-            f"Safety Violation: Sutradhar is locked to upload_mode='private_review', got '{upload_mode}'."
+            f"Invalid upload_mode '{upload_mode}' in config.yaml. Must be 'public', 'private_review', or 'scheduled'."
         )
 
-    allow_pub = pub_cfg.get("allow_public_or_scheduled", False)
-    if allow_pub:
+    allow_pub = bool(pub_cfg.get("allow_public_or_scheduled", False))
+    if upload_mode in ("public", "scheduled") and not allow_pub:
         raise PublishPipelineError(
-            "Safety Violation: config.yaml allow_public_or_scheduled must be false."
+            f"Safety Violation: config.yaml upload_mode='{upload_mode}' requires allow_public_or_scheduled=true."
         )
+
+    # Resolve publishing targets
+    scheduled_publish_at: Optional[str] = None
+    if upload_mode == "public":
+        target_privacy = "public"
+        target_publish_status = "PUBLISHED"
+    elif upload_mode == "scheduled":
+        target_privacy = "private"
+        target_publish_status = "PUBLISHED"
+        scheduled_publish_at = compute_scheduled_publish_time(pub_cfg)
+    else:  # private_review
+        target_privacy = "private"
+        target_publish_status = "PRIVATE_REVIEW"
 
     paths = cfg.get("paths", {})
     build_dir = (root / paths.get("build_dir", "build")).resolve()
@@ -118,7 +147,7 @@ def run_publish_pipeline(root: Path) -> dict[str, Any]:
         # Resilient Offline / Dry-Run Simulation Mode
         reason = "SUTRADHAR_OFFLINE_STUB active" if offline_force else "No OAuth refresh token in .env.youtube"
         print(f"[INFO] Running in OFFLINE / DRY-RUN mode ({reason}).", file=sys.stderr)
-        print(f"[INFO] Upload Mode: private_review | Privacy: private | Category: {category_id} | Language: {video_lang}", file=sys.stderr)
+        print(f"[INFO] Upload Mode: {upload_mode} | Privacy: {target_privacy} | Category: {category_id} | Language: {video_lang}", file=sys.stderr)
         print(f"[INFO] Synthetic Media Disclosure (AI): True | Title: {title}", file=sys.stderr)
 
         ep_num = plan_data.get("global_episode_number", 1)
@@ -129,10 +158,10 @@ def run_publish_pipeline(root: Path) -> dict[str, Any]:
         result_dict = {
             "video_id": simulated_video_id,
             "playlist_id": simulated_playlist_id,
-            "upload_status": "PRIVATE_REVIEW",
-            "scheduled_publish_at": None,
-            "upload_mode": "private_review",
-            "privacy_status": "private",
+            "upload_status": target_publish_status,
+            "scheduled_publish_at": scheduled_publish_at,
+            "upload_mode": upload_mode,
+            "privacy_status": target_privacy,
             "video_url": f"https://youtu.be/{simulated_video_id}",
             "error_message": None,
         }
@@ -147,8 +176,8 @@ def run_publish_pipeline(root: Path) -> dict[str, Any]:
                 "categoryId": {"expected": category_id, "actual": category_id, "match": True},
                 "defaultAudioLanguage": {"expected": video_lang, "actual": video_lang, "match": True},
                 "defaultLanguage": {"expected": video_lang, "actual": video_lang, "match": True},
-                "privacyStatus": {"expected": "private", "actual": "private", "match": True},
-                "publishAt": {"expected": None, "actual": None, "match": True},
+                "privacyStatus": {"expected": target_privacy, "actual": target_privacy, "match": True},
+                "publishAt": {"expected": scheduled_publish_at, "actual": scheduled_publish_at, "match": True},
                 "selfDeclaredMadeForKids": {"expected": False, "actual": False, "match": True},
                 "containsSyntheticMedia": {"expected": True, "actual": True, "match": True},
                 "playlist_membership": {"playlist_id": simulated_playlist_id, "is_member": True},
@@ -157,7 +186,7 @@ def run_publish_pipeline(root: Path) -> dict[str, Any]:
         })
     else:
         # Live YouTube Data API v3 Upload Flow
-        print(f"[INFO] Live YouTube OAuth credentials detected. Uploading private review video...", file=sys.stderr)
+        print(f"[INFO] Live YouTube OAuth credentials detected. Uploading {upload_mode} video...", file=sys.stderr)
         try:
             from google.oauth2.credentials import Credentials
             from googleapiclient.discovery import build
@@ -177,6 +206,14 @@ def run_publish_pipeline(root: Path) -> dict[str, Any]:
             youtube = build("youtube", "v3", credentials=creds)
 
             # 1. Upload Video
+            status_body: dict[str, Any] = {
+                "privacyStatus": target_privacy,
+                "selfDeclaredMadeForKids": False,
+                "containsSyntheticMedia": True,  # Mandatory AI disclosure
+            }
+            if scheduled_publish_at:
+                status_body["publishAt"] = scheduled_publish_at
+
             body = {
                 "snippet": {
                     "title": title[:100],
@@ -186,11 +223,7 @@ def run_publish_pipeline(root: Path) -> dict[str, Any]:
                     "defaultLanguage": video_lang,
                     "defaultAudioLanguage": video_lang,
                 },
-                "status": {
-                    "privacyStatus": "private",  # Strictly enforced private review
-                    "selfDeclaredMadeForKids": False,
-                    "containsSyntheticMedia": True,  # Mandatory AI disclosure
-                },
+                "status": status_body,
             }
 
             media = MediaFileUpload(str(final_video_path), chunksize=-1, resumable=True)
@@ -201,37 +234,63 @@ def run_publish_pipeline(root: Path) -> dict[str, Any]:
             # 2. Upload Custom Thumbnail (build/thumbnail.jpg)
             thumbnail_status = "not_provided"
             if thumbnail_path.is_file() and video_id:
-                try:
-                    media_thumb = MediaFileUpload(str(thumbnail_path), mimetype="image/jpeg")
-                    thumb_req = youtube.thumbnails().set(videoId=video_id, media_body=media_thumb)
-                    thumb_res = thumb_req.execute()
-                    thumbnail_status = "uploaded"
-                    print(f"[INFO] Uploaded custom thumbnail for video {video_id}.", file=sys.stderr)
-                except Exception as thumb_exc:
-                    is_403 = False
-                    if hasattr(thumb_exc, "resp") and getattr(thumb_exc.resp, "status", None) == 403:
-                        is_403 = True
-                    elif "403" in str(thumb_exc):
-                        is_403 = True
-                    if is_403:
-                        thumbnail_status = "403_forbidden_custom_thumbnails_pending"
-                        print(
-                            f"[WARN] Thumbnail upload returned 403 (Channel phone verification / Intermediate Features needed for custom thumbnails). Non-fatal: {thumb_exc}",
-                            file=sys.stderr,
-                        )
-                    else:
-                        thumbnail_status = f"failed: {thumb_exc}"
-                        print(f"[WARN] Thumbnail upload non-fatal error: {thumb_exc}", file=sys.stderr)
+                max_retries = 3
+                for attempt in range(1, max_retries + 1):
+                    try:
+                        media_thumb = MediaFileUpload(str(thumbnail_path), mimetype="image/jpeg", resumable=False)
+                        thumb_req = youtube.thumbnails().set(videoId=video_id, media_body=media_thumb)
+                        thumb_res = thumb_req.execute()
+                        thumbnail_status = "uploaded"
+                        print(f"[INFO] Successfully uploaded and applied custom thumbnail for video {video_id}.", file=sys.stderr)
+                        break
+                    except Exception as thumb_exc:
+                        is_403 = False
+                        if hasattr(thumb_exc, "resp") and getattr(thumb_exc.resp, "status", None) == 403:
+                            is_403 = True
+                        elif "403" in str(thumb_exc):
+                            is_403 = True
+
+                        if is_403:
+                            thumbnail_status = "403_forbidden_custom_thumbnails_pending"
+                            print(
+                                f"[WARN] Thumbnail upload returned 403 (Channel phone verification / Intermediate Features needed for custom thumbnails). Non-fatal: {thumb_exc}",
+                                file=sys.stderr,
+                            )
+                            break
+                        elif attempt < max_retries:
+                            print(f"[WARN] Thumbnail upload attempt {attempt} failed: {thumb_exc}. Retrying in 2s...", file=sys.stderr)
+                            time.sleep(2.0)
+                        else:
+                            thumbnail_status = f"failed: {thumb_exc}"
+                            print(f"[WARN] Thumbnail upload failed after {max_retries} attempts: {thumb_exc}", file=sys.stderr)
 
             # 3. Add to Series Playlist
             playlist_id = plan_data.get("youtube_playlist_id")
+            playlist_privacy = "public" if upload_mode == "public" else "private"
             try:
                 if not playlist_id:
-                    pl_request = youtube.playlists().list(part="snippet", mine=True, maxResults=50)
+                    pl_request = youtube.playlists().list(part="snippet,status", mine=True, maxResults=50)
                     pl_response = pl_request.execute()
                     for item in pl_response.get("items", []):
                         if item.get("snippet", {}).get("title") == series_title:
                             playlist_id = item.get("id")
+                            # If existing playlist was private and mode is public, update it
+                            if upload_mode == "public" and item.get("status", {}).get("privacyStatus") != "public":
+                                try:
+                                    youtube.playlists().update(
+                                        part="id,snippet,status",
+                                        body={
+                                            "id": playlist_id,
+                                            "snippet": {
+                                                "title": series_title,
+                                                "description": f"Sutradhar Series: {series_title}",
+                                            },
+                                            "status": {"privacyStatus": "public"},
+                                        },
+                                    ).execute()
+                                    print(f"[INFO] Updated existing series playlist {playlist_id} to public.", file=sys.stderr)
+                                except Exception as pl_up_err:
+                                    print(f"[WARN] Could not update playlist privacyStatus: {pl_up_err}", file=sys.stderr)
                             break
 
                 if not playlist_id:
@@ -242,7 +301,7 @@ def run_publish_pipeline(root: Path) -> dict[str, Any]:
                                 "title": series_title,
                                 "description": f"Sutradhar Series: {series_title}",
                             },
-                            "status": {"privacyStatus": "private"},
+                            "status": {"privacyStatus": playlist_privacy},
                         },
                     )
                     pl_res = create_pl.execute()
@@ -307,14 +366,14 @@ def run_publish_pipeline(root: Path) -> dict[str, Any]:
                             "match": s_snip.get("defaultLanguage") == video_lang,
                         },
                         "privacyStatus": {
-                            "expected": "private",
+                            "expected": target_privacy,
                             "actual": s_stat.get("privacyStatus"),
-                            "match": s_stat.get("privacyStatus") == "private",
+                            "match": s_stat.get("privacyStatus") == target_privacy,
                         },
                         "publishAt": {
-                            "expected": None,
+                            "expected": scheduled_publish_at,
                             "actual": s_stat.get("publishAt"),
-                            "match": s_stat.get("publishAt") is None,
+                            "match": s_stat.get("publishAt") == scheduled_publish_at,
                         },
                         "selfDeclaredMadeForKids": {
                             "expected": False,
@@ -369,10 +428,10 @@ def run_publish_pipeline(root: Path) -> dict[str, Any]:
             result_dict = {
                 "video_id": video_id,
                 "playlist_id": playlist_id,
-                "upload_status": "PRIVATE_REVIEW",
-                "scheduled_publish_at": None,
-                "upload_mode": "private_review",
-                "privacy_status": "private",
+                "upload_status": target_publish_status,
+                "scheduled_publish_at": scheduled_publish_at,
+                "upload_mode": upload_mode,
+                "privacy_status": target_privacy,
                 "video_url": f"https://youtu.be/{video_id}" if video_id else None,
                 "error_message": None,
             }
@@ -383,9 +442,9 @@ def run_publish_pipeline(root: Path) -> dict[str, Any]:
                 "video_id": None,
                 "playlist_id": None,
                 "upload_status": "FAILED",
-                "scheduled_publish_at": None,
-                "upload_mode": "private_review",
-                "privacy_status": "private",
+                "scheduled_publish_at": scheduled_publish_at,
+                "upload_mode": upload_mode,
+                "privacy_status": target_privacy,
                 "video_url": None,
                 "error_message": str(exc),
             }

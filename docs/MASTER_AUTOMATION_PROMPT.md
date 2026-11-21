@@ -9,9 +9,9 @@ Execute ONE complete episode production run end-to-end strictly following the ru
 ## 1. Non-Negotiable Safety & Operational Rules
 
 1. **Zero External AI APIs:** Never call external LLM, TTS, or image APIs. Perform all series planning, scripting, bespoke SVG authoring, and multimodal visual QA natively.
-2. **Strict Publishing Safety Lock:**
-   - NEVER modify `config.yaml` to change `publishing.upload_mode` or `publishing.allow_public_or_scheduled`.
-   - While `upload_mode == "private_review"` or `allow_public_or_scheduled == false`, NEVER attempt public or scheduled publishing (`publishAt`).
+2. **Automated Public Publishing & Credential Security:**
+   - Every episode is uploaded as **Public by default** (`upload_mode == "public"`, `privacy_status == "public"`, `allow_public_or_scheduled == true`) or scheduled when configured in `config.yaml`.
+   - Custom thumbnail generation and upload are fully enabled; verify that `build/thumbnail.jpg` is automatically applied.
    - NEVER read, print, echo, or log any credentials, secrets, or tokens from `.env.youtube`. Keep OAuth tokens 100% confidential.
 3. **Git & Database Protection:**
    - Do NOT run `git add`, `git commit`, `git push`, `git reset`, `git checkout`, or `git switch`.
@@ -96,9 +96,9 @@ Create `build/episode_plan.json` matching the active `primary_language` (`en` or
 
 ### Step 7: Upload to YouTube, Verify Read-Back & Record in SQLite
 1. Run `.\.venv\Scripts\python.exe scripts/publish_youtube.py`.
-   - Verify exit code `0`, inspect `build/publish_verification.json` (confirming expected `title`, `description`, `privacyStatus`, `containsSyntheticMedia: true`, `selfDeclaredMadeForKids: false`, `defaultAudioLanguage`, `playlist_id` membership, and `thumbnail_upload_status`), and confirm `publishAt` is `null` whenever `private_review` lock is active.
+   - Verify exit code `0`, inspect `build/publish_verification.json` (confirming expected `title`, `description`, `privacyStatus: "public"`, `containsSyntheticMedia: true`, `selfDeclaredMadeForKids: false`, `defaultAudioLanguage`, `playlist_id` membership, and `thumbnail_upload_status: "uploaded"`), and confirm `upload_status: "PUBLISHED"`.
 2. Run `.\.venv\Scripts\python.exe scripts/db_manager.py --record-published`.
-   - Confirm exit code `0`, episode persisted to `episodes.db`, `youtube_playlist_id` saved, and `series_status` updated (`ACTIVE` -> `COMPLETED` on the final episode).
+   - Confirm exit code `0`, episode persisted to `episodes.db` with `status: "PUBLISHED"`, `youtube_playlist_id` saved, and `series_status` updated (`ACTIVE` -> `COMPLETED` on the final episode).
    - *(Note: If `publish_youtube.py` failed with `upload_status: "FAILED"`, still run `--record-published` to log the failure safely without advancing `completed_episodes`, and report the exact error.)*
 
 ---
@@ -109,5 +109,5 @@ Always conclude with a concise structured report containing:
 - **Series & Episode:** Series Title, Pillar, Language (`en`/`hi`), Part (`X / Y`), Global Episode `#`
 - **Originality:** Bespoke SVG asset path created & featured
 - **Technical & QA Metrics:** Duration (`s`), Integrated Loudness (`LUFS`), KinoCut Score (`/100`), Visual QA status (`qa_grid.jpg`, `final_qa_grid.jpg`, `thumbnail.jpg`)
-- **YouTube Verification:** Video ID, Playlist ID, Upload Mode / Privacy Status (`PRIVATE_REVIEW` vs `PUBLISHED`), Thumbnail upload status, API read-back status (zero secrets printed)
-- **Next Action Needed (if any):** e.g., review private Short in YouTube Studio, or toggle Shorts Series serial mode on Part 1–2.
+- **YouTube Verification:** Video ID, Playlist ID, Upload Mode / Privacy Status (`PUBLISHED` with `privacyStatus: public`), Thumbnail upload status (`uploaded`), API read-back status (zero secrets printed)
+- **Next Action Needed (if any):** e.g., inspect public Short in YouTube Studio or check next scheduled part.

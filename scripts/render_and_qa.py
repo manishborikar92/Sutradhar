@@ -186,9 +186,11 @@ def build_audio_mix(
         filters.append(f"[{inp_idx}:a]aresample=24000:async=1,volume={sfx_gain}dB,adelay={delay_ms}|{delay_ms}[sfx_{idx}]")
         mix_sources.append(out_lbl)
 
-    # 4. Amix all streams together
+    # 4. Amix all streams together with true peak limiting
     mix_count = len(mix_sources)
-    filters.append(f"{''.join(mix_sources)}amix=inputs={mix_count}:duration=first:dropout_transition=2[a_mix]")
+    filters.append(
+        f"{''.join(mix_sources)}amix=inputs={mix_count}:duration=first:dropout_transition=2,alimiter=limit=-1.5dB:level=false[a_mix]"
+    )
 
     filter_complex_str = ";".join(filters)
 
@@ -370,13 +372,17 @@ def run_render_and_qa_pipeline(root: Path) -> dict[str, Any]:
     print(f"[INFO] Mixing audio layers and applying dynamic sidechain ducking...", file=sys.stderr)
     build_audio_mix(root, manifest, cfg, raw_video, mixed_temp)
 
-    # Step 3: KinoCut Mastering to -14.0 LUFS
+    # Step 3: KinoCut Mastering to -14.0 LUFS with true peak limiting
     target_lufs = float(cfg.get("audio_mastering", {}).get("target_lufs", -14.0))
-    print(f"[INFO] Normalizing audio to {target_lufs} LUFS via KinoCut...", file=sys.stderr)
+    true_peak_dbtp = float(cfg.get("audio_mastering", {}).get("true_peak_max_dbtp", -1.0))
+    # Leave 1.5 dB headroom below -1.0 dBTP to protect against AAC encoder intersample peak overshoot
+    safe_peak = min(true_peak_dbtp - 1.0, -2.5)
+    print(f"[INFO] Normalizing audio to {target_lufs} LUFS (true peak ceiling {safe_peak} dBTP) via KinoCut...", file=sys.stderr)
     kino_client = kinocut.Client()
     kino_client.normalize_audio(
         video=str(mixed_temp),
         target_lufs=target_lufs,
+        true_peak_dbtp=safe_peak,
         output=str(final_short),
         overwrite=True,
     )

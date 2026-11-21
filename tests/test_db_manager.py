@@ -390,7 +390,8 @@ class TestDbManagerCompliance(unittest.TestCase):
         ep = make_valid_episode_plan()
         self.write_build_json("episode_plan.json", ep)
 
-        # Under default config (upload_mode=private_review, allow_public_or_scheduled=false):
+        # Under locked config (upload_mode=private_review, allow_public_or_scheduled=false):
+        self.update_config(lambda c: c["publishing"].update({"upload_mode": "private_review", "allow_public_or_scheduled": False}))
         forbidden_payloads = [
             # Attempt 1: PUBLISHED status
             {

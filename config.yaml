@@ -139,9 +139,10 @@ assets:
   - mystic_mist
 publishing:
   env_file: .env.youtube
-  upload_mode: private_review
-  allow_public_or_scheduled: false
-  calibration_episodes_required: 3
+  upload_mode: public
+  allow_public_or_scheduled: true
+  calibration_episodes_required: 0
+  require_custom_thumbnail: true
   scheduled_publish_time_ist: '18:30'
   scheduled_publish_time_utc: '13:00'
   auto_create_series_playlist: true

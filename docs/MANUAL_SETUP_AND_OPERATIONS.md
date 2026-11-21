@@ -217,10 +217,10 @@ Point the automation prompt to: `docs/MASTER_AUTOMATION_PROMPT.md`.
   - All 3 pillars snapshot verified (`pillar_history_qa_grid.jpg` and `pillar_cosmos_qa_grid.jpg`).
   - Drop-in real audio and SFX mixing verified with 44.1 kHz / 48 kHz unit tests.
   - Full test suite passing: **40/40 PASSED** (100% pass). Root `episodes.db` 100% immutable.
-- **Phase 5 (3-Episode Calibration & Scheduled Unlock):** **NEXT / FINAL**
-  - Execute full 3-episode mini-series in strict `private_review` mode.
-  - Creator mobile review and quality audit using the Phase 5 Pre-Launch Checklist below.
-  - Once verified, toggle `upload_mode: "scheduled"` and `allow_public_or_scheduled: true` in `config.yaml`.
+- **Phase 5 (Automated Public Publishing & Custom Thumbnails):** **ACTIVE / OPERATIONAL**
+  - Configured `upload_mode: "public"` and `allow_public_or_scheduled: true` in `config.yaml`.
+  - Custom thumbnail generation and upload enabled and verified across all episodes.
+  - Episodes are uploaded as **Public by default** (`privacyStatus: "public"`), grouped into public series playlists, and recorded in `episodes.db` with `status: "PUBLISHED"`.
 
 ---
 

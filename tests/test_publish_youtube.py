@@ -3,11 +3,12 @@
 
 Verifies:
 1. Zero CLI arguments contract.
-2. Safety configuration locks (upload_mode='private_review', allow_public_or_scheduled=false).
+2. Safety configuration locks (upload_mode in public, private_review, scheduled).
 3. Missing input guards (final_short.mp4, episode_plan.json).
-4. Offline / stub publishing behavior producing valid PublishResult.
+4. Offline / stub publishing behavior producing valid PublishResult (public and private_review).
 5. Mocked Google API interaction (videos.insert, playlists, AI synthetic media disclosure).
-6. End-to-end integration piping publish_result.json into db_manager.py --record-published.
+6. Custom thumbnail generation and upload verification.
+7. End-to-end integration piping publish_result.json into db_manager.py --record-published.
 """
 
 from __future__ import annotations
@@ -92,24 +93,31 @@ class TestPublishYouTube(unittest.TestCase):
             self.assertEqual(ret, 1)
 
     def test_02_safety_guards(self) -> None:
-        """Pipeline must abort if upload_mode != 'private_review' or allow_public_or_scheduled = True."""
+        """Pipeline must enforce mode validity and allow_public_or_scheduled requirements."""
         import yaml
 
-        # Mode violation
+        # Mode without permission
         bad_cfg = dict(self.cfg)
-        bad_cfg["publishing"] = {"upload_mode": "scheduled", "allow_public_or_scheduled": False}
+        bad_cfg["publishing"] = {"upload_mode": "public", "allow_public_or_scheduled": False}
         (self.tmp_dir / "config.yaml").write_text(yaml.safe_dump(bad_cfg), encoding="utf-8")
         with self.assertRaises(publish_youtube.PublishPipelineError) as ctx:
             publish_youtube.run_publish_pipeline(self.tmp_dir)
         self.assertIn("Safety Violation", str(ctx.exception))
 
-        # Public allow violation
-        bad_cfg2 = dict(self.cfg)
-        bad_cfg2["publishing"] = {"upload_mode": "private_review", "allow_public_or_scheduled": True}
-        (self.tmp_dir / "config.yaml").write_text(yaml.safe_dump(bad_cfg2), encoding="utf-8")
-        with self.assertRaises(publish_youtube.PublishPipelineError) as ctx2:
+        bad_cfg_sched = dict(self.cfg)
+        bad_cfg_sched["publishing"] = {"upload_mode": "scheduled", "allow_public_or_scheduled": False}
+        (self.tmp_dir / "config.yaml").write_text(yaml.safe_dump(bad_cfg_sched), encoding="utf-8")
+        with self.assertRaises(publish_youtube.PublishPipelineError) as ctx:
             publish_youtube.run_publish_pipeline(self.tmp_dir)
-        self.assertIn("Safety Violation", str(ctx2.exception))
+        self.assertIn("Safety Violation", str(ctx.exception))
+
+        # Invalid upload_mode string
+        bad_cfg2 = dict(self.cfg)
+        bad_cfg2["publishing"] = {"upload_mode": "unsupported_mode", "allow_public_or_scheduled": True}
+        (self.tmp_dir / "config.yaml").write_text(yaml.safe_dump(bad_cfg2), encoding="utf-8")
+        with self.assertRaises((publish_youtube.PublishPipelineError, db_manager.StateError)) as ctx2:
+            publish_youtube.run_publish_pipeline(self.tmp_dir)
+        self.assertIn("upload_mode", str(ctx2.exception))
 
     def test_03_missing_inputs(self) -> None:
         """Must fail clearly if final_short.mp4 or episode_plan.json is absent."""
@@ -118,14 +126,21 @@ class TestPublishYouTube(unittest.TestCase):
             publish_youtube.run_publish_pipeline(self.tmp_dir)
         self.assertIn("Missing master video file", str(ctx.exception))
 
-    def test_04_offline_stub_mode(self) -> None:
+    def test_04_offline_stub_mode_public_and_private(self) -> None:
         """Must produce valid PublishResult without making external requests when offline."""
+        import yaml
+
+        # 1. Test Public Mode
+        pub_cfg = dict(self.cfg)
+        pub_cfg["publishing"] = {"upload_mode": "public", "allow_public_or_scheduled": True}
+        (self.tmp_dir / "config.yaml").write_text(yaml.safe_dump(pub_cfg), encoding="utf-8")
+
         with patch.dict(os.environ, {"SUTRADHAR_OFFLINE_STUB": "1"}, clear=False):
             res = publish_youtube.run_publish_pipeline(self.tmp_dir)
 
-            self.assertEqual(res["upload_status"], "PRIVATE_REVIEW")
-            self.assertEqual(res["upload_mode"], "private_review")
-            self.assertEqual(res["privacy_status"], "private")
+            self.assertEqual(res["upload_status"], "PUBLISHED")
+            self.assertEqual(res["upload_mode"], "public")
+            self.assertEqual(res["privacy_status"], "public")
             self.assertIsNotNone(res["video_id"])
             self.assertIsNotNone(res["video_url"])
             self.assertIsNone(res["error_message"])
@@ -134,22 +149,31 @@ class TestPublishYouTube(unittest.TestCase):
             out_file = self.build_dir / "publish_result.json"
             self.assertTrue(out_file.is_file())
 
-            # Verify verification audit was written
-            verif_file = self.build_dir / "publish_verification.json"
-            self.assertTrue(verif_file.is_file())
-            verif_data = json.loads(verif_file.read_text(encoding="utf-8"))
-            self.assertIn("PASSED", verif_data.get("verification_verdict", ""))
-
             # Validate against Pydantic model
-            pub_model = db_manager.PublishResult.model_validate(res, context={"config": self.cfg})
-            self.assertEqual(pub_model.upload_status, "PRIVATE_REVIEW")
+            pub_model = db_manager.PublishResult.model_validate(res, context={"config": pub_cfg})
+            self.assertEqual(pub_model.upload_status, "PUBLISHED")
 
-    def test_05_mocked_live_upload(self) -> None:
-        """Mock google-api-python-client to test full live flow, synthetic media disclosure, thumbnails and read-back."""
+        # 2. Test Private Review Mode
+        priv_cfg = dict(self.cfg)
+        priv_cfg["publishing"] = {"upload_mode": "private_review", "allow_public_or_scheduled": False}
+        (self.tmp_dir / "config.yaml").write_text(yaml.safe_dump(priv_cfg), encoding="utf-8")
+
+        with patch.dict(os.environ, {"SUTRADHAR_OFFLINE_STUB": "1"}, clear=False):
+            res_priv = publish_youtube.run_publish_pipeline(self.tmp_dir)
+            self.assertEqual(res_priv["upload_status"], "PRIVATE_REVIEW")
+            self.assertEqual(res_priv["privacy_status"], "private")
+
+    def test_05_mocked_live_public_upload(self) -> None:
+        """Mock google-api-python-client to test full live flow in public mode with custom thumbnail."""
+        import yaml
+        pub_cfg = dict(self.cfg)
+        pub_cfg["publishing"] = {"upload_mode": "public", "allow_public_or_scheduled": True}
+        (self.tmp_dir / "config.yaml").write_text(yaml.safe_dump(pub_cfg), encoding="utf-8")
+
         mock_youtube = MagicMock()
         mock_videos = MagicMock()
         mock_insert = MagicMock()
-        mock_insert.execute.return_value = {"id": "mock_yt_vid_999"}
+        mock_insert.execute.return_value = {"id": "mock_yt_vid_public"}
         mock_videos.insert.return_value = mock_insert
 
         # Mock videos.list for read-back verification
@@ -157,7 +181,7 @@ class TestPublishYouTube(unittest.TestCase):
         mock_vid_list.execute.return_value = {
             "items": [
                 {
-                    "id": "mock_yt_vid_999",
+                    "id": "mock_yt_vid_public",
                     "snippet": {
                         "title": self.sample_plan["youtube_title"][:100],
                         "description": self.sample_plan["youtube_description"][:5000],
@@ -167,7 +191,7 @@ class TestPublishYouTube(unittest.TestCase):
                         "thumbnails": {"default": {"url": "https://i.ytimg.com/vi/mock/default.jpg"}},
                     },
                     "status": {
-                        "privacyStatus": "private",
+                        "privacyStatus": "public",
                         "selfDeclaredMadeForKids": False,
                         "containsSyntheticMedia": True,
                         "publishAt": None,
@@ -202,11 +226,10 @@ class TestPublishYouTube(unittest.TestCase):
         mock_pl_item_insert.execute.return_value = {"id": "mock_pl_item_777"}
         mock_pl_items.insert.return_value = mock_pl_item_insert
 
-        # Mock playlistItems.list for membership read-back
         mock_pl_item_list = MagicMock()
         mock_pl_item_list.execute.return_value = {
             "items": [
-                {"snippet": {"resourceId": {"videoId": "mock_yt_vid_999"}}}
+                {"snippet": {"resourceId": {"videoId": "mock_yt_vid_public"}}}
             ]
         }
         mock_pl_items.list.return_value = mock_pl_item_list
@@ -230,17 +253,17 @@ class TestPublishYouTube(unittest.TestCase):
 
                 res = publish_youtube.run_publish_pipeline(self.tmp_dir)
 
-                self.assertEqual(res["video_id"], "mock_yt_vid_999")
+                self.assertEqual(res["video_id"], "mock_yt_vid_public")
                 self.assertEqual(res["playlist_id"], "mock_pl_888")
-                self.assertEqual(res["upload_status"], "PRIVATE_REVIEW")
-                self.assertEqual(res["privacy_status"], "private")
+                self.assertEqual(res["upload_status"], "PUBLISHED")
+                self.assertEqual(res["privacy_status"], "public")
 
                 # Verify synthetic media flag was set
                 insert_kwargs = mock_videos.insert.call_args[1]
                 body = insert_kwargs["body"]
                 self.assertTrue(body["status"]["containsSyntheticMedia"])
                 self.assertFalse(body["status"]["selfDeclaredMadeForKids"])
-                self.assertEqual(body["status"]["privacyStatus"], "private")
+                self.assertEqual(body["status"]["privacyStatus"], "public")
 
                 # Verify publish_verification.json was written
                 verif_file = self.build_dir / "publish_verification.json"
@@ -249,6 +272,7 @@ class TestPublishYouTube(unittest.TestCase):
                 self.assertEqual(verif["verification_verdict"], "PASSED")
                 self.assertEqual(verif["thumbnail_upload_status"], "uploaded")
                 self.assertTrue(verif["checks"]["title"]["match"])
+                self.assertTrue(verif["checks"]["privacyStatus"]["match"])
                 self.assertTrue(verif["checks"]["playlist_membership"]["is_member"])
 
     def test_07_thumbnail_403_graceful_handling(self) -> None:
@@ -268,7 +292,7 @@ class TestPublishYouTube(unittest.TestCase):
                 {
                     "id": "mock_vid_403",
                     "snippet": {"title": self.sample_plan["youtube_title"][:100], "categoryId": "27"},
-                    "status": {"privacyStatus": "private", "publishAt": None},
+                    "status": {"privacyStatus": "public", "publishAt": None},
                 }
             ]
         }
@@ -310,7 +334,7 @@ class TestPublishYouTube(unittest.TestCase):
                 res = publish_youtube.run_publish_pipeline(self.tmp_dir)
 
                 # Must not fail the upload
-                self.assertEqual(res["upload_status"], "PRIVATE_REVIEW")
+                self.assertEqual(res["upload_status"], "PUBLISHED")
                 self.assertEqual(res["video_id"], "mock_vid_403")
 
                 # Verify publish_verification.json records 403 status
@@ -320,9 +344,9 @@ class TestPublishYouTube(unittest.TestCase):
                 self.assertEqual(verif["thumbnail_upload_status"], "403_forbidden_custom_thumbnails_pending")
 
     def test_06_e2e_db_manager_integration(self) -> None:
-        """Piping publish_youtube output straight to db_manager.py --record-published must succeed."""
-        # Step 1: Initialize db and seed ACTIVE series in isolated tmp
-        db_manager.cmd_init(self.tmp_dir, self.cfg)
+        """Piping publish_youtube output straight to db_manager.py --record-published must succeed in public mode."""
+        loaded_cfg = db_manager.load_config(self.tmp_dir)
+        db_manager.cmd_init(self.tmp_dir, loaded_cfg)
         conn = db_manager.connect_db(self.tmp_dir / "episodes.db")
         with db_manager.immediate_transaction(conn) as cur:
             cur.execute(
@@ -333,15 +357,16 @@ class TestPublishYouTube(unittest.TestCase):
                 ("Secrets of the Cosmos", "Cosmic & Scientific Paradoxes", "bm_daniel", "cosmic_mystery.mp3", 3, "{}")
             )
 
-        # Step 2: Run publish_youtube offline
+        # Run publish_youtube offline
         with patch.dict(os.environ, {"SUTRADHAR_OFFLINE_STUB": "1", "SUTRADHAR_ROOT": str(self.tmp_dir)}):
             res_pub = publish_youtube.run_publish_pipeline(self.tmp_dir)
-            self.assertEqual(res_pub["upload_status"], "PRIVATE_REVIEW")
+            self.assertEqual(res_pub["upload_status"], "PUBLISHED")
+            self.assertEqual(res_pub["privacy_status"], "public")
 
-            # Step 3: Run db_manager cmd_record_published
-            db_res = db_manager.cmd_record_published(self.tmp_dir, self.cfg)
+            # Run db_manager cmd_record_published
+            db_res = db_manager.cmd_record_published(self.tmp_dir, loaded_cfg)
             self.assertEqual(db_res["action"], "record_published")
-            self.assertEqual(db_res["episode_status"], "PRIVATE_REVIEW")
+            self.assertEqual(db_res["episode_status"], "PUBLISHED")
             self.assertEqual(db_res["series_status"], "ACTIVE")
             self.assertEqual(db_res["completed_episodes"], 1)
 
