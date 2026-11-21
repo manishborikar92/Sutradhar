@@ -42,7 +42,7 @@ This specification defines **Sutradhar**, a **100% Antigravity-native, zero-recu
 
 | Pipeline Layer | Tool / Dependency | Configuration / Version | License / Tier | Operational Ceiling | External Cost |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Orchestrator & Vision QA** | Google Antigravity IDE (Gemini 2.5 Pro) + optional `/automation` | Built-in frontier models | Developer Plan | Runs locally via Antigravity Desktop / CLI | **$0 extra** |
+| **Orchestrator & Vision QA** | Google Antigravity IDE (Pro Reasoning Model) + optional `/automation` | Built-in frontier models | Developer Plan | Runs locally via Antigravity Desktop / CLI | **$0 extra** |
 | **Agent Skills** | `hyperframes` + `svg-character-animation` | Global: `C:\Users\manis\.agents\skills\` | Apache 2.0 | Global rules & HyperFrames templates | **$0.00** |
 | **Local Neural TTS (EN & HI)** | `kokoro-onnx` (Kokoro-82M v1.0) | `kokoro-onnx==0.6.1`, ONNX Runtime | **Apache 2.0** | Unlimited offline CPU synthesis; 0 API keys | **$0.00** |
 | **Word Alignment (Audition)** | `faster-whisper` (CTranslate2) | `faster-whisper==1.2.1` (`base`, `int8`) | MIT | Used for voice auditions; video uses `ffprobe` | **$0.00** |
@@ -251,7 +251,7 @@ flowchart LR
   - Read-back verification: **PASSED** (all fields verified against YouTube Data API).
   - Recorded in `build/youtube_e2e_verification.json`.
 - **Stage 3C (Documentation):** Complete rewrite of `IMPLEMENTATION_PLAN.md`, `MASTER_AUTOMATION_PROMPT.md`, and `MANUAL_SETUP_AND_OPERATIONS.md`. Retired obsolete interim docs.
-- **Stage 3D (Operational Workflow Selection & Automation Documentation):** Established **Manual Daily Execution** on Gemini 2.5 Pro as Sutradhar's recommended primary daily workflow. Documented Antigravity App `/automation` as an optional future upgrade with verified local sidecar, machine-awake, Pro model, and Windows Terminal Sandbox permission requirements.
+- **Stage 3D (Operational Workflow Selection & Automation Documentation):** Established **Manual Daily Execution** on Antigravity's highest-capability / Pro reasoning model as Sutradhar's recommended primary daily workflow. Documented Antigravity App `/automation` as an optional future upgrade with verified local sidecar, machine-awake, Pro model, and Windows Terminal Sandbox permission requirements.
 
 #### Phase 4A — Generalized Multi-Shot Engine, Kathputli Cast Expansion & Real Audio Hardening: COMPLETED
 - **Generalized Multi-Shot Engine (`scripts/generate_composition.py` + `engine.js`):**
@@ -288,11 +288,31 @@ flowchart LR
 - **Database Immutability:**
   - Root `episodes.db` confirmed bit-for-bit unchanged (SHA-256: `729ACCE0CD4F31CC69CECA61470D331ABCBCE5E62B51728AB372CD28F83F8011`).
 
-#### Phase 4B — Multi-Series Production Prep & Pillar Expansion: NEXT
-- Author bespoke diagrams and props for upcoming series across *Hidden History* and *Cosmic & Scientific Paradoxes*.
-- Prepare series bible templates and rotation schedules.
+#### Phase 4B — Automated Multi-Pillar & Real-Audio Swap Readiness: COMPLETED
+- **Full-Repository Gemini Reference Audit & Removal (Mandatory Gate):**
+  - Completed case-insensitive search across all codebase files, configs, and documentation.
+  - Replaced all legacy model strings with clean, model-agnostic Antigravity phrasing (`Antigravity's highest-capability / Pro reasoning model`, `Pro`, `Never call external LLM, TTS, or image APIs`).
+  - Verified 0 model references remain across all tracked and workspace files.
+- **Script Directory Hygiene & Developer Tooling Separation:**
+  - Removed one-off test runner `scripts/run_crosscast_e2e.py`.
+  - Formalized strict classification: the 7 static whitelisted production pipeline commands (`scripts/db_manager.py`, `scripts/build_audio.py`, `scripts/generate_composition.py`, `scripts/preview_frames.py`, `scripts/render_and_qa.py`, `scripts/publish_youtube.py`) remain completely decoupled from developer utilities (`scripts/audition_voices.py`, `scripts/generate_pose_sheets.py`).
+- **Multi-Pillar Theatrical & Diagram Asset Proof:**
+  - Authored bespoke diagram `assets/svg/diagrams/nalanda_scroll_astrolabe.svg` (`viewBox="0 0 900 900"`), implementing an ancient Sanskrit astronomical parchment scroll and brass astrolabe with warm folk-art gold/ochre/obsidian palette, zero teal, and kinetic path classes (`#diagram_base`, `#stage_1`, `#stage_2`, `#stage_3`).
+  - Generated and visually verified multi-shot snapshot contact sheets for both remaining pillars:
+    - **Pillar 2 (Hidden History):** `ancient_scholar` + `ancient_nalanda_courtyard` + `nalanda_scroll_astrolabe` -> `build/phase4_qa/pillar_history_qa_grid.jpg`.
+    - **Pillar 3 (Cosmic & Scientific Paradoxes):** `ancient_scholar` / `sutradhar_narrator` + `celestial_cosmos_court` + `black_hole_anatomy` -> `build/phase4_qa/pillar_cosmos_qa_grid.jpg`.
+  - Confirmed 100% clean canvas (zero captions, zero titles or part badges) and zero visual styling anomalies across all 3 editorial pillars.
+- **Drop-In Real Audio Handling & Audio Engine Verification:**
+  - Verified 1:1 match between `assets/AUDIO_LIBRARY_MANIFEST.md` and `config.yaml` (`bgm_by_pillar` and `sfx_tracks`).
+  - Added automated unit test `test_08_audio_mixing_real_bgm_resampling_loop_and_fade` in `tests/test_render_pipeline.py` verifying real 44.1 kHz stereo audio looping (`-stream_loop -1`), 48 kHz stereo audio trimming with 1.2s exponential fade-out, and multi-track SFX ducking.
+  - Verified full test suite: **40/40 PASSED** (100% pass, 0 failures).
+  - Validated HyperFrames: `npx hyperframes lint` (0 errors) and `npx hyperframes check --json` (0 runtime/layout/contrast errors, `ok: true`).
+- **Database Immutability:**
+  - Root `episodes.db` confirmed bit-for-bit untouched (SHA-256: `729ACCE0CD4F31CC69CECA61470D331ABCBCE5E62B51728AB372CD28F83F8011`).
+- **Manual Hand-off to Creator:**
+  - Production workflow is fully documented and ready for creator-driven daily execution via [docs/MASTER_AUTOMATION_PROMPT.md](file:///c:/Users/manis/Projects/Sutradhar/docs/MASTER_AUTOMATION_PROMPT.md).
 
-#### Phase 5 — Production Calibration & Scheduled Publishing Unlock: FINAL
-- Run full 3-episode mini-series in `private_review` mode.
-- Creator visual and narrative approval audit.
-- Unlock `publishing.upload_mode: "scheduled"` and `publishing.allow_public_or_scheduled: true` for autonomous public YouTube distribution.
+#### Phase 5 — Production Calibration & Scheduled Publishing Unlock: NEXT / FINAL
+- **Step 1 (Pre-Launch Calibration):** Execute 3 consecutive daily calibration episodes across the 3 editorial pillars in strict `private_review` mode (`allow_public_or_scheduled: false`).
+- **Step 2 (Mobile Quality Audit):** Review each private Short in YouTube Studio on mobile devices to verify pacing, audio loudness (-14 LUFS), zero mobile DAC clipping, and clean-canvas aesthetics.
+- **Step 3 (Scheduled Publishing Unlock):** Once all 3 calibration episodes pass inspection, toggle `publishing.upload_mode: "scheduled"` and `publishing.allow_public_or_scheduled: true` in `config.yaml` to begin scheduled distribution (defaulting to 18:30 IST / 13:00 UTC).

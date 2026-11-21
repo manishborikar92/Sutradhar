@@ -251,6 +251,115 @@ class TestRenderPipeline(unittest.TestCase):
         info = render_and_qa.probe_media(out_vid)
         self.assertIn("format", info)
 
+    def test_08_audio_mixing_real_bgm_resampling_loop_and_fade(self) -> None:
+        """Verify audio mixing pipeline handles real 44.1kHz and 48kHz audio tracks (looping, fade-out, SFX ducking)."""
+        build_dir = self.root / "build"
+        build_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy(REPO_ROOT / "config.yaml", self.root / "config.yaml")
+        bgm_dir = self.root / "assets" / "bgm"
+        sfx_dir = self.root / "assets" / "sfx"
+        bgm_dir.mkdir(parents=True, exist_ok=True)
+        sfx_dir.mkdir(parents=True, exist_ok=True)
+
+        # 1. Create a dummy raw video of 3.0 seconds
+        raw_vid = build_dir / "raw_video.mp4"
+        subprocess.run(
+            ["ffmpeg", "-y", "-f", "lavfi", "-i", "testsrc=size=1080x1920:rate=30", "-t", "3", "-pix_fmt", "yuv420p", str(raw_vid)],
+            capture_output=True,
+            check=True,
+        )
+
+        # 2. Create narration audio at 24kHz, duration 3.0 seconds
+        narr_wav = build_dir / "narration.wav"
+        subprocess.run(
+            ["ffmpeg", "-y", "-f", "lavfi", "-i", "sine=frequency=440:sample_rate=24000", "-t", "3", str(narr_wav)],
+            capture_output=True,
+            check=True,
+        )
+
+        # 3. Create real 44.1kHz stereo BGM (short: 1.0s, so it must loop)
+        short_44k_bgm = bgm_dir / "short_44k_track.mp3"
+        subprocess.run(
+            ["ffmpeg", "-y", "-f", "lavfi", "-i", "sine=frequency=220:sample_rate=44100", "-ac", "2", "-t", "1.0", "-b:a", "192k", str(short_44k_bgm)],
+            capture_output=True,
+            check=True,
+        )
+
+        # 4. Create real 48kHz stereo BGM (long: 5.0s, so it must trim and apply 1.2s fade)
+        long_48k_bgm = bgm_dir / "long_48k_track.mp3"
+        subprocess.run(
+            ["ffmpeg", "-y", "-f", "lavfi", "-i", "sine=frequency=330:sample_rate=48000", "-ac", "2", "-t", "5.0", "-b:a", "192k", str(long_48k_bgm)],
+            capture_output=True,
+            check=True,
+        )
+
+        # 5. Create real SFX cues (48kHz and 44.1kHz)
+        sfx_whoosh = sfx_dir / "whoosh_soft.wav"
+        subprocess.run(
+            ["ffmpeg", "-y", "-f", "lavfi", "-i", "sine=frequency=660:sample_rate=48000", "-ac", "2", "-t", "0.5", str(sfx_whoosh)],
+            capture_output=True,
+            check=True,
+        )
+        sfx_hit = sfx_dir / "sub_hit.wav"
+        subprocess.run(
+            ["ffmpeg", "-y", "-f", "lavfi", "-i", "sine=frequency=80:sample_rate=44100", "-ac", "2", "-t", "0.8", str(sfx_hit)],
+            capture_output=True,
+            check=True,
+        )
+
+        cfg = render_and_qa.load_config(self.root)
+
+        # Test Case A: Short 44.1kHz BGM looping + SFX cue
+        manifest_a = {
+            "bgm_track": "short_44k_track.mp3",
+            "audio": {
+                "narration_full_path": "build/narration.wav",
+                "total_duration_sec": 3.0,
+            },
+            "scenes": [
+                {"scene_index": 1, "start_sec": 0.0, "end_sec": 1.5, "sfx_cue": "whoosh_soft.wav"},
+                {"scene_index": 2, "start_sec": 1.5, "end_sec": 3.0, "sfx_cue": "sub_hit.wav"},
+            ],
+        }
+        out_vid_a = build_dir / "final_short_44k_looped.mp4"
+        render_and_qa.build_audio_mix(
+            root=self.root,
+            manifest=manifest_a,
+            cfg=cfg,
+            raw_video_path=raw_vid,
+            output_video_path=out_vid_a,
+        )
+        self.assertTrue(out_vid_a.is_file())
+        info_a = render_and_qa.probe_media(out_vid_a)
+        duration_a = float(info_a["format"]["duration"])
+        self.assertAlmostEqual(duration_a, 3.0, delta=0.3)
+        self.assertTrue(any(s["codec_type"] == "audio" for s in info_a["streams"]))
+
+        # Test Case B: Long 48kHz BGM trimmed with 1.2s fade-out
+        manifest_b = {
+            "bgm_track": "long_48k_track.mp3",
+            "audio": {
+                "narration_full_path": "build/narration.wav",
+                "total_duration_sec": 3.0,
+            },
+            "scenes": [
+                {"scene_index": 1, "start_sec": 0.0, "end_sec": 3.0},
+            ],
+        }
+        out_vid_b = build_dir / "final_short_48k_faded.mp4"
+        render_and_qa.build_audio_mix(
+            root=self.root,
+            manifest=manifest_b,
+            cfg=cfg,
+            raw_video_path=raw_vid,
+            output_video_path=out_vid_b,
+        )
+        self.assertTrue(out_vid_b.is_file())
+        info_b = render_and_qa.probe_media(out_vid_b)
+        duration_b = float(info_b["format"]["duration"])
+        self.assertAlmostEqual(duration_b, 3.0, delta=0.3)
+        self.assertTrue(any(s["codec_type"] == "audio" for s in info_b["streams"]))
+
 
 if __name__ == "__main__":
     unittest.main()

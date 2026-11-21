@@ -164,13 +164,13 @@ flowchart TD
 **Manual Daily Execution** is Sutradhar's authoritative production workflow. 
 
 **Why Manual Daily Execution is Primary:**
-- **Model Tier:** Sutradhar's theatrical Kathputli hierarchical SVG directing, narrative pacing, and visual error detection require **Gemini 2.5 Pro**. Antigravity `/automation` defaults to Flash, which is insufficient for multi-shot puppet anatomy and visual QA reasoning.
+- **Model Tier:** Sutradhar's theatrical Kathputli hierarchical SVG directing, narrative pacing, and visual error detection require **Antigravity's highest-capability / Pro reasoning model**. Antigravity `/automation` defaults to Flash, which is insufficient for multi-shot puppet anatomy and visual QA reasoning.
 - **Multimodal Visual Oversight:** Directing in chat gives the creator instant visual inspection of `build/qa_grid.jpg`, `build/final_qa_grid.jpg`, and `build/thumbnail.jpg`, ensuring zero detached limbs or styling drift before any upload occurs.
 - **Local Sandbox Reliability:** Antigravity App `/automation` runs as a local sidecar and by default enforces strict unattended auto-denial for network calls and `.env` file reading. Manual execution eliminates sandbox permission timeouts and guarantees smooth YouTube API connectivity.
 - **Host Availability:** The creator initiates production when the workstation is active, avoiding machine-sleep failures.
 
 **Daily 3-Step Execution Procedure:**
-1. **Open Antigravity IDE:** Ensure the workspace is set to `C:\Users\manis\Projects\Sutradhar` and model selection is set to **Gemini 2.5 Pro**.
+1. **Open Antigravity IDE:** Ensure the workspace is set to `C:\Users\manis\Projects\Sutradhar` and model selection is set to **Antigravity's Pro reasoning model**.
 2. **Trigger Master Prompt:** Copy and send the contents of [docs/MASTER_AUTOMATION_PROMPT.md](file:///c:/Users/manis/Projects/Sutradhar/docs/MASTER_AUTOMATION_PROMPT.md) in the chat.
 3. **Review End-of-Run Report:**
    - Confirm all 7 steps executed with exit code `0`.
@@ -186,7 +186,7 @@ Antigravity App `/automation` is supported as an optional future upgrade for sch
 
 - **Surface Limitation:** `/automation` runs strictly within the **Antigravity Desktop App** (via local background sidecar processes). It cannot run as a cloud cron or in browser-only / standalone CLI environments.
 - **Machine-Awake Requirement:** The host Windows PC must remain powered on, awake, and unlocked at the scheduled time (`CRON_TZ=Asia/Kolkata`). If the machine is sleeping or off, scheduled events fail or stall.
-- **Model Configuration:** You must explicitly switch the automation model configuration from default `Flash` to **`Gemini 2.5 Pro`**.
+- **Model Configuration:** You must explicitly switch the automation model configuration from default `Flash` to **`Pro`**.
 - **Interactive Permissions Record:** Because the Windows Terminal Sandbox restricts `.env` file reads and outbound network access by default, an interactive first run is **mandatory** to record and persist `agent_permissions` for:
   - All 7 whitelisted `.\.venv\Scripts\python.exe` commands.
   - Outbound HTTPS network access to `www.googleapis.com` and `oauth2.googleapis.com`.
@@ -210,13 +210,61 @@ Point the automation prompt to: `docs/MASTER_AUTOMATION_PROMPT.md`.
   - Live E2E `private_review` upload verified (`vdkMMm5ucPQ`).
   - Master daily prompt hardened with `.venv` whitelist and duplicate guards.
   - Primary manual workflow and optional `/automation` upgrade established.
-- **Phase 4 (Kathputli Cast Expansion & Real Audio Library):** **NEXT**
-  - Expand character SVGs (Lord Shiva, Narad Muni, Shani Dev, Ashwatthama) with verified hierarchical rivet rigging.
-  - Curate authentic royalty-free Indian acoustic instruments and transition SFX.
-- **Phase 5 (3-Episode Calibration & Scheduled Unlock):** **FINAL**
-  - Run full 3-episode mini-series in `private_review` mode.
-  - Creator mobile review and quality audit.
+- **Phase 4A & 4B (Multi-Shot Engine, Cast Expansion & Production Readiness):** **COMPLETED**
+  - Generalized manifest-driven multi-shot engine in `scripts/generate_composition.py` and `engine.js` with 7 shot types and 5 standardized poses.
+  - Kathputli cast expanded to 5 reusable character rigs: `ravana`, `shani_dev`, `narad_muni`, `hanuman`, and `ancient_scholar`.
+  - 4 theatrical backdrops and bespoke diagrams across all 3 editorial pillars verified (`assets/svg/diagrams/nalanda_scroll_astrolabe.svg`).
+  - All 3 pillars snapshot verified (`pillar_history_qa_grid.jpg` and `pillar_cosmos_qa_grid.jpg`).
+  - Drop-in real audio and SFX mixing verified with 44.1 kHz / 48 kHz unit tests.
+  - Full test suite passing: **40/40 PASSED** (100% pass). Root `episodes.db` 100% immutable.
+- **Phase 5 (3-Episode Calibration & Scheduled Unlock):** **NEXT / FINAL**
+  - Execute full 3-episode mini-series in strict `private_review` mode.
+  - Creator mobile review and quality audit using the Phase 5 Pre-Launch Checklist below.
   - Once verified, toggle `upload_mode: "scheduled"` and `allow_public_or_scheduled: true` in `config.yaml`.
+
+---
+
+### Phase 5 Pre-Launch Calibration Checklist
+
+Before transitioning Sutradhar from `private_review` to public or scheduled YouTube distribution, the creator must perform this 4-step calibration audit across **3 consecutive test episodes**:
+
+#### 1. Three Consecutive Mobile Quality Audits
+- Upload 3 consecutive calibration episodes (covering each editorial pillar: *Ancient Epics & Lore*, *Hidden History*, *Cosmic & Scientific Paradoxes*) in `private_review` mode.
+- Open each private Short in the **YouTube mobile app** (iOS or Android) on a physical phone.
+- Confirm playback is smooth, aspect ratio is 9:16 full-bleed, and no video stutter occurs.
+
+#### 2. Clean-Canvas & Safe-Zone Verification
+- Verify **100% Clean Canvas**: Zero on-screen captions or subtitles (rely exclusively on YouTube auto-captions generated from clear Kokoro narration).
+- Verify **Zero On-Screen Badges**: Zero episode titles, series titles, or part badges (`PART X OF Y`) cluttering the frame.
+- Verify **Safe Zones**: Inspect against `build/qa_grid_safezones.jpg` to ensure character faces, important limbs, and bespoke diagrams remain outside blocked areas (top 288px header, bottom 520px description/audio badge, right 192px engagement buttons).
+- Verify **Aesthetic Palette**: Confirm warm Indian theatrical folk-art palette (gold, ochre, terracotta, obsidian) with **strictly zero teal/cyan**.
+
+#### 3. Audio & Vocal Clarity Verification
+- Listen to each Short on physical mobile phone speakers and headphones.
+- Confirm dialogue intelligibility: narration and character dialogue must sound warm, authoritative, and articulate with zero synthetic buzz, sibilance, or chipmunk artifacts.
+- Confirm BGM ducking: background music must duck cleanly by 6:1 ratio (-22 dB base gain) beneath speech, rising smoothly during pauses.
+- Confirm True Peak and Loudness: audio must meet -14.0 LUFS ± 0.5 without mobile DAC clipping or distortion (True Peak $\le -1.0\text{ dBTP}$).
+- Confirm tail fade-out: BGM must fade smoothly over 1.2s at the conclusion without an abrupt cutoff.
+
+#### 4. Custom Thumbnail & Metadata Verification
+- Verify `build/thumbnail.jpg`: size must be $\le 2\text{ MB}$, resolution 1080×1920, capturing the key narrative hook at midpoint of Shot 3.
+- Verify YouTube metadata: title adheres to `<Title> (Part X/Y) #Shorts`, synthetic media AI disclosure flag is set to `True`, category is 27 (Education), and playlist association matches `active_series`.
+
+#### 5. Scheduled Publishing Unlock Procedure
+When all 3 calibration episodes pass the checks above:
+1. Open `config.yaml` and locate the `publishing` block:
+   ```yaml
+   publishing:
+     env_file: .env.youtube
+     upload_mode: scheduled               # Switch from private_review to scheduled
+     allow_public_or_scheduled: true      # Switch from false to true
+     calibration_episodes_required: 3
+     scheduled_publish_time_ist: "18:30"  # Target release time (IST)
+     scheduled_publish_time_utc: "13:00"  # Target release time (UTC)
+     auto_create_series_playlist: true
+   ```
+2. Save `config.yaml`.
+3. From that point on, daily executions of [docs/MASTER_AUTOMATION_PROMPT.md](file:///c:/Users/manis/Projects/Sutradhar/docs/MASTER_AUTOMATION_PROMPT.md) will automatically upload episodes with `status.privacyStatus: "private"` and `status.publishAt: "<date>T13:00:00Z"`, enabling seamless scheduled daily release!
 
 ---
 
@@ -231,6 +279,6 @@ Point the automation prompt to: `docs/MASTER_AUTOMATION_PROMPT.md`.
 | **Thumbnail Generator** | **VERIFIED** | `build/thumbnail.jpg` 1080×1920 $\le 2\text{ MB}$, midpoint of Shot 3 | None (operational) |
 | **KinoCut Quality Gate** | **VERIFIED** | -14.0 LUFS, score $\ge 82/100$, True Peak $\le -1.1\text{ dBTP}$ | None (operational) |
 | **YouTube Data API v3** | **VERIFIED** | Live `private_review` upload (`vdkMMm5ucPQ`) + API read-back | Phone verification for custom thumbnails |
-| **SQLite State Manager** | **VERIFIED** | 37/37 automated tests passing; root `episodes.db` 100% immutable | None (operational) |
+| **SQLite State Manager** | **VERIFIED** | 40/40 automated tests passing; root `episodes.db` 100% immutable | None (operational) |
 | **Master Production Prompt**| **VERIFIED** | Self-contained, `.venv` explicit, duplicate guard, clean canvas | Trigger daily via Antigravity on Pro |
-| **Operational Workflow** | **VERIFIED** | Manual Daily Execution primary; `/automation` documented as optional upgrade | Ready for Phase 4 or first real episode |
+| **Operational Workflow** | **VERIFIED** | Manual Daily Execution primary; `/automation` documented as optional upgrade | Ready for Phase 5 Calibration |

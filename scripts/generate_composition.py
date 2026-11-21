@@ -960,6 +960,10 @@ def generate_root_composition(root: Optional[Path] = None) -> dict[str, Any]:
         # Optional Diagram
         diagram_html = ""
         diag_rig = sc.get("diagram_rig")
+        if not diag_rig and sc.get("bespoke_diagram_asset"):
+            diag_rig = Path(sc["bespoke_diagram_asset"]).stem
+        if not diag_rig and sc.get("diagram_asset"):
+            diag_rig = Path(sc["diagram_asset"]).stem
         if diag_rig:
             diag_path = diagrams_dir / f"{diag_rig}.svg"
             if diag_path.is_file():

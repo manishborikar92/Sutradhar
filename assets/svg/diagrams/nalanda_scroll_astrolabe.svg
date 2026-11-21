@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900" width="900" height="900">
+  <defs>
+    <!-- Warm Indian Folk-Art Astrolabe Gradients -->
+    <radialGradient id="nalanda_brass_disc" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#F8F4EC" stop-opacity="0.95" />
+      <stop offset="35%" stop-color="#E5B869" stop-opacity="0.9" />
+      <stop offset="70%" stop-color="#C84B31" stop-opacity="0.75" />
+      <stop offset="100%" stop-color="#1A120B" stop-opacity="0.95" />
+    </radialGradient>
+
+    <radialGradient id="scroll_parchment_vignette" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#2D1E12" stop-opacity="0.2" />
+      <stop offset="70%" stop-color="#1A120B" stop-opacity="0.7" />
+      <stop offset="100%" stop-color="#07090F" stop-opacity="0.95" />
+    </radialGradient>
+
+    <linearGradient id="astrolabe_gold_grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F8F4EC" />
+      <stop offset="50%" stop-color="#E5B869" />
+      <stop offset="100%" stop-color="#C84B31" />
+    </linearGradient>
+
+    <linearGradient id="alidade_rule_grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#E5B869" />
+      <stop offset="50%" stop-color="#F8F4EC" />
+      <stop offset="100%" stop-color="#C84B31" />
+    </linearGradient>
+
+    <filter id="nalanda_gold_glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Base: Ancient Scroll Framing & Astrolabe Mater Disc -->
+  <g id="diagram_base">
+    <!-- Parchment Scroll Background Backdrop -->
+    <rect x="30" y="30" width="840" height="840" rx="24" fill="url(#scroll_parchment_vignette)" stroke="#E5B869" stroke-width="3" opacity="0.9" />
+    <rect x="46" y="46" width="808" height="808" rx="16" fill="none" stroke="#E5B869" stroke-width="1.5" stroke-dasharray="8 6" opacity="0.6" />
+
+    <!-- Corner Decorative Folk Mandalas -->
+    <circle cx="70" cy="70" r="14" fill="#C84B31" stroke="#E5B869" stroke-width="2" />
+    <circle cx="830" cy="70" r="14" fill="#C84B31" stroke="#E5B869" stroke-width="2" />
+    <circle cx="70" cy="830" r="14" fill="#C84B31" stroke="#E5B869" stroke-width="2" />
+    <circle cx="830" cy="830" r="14" fill="#C84B31" stroke="#E5B869" stroke-width="2" />
+
+    <!-- Header & Subtitle -->
+    <text x="450" y="85" fill="#E5B869" font-family="'Playfair Display', Georgia, serif" font-size="30" font-weight="800" text-anchor="middle" letter-spacing="3">NALANDA KHAGOLA OBSERVATORY</text>
+    <text x="450" y="115" fill="#F8F4EC" font-family="'Inter', system-ui, sans-serif" font-size="18" font-weight="600" text-anchor="middle" opacity="0.85">ASTRONOMICAL RETE • 5TH CENTURY CE</text>
+
+    <!-- Astrolabe Mater (Outer Brass Limbo & Degree Ring) -->
+    <circle class="draw-path" cx="450" cy="480" r="330" fill="#111827" stroke="#E5B869" stroke-width="3.5" />
+    <circle class="draw-path" cx="450" cy="480" r="300" fill="none" stroke="#E5B869" stroke-width="2" stroke-dasharray="6 8" opacity="0.75" />
+    <circle class="draw-path" cx="450" cy="480" r="260" fill="none" stroke="#C84B31" stroke-width="1.5" opacity="0.6" />
+
+    <!-- Cardinal Meridian & Horizon Axes -->
+    <line class="draw-path" x1="450" y1="150" x2="450" y2="810" stroke="#E5B869" stroke-width="2" opacity="0.8" />
+    <line class="draw-path" x1="120" y1="480" x2="780" y2="480" stroke="#E5B869" stroke-width="2" opacity="0.8" />
+
+    <!-- Horizon & Meridian Sanskrit / English Indicators -->
+    <text x="450" y="172" fill="#E5B869" font-family="'Playfair Display', Georgia, serif" font-size="20" font-weight="800" text-anchor="middle">MERIDIAN (याम्योत्तर)</text>
+    <text x="450" y="800" fill="#E5B869" font-family="'Playfair Display', Georgia, serif" font-size="20" font-weight="800" text-anchor="middle">NADIR</text>
+    <text x="765" y="472" fill="#E5B869" font-family="'Playfair Display', Georgia, serif" font-size="18" font-weight="800" text-anchor="end">EAST (प्राची)</text>
+    <text x="135" y="472" fill="#E5B869" font-family="'Playfair Display', Georgia, serif" font-size="18" font-weight="800">WEST (प्रतीची)</text>
+  </g>
+
+  <!-- Stage 1: Almucantar Altitude Arcs & Celestial Tropic Bands -->
+  <g id="stage_1">
+    <!-- Concentric Almucantars (Altitude Circles) -->
+    <ellipse class="draw-path" cx="450" cy="430" rx="230" ry="160" fill="none" stroke="#E5B869" stroke-width="2.5" opacity="0.75" />
+    <ellipse class="draw-path" cx="450" cy="400" rx="170" ry="110" fill="none" stroke="#E5B869" stroke-width="2" stroke-dasharray="6 6" opacity="0.7" />
+    <ellipse class="draw-path" cx="450" cy="370" rx="100" ry="60" fill="none" stroke="#C84B31" stroke-width="2" opacity="0.8" />
+
+    <!-- Zenith Point (खगोल शीर्ष) -->
+    <circle cx="450" cy="370" r="7" fill="#F8F4EC" filter="url(#nalanda_gold_glow)" />
+    <text x="450" y="345" fill="#F8F4EC" font-family="'Inter', system-ui, sans-serif" font-size="18" font-weight="700" text-anchor="middle">ZENITH (ख-मध्य)</text>
+
+    <!-- Tropic of Cancer & Celestial Equator Rings -->
+    <circle class="draw-path" cx="450" cy="480" r="210" fill="none" stroke="#E5B869" stroke-width="2" stroke-dasharray="10 6" opacity="0.65" />
+    <text x="640" y="440" fill="#E5B869" font-family="'Inter', system-ui, sans-serif" font-size="16" font-weight="600">EQUATOR (नाड़ीवलय)</text>
+  </g>
+
+  <!-- Stage 2: Brass Rete (Stellar Web) & Pointer Star Foliage -->
+  <g id="stage_2">
+    <!-- Ecliptic / Rashi Chakra Ring (Offset Circle) -->
+    <circle class="draw-path" cx="450" cy="425" r="145" fill="none" stroke="url(#astrolabe_gold_grad)" stroke-width="3.5" filter="url(#nalanda_gold_glow)" />
+
+    <!-- Rete Star Pointers (Flame-shaped brass prongs pointing to major Nakshatras) -->
+    <!-- Pointer 1: Rohini (Aldebaran) -->
+    <path class="draw-path" d="M 330 380 Q 310 360 295 340 Q 320 355 338 375 Z" fill="#E5B869" stroke="#C84B31" stroke-width="1.5" />
+    <circle cx="295" cy="340" r="5" fill="#F8F4EC" />
+    <text x="285" y="325" fill="#F8F4EC" font-family="'Inter', system-ui, sans-serif" font-size="16" font-weight="700" text-anchor="end">ROHIṆĪ (ALDEBARAN)</text>
+
+    <!-- Pointer 2: Swati (Arcturus) -->
+    <path class="draw-path" d="M 570 380 Q 590 360 610 335 Q 585 355 565 375 Z" fill="#E5B869" stroke="#C84B31" stroke-width="1.5" />
+    <circle cx="610" cy="335" r="5" fill="#F8F4EC" />
+    <text x="620" y="325" fill="#F8F4EC" font-family="'Inter', system-ui, sans-serif" font-size="16" font-weight="700">SWĀTĪ (ARCTURUS)</text>
+
+    <!-- Pointer 3: Abhijit (Vega) -->
+    <path class="draw-path" d="M 450 280 Q 450 250 450 230 Q 460 255 458 280 Z" fill="#E5B869" stroke="#C84B31" stroke-width="1.5" />
+    <circle cx="450" cy="230" r="5" fill="#F8F4EC" />
+    <text x="450" y="215" fill="#F8F4EC" font-family="'Inter', system-ui, sans-serif" font-size="16" font-weight="700" text-anchor="middle">ABHIJIT (VEGA)</text>
+
+    <!-- Center Brass Boss (Pivot Collar) -->
+    <circle cx="450" cy="480" r="32" fill="url(#nalanda_brass_disc)" stroke="#E5B869" stroke-width="3" />
+    <circle cx="450" cy="480" r="12" fill="#111827" stroke="#E5B869" stroke-width="2" />
+  </g>
+
+  <!-- Stage 3: Sighting Alidade (Pivoting Pointer Rule & Degree Sights) -->
+  <g id="stage_3">
+    <!-- Rotating Alidade Rule (Diagonal Sight Vector) -->
+    <line class="draw-path" x1="230" y1="700" x2="670" y2="260" stroke="url(#alidade_rule_grad)" stroke-width="6" stroke-linecap="round" />
+    
+    <!-- Sighting Vane Brackets (Pin-hole sights) -->
+    <rect x="250" y="660" width="22" height="30" rx="4" transform="rotate(-45 261 675)" fill="#C84B31" stroke="#E5B869" stroke-width="2" />
+    <rect x="628" y="282" width="22" height="30" rx="4" transform="rotate(-45 639 297)" fill="#C84B31" stroke="#E5B869" stroke-width="2" />
+
+    <!-- Alidade Direction Labels -->
+    <text x="690" y="245" fill="#E5B869" font-family="'Playfair Display', Georgia, serif" font-size="22" font-weight="800">ALIDADE (यन्त्र-राज)</text>
+    <text x="690" y="270" fill="#F8F4EC" font-family="'Inter', system-ui, sans-serif" font-size="16" font-weight="600" opacity="0.85">SIGHTING ANGLE: 45°</text>
+
+    <!-- Central Decorative Brass Pin (Ghora / Horse Wedge Pin) -->
+    <circle cx="450" cy="480" r="6" fill="#F8F4EC" filter="url(#nalanda_gold_glow)" />
+  </g>
+</svg>
