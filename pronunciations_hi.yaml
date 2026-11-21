@@ -1,0 +1,24 @@
+# Sutradhar Hindi Pronunciation Overrides for Kokoro-82M (Hindi)
+# Format:
+#   text_replacements: Exact Devanagari text substitutions for schwa restoration and halant clarity
+#   ipa_replacements: Regex substitutions directly on Hindi phoneme stream
+
+text_replacements:
+  "स्वयं": "स्वयम्"
+  "लंकापति": "लंका पति"
+  "दशानन": "दशानन"
+  "कैलाश": "कैलाश"
+  "महादेव": "महादेव"
+  "शिव": "शिव"
+  "स्तुति": "स्तुति"
+  "स्तोत्र": "स्तोत्र"
+
+ipa_replacements:
+  - pattern: "sʋˈʌjən"
+    replacement: "sʋˈʌjəm"
+  - pattern: "ləŋkˈaːptˌɪ"
+    replacement: "lˈʌŋkaː pˈʌtɪ"
+  - pattern: "mˌahaːdˈeʋ"
+    replacement: "mˌahaːdˈeːʋ"
+  - pattern: "ʊkʰˈaːr\\.\\s*pʰẽːkˈũnɡaː"
+    replacement: "ʊkʰˈaːɽ pʰˈẽːkʊ̃ŋɡaː"

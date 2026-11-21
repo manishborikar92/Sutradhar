@@ -1,295 +1,220 @@
 # Sutradhar — Manual Setup, Operations & Handoff Guide
 
-This document is the authoritative operations manual for the **Sutradhar** autonomous YouTube Shorts production pipeline. It details one-time manual infrastructure setup, creator approval gates, routine operational workflows, and verified technical baselines.
+This document is the authoritative operations manual for the **Sutradhar** autonomous YouTube Shorts production pipeline. It details completed infrastructure setup, verified production baselines, live YouTube API read-back proof, routine operational workflows, and the exact handoff checklist for **Stage 3D (Antigravity `/automation` Scheduling Setup)**.
 
 ---
 
-## SECTION A — One-Time Manual Setup
+## SECTION A — One-Time Manual Setup Status
 
-Because live publishing, Google Cloud project creation, and OAuth token issuance require interactive browser authentication and real identity credentials, these steps must be performed manually once by the channel owner.
+### Setup Status Summary
 
-### 1. Google Cloud Project & YouTube Data API v3
+| Setup Step | Description | Status | Verification Proof |
+| :--- | :--- | :--- | :--- |
+| **Step 1** | Google Cloud Project & YouTube Data API v3 | **COMPLETED** | Verified via live API authentication |
+| **Step 2** | OAuth Consent Screen Configuration | **COMPLETED** | External test user authorized |
+| **Step 3** | OAuth 2.0 Desktop Credentials | **COMPLETED** | Client ID & secret configured |
+| **Step 4** | Refresh Token Generation Script | **COMPLETED** | Long-lived refresh token issued |
+| **Step 5** | Secure Storage in `.env.youtube` | **COMPLETED** | Excluded from Git (`.gitignore`); 621 bytes |
+| **Step 6** | YouTube Studio Auto-Dubbing Settings | **COMPLETED** | Studio auto-dubbing enabled |
+| **Step 7 (Stage 3D)** | Antigravity `/automation` Scheduling | **PENDING USER UI SETUP** | See Section C for exact 5-minute setup instructions |
 
-1. Log into the [Google Cloud Console](https://console.cloud.google.com/) with your channel's Google account.
-2. Create a new Google Cloud Project named `Sutradhar-Autonomous-Pipeline`.
-3. In the sidebar, navigate to **APIs & Services > Library**.
-4. Search for **YouTube Data API v3** and click **Enable**.
-
-### 2. OAuth Consent Screen Configuration
-
-1. In the sidebar, select **APIs & Services > OAuth consent screen**.
-2. Select **User Type: External** and click **Create**.
-3. Fill in the required application details:
-   - **App name:** `Sutradhar Shorts Engine`
-   - **User support email:** (your Google email)
-   - **Developer contact information:** (your Google email)
-4. Under **Scopes**, click **Add or Remove Scopes** and add:
-   - `https://www.googleapis.com/auth/youtube.upload` (Upload YouTube videos)
-   - `https://www.googleapis.com/auth/youtube` (Manage YouTube account, playlists)
-5. Under **Test users**, add your YouTube channel's Google email address. (While in Testing status, only authorized test users can complete authorization).
-6. Save and finish.
-
-### 3. Create OAuth 2.0 Desktop Credentials
-
-1. Navigate to **APIs & Services > Credentials**.
-2. Click **+ CREATE CREDENTIALS > OAuth client ID**.
-3. Select **Application type: Desktop app**.
-4. Set the name to `Sutradhar Publisher CLI`.
-5. Click **Create**, then download the client configuration JSON (`client_secret_....json`).
-6. Note the **Client ID** and **Client Secret**.
-
-### 4. Generate Refresh Token via Local One-Time Script
-
-Run this one-time Python helper in your PowerShell terminal using Sutradhar's virtual environment:
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-python -c "
-from google_auth_oauthlib.flow import InstalledAppFlow
-flow = InstalledAppFlow.from_client_config(
-    {
-        'installed': {
-            'client_id': input('Enter Client ID: ').strip(),
-            'client_secret': input('Enter Client Secret: ').strip(),
-            'auth_uri': 'https://accounts.google.com/o/oauth2/auth',
-            'token_uri': 'https://oauth2.googleapis.com/token',
-            'redirect_uris': ['http://localhost']
-        }
-    },
-    scopes=[
-        'https://www.googleapis.com/auth/youtube.upload',
-        'https://www.googleapis.com/auth/youtube'
-    ]
-)
-creds = flow.run_local_server(port=8080)
-print('\n=== YOUR REFRESH TOKEN ===\n', creds.refresh_token)
-"
-```
-
-A browser window will open. Sign in with your YouTube channel account, grant permissions, and return to PowerShell. Your long-lived **Refresh Token** will be printed.
-
-### 5. Secure Credentials in `.env.youtube`
-
-Create a file named `.env.youtube` at the repository root (this file is excluded from Git tracking):
-
-```env
-# Sutradhar YouTube Data API v3 OAuth Credentials
-YOUTUBE_CLIENT_ID="your_client_id_here.apps.googleusercontent.com"
-YOUTUBE_CLIENT_SECRET="your_client_secret_here"
-YOUTUBE_REFRESH_TOKEN="your_refresh_token_here"
-```
-
-> [!CAUTION]
-> Never commit `.env.youtube` or paste your refresh token in chat. Verify that `.env.youtube` matches `.gitignore`.
-
-### 6. YouTube Studio Auto-Dubbing Settings
-
-Sutradhar videos are generated with **Global English narration** featuring authentic Sanskrit/Indian terminology. To enable YouTube's automatic multi-language audio dubbing (Hindi, Spanish, etc.):
-
-1. Open [YouTube Studio](https://studio.youtube.com/).
-2. Navigate to **Settings > Channel > Advanced settings**.
-3. Ensure **Automatic captions** are enabled.
-4. When videos are uploaded to **Private Review**, go to video details > **Subtitles / Audio tracks** and confirm **Auto-dubbing** is enabled for your channel.
-
-### 7. Antigravity `/automation` Scheduling Setup
-
-To configure Antigravity to run Sutradhar autonomously every morning at 06:00 AM:
-
-1. In the Antigravity chat, trigger the `/automation` command:
-   ```text
-   /automation schedule daily morning run of Sutradhar pipeline at 06:00
-   ```
-2. Antigravity will generate a scheduled background job executing the 6-stage pipeline:
-   - `python scripts/db_manager.py --context`
-   - `python scripts/build_audio.py`
-   - `python scripts/preview_frames.py`
-   - `python scripts/render_and_qa.py`
-   - `python scripts/publish_youtube.py`
-   - `python scripts/db_manager.py --record-published`
+> [!NOTE]
+> **Optional Custom Thumbnails Note:** During our live API test, the custom thumbnail upload returned HTTP 403 (`"The caller does not have permission for custom thumbnails"`). This is standard for newer YouTube channels: custom thumbnail uploads require one-time phone verification (**YouTube Studio > Settings > Channel > Feature Eligibility > Intermediate Features**). The pipeline handles this gracefully without crashing or losing the video ID, and YouTube automatically selects a high-quality frame from the uploaded video. Once you verify your phone number in Studio, custom thumbnails upload automatically.
 
 ---
 
-## SECTION B — Manual Decisions & Approvals
+## SECTION B — Production Verification & Live YouTube Evidence
 
-Before flipping the autonomous pipeline into live scheduled uploads, three creator decisions are required.
+### 1. Primary Language Selection (`config.yaml`)
 
-### 1. Final Voice Selection Review
+Sutradhar officially supports dual-language local production in **English (`en`)** and **Hindi (`hi`)**. Set your desired primary language in `config.yaml`:
 
-Milestone 3 and the Quality Overhaul generated 16 focused documentary voice audition samples in `build/audition/` across candidate voices and blends at `0.90x` and `0.94x` speed, evaluated against Indian historical, mythic, and philosophical terminology (*Sutradhar*, *Mount Kailash*, *Ravana*, *Ramayana*, *Nalanda*, *Pataliputra*).
-
-Inspect the top audition results table below:
-
-| Voice / Blend ID | Speed | Duration | Words Per Minute (WPM) | Alignment Match Ratio | RMS dBFS | Recommended Persona |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **`am_fenrir:0.60+am_onyx:0.40`** | **0.90x** | **30.68s** | **133.0** | **1.0000** | **-21.2 dB** | **Deep, resonant documentary baritone (Sample 1 Narrator)** |
-| **`bm_george:0.60+am_fenrir:0.40`** | **0.90x** | **33.11s** | **123.2** | **1.0000** | **-21.0 dB** | **Prestigious BBC-style historical authority (Sample 2 Narrator)** |
-| `bm_george` | 0.94x | 33.86s | 120.5 | 0.9853 | -21.3 dB | Measured, reflective traditional documentary narrator |
-| `am_fenrir` *(Provisional)* | 0.94x | 31.30s | 130.4 | 0.9853 | -19.6 dB | Gravitas-heavy mythic storyteller |
-| `am_onyx` | 0.94x | 27.77s | 146.9 | 0.9853 | -24.2 dB | Analytical, crisp modern scientific narrator |
-
-#### How to Listen to Auditions Locally:
-Open PowerShell and listen to any WAV in `build/audition/` using Windows Media Player:
-```powershell
-start wmplayer "c:\Users\manis\Projects\Sutradhar\build\audition\am_fenrir_0p60__am_onyx_0p40_s0p90.wav"
-start wmplayer "c:\Users\manis\Projects\Sutradhar\build\audition\bm_george_0p60__am_fenrir_0p40_s0p90.wav"
-start wmplayer "c:\Users\manis\Projects\Sutradhar\build\audition\am_fenrir_s0p94.wav"
-```
-
-#### How to Lock Your Selected Voice:
-Once you decide on your favorite voice (e.g., `am_fenrir:0.60+am_onyx:0.40`), update `config.yaml`:
 ```yaml
-tts:
-  engine: "kokoro"
-  default_voice: "am_fenrir:0.60+am_onyx:0.40"
-  speed: 0.92
-  voice_provisional: false       # Set to false to lock the voice
+channel:
+  primary_language: "en"  # "en" for English, "hi" for Hindi
 ```
 
-### 2. Local Sample Videos Review (Clean-Canvas & Broadcast Mastering)
+- **English (`en`):**
+  - **Narrator:** British Prestige blend (`bm_fable:0.55 + am_fenrir:0.45` @ 0.91x speed)
+  - **Dialogue:** `am_onyx` with dynamic pitch-lowering DSP (preserves 24kHz sample rate)
+  - **Dictionary:** `pronunciations_en.yaml` (clean IPA overrides)
+- **Hindi (`hi`):**
+  - **Narrator:** Classical *Katha* blend (`hf_alpha:0.70 + hf_beta:0.30` @ 0.95x speed)
+  - **Dialogue:** `hm_omega` with dynamic pitch-lowering DSP
+  - **Dictionary:** `pronunciations_hi.yaml` (Devanagari compound & halant clarity)
 
-Two master-quality local sample videos have been rendered in the **Clean-Canvas format** (zero on-screen captions, zero top badges, open-canvas editorial typography, and full 5-stage FFmpeg broadcast vocal mastering) under `build/samples/`:
+### 2. Verified V2 Production Shorts (`build/samples_v2/`)
 
-#### Sample 1: Cosmic & Scientific Paradoxes
-- **Directory:** `build/samples/sample_01_cosmos/`
-- **Video:** `build/samples/sample_01_cosmos/final_short.mp4`
-- **Title:** *What Happens The Second You Cross an Event Horizon? (Part 1/3) #Shorts*
-- **Specs:** 1080x1920 (9:16), 30 fps, H.264 / AAC, 43.10s duration, 30.4 MB
-- **Voice Blend:** `am_fenrir:0.60+am_onyx:0.40` @ 0.92x speed (100% word alignment)
-- **Bespoke Asset:** `assets/svg/diagrams/gravitational_time_dilation_clock.svg` (DrawSVG spacetime curvature & precision dial)
-- **KinoCut Mastering:** -14.0 LUFS, Checkpoint Score: **95.2 / 100**
-- **QA Contact Sheet:** `build/samples/sample_01_cosmos/final_qa_grid.jpg`
+Two master-quality production Shorts have been rendered through the root production scripts in the **Clean-Canvas format** (zero on-screen captions, zero top badges, pure cinematic storytelling with hierarchical puppet rigging) under `build/samples_v2/`:
 
-#### Sample 2: Ancient Epics & Lore
-- **Directory:** `build/samples/sample_02_epics/`
-- **Video:** `build/samples/sample_02_epics/final_short.mp4`
+#### Production Short 1: English (Mount Kailash & Ravana)
+- **File:** `build/samples_v2/prod_en_ravana_kailash/final_short.mp4`
 - **Title:** *The Secret Geometry Beneath Mount Kailash (Part 1/3) #Shorts*
-- **Specs:** 1080x1920 (9:16), 30 fps, H.264 / AAC, 44.50s duration, 32.7 MB
-- **Voice Blend:** `bm_george:0.60+am_fenrir:0.40` @ 0.92x speed (98.98% word alignment)
-- **Bespoke Character & Asset:** `assets/svg/characters/ravana.svg` (ten-crowned shadow titan) & `assets/svg/diagrams/kailash_axis_alignments.svg`
-- **KinoCut Mastering:** -14.0 LUFS, Checkpoint Score: **98.3 / 100**
-- **QA Contact Sheet:** `build/samples/sample_02_epics/final_qa_grid.jpg`
+- **Specs:** 1080×1920 (9:16), 30 fps, H.264 / AAC, 42.4s duration, 23.5 MB
+- **Narrator:** British Prestige blend (`bm_fable:0.55+am_fenrir:0.45`) + `am_onyx` dialogue
+- **Visual Engine:** 5-Shot Indian Kathputli Folk-Art Puppetry
+- **KinoCut Checkpoint:** -14.0 LUFS, Overall Score: **83.2 / 100** (PASS)
+- **Trailing Silence Floor:** -150.0 dBFS (clean digital zeros)
+- **QA Contact Sheet:** `build/samples_v2/prod_en_ravana_kailash/final_qa_grid.jpg`
 
-To play either video locally:
+#### Production Short 2: Hindi (Mount Kailash & Ravana)
+- **File:** `build/samples_v2/prod_hi_ravana_kailash/final_short.mp4`
+- **Title:** *The Secret Geometry Beneath Mount Kailash (Part 1/3) #Shorts*
+- **Specs:** 1080×1920 (9:16), 30 fps, H.264 / AAC, 44.3s duration, 24.0 MB
+- **Narrator:** Classical *Katha* blend (`hf_alpha:0.70+hf_beta:0.30`) + `hm_omega` dialogue
+- **Visual Engine:** 5-Shot Indian Kathputli Folk-Art Puppetry
+- **KinoCut Checkpoint:** -14.0 LUFS, Overall Score: **82.4 / 100** (PASS)
+- **Trailing Silence Floor:** -150.0 dBFS (clean digital zeros)
+- **QA Contact Sheet:** `build/samples_v2/prod_hi_ravana_kailash/final_qa_grid.jpg`
+
+To play either production short locally in PowerShell:
 ```powershell
-start "build\samples\sample_01_cosmos\final_short.mp4"
-start "build\samples\sample_02_epics\final_short.mp4"
+start "build\samples_v2\prod_en_ravana_kailash\final_short.mp4"
+start "build\samples_v2\prod_hi_ravana_kailash\final_short.mp4"
 ```
 
-### 3. Background Music (BGM) & Sound Effects (SFX) Audition
+### 3. Live Private-Review YouTube E2E Upload Proof (`build/youtube_e2e_verification.json`)
 
-Royalty-free procedural/cinematic audio beds and transitions are located under:
-- `assets/bgm/`:
-  - `cosmic_mystery.mp3` (Ambient space drone, low-passed <620Hz, sidechain ducked)
-  - `dramatic_mythology.mp3` (Ethnic Indian tanpura and deep harmonic resonance)
-  - `epic_history.mp3` (Low-frequency cinematic pulse)
-- `assets/sfx/`:
-  - `sub_hit.wav` (Deep 55Hz cinematic sub bass drop)
-  - `whoosh_soft.wav` (Gentle pink-noise stereo whoosh for scene cuts)
-  - `tension_swell.wav` (Restrained analog chord swell for key reveals)
+A real end-to-end `private_review` upload was executed against YouTube Data API v3 in an isolated workspace, uploading the verified 42.4s English master and executing immediate API read-back verification:
 
-You can replace any track with your own licensed `.mp3` or `.wav` by keeping the same filename or referencing new filenames in `episode_plan.json`.
-
-### 4. Transitioning From Private Review to Live Uploads
-
-Currently, `config.yaml` is locked in safe offline review mode:
-```yaml
-publishing:
-  upload_mode: "private_review"
-  allow_public_or_scheduled: false
+```json
+{
+  "timestamp": "2026-11-21T10:08:20Z",
+  "mode": "live_youtube_api",
+  "video_id": "vdkMMm5ucPQ",
+  "playlist_id": "PLV5anx_T8pUw",
+  "thumbnail_upload_status": "403_forbidden_custom_thumbnails_pending",
+  "checks": {
+    "title": { "expected": "[TEST PRIVATE REVIEW]...", "actual": "[TEST PRIVATE REVIEW]...", "match": true },
+    "description": { "expected": "[TEST PRIVATE REVIEW]...", "actual": "[TEST PRIVATE REVIEW]...", "match": true },
+    "categoryId": { "expected": "27", "actual": "27", "match": true },
+    "defaultAudioLanguage": { "expected": "en", "actual": "en", "match": true },
+    "defaultLanguage": { "expected": "en", "actual": "en", "match": true },
+    "privacyStatus": { "expected": "private", "actual": "private", "match": true },
+    "publishAt": { "expected": null, "actual": null, "match": true },
+    "selfDeclaredMadeForKids": { "expected": false, "actual": false, "match": true },
+    "containsSyntheticMedia": { "expected": true, "actual": true, "match": true },
+    "playlist_membership": { "playlist_id": "PLV5anx_T8pUw", "is_member": true, "playlist_items_count": 1 }
+  },
+  "verification_verdict": "PASSED"
+}
 ```
 
-When you are ready for Sutradhar to publish to YouTube automatically:
-1. Verify that `.env.youtube` contains valid OAuth credentials.
-2. In `config.yaml`, set:
-   ```yaml
-   publishing:
-     upload_mode: "scheduled"
-     allow_public_or_scheduled: true
-   ```
-3. Videos will now be uploaded to YouTube as scheduled or private entries ready for public premiere according to your channel schedule.
+- **Live Test Video URL:** `https://youtu.be/vdkMMm5ucPQ`
+- **Visibility:** Strictly `private` (visible only to you when logged into your channel in YouTube Studio).
+- **Playlist:** Strictly `private` (`PLV5anx_T8pUw`).
+- **Database Safety:** Executed against an isolated temporary database; root `episodes.db` SHA-256 remained **100% bit-for-bit untouched** (`729ACCE0CD4F31CC69CECA61470D331ABCBCE5E62B51728AB372CD28F83F8011`).
 
 ---
 
-## SECTION C — Routine Operations
+## SECTION C — Routine Operations & Stage 3D Handoff Checklist
 
-### The 6-Stage Autonomous Execution Cycle
+### The 7-Stage Autonomous Execution Cycle
 
-In routine production, the pipeline executes sequentially with zero dynamic arguments:
+In daily production, Antigravity executes these 7 static commands sequentially with zero dynamic arguments:
 
 ```mermaid
 flowchart TD
-    A["1. db_manager.py --context"] --> B["2. build_audio.py"]
-    B --> C["3. preview_frames.py"]
-    C --> D["4. render_and_qa.py"]
-    D --> E["5. publish_youtube.py"]
-    E --> F["6. db_manager.py --record-published"]
+    A["1. db_manager.py --context"] --> B["2. db_manager.py --create-series (if starting new)"]
+    B --> C["3. build_audio.py"]
+    C --> D["4. preview_frames.py"]
+    D --> E["5. render_and_qa.py"]
+    E --> F["6. publish_youtube.py"]
+    F --> G["7. db_manager.py --record-published"]
 ```
 
 1. **Context & State Inspection:**
    ```powershell
    python scripts/db_manager.py --context
    ```
-   Reads `episodes.db` to discover active series progress, episode numbers, available characters, backdrops, and bespoke diagram rigs.
-
-2. **Audio Synthesis & Alignment:**
+2. **Series Initialization (Only when starting a new series):**
+   ```powershell
+   python scripts/db_manager.py --create-series
+   ```
+3. **Audio Synthesis & Alignment:**
    ```powershell
    python scripts/build_audio.py
    ```
-   Reads `build/episode_plan.json`, synthesizes 24kHz narration via Kokoro ONNX, applies Sanskrit phonetics from `pronunciations.yaml`, performs forced alignment via `faster-whisper`, and generates `build/manifest.js`.
-
-3. **Snapshot QA & Safe-Zone Lint:**
+4. **Snapshot QA & Safe-Zone Lint:**
    ```powershell
    python scripts/preview_frames.py
    ```
-   Lints `index.html` via `npx hyperframes lint`, extracts scene midpoints, and generates 2x3 contact sheets (`qa_grid.jpg` and `qa_grid_safezones.jpg`) for 2026 YouTube Shorts safe zones.
-
-4. **Master Rendering & Audio Engineering:**
+5. **Master Rendering, Audio Engineering & Thumbnail:**
    ```powershell
    python scripts/render_and_qa.py
    ```
-   Renders 1080x1920 @ 30fps MP4 via HyperFrames CLI, ducks BGM beneath narration via FFmpeg `sidechaincompress`, normalizes audio to -14.0 LUFS via `kinocut`, and runs the release checkpoint gate (`min_score=80.0`).
-
-5. **Upload & Series Grouping:**
+   Renders `1080x1920 @ 30fps` MP4, applies dynamic sidechain ducking, masters to `-14.0 LUFS` via KinoCut (quality gate $\ge 80.0$), extracts `build/thumbnail.jpg` ($\le 2\text{ MB}$), and decodes QA frames into `build/final_qa_grid.jpg`.
+6. **Upload & Series Grouping:**
    ```powershell
    python scripts/publish_youtube.py
    ```
-   Uploads `build/final_short.mp4` with mandatory AI synthetic media disclosure, tags, description, and adds the video to the appropriate YouTube Shorts Series playlist.
-
-6. **State Persistence:**
+   Uploads `build/final_short.mp4` and `build/thumbnail.jpg`, verifies private status, adds video to series playlist, and performs read-back verification.
+7. **State Persistence:**
    ```powershell
    python scripts/db_manager.py --record-published
    ```
-   Atomically updates `episodes.db`, logs the published video ID, increments completed series episodes, and rotates thematic pillars upon series completion.
-
-### Troubleshooting & Maintenance
-
-- **Checking Database State:**
-  ```powershell
-  python scripts/db_manager.py --context
-  ```
-- **Database Backup:**
-  To create a safe point-in-time backup of your database:
-  ```powershell
-  copy episodes.db "episodes_backup_$(Get-Date -Format 'yyyyMMdd_HHmmss').db"
-  ```
-- **Cleaning Build Artifacts:**
-  Between series runs, you can clean temporary build files without touching database or assets:
-  ```powershell
-  Remove-Item -Recurse -Force build/audio/*, build/*.mp4, build/*.jpg, build/manifest.js
-  ```
+   Persists video ID, increments completed series episodes, and rotates thematic pillars upon completion.
 
 ---
 
-## SECTION D — External Blockers & Readiness Checklist
+### Stage 3D Handoff Checklist for Channel Creator
 
-| Component / Subsystem | Status | Verification Evidence | Action Required by User |
+Follow these simple steps in your Antigravity chat and YouTube Studio:
+
+#### Step 1: Inspect and Clean Up the Test Private Video in YouTube Studio
+1. Open [YouTube Studio](https://studio.youtube.com/).
+2. Navigate to **Content > Shorts**.
+3. Verify the private test video: **`[TEST PRIVATE REVIEW] The Secret Geometry Beneath Mount Kailash (Part 1/3) #Shorts`** (`vdkMMm5ucPQ`).
+4. Play it in Studio to verify the clean canvas, British prestige narration, deep dialogue, and sync.
+5. You can keep or delete this test video at your convenience.
+6. *(Optional)* Go to **Settings > Channel > Feature Eligibility > Intermediate Features** and complete one-time phone verification to enable custom thumbnail uploads.
+
+#### Step 2: Configure Antigravity `/automation` Daily Schedule
+In the Antigravity chat UI, trigger the `/automation` command:
+```text
+/automation schedule daily morning run of Sutradhar pipeline at 06:00
+```
+When prompted for instructions, point the agent to:
+`docs/MASTER_AUTOMATION_PROMPT.md`
+
+#### Step 3: Approve Static Command Whitelist
+When Antigravity requests permissions for unattended execution, approve the 7 static commands in `agent_permissions`:
+```text
+python scripts/db_manager.py --context
+python scripts/db_manager.py --create-series
+python scripts/build_audio.py
+python scripts/preview_frames.py
+python scripts/render_and_qa.py
+python scripts/publish_youtube.py
+python scripts/db_manager.py --record-published
+```
+
+#### Step 4: Run One Controlled Private Review Test Run
+Trigger a single unattended run in `private_review` mode. Once completed, inspect the newly generated episode in YouTube Studio.
+
+#### Step 5: Phase 5 Gate Criteria (Before Ever Unlocking Scheduled Mode)
+Do NOT unlock public/scheduled publishing until:
+1. Phase 4 (Kathputli Cast Expansion & Real Audio Library) is completed.
+2. A full 3-episode mini-series has been produced and reviewed in `private_review` mode.
+3. You explicitly change `config.yaml`:
+   ```yaml
+   publishing:
+     upload_mode: "scheduled"
+     allow_public_or_scheduled: true
+   ```
+
+---
+
+## SECTION D — System Readiness Matrix
+
+| Subsystem | Status | Verification Evidence | Action Required |
 | :--- | :--- | :--- | :--- |
-| **Kokoro ONNX Engine** | **VERIFIED** | Full 325.5MB model verified, SHA-256 pinned, 20 voices tested | None (operational) |
-| **Whisper Alignment** | **VERIFIED** | Word-level alignment, 1.00 match ratio | None (operational) |
-| **HyperFrames Composition** | **VERIFIED** | 0 lint errors, 2026 Shorts safe-zones, 5 mood palettes | None (operational) |
-| **Mastering & QA Pipeline** | **VERIFIED** | -14.0 LUFS, KinoCut score > 90/100, ffprobe verified | None (operational) |
-| **Local Sample Videos** | **VERIFIED** | Sample 1 (40.7s) & Sample 2 (46.6s) rendered and archived | Listen & inspect local MP4s |
-| **SQLite State Manager** | **VERIFIED** | 35/35 automated unit & integration tests passing | None (operational) |
-| **Provisional Voice Lock** | **PENDING** | `am_fenrir` provisional lock held in `config.yaml` | Pick preferred voice & update `config.yaml` |
-| **YouTube OAuth Setup** | **PENDING** | Offline stub mode verified; live API pending OAuth token | Perform Section A (1-5) setup |
-| **Live Publishing Gate** | **PENDING** | Locked at `upload_mode: "private_review"` | Set to `"scheduled"` when ready |
+| **Kokoro-82M ONNX** | **VERIFIED** | 325.5MB authoritative model (SHA-256 pinned), dual-language CPU synthesis | None (operational) |
+| **Dual-Language Audio** | **VERIFIED** | English (`bm_fable:0.55+am_fenrir:0.45`) & Hindi (`hf_alpha:0.70+hf_beta:0.30`) | Pick primary language in `config.yaml` |
+| **Dialogue DSP** | **VERIFIED** | 24kHz sample-rate preserved, -1.5 semitones pitch shift, 0 chipmunk artifacts | None (operational) |
+| **5-Shot Kathputli Engine** | **VERIFIED** | Hierarchical 0px 0px rivet pins, dynamic camera staging, 0 lint errors | None (operational) |
+| **Thumbnail Generator** | **VERIFIED** | `build/thumbnail.jpg` 1080×1920 $\le 2\text{ MB}$, midpoint of Shot 3 | None (operational) |
+| **KinoCut Quality Gate** | **VERIFIED** | -14.0 LUFS, score $\ge 82/100$, True Peak $\le -1.1\text{ dBTP}$ | None (operational) |
+| **YouTube Data API v3** | **VERIFIED** | Live `private_review` upload (`vdkMMm5ucPQ`) + API read-back | Phone verification for custom thumbnails |
+| **SQLite State Manager** | **VERIFIED** | 37/37 automated tests passing; root `episodes.db` 100% immutable | None (operational) |
+| **Antigravity `/automation`**| **READY FOR SETUP** | Whitelisted 7 commands, clear daily execution prompt | Complete Stage 3D in Antigravity chat |

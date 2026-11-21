@@ -1,457 +1,253 @@
 # IMPLEMENTATION_PLAN.md
-## Sutradhar — Zero-External-API Autonomous Serialized YouTube Shorts Pipeline
-### (Antigravity `/automation` + Series State Machine + Triple-Mode SVG Rigs + Kokoro-82M EN + HyperFrames + KinoCut 2.0)
+## Sutradhar — Autonomous Dual-Language YouTube Shorts Production Pipeline
+### (Antigravity `/automation` + Series State Machine + 5-Shot Kathputli Folk-Art Visual Engine + Kokoro-82M Dual-Language + HyperFrames + KinoCut 2.0)
 
 ---
 
 ### 1. Executive Summary & Architectural Decisions
 
-This specification defines **Sutradhar**, a **100% Antigravity-native, zero-recurring-external-cost daily YouTube Shorts pipeline** engineered for high-retention serialized edutainment, native **YouTube Shorts Series** compatibility, and sustainable **YouTube Partner Program (YPP) monetization**.
+This specification defines **Sutradhar**, a **100% Antigravity-native, zero-recurring-external-cost daily YouTube Shorts production pipeline** engineered for serialized edutainment, native **YouTube Shorts Series** playlist grouping, and sustainable **YouTube Partner Program (YPP) monetization**.
 
 #### Core Design Principles
-1. **Zero External AI APIs ($0.00 External API Spend):**
-   - **Google Antigravity** acts as the sole intelligence engine—handling pillar rotation, multi-episode series planning, scriptwriting, bespoke SVG rig authoring, and multimodal visual QA inspection. No external LLM, image, TTS, or video API keys are required.
-2. **Global English Master (`en`) + YouTube Auto-Dubbing Hub:**
-   - Sutradhar locks permanently to **Global English (`en`)** to maximize Tier-1 RPM, Kokoro-82M voice naturalness, and `faster-whisper` word-alignment precision.
-   - Because English is YouTube’s primary Auto-Dubbing hub, setting `defaultAudioLanguage: "en"` unlocks automatic distribution into **Hindi and Telugu (with Expressive Speech)**, Tamil, Bengali, Malayalam, Punjabi, and 20+ global languages without fracturing the channel’s core Shorts feed.
-   - A local **`pronunciations.yaml`** phonetic map ensures Sanskrit, Indian epic, and historical proper nouns sound natural and respectful in English narration while captions preserve exact spelling.
-3. **Cohesive 3-Pillar Editorial Architecture + Strict Series State Machine:**
-   - Rotates cleanly across **3 thematically unified pillars**—*Ancient Epics & Lore*, *Hidden History*, and *Cosmic & Scientific Paradoxes*—under one unified *Sutradhar* storyteller voice.
-   - Every topic runs as a self-contained **3-to-6-episode mini-series** in SQLite (`episodes.db`), strictly completing `Part 1` through `Part N` while auto-syncing episodes into a dedicated YouTube playlist (`youtube_playlist_id`) ready for native **YouTube Shorts Series**.
-4. **100% Offline, Commercial-Safe Audio Stack:**
-   - **Kokoro-82M (`kokoro-onnx`, Apache-2.0)** synthesizes studio-grade English narration locally on CPU with a consistent signature narrator preset (or weighted blend of `am_fenrir` + `bm_george`).
-   - **`faster-whisper` (`base`, `int8` CPU)** produces deterministic word-level timestamps for exact `#FFD700` active-word karaoke highlighting.
-5. **YPP Originality-First Visual Pipeline + Pre-Render Snapshot Gate:**
-   - Visuals render deterministically in `1080x1920` (30fps) via **HyperFrames** (`hyperframes` `^0.9.19`) + **GSAP**, combining modular SVG character rigs, **at least 1 newly authored bespoke SVG per episode**, kinetic callout cards, sidechain-ducked BGM, and transition SFX to stay fully compliant with YouTube’s **"Inauthentic Content"** policy.
-   - A fast **pre-render snapshot QA gate** (`preview_frames.py`) verifies layout, safe zones, and SVG integrity before full `--quality high` rendering.
-6. **Zero-Argument Pre-Whitelisted Commands:**
-   - All stateful handoffs occur via JSON files inside `build/`, enabling unattended Antigravity `/automation` runs with **7 static, zero-argument whitelisted commands**.
+1. **Zero External AI APIs ($0.00 External Spend):**
+   - **Google Antigravity** acts as the sole intelligence engine—handling pillar rotation, multi-episode series planning, scriptwriting, bespoke SVG rig authoring, and multimodal visual QA inspection. No external LLM, image generation, or cloud TTS API keys are required.
+2. **Clean-Canvas Video Format (Strict Removal of Captions & Title/Part Labels):**
+   - Every Short is rendered on a clean canvas with **zero on-screen captions or subtitles**, **zero title cards**, and **zero series/part badges**.
+   - Spoken narration and layered theatrical staging carry 100% of the narrative, while YouTube automatically generates closed captions for viewers who desire them.
+   - The visual focus is preserved entirely for animated folk-art puppetry and multi-plane environments.
+3. **Dual-Language Production Core (English `en` & Hindi `hi`):**
+   - Sutradhar officially supports both **Global English (`en`)** and **Classical Hindi (`hi`)**, selectable per channel via `channel.primary_language` in `config.yaml`.
+   - **English Voice Profile:** British Prestige blend (`bm_fable:0.55 + am_fenrir:0.45` @ 0.91x speed) for narration + `am_onyx` for dialogue.
+   - **Hindi Voice Profile:** Classical *Katha* blend (`hf_alpha:0.70 + hf_beta:0.30` @ 0.95x speed) for narration + `hm_omega` for dialogue.
+   - **Language-Specific Dictionaries:** `pronunciations_en.yaml` (IPA substitutions for Sanskrit and Indian proper nouns) and `pronunciations_hi.yaml` (Devanagari compound & halant clarity).
+4. **Indian Kathputli / Folk-Art 2D Vector Puppetry Engine:**
+   - Visuals employ traditional **Indian Kathputli puppet aesthetics** with warm shaded olive/ochre tones, ornate tiered mukut crowns, dhotis, white *janeu*, and gold jewelry.
+   - **Hierarchical Rivet Rigging:** Movable limbs use CSS custom-property rotations (`--rot-...`) anchored to `0px 0px` local joint origins. Limbs remain permanently pinned to circular brass rivets across all poses with zero detachment.
+   - **5-Shot Narrative Progression:** Each Short follows a dynamic 5-scene cinematic progression (Wide Establishing Curtain Reveal $\to$ Royal Court Advance $\to$ Wrathful Close-Up with Lip-Sync $\to$ Cosmic Summit Strike $\to$ Foreground Granite Crushing).
+5. **Connected Context-Window Audio & Dynamic Dialogue DSP:**
+   - Synthesizes multi-sentence narrative blocks in connected context windows, eliminating prosody resets and dead-air seams.
+   - Applies dynamic sample-rate-preserved dialogue DSP (`asetrate={sr*0.917},aresample={sr},atempo=1.0905`) to character lines, providing deep resonant authority without chipmunk distortion or sample-rate mismatches.
+   - 20ms cosine volume ramps on audio segments, two-pass EBU R128 loudness normalization to `-14.0 LUFS` (`-1.5 dBTP`), and zero digital trailing floor (-150.0 dBFS).
+6. **Deterministic Composition Synchronizer (`scripts/generate_composition.py`):**
+   - Automatically compiles and synchronizes `index.html`, `styles.css`, and `engine.js` from `assets/svg/` and `build/manifest.js`, maintaining 100% HyperFrames 0.9.70 compliance.
+7. **Deterministic Thumbnail Generation & Live Verified Publishing:**
+   - `scripts/render_and_qa.py` extracts a clean-canvas, high-impact JPEG thumbnail (`build/thumbnail.jpg` $\le 2\text{ MB}$, 1080×1920) from the episode's peak hero shot.
+   - `scripts/publish_youtube.py` uploads the video and custom thumbnail via `thumbnails().set()`, handles 403 phone verification gates gracefully, and executes mandatory live API read-back verification (`videos().list` and `playlistItems().list`), recording a structured audit in `build/publish_verification.json`.
+8. **7 Static Pre-Whitelisted Commands (Zero Dynamic CLI Arguments):**
+   - All stateful handoffs occur via JSON files inside `build/`, enabling unattended Antigravity `/automation` runs with 7 static commands.
 
 ---
 
-### 2. Verified Zero-Cost Technology Stack
+### 2. Verified Technology Stack
 
-| Pipeline Layer | Tool / Service | Config / Version | License / Tier | Free Quota & Ceiling | External Cost |
+| Pipeline Layer | Tool / Dependency | Configuration / Version | License / Tier | Operational Ceiling | External Cost |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Orchestrator, Writer & Vision QA** | Google Antigravity IDE + `/automation` | Built-in frontier models | Developer's Antigravity plan | Runs locally via Antigravity Desktop / CLI | **$0 extra** |
-| **Agent Skills** | `hyperframes` + `svg-character-animation` | Global: `$HOME/.agent/skills/` (`npx skills add -g`) | Apache 2.0 / Open Skills | Global `SKILL.md` rules + HyperFrames registry blocks | **$0.00** |
-| **Local Neural TTS (English)** | `kokoro-onnx` (Kokoro-82M v1.0) | Signature voice: `am_fenrir` (or `0.65*am_fenrir + 0.35*bm_george`), fallback `am_michael` | **Apache 2.0** (Commercial-safe) | Unlimited offline CPU synthesis; zero API keys | **$0.00** |
-| **Word-Level Caption Alignment** | `faster-whisper` (CTranslate2) | `base` (`compute_type="int8"`, CPU, `language="en"`) | MIT | Unlimited offline forced word timestamps (~2–4s per Short on CPU) | **$0.00** |
-| **2.5D SVG & Shader Renderer** | `hyperframes` (`^0.9.19`) + GSAP | Node.js 22+ + Chromium + FFmpeg | Apache 2.0 | Unlimited local `1080x1920` 30fps renders; **no watermark** | **$0.00** |
-| **Audio Mastering & Tech QA** | `kinocut` + `ffmpeg` | `kinocut==2.0.1` | Apache 2.0 / LGPL | Unlimited `-14.0 LUFS` mastering, sidechain ducking, quality gate (`>=80`) | **$0.00** |
-| **Series & Episode Database** | SQLite3 | `episodes.db` | Public Domain | Local relational DB enforcing strict series completion & playlist sync | **$0.00** |
-| **YouTube Publishing & Series** | `google-api-python-client` | YouTube Data API v3 | Google Cloud Free Quota | **100 `videos.insert` calls/day** (Uploads bucket) + **10,000 units/day** other (`playlists.insert`: 50, `playlistItems.insert`: 50) | **$0.00** |
+| **Orchestrator & Vision QA** | Google Antigravity IDE + `/automation` | Built-in frontier models | Developer Plan | Runs locally via Antigravity Desktop / CLI | **$0 extra** |
+| **Agent Skills** | `hyperframes` + `svg-character-animation` | Global: `C:\Users\manis\.agents\skills\` | Apache 2.0 | Global rules & HyperFrames templates | **$0.00** |
+| **Local Neural TTS (EN & HI)** | `kokoro-onnx` (Kokoro-82M v1.0) | `kokoro-onnx==0.6.1`, ONNX Runtime | **Apache 2.0** | Unlimited offline CPU synthesis; 0 API keys | **$0.00** |
+| **Word Alignment (Audition)** | `faster-whisper` (CTranslate2) | `faster-whisper==1.2.1` (`base`, `int8`) | MIT | Used for voice auditions; video uses `ffprobe` | **$0.00** |
+| **2.5D Vector Video Engine** | `hyperframes` (`^0.9.19`) + GSAP | Node.js 24+ + Chromium + FFmpeg | Apache 2.0 | Local `1080x1920` 30fps high-quality renders | **$0.00** |
+| **Mastering & Quality Gate** | `kinocut` + FFmpeg 7.1 | `kinocut==2.0.1` (`ui-capture-dark`) | Apache 2.0 / LGPL | `-14.0 LUFS` mastering, release gate ($\ge 80$) | **$0.00** |
+| **State Machine & Ledger** | SQLite3 + Python `sqlite3` | `episodes.db` (foreign keys, atomic trans) | Public Domain | Strict series completion & playlist sync | **$0.00** |
+| **YouTube Publishing & Sync** | `google-api-python-client` | YouTube Data API v3 | Google Cloud Quota | **10,000 units/day** free quota | **$0.00** |
 
 ---
 
 ### 3. Repository Structure
 
 ```text
-sutradhar/
+Sutradhar/
 ├── docs/
-│   ├── IMPLEMENTATION_PLAN.md          # This architectural specification
-│   └── MASTER_AUTOMATION_PROMPT.md     # Daily prompt executed by Antigravity /automation
-│                                       # (Agent skills installed globally: $HOME/.agent/skills/ via npx skills add -g)
+│   ├── IMPLEMENTATION_PLAN.md          # Authoritative architectural specification & project roadmap
+│   ├── MASTER_AUTOMATION_PROMPT.md     # Daily prompt executed by Antigravity /automation
+│   ├── MANUAL_SETUP_AND_OPERATIONS.md  # Setup guide, verification records & Stage 3D handoff
+│   └── schema.sql                      # Reference SQLite schema for episodes.db
 ├── assets/
 │   ├── bgm/
-│   │   ├── dramatic_mythology.mp3      # Royalty-free CC0 / YouTube Audio Library bed
-│   │   ├── cosmic_mystery.mp3          # Royalty-free ambient synth/space bed
-│   │   └── epic_history.mp3            # Royalty-free cinematic percussion/strings bed
+│   │   ├── dramatic_mythology.mp3      # Indian ethnic drone & tanpura resonance bed (<620Hz low-pass)
+│   │   ├── cosmic_mystery.mp3          # Ambient synth/space drone bed
+│   │   └── epic_history.mp3            # Cinematic historical percussion bed
 │   ├── sfx/
-│   │   ├── whoosh_soft.wav             # CC0 scene-transition whoosh
-│   │   ├── sub_hit.wav                 # CC0 dramatic reveal impact
-│   │   └── riser_tension.wav           # CC0 hook / cliffhanger tension swell
+│   │   ├── whoosh_soft.wav             # Scene-transition stereo whoosh
+│   │   ├── sub_hit.wav                 # 55Hz cinematic sub bass drop
+│   │   └── riser_tension.wav           # Restrained analog tension swell
+│   ├── js/
+│   │   └── gsap.min.js                 # GSAP 3.12.5 local runtime
 │   └── svg/
-│       ├── characters/                 # Modular rigged character SVGs (viewBox="0 0 800 1200")
-│       │   ├── sutradhar_narrator.svg  # Signature host/storyteller character rig
-│       │   ├── ravana.svg
-│       │   ├── shani_dev.svg
-│       │   ├── narad_muni.svg
-│       │   └── lord_shiva.svg
-│       ├── backdrops/                  # Multi-plane environment SVGs (viewBox="0 0 1080 1920")
-│       │   ├── golden_lanka_throne.svg
-│       │   ├── mount_kailash.svg
-│       │   ├── deep_cosmos_nebula.svg
-│       │   ├── ancient_temple_ruins.svg
-│       │   └── quantum_grid_void.svg
-│       └── diagrams/                   # Bespoke animated SVG diagrams & props (viewBox="0 0 900 900")
-│           └── black_hole_anatomy.svg  # Starter diagram; Antigravity authors >=1 new asset per episode
-├── build/                              # Ephemeral per-episode artifacts (gitignored)
-│   ├── audio/                          # Scene WAVs + concatenated narration_full.wav
-│   ├── new_series_plan.json            # Written by Antigravity only when starting a new series
-│   ├── episode_plan.json               # Written by Antigravity for today's episode
-│   ├── manifest.js                     # Generated by build_audio.py (window.EPISODE_MANIFEST)
-│   ├── qa_grid.jpg                     # Pre-render 3x3 scene-midpoint snapshot sheet
-│   ├── raw_video.mp4                   # Rendered by HyperFrames CLI (--quality high)
-│   ├── final_short.mp4                 # Sidechain-ducked, SFX-mixed, -14.0 LUFS master
-│   ├── final_qa_grid.jpg               # Post-render decoded frame verification sheet
-│   └── publish_result.json             # Written by publish_youtube.py with video_id & playlist_id
+│       ├── characters/                 # Hierarchical Kathputli character rigs
+│       │   ├── ravana.svg              # 10-headed King Ravana (rivet rig, expressions, lip-sync, janeu)
+│       │   └── sutradhar_narrator.svg  # Signature host storyteller Kathputli rig
+│       └── backdrops/                  # Theatrical multi-plane environment SVGs
+│           ├── golden_lanka_citadel.svg # Full-bleed Lanka spires, twilight sky, courtyard waters
+│           ├── lanka_sandstone_throne.svg # Sandstone throne room backdrop
+│           ├── mount_kailash.svg       # Sacred summit with cosmic light shafts
+│           ├── crushed_atmosphere.svg  # Deep cosmic void with atmospheric pressure
+│           ├── granite_underside.svg   # Descending granite mountain underside
+│           └── ancient_temple_ruins.svg # Sandstone carved temple colonnades
+├── models/
+│   └── kokoro/
+│       ├── kokoro-v1.0.onnx            # Authoritative 325.5MB ONNX model (SHA-256 pinned)
+│       └── voices-v1.0.bin             # 28.2MB voices tensor (54 voices, SHA-256 pinned)
 ├── scripts/
-│   ├── db_manager.py                   # Fixed CLI: --init | --context | --create-series | --record-published
-│   ├── build_audio.py                  # Kokoro-82M synthesis + pronunciations.yaml + faster-whisper alignment
-│   ├── preview_frames.py               # HyperFrames lint + check --json + mid-scene snapshots -> qa_grid.jpg
-│   ├── render_and_qa.py                # HyperFrames --quality high + FFmpeg sidechain/SFX + KinoCut QA (>=80)
-│   └── publish_youtube.py              # Single-call videos.insert + playlist/Shorts Series sync
-├── index.html                          # HyperFrames 1080x1920 master composition (triple visual mode)
-├── styles.css                          # 2026 Safe-zone captions, series badge, SVG filters & mood themes
-├── engine.js                           # GSAP skeletal acting, diagram reveals, kinetic stats, parallax & FX
-├── config.yaml                         # Locked EN voice/blend, 3 pillars, BGM/SFX, upload_mode, publish hour
-├── pronunciations.yaml                 # Phonetic overrides for Sanskrit, historical & scientific terms
-├── episodes.db                         # SQLite series & episode ledger
-├── package.json                        # hyperframes (^0.9.19) & gsap dependencies
-├── requirements.txt                    # kokoro-onnx, faster-whisper, kinocut==2.0.1, google-api-python-client, pyyaml, pydantic, pillow, soundfile, numpy
-└── .env.youtube.example                # Dedicated YouTube OAuth2 env file (isolated from HyperFrames .env)
-
+│   ├── db_manager.py                   # Context & state engine (--context | --create-series | --record-published)
+│   ├── build_audio.py                  # Dual-language Kokoro synthesis + dialogue DSP + -14.0 LUFS
+│   ├── preview_frames.py               # Composition sync + mid-scene snapshots -> qa_grid.jpg
+│   ├── render_and_qa.py                # HyperFrames render + FFmpeg ducking + KinoCut gate + thumbnail.jpg
+│   ├── publish_youtube.py              # Private review upload + thumbnails.set + API read-back verification
+│   └── generate_composition.py         # Deterministic index.html / styles.css / engine.js synchronizer
+├── tests/
+│   ├── test_audition_voices.py         # Kokoro blend math, RMS dBFS, and immutability tests
+│   ├── test_build_audio.py             # Audio pipeline, duration bounds, and model quarantine tests
+│   ├── test_db_manager.py              # Database integrity, series lifecycle, and schema tests
+│   ├── test_render_pipeline.py         # Preview grids, probe media, and thumbnail generation tests
+│   └── test_publish_youtube.py         # Offline stub, mocked upload, thumbnail 403, and read-back tests
+├── build/                              # Ephemeral build artifacts (gitignored)
+│   ├── audio/                          # Active narration WAVs
+│   ├── samples_v2/                     # Verified production sample bundles (EN & HI)
+│   │   ├── prod_en_ravana_kailash/     # 42.4s English master (final_short.mp4, contact sheets)
+│   │   └── prod_hi_ravana_kailash/     # 44.3s Hindi master (final_short.mp4, contact sheets)
+│   ├── youtube_e2e_verification.json   # Live YouTube private_review upload & read-back proof
+│   └── final_short.mp4                 # Active render master
+├── config.yaml                         # Channel config (language, voice profiles, upload_mode, pillars)
+├── pronunciations_en.yaml              # English IPA pronunciation dictionary
+├── pronunciations_hi.yaml              # Hindi Devanagari pronunciation dictionary
+├── pronunciations.yaml                 # Root fallback pronunciation dictionary
+├── episodes.db                         # SQLite series & episode ledger (immutable baseline)
+├── package.json                        # Node.js dependencies (hyperframes, gsap)
+├── requirements.txt                    # Python dependencies
+└── .gitignore                          # Git exclusions (build/, models/, .env.youtube, episodes.db)
 ```
 
 ---
 
-### 4. Series Management, Editorial Identity & 2026 Retention Blueprint
+### 4. Series Management, State Machine & Multi-Shot Pacing
 
-#### 4.1 Brand Cohesion & Strict Pillar Rotation (`config.yaml` + `episodes.db`)
-
-1. **Single-Language Global English Lock (`en`):**
-* Every Sutradhar Short is written, narrated, and captioned in crisp, cinematic English (`defaultAudioLanguage: "en"`, `defaultLanguage: "en"`).
-* **YouTube Auto-Dubbing** (enabled in Studio) handles automatic Expressive Speech distribution into Hindi and Telugu plus 20+ other languages without mixing spoken languages on the primary feed.
-
-
-2. **Cohesive 3-Pillar Rotation:**
-* Rotate across 3 tightly connected curiosity pillars so consecutive series retain the same viewer profile:
+#### 4.1 Brand Cohesion & 3-Pillar Rotation
+Sutradhar rotates across three thematically connected curiosity pillars:
 1. **`Ancient Epics & Lore`** (Sanatan Dharma, Puranic paradoxes, mythic cosmology, forgotten legends)
 2. **`Hidden History`** (Ancient Indian & world empires, lost engineering, untold turning points)
 3. **`Cosmic & Scientific Paradoxes`** (Astrophysics, quantum mysteries, deep time, reality-bending science)
 
-
-
-
-3. **Active Series Lock & Automatic Completion:**
-* Every series defines **3 to 6 episodes** (`total_planned_episodes`) stored in `series_bible_json`. While `status == 'ACTIVE'`, `db_manager.py --context` locks each daily run to `completed_episodes + 1`. On the final episode, `db_manager.py --record-published` flips `series.status = 'COMPLETED'`.
-
-
-
-#### 4.2 Viral 2026 YouTube Shorts Pacing & YPP Compliance
-
-* **36–46 Seconds Total Across 7–8 Dynamic Scenes (~4.5–6.0s each):** Targets the peak Shorts completion and rewatch zone.
-* **12–22 Spoken Words per Scene (Kokoro Prosody Sweet Spot):** Avoids Kokoro-82M’s short-utterance artifacts (<10 tokens) while keeping delivery brisk and punchy.
-* **0–2.5 Second Pattern-Interrupt Hook (Scene 1):** Drops viewers straight into a paradox, visual reveal, or high-stakes moment—never a channel intro or greeting.
-* **Standalone Clarity + Serial Pull:** Every episode makes complete sense to a cold Shorts-feed viewer while planting an open-loop cliffhanger for the next part (or series finale).
-* **YPP "Inauthentic Content" & Originality Safeguards:**
-* **Mandatory Per-Episode Bespoke Asset:** Every episode authors at least **1 brand-new, topic-specific SVG asset** (diagram, cutaway, map, artifact, or backdrop variant).
-* **Triple-Mode Visual Variety:** Alternates `character_drama`, `explainer_diagram`, and `kinetic_callout` scenes within each episode alongside sidechain-ducked BGM and scene transition SFX.
-* **Full Metadata Compliance:** Declares `containsSyntheticMedia: True`, `selfDeclaredMadeForKids: False`, and `defaultAudioLanguage: "en"` on upload.
-
-
+#### 4.2 Multi-Shot 5-Beat Narrative Pacing (38–44 Seconds)
+Each episode is structured for maximum Shorts retention across 5 dynamic shots (~6.5–9.5s each):
+- **Shot 1 (Wide Establishing / Vista Hook, 0–8s):** Parting velvet curtains, full-bleed panoramic environment, opening paradox or confrontation.
+- **Shot 2 (Character Advance / Tension Escalation):** Character enters with articulated walking gait and hierarchical rivet joints.
+- **Shot 3 (Wrathful Close-Up / Dialogue Climax):** Dynamic camera push (2.15x) into character heads, angry facial expression swap (brows/eyes), multi-vowel lip-sync articulation, and rotating folk-art solar burst aura.
+- **Shot 4 (Cosmic / Divine Counter-Strike):** Scale shift to a divine summit or cosmic realm with impact shockwaves and screen rumbles.
+- **Shot 5 (Crushing Climax / Cliffhanger Payoff):** Physical environmental pressure (e.g. descending granite mountain) directly onto the character's bracing limbs; narrator delivers cliffhanger hook teasing tomorrow's episode.
 
 ---
 
-### 5. Triple-Mode Modular SVG Rig, Safe Zones & Shader Contract
+### 5. Hierarchical Puppet Rigging Standard (`ravana.svg`)
 
-All `.svg` files in `assets/svg/` follow strict DOM layer contracts so `engine.js` animates existing and newly authored SVGs automatically.
+All movable character limbs in `assets/svg/characters/` follow a strict kinematic hierarchy:
+```text
+#ravana_character
+├── #lower_body
+│   ├── #hip_left_joint ──> #thigh_left_rot ──> #knee_left_joint ──> #shin_left_rot
+│   └── #hip_right_joint ──> #thigh_right_rot ──> #knee_right_joint ──> #shin_right_rot
+├── #torso_group
+│   ├── #torso_artwork (<clipPath id="torso_clip"> locks janeu permanently inside torso)
+│   ├── #rear_arms_layer (4 left arms + 4 right arms with weapon props)
+│   ├── #front_arms_layer (forearms, wrists, and gesture hands)
+│   └── #heads_group
+│       ├── #flanking_heads (4 heads left, 4 heads right with fan-out rotation)
+│       └── #central_head (brows_neutral/angry, eyes_normal/wrath, mouth_calm/talk/shout)
+└── #wrath_sunburst (folk-art solar rays & glowing aura revealed on dialogue climax)
+```
 
-#### 5.1 Mode A: Character Drama (`visual_mode: "character_drama"`)
+**Joint Pin Kinematics:** Joint pins use circular brass rivets (`#puppet_pin`). Rotations are driven entirely by CSS custom properties (`--rot-thigh-left`, `--rot-shin-left`, etc.) defined in `styles.css` with `transform-origin: 0px 0px !important`.
 
-* **Character Rigs (`assets/svg/characters/*.svg`, `viewBox="0 0 800 1200"`):**
-* Required `<g>` IDs (z-order back-to-front): `#char_aura`, `#char_body` (`data-pivot-x/y`), `#arm_left` (`data-pivot-x/y`), `#char_head` (`data-pivot-x/y`), `#eyes_open`, `#eyes_closed`, `#brows`, `#arm_right` (`data-pivot-x/y`), and nested `#prop_weapon`.
-* Driven by `emotion` (`calm`, `wrath`, `shock`, `smirk`, `meditating`) and `action_gesture` (`idle_breathe`, `raise_weapon`, `point_accuse`, `bless_hand`, `tremble`).
-
-
-* **Backdrop Rigs (`assets/svg/backdrops/*.svg`, `viewBox="0 0 1080 1920"`):**
-* Required depth layers: `#bg_far_sky`, `#bg_mid_architecture`, `#bg_fg_pillars` styled via CSS variables (`var(--sky-top)`, `var(--sky-bottom)`, `var(--accent-glow)`, `var(--shadow-tint)`).
-
-
-
-#### 5.2 Mode B: Explainer & Science Diagrams (`visual_mode: "explainer_diagram"`)
-
-* **Diagram Rigs (`assets/svg/diagrams/*.svg`, `viewBox="0 0 900 900"`):**
-* Required `<g>` IDs: `#diagram_base` (core structure/axis), progressive reveal groups `#stage_1` through `#stage_4` driven by `active_diagram_stage` (`1..4`), and `#highlight_pulse` styled with `#divine-bloom` or `#cosmic-glow`.
-
-
-
-#### 5.3 Mode C: Kinetic Stat / Timeline Callout (`visual_mode: "kinetic_callout"`)
-
-* High-contrast animated typography / counter / comparison card over a mood-tinted backdrop + particles using `callout_headline` and `callout_subtext`.
-
-#### 5.4 Procedural Shaders, Particles & Verified 2026 Safe-Zone Layout
-
-* **Inline SVG `<filter>` Graphs:** `#divine-bloom`, `#fire-haze` (`feTurbulence`), and `#parchment-grain`.
-* **Frame-Locked Canvas Particles (`particle_theme`):** `<canvas id="fx-canvas">` driven by GSAP `onUpdate` progress renders `"golden_embers"`, `"starfield_warp"`, `"quantum_nodes"`, or `"mystic_mist"`.
-* **Verified 2026 YouTube Shorts Safe-Zone Layout (`1080 × 1920`):**
-* Keep clear: **Top `288px**`, **Bottom `520–672px**` (clears handle, title, Subscribe, and the Shorts Series *"Watch Series"* pill), **Right `192px**` (clears Like/Comment/Share/Remix stack), **Left `48px**`.
-* **Top Series Badge:** `top: 300px; left: 64px; max-width: 816px;` (`PART 2 OF 4 • COSMIC PARADOXES`).
-* **Primary Visual Focal Area (Characters / Diagrams):** Vertically centered between `y: 380px` and `y: 1220px`, horizontally constrained within `x: 64px..880px`.
-* **Subtitles:** `bottom: 560px; left: 64px; right: 200px;` with high-contrast backing and `#FFD700` active-word highlight.
-
-
+**Folk-Art Palette (Strictly Zero Teal):** Midnight obsidian `#060814`, deep twilight indigo `#1e1828`, sandstone amber `#d97706`, burnished gold `#ffd43b`, and bronze `#b45309`.
 
 ---
 
-### 6. Database & JSON Schemas
+### 6. Dual-Language Audio Engine & Dynamic Dialogue DSP
 
-#### 6.1 SQLite Schema (`episodes.db`)
+#### 6.1 Connected Context-Window Synthesis
+Sequential narrator sentences are synthesized within coherent connected context blocks rather than isolated fragments, eliminating sentence-by-sentence prosody resets and dead-air digital seams.
 
-```sql
-CREATE TABLE IF NOT EXISTS series (
-    series_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    series_title TEXT NOT NULL,
-    pillar TEXT NOT NULL,                 -- 'Ancient Epics & Lore' | 'Hidden History' | 'Cosmic & Scientific Paradoxes'
-    tts_voice TEXT NOT NULL,              -- Kokoro preset or blend spec from config.yaml
-    bgm_track TEXT NOT NULL,
-    total_planned_episodes INTEGER NOT NULL,
-    completed_episodes INTEGER NOT NULL DEFAULT 0,
-    series_bible_json TEXT NOT NULL,      -- Full planned episode-by-episode arc outline
-    youtube_playlist_id TEXT,             -- Auto-created playlist ID for YouTube Shorts Series grouping
-    status TEXT NOT NULL DEFAULT 'ACTIVE',-- 'ACTIVE' | 'COMPLETED'
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+#### 6.2 Dynamic Dialogue DSP Chain
+When `speaker_role: "character_dialogue"` is specified:
+1. Dynamic pitch lowering: `asetrate={int(sr*0.917)},aresample={sr},atempo=1.0905` shifts pitch downward by 1.5 semitones while precisely maintaining duration and Kokoro's native 24kHz sample rate.
+2. Low-shelf chest resonance boost (`+2.5dB @ 150Hz`).
+3. Subtle stone-hall reverb echo (`aecho=0.8:0.88:35:0.25`).
+4. Automated assertions: $\Delta\text{Duration} \le \pm 5\%$, pitch reduction verified, and trailing 500ms silence floor $< -65.0\text{ dBFS}$.
 
-CREATE TABLE IF NOT EXISTS episodes (
-    episode_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    series_id INTEGER NOT NULL,
-    episode_number_in_series INTEGER NOT NULL,
-    global_episode_number INTEGER NOT NULL UNIQUE,
-    youtube_title TEXT NOT NULL,
-    summary TEXT NOT NULL,
-    bespoke_asset_path TEXT NOT NULL,     -- Tracks unique SVG created for this episode (YPP originality audit)
-    script_json TEXT NOT NULL,
-    youtube_video_id TEXT,
-    scheduled_publish_at TEXT,
-    status TEXT NOT NULL,                 -- 'PUBLISHED' | 'PRIVATE_REVIEW' | 'FAILED'
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (series_id) REFERENCES series(series_id)
-);
-
-```
-
-#### 6.2 `build/episode_plan.json` Schema
-
-```json
-{
-  "series_id": 1,
-  "series_title": "Secrets of the Event Horizon",
-  "pillar": "Cosmic & Scientific Paradoxes",
-  "episode_number_in_series": 2,
-  "total_planned_episodes": 4,
-  "global_episode_number": 2,
-  "tts_voice": "am_fenrir:0.65+bm_george:0.35",
-  "bgm_track": "cosmic_mystery.mp3",
-  "bespoke_asset_path": "assets/svg/diagrams/spaghettification_tidal_gradient.svg",
-  "youtube_title": "What Happens The Second You Cross a Black Hole? (Part 2/4) #Shorts",
-  "youtube_description": "Part 2 of 4: Secrets of the Event Horizon. At the horizon, gravity stretches time and matter beyond recognition. Watch the full series on Sutradhar! #Science #Space #Shorts",
-  "summary": "Explains gravitational time dilation and tidal spaghettification at a black hole's event horizon.",
-  "scenes": [
-    {
-      "scene_index": 1,
-      "narration_text": "Cross this invisible boundary, and the universe outside ages millions of years in a single heartbeat.",
-      "caption_text": "Cross this invisible boundary, and the universe outside ages millions of years in a single heartbeat.",
-      "visual_mode": "explainer_diagram",
-      "backdrop_rig": "deep_cosmos_nebula",
-      "diagram_rig": "spaghettification_tidal_gradient",
-      "active_diagram_stage": 1,
-      "primary_character": null,
-      "secondary_character": null,
-      "callout_headline": null,
-      "callout_subtext": null,
-      "emotion": "calm",
-      "action_gesture": "idle_breathe",
-      "mood_palette": "cosmic_indigo",
-      "particle_theme": "starfield_warp",
-      "camera_motion": "dramatic_zoom",
-      "transition_sfx": "sub_hit.wav"
-    }
-  ]
-}
-```
-
-#### 6.3 `build/new_series_plan.json` Schema
-
-```json
-{
-  "series_title": "Secrets of the Event Horizon",
-  "pillar": "Cosmic & Scientific Paradoxes",
-  "tts_voice": "am_fenrir",
-  "bgm_track": "cosmic_mystery.mp3",
-  "total_planned_episodes": 3,
-  "series_bible_json": {
-    "arc_summary": "Overarching multi-episode season arc (>=15 chars).",
-    "continuity_notes": "Optional visual/narrative continuity guidance.",
-    "episodes": [
-      {
-        "episode_number": 1,
-        "working_title": "Event Horizon Paradox Part 1",
-        "hook": "Opening 0-2.5s curiosity hook (>=10 chars).",
-        "narrative_direction": "Core story/explanation beats for this episode (>=15 chars).",
-        "planned_bespoke_asset": "assets/svg/diagrams/horizon_clock_dilation.svg",
-        "cliffhanger_or_payoff": "Bridge to Part 2 or finale payoff (>=10 chars)."
-      }
-    ]
-  }
-}
-```
-
-#### 6.4 `build/publish_result.json` Schema
-
-```json
-// build/publish_result.json (extra keys forbidden; locked to PRIVATE_REVIEW/FAILED while private_review lock is active)
-{
-  "video_id": "abc123XYZ",
-  "playlist_id": "PL_SERIES_001",
-  "upload_status": "PRIVATE_REVIEW",
-  "upload_mode": "private_review",
-  "privacy_status": "private",
-  "scheduled_publish_at": null,
-  "video_url": "https://youtube.com/shorts/abc123XYZ",
-  "error_message": null
-}
-```
+#### 6.3 Broadcast Mastering Standards
+- Two-pass EBU R128 loudness normalization to **-14.0 LUFS** (True Peak $\le -1.5\text{ dBTP}$).
+- Dynamic sidechain ducking (`sidechaincompress` threshold -24dB, ratio 4:1) dips BGM beneath narration.
+- Digital zero trailing buffer with 20ms cosine volume ramp, yielding **-150.0 dBFS** trailing noise floor.
 
 ---
 
-### 7. Specifications for the 7 Pre-Whitelisted Static Scripts (`scripts/`)
+### 7. Deterministic Thumbnail Generation & YouTube Publishing
 
-All 7 runtime commands take **zero dynamic arguments**, ensuring full compatibility with unattended Antigravity `/automation` `agent_permissions`:
+#### 7.1 Episode Thumbnail (`build/thumbnail.jpg`)
+During `render_and_qa.py`, FFmpeg extracts a clean-canvas, high-impact JPEG thumbnail:
+- **Source:** Peak dramatic hero moment (midpoint of Shot 3 wrath dialogue).
+- **Dimensions:** Exactly `1080x1920` (9:16 vertical cover).
+- **File Size:** Verified $\le 2\text{ MB}$ (YouTube custom thumbnail limit).
 
-1. **`python scripts/db_manager.py --context`** *(plus one-time setup `python scripts/db_manager.py --init`)*
-* Outputs JSON containing: `channel_config` (`pillars`, default `tts_voice`, `upload_mode`), `active_series` (including `youtube_playlist_id` and `series_bible_json`), `next_episode_number_in_series`, `next_global_episode_number`, `completed_series_history` (last 20), and `available_rigs` across `characters/`, `backdrops/`, `diagrams/`, `bgm/`, and `sfx/`.
+#### 7.2 YouTube Data API v3 Workflow (`scripts/publish_youtube.py`)
+1. **Video Upload:** `videos().insert(part="snippet,status", ...)` setting title, description, category 27 (Education), default languages, `privacyStatus: "private"`, `selfDeclaredMadeForKids: False`, and `containsSyntheticMedia: True`.
+2. **Thumbnail Upload:** `thumbnails().set(videoId=video_id, media_body=...)`. Catches HTTP 403 (e.g. channel phone verification / Intermediate Features pending) gracefully, logging a clear diagnostic without failing the upload or losing the video ID.
+3. **Playlist Assignment:** Reuses active series playlist or creates a private series playlist via `playlists().insert` and appends the video via `playlistItems().insert`.
+4. **Mandatory Live API Read-Back Verification:** Immediately executes `videos().list` and `playlistItems().list` to verify YouTube-stored values against expected metadata, recording a complete audit in `build/publish_verification.json`.
 
-
-2. **`python scripts/db_manager.py --create-series`**
-* Reads `build/new_series_plan.json`, validates schema via Pydantic (3–6 episodes, valid pillar), and inserts a new `ACTIVE` row into `series`.
-
-
-3. **`python scripts/build_audio.py`**
-* Reads `build/episode_plan.json` and `pronunciations.yaml`.
-* Applies whole-word case-insensitive phonetic replacements from `pronunciations.yaml` to `narration_text` before passing to **`kokoro-onnx`** (preserving clean spelling in `caption_text`). Supports single voice IDs (e.g., `am_fenrir`) or weighted voice blends (`am_fenrir:0.65+bm_george:0.35`) via vector averaging.
-* Trims dead silence, measures exact durations via `ffprobe`, concatenates `build/audio/narration_full.wav`, and runs **`faster-whisper` (`base`, `int8`, CPU, `language="en"`, `word_timestamps=True`)** on each scene WAV to align exact word timings onto `caption_text`.
-* Validates total runtime (34–50s) and writes `build/manifest.js` (`window.EPISODE_MANIFEST = {...};`).
-
-
-4. **`python scripts/preview_frames.py`** *(Fast Pre-Render Visual QA Gate)*
-* Runs `npx hyperframes lint` and `npx hyperframes check --json`.
-* Computes scene midpoint timestamps from `build/manifest.js` and runs `npx hyperframes snapshot --at <midpoints>` (~10s total without full MP4 encoding).
-* Stitches snapshots into `build/qa_grid.jpg` for Antigravity multimodal visual inspection.
-
-
-5. **`python scripts/render_and_qa.py`**
-* Runs `npx hyperframes render --quality high --output build/raw_video.mp4`.
-* Mixes scene transition SFX (`assets/sfx/`) at exact scene timestamps and applies **FFmpeg `sidechaincompress**` dynamic ducking to `bgm_track` under `narration_full.wav`.
-* Normalizes final audio to **`-14.0 LUFS`** via `kinocut.Client().normalize_audio(..., target_lufs=-14.0)` into `build/final_short.mp4`.
-* Runs `kino.quality_check("build/final_short.mp4")` and `kino.release_checkpoint("build/final_short.mp4", min_score=80)`, verifies `ffprobe` duration matches `manifest.js`, and writes decoded frame sheet `build/final_qa_grid.jpg`.
-
-
-6. **`python scripts/publish_youtube.py`**
-* Loads OAuth2 credentials from **`.env.youtube`** (isolated from `.env` so HyperFrames CLI emits zero unrecognized-key warnings).
-* Executes a **single `videos().insert(part="snippet,status", ...)**` call with:
-* `snippet`: `title`, `description`, `categoryId: "27"` (Education), `defaultAudioLanguage: "en"`, `defaultLanguage: "en"`.
-* `status`: `privacyStatus: "private"`, `publishAt` (next `18:30 IST` / `13:00 UTC` if `upload_mode == "scheduled"`, omitted if `upload_mode == "private_review"`), `selfDeclaredMadeForKids: False`, and **`containsSyntheticMedia: True`** natively on insert.
-
-
-* Creates the series playlist via `playlists().insert` on Part 1 (if `youtube_playlist_id` is null) and appends `video_id` via `playlistItems().insert` in episode order for native **YouTube Shorts Series** grouping.
-* Writes `video_id`, `playlist_id`, `upload_status`, and `scheduled_publish_at` to `build/publish_result.json`.
-
-
-7. **`python scripts/db_manager.py --record-published`**
-* Reads `build/episode_plan.json` and `build/publish_result.json`, persists `youtube_playlist_id` (if newly created), records the episode in `episodes`, increments `completed_episodes`, and flips `series.status = 'COMPLETED'` on the final episode.
-
-
+#### 7.3 Daily Quota Accounting
+| API Method | Quota Cost per Call | Calls per Short | Total Daily Quota |
+| :--- | :--- | :--- | :--- |
+| `videos.insert` | 1,600 units | 1 | 1,600 units |
+| `thumbnails.set` | 50 units | 1 | 50 units |
+| `playlists.insert` | 50 units | 0–1 (Part 1 only) | 0–50 units |
+| `playlistItems.insert` | 50 units | 1 | 50 units |
+| `videos.list` (read-back) | 1 unit | 1 | 1 unit |
+| `playlistItems.list` (read-back) | 1 unit | 1 | 1 unit |
+| **Total Daily Usage** | — | — | **1,702 units / 10,000 units** (17% of free tier) |
 
 ---
 
-### 8. Setup & Antigravity `/automation` Runbook
+### 8. Phase 1–5 Project Roadmap & Acceptance Criteria
 
-1. **Install Dependencies, Local Models & Skills:**
-```bash
-npm install
-npx hyperframes browser ensure
-npx skills add heygen-com/hyperframes
-npx skills add het8802/OpenNolan --skill svg-character-animation
-pip install -r requirements.txt
-python scripts/db_manager.py --init
-
+```mermaid
+flowchart LR
+    P1["Phase 1: Pipeline & Model Fixes<br/>(COMPLETED)"] --> P2["Phase 2: Core V2 Migration<br/>(COMPLETED)"]
+    P2 --> P3["Phase 3: Cleanup & Live Verification<br/>(COMPLETED 3A-3C; 3D Ready)"]
+    P3 --> P4["Phase 4: Kathputli Cast & Audio Library<br/>(NEXT)"]
+    P4 --> P5["Phase 5: Production Calibration & Unlock<br/>(FINAL)"]
 ```
 
+#### Phase 1 — Environment & Audio Pipeline Fixes: COMPLETED
+- Downloaded authoritative 325.5MB Kokoro ONNX model (SHA-256: `7d5df8ec...`) and voices tensor.
+- Quarantined corrupt model file.
+- HyperFrames 0.9.70 audio duration sync (`+0.30s`).
+- 35/35 automated tests passed.
 
-*(First run of `build_audio.py` caches Kokoro-82M ONNX weights + voices and `faster-whisper` `base` int8 weights locally for 100% offline execution.)*
-2. **Configure YouTube OAuth2 (`.env.youtube`) & Studio Auto-Dubbing:**
-* Enable **YouTube Data API v3** in Google Cloud Console, publish the OAuth Consent Screen to **Production** (prevents 7-day token expiry), and store `YOUTUBE_CLIENT_ID`, `YOUTUBE_CLIENT_SECRET`, and `YOUTUBE_REFRESH_TOKEN` in `.env.youtube`.
-* In **YouTube Studio → Settings → Channel → Advanced Settings**, enable **Automatic Dubbing** (with Expressive Speech) so every Global English Short automatically reaches Hindi, Telugu, and global audiences.
+#### Phase 2 — Production Core V2 Migration: COMPLETED
+- Promoted V2.2 multi-shot Kathputli visual engine and Stage 1.5 dual-language audio engine into root production codebase.
+- Verified two full-length 38–44s production Shorts in `build/samples_v2/`:
+  - `prod_en_ravana_kailash` (42.4s, KinoCut **83.2 / 100**, PASS)
+  - `prod_hi_ravana_kailash` (44.3s, KinoCut **82.4 / 100**, PASS)
+- Root `episodes.db` confirmed bit-for-bit unchanged (SHA-256: `729ACCE0CD4F31CC69CECA61470D331ABCBCE5E62B51728AB372CD28F83F8011`).
 
+#### Phase 3 — Operational Readiness, Codebase Cleanup & Live Verification: COMPLETED (3A–3C)
+- **Stage 3A (Cleanup):** Audited and removed obsolete scratch files, old benchmark directories, and quarantined model files. Verified zero broken references. Full test suite: **37/37 PASSED**.
+- **Stage 3B (Thumbnail & Live YouTube Verification):** Added `build/thumbnail.jpg` generation ($\le 2\text{ MB}$, 1080×1920) in `render_and_qa.py`. Upgraded `publish_youtube.py` with `thumbnails.set`, 403 handling, and mandatory API read-back verification. Successfully executed a real live `private_review` upload in an isolated workspace:
+  - Video ID: `vdkMMm5ucPQ` (`https://youtu.be/vdkMMm5ucPQ`)
+  - Playlist ID: `PLV5anx_T8pUw`
+  - Privacy Status: `private`
+  - Read-back verification: **PASSED** (all fields verified against YouTube Data API).
+  - Recorded in `build/youtube_e2e_verification.json`.
+- **Stage 3C (Documentation):** Complete rewrite of `IMPLEMENTATION_PLAN.md`, `MASTER_AUTOMATION_PROMPT.md`, and `MANUAL_SETUP_AND_OPERATIONS.md`. Retired obsolete interim docs.
+- **Stage 3D (Antigravity `/automation` Setup):** Ready for user UI configuration.
 
-3. **Calibration Pass (`upload_mode: "private_review"`):**
-* Keep `upload_mode: "private_review"` in `config.yaml` for the first 3–5 episodes.
-* Open `sutradhar/` in **Google Antigravity IDE**, configure `agent_permissions` to allow the 7 exact commands, and run an interactive pass of `docs/MASTER_AUTOMATION_PROMPT.md`.
-* Inspect the uploaded private Short on a real mobile device (safe zones, voice clarity, pronunciation of Sanskrit/historical terms, and Auto-Dubbing track quality).
+#### Phase 4 — Kathputli Cast Expansion & Real Audio Library: NEXT
+- Expand Kathputli character roster in `assets/svg/characters/` (Lord Shiva, Narad Muni, Shani Dev, Ashwatthama) following the verified rivet rig standard.
+- Author diverse multi-plane backdrops (Vaikuntha, Kurukshetra, Pataliputra, Harappan Citadel).
+- Curate and master thematic acoustic BGM tracks (ancient Indian folk percussion, bamboo flute, sitar, veena) and transition SFX.
 
-
-4. **Enable Daily `/automation` Schedule:**
-* Switch `upload_mode: "scheduled"` in `config.yaml`.
-* Schedule `/automation` **Daily at 16:30 IST** pointing to `docs/MASTER_AUTOMATION_PROMPT.md` so each Short is scheduled for `18:30 IST` peak traffic.
-* On Episode 1–2 of each series, open **YouTube Studio → Content → Shows** and toggle the auto-created series playlist into a native **Shorts Series** (serial mode).
-
----
-
-### 9. Milestone Status & Verification Log
-
-#### Milestone 1 — Repository Scaffold & Environment Setup: COMPLETED
-- **Environment:** Windows 11 (PowerShell), Node.js v24.22.1, Python 3.12.10 (`.venv`), FFmpeg/FFprobe 7.1, `hyperframes` 0.9.70 (Chromium verified via `npx hyperframes browser ensure` and `npx hyperframes doctor`), `kinocut==2.0.1` (`kino doctor` passed).
-- **Global Agent Skills:** Installed globally at `C:\Users\manis\.agents\skills\` (`hyperframes`, `svg-character-animation`, and companion skills; verified via `npx skills list -g`).
-
-#### Milestone 2 — Database & State Management (`scripts/db_manager.py`): COMPLETED
-- **Automated Compliance Tests:** `python -m unittest tests/test_db_manager.py -v` — **Ran 11 tests ... OK** (0 failures, 0 skips, executed in isolated temporary workspaces via `SUTRADHAR_ROOT`).
-- **Live Database Verification:** `python scripts/db_manager.py --context` verified against initialized `episodes.db`: `active_series: null`, `next_episode_number_in_series: 1`, `next_global_episode_number: 1`, `upload_mode: "private_review"`, `allow_public_or_scheduled: false`, `completed_private_review_episodes: 0`.
-- **Enforced Contracts:** Identical `narration_text`/`caption_text`, complete `series_bible_json` roadmap validation, strict `private_review` publishing lock (`PUBLISHED` and `scheduled_publish_at` rejected while locked), pillar rotation, bespoke asset uniqueness, and atomic `BEGIN IMMEDIATE` transactions with SQLite foreign keys and partial unique indexes.
-- **Remaining Limitations (By Design, Deferred to Later Milestones):**
-  - Physical `.svg`, BGM, and SFX file existence on disk is validated in Milestones 3–5 rather than `db_manager.py`.
-  - Audio runtime bounds (`34–50s` hard, `36–46s` target) are enforced in Milestone 3 (`scripts/build_audio.py`).
-  - Zero Milestone 2 requirements remain incomplete.
-
-#### Milestone 3 — Audio Synthesis & Forced Alignment (`scripts/build_audio.py`, `scripts/audition_voices.py`): COMPLETED
-- **Kokoro ONNX Model Integrity:** Quarantined corrupt 158.5MB model; downloaded authoritative 325,532,387-byte model (SHA-256: `7d5df8ecf7d4b1878015a32686053fd0eebe2bc377234608764cc0ef3636a6c5`). Verified `voices-v1.0.bin` (28,214,398 bytes, SHA-256: `bca610b8308e8d99f32e6fe4197e7ec01679264efed0cac9140fe9c29f1fbf7d`, 54 voices).
-- **Hardened Resilient Download:** Added HTTP Range resume, size bounds (250MB/10MB), SHA-256 checksum pins, and structural `onnxruntime.InferenceSession` validation in `scripts/build_audio.py`.
-- **Voice Auditions:** Auditioned 20 candidate voices and blends via `scripts/audition_voices.py`. Generated 20 WAVs in `build/audition/` and `audition_report.json`. Top performer: `bm_daniel` (155.7 WPM, 1.0000 match ratio). Held `tts.default_voice: "am_fenrir"` and `voice_provisional: true` unchanged in `config.yaml` for user signoff.
-- **Forced Alignment Integration:** Added PyAV 19 compatibility shim for `faster-whisper 1.2.1`. Validated word-level alignment, monotonically increasing timestamps, and exact `build/manifest.js` emission.
-- **Automated Tests:** `python -m unittest tests/test_audition_voices.py tests/test_build_audio.py -v` — **Ran 14 tests ... OK**.
-
-#### Milestone 4 — Visual Composition Engine & Starter Assets: COMPLETED
-- **Visual Composition Engine:** Authored `index.html`, `styles.css`, and `engine.js` complying with HyperFrames 0.9.70 contract. Built-in 2026 YouTube Shorts safe zones (130px top, 560px bottom, 120px right), 5 mood palettes (`golden_imperial`, `cosmic_indigo`, `crimson_wrath`, `mystic_slate`, `obsidian_amber`), 4 particle themes, and word-level karaoke subtitles.
-- **HyperFrames Lint Cleanliness:** Verified `npx hyperframes lint` passes with 0 errors.
-- **Procedural BGM & SFX:** Generated `cosmic_mystery.mp3`, `dramatic_mythology.mp3`, `epic_history.mp3` in `assets/bgm/`; generated `sub_hit.wav`, `whoosh_soft.wav`, `riser_tension.wav` in `assets/sfx/`.
-- **Starter SVG Rigs:** Authored characters (`sutradhar_narrator.svg`, `ravana.svg`), backdrops (`deep_cosmos_nebula.svg`, `mount_kailash.svg`, `ancient_temple_ruins.svg`), and bespoke diagrams (`black_hole_anatomy.svg`, `gravitational_time_dilation_clock.svg`, `kailash_axis_alignments.svg`).
-
-#### Milestone 5 — Snapshot QA, Render Pipeline & Sample Production: COMPLETED
-- **Preview & QA Pipeline:** Implemented zero-argument `scripts/preview_frames.py` capturing 2x3 contact sheets (`qa_grid.jpg`, `qa_grid_safezones.jpg`) with visual safe-zone overlay guides.
-- **Master Render & Audio Engineering:** Implemented zero-argument `scripts/render_and_qa.py`: HyperFrames CLI 1080x1920 render, FFmpeg dynamic sidechain ducking (`sidechaincompress`), KinoCut loudness normalization to `-14.0 LUFS`, and release checkpoint gate (`min_score=80.0`).
-- **End-to-End Local Sample Videos (Verified in Isolated Environments):**
-  - **Sample 1 (`sample_01_cosmos`):** 40.70s, 1080x1920 @ 30fps, H.264/AAC, -14.0 LUFS, KinoCut Score: **90.6 / 100**, archived with all QA contact sheets under `build/samples/sample_01_cosmos/`.
-  - **Sample 2 (`sample_02_epics`):** 46.60s, 1080x1920 @ 30fps, H.264/AAC, -14.0 LUFS, KinoCut Score: **90.8 / 100**, archived with all QA contact sheets under `build/samples/sample_02_epics/`.
-- **Automated Tests:** `python -m unittest tests/test_render_pipeline.py -v` — **Ran 4 tests ... OK**.
-
-#### Milestone 6 — Offline YouTube Publisher & Safeguards (`scripts/publish_youtube.py`): COMPLETED (Offline Engine Verified; Live Publishing Pending User OAuth)
-- **Zero-Argument Publisher CLI:** Implemented `scripts/publish_youtube.py` strictly enforcing `upload_mode: "private_review"`, `allow_public_or_scheduled: false`, and `containsSyntheticMedia=True`.
-- **Isolated `.env.youtube` Credential Discovery:** Loads credentials without leaking into parent environment; falls back gracefully to offline dry-run stub mode when credentials are absent or `SUTRADHAR_OFFLINE_STUB=1`.
-- **Strict Schema Compliance:** Emits `build/publish_result.json` validating against `db_manager.PublishResult` (`extra="forbid"`).
-- **Cross-Module Contract Verification:** Successfully piped `publish_youtube.py` output directly into `db_manager.py --record-published` in isolated temp workspace.
-- **Automated Tests:** `python -m unittest tests/test_publish_youtube.py -v` — **Ran 6 tests ... OK**.
-- **Live Publishing Status:** Marked as **Pending User OAuth Setup & Voice/Sample Approval** per non-negotiable safety guardrails.
-
-#### Milestone 7 — User Handoff Guide & Comprehensive Verification: COMPLETED
-- **Operations Manual:** Created `docs/MANUAL_SETUP_AND_OPERATIONS.md` covering Google Cloud setup, OAuth token generation script, Studio Auto-Dubbing, voice/sample approval decisions, routine 6-step operations, and troubleshooting.
-- **Repository-Wide Test Discovery:** `python -m unittest discover -s tests -v` — **Ran 35 tests ... OK** (35 passed, 0 failed, 0 skipped).
-- **Database Immutability Re-Verification:** Root `episodes.db` confirmed identical to initial baseline (SHA-256: `729acce0cd4f31cc69ceca61470d331abcbce5e62b51728ab372cd28f83f8011`, size: 36,864 bytes).
-
-#### Quality Overhaul & Clean-Canvas Visual/Audio Production: COMPLETED
-- **Clean-Canvas Video Format:** Completely eliminated on-screen subtitles and top episode badges from `index.html`, `styles.css`, `engine.js`, `preview_frames.py`, and docs. Spoken audio alone drives the narrative while YouTube generates closed captions automatically. Removed redundant `caption_text` from schema; made `narration_text` the canonical source of truth. Retained Whisper word alignment strictly for audio-synced visual choreography.
-- **Broadcast Audio Mastering & Resilient Vocal Chain:**
-  - Implemented 5-stage FFmpeg vocal chain: `highpass=f=80`, warmth `+2dB @ 175Hz`, harshness tame `-2dB @ 5kHz`, air `+1.5dB @ 10kHz`, 2.5:1 `acompressor` with `asplit=2` dual-stream routing for sidechain ducking.
-  - Rebuilt `pronunciations.yaml` with smooth unhyphenated respellings (`Sootradaar`, `Kylaash`, `Raavana`, `Raamaayana`, `Mahaabhaarata`, `Naalanda`, `Patalipootra`).
-  - Generated restrained cinematic SFX (`whoosh_soft.wav`, `sub_hit.wav`, `tension_swell.wav`) and ambient BGM pads low-passed at 620Hz (`cosmic_mystery.mp3`, `dramatic_mythology.mp3`, `epic_history.mp3`).
-  - Fixed final-word cutoff bug (`FINAL_SCENE_PAD_SEC = 0.75`, `TRIM_MARGIN_SEC = 0.10`, HyperFrames duration sync `+0.30s`). Verified 0.00000 peak silence in final 400ms buffer across both samples.
-- **Illuminated Obsidian & Gold Visual Redesign:**
-  - Strict palette: Obsidian `#07090F`, Deep Indigo `#111827`, Burnished Gold `#E5B869`, Warm Ivory `#F8F4EC`, Ember Crimson `#C84B31` (strictly zero teal).
-  - Sculptural backlit silhouette rigs (`sutradhar_narrator.svg`, `ravana.svg`), multi-plane atmospheric backdrops (`deep_cosmos_nebula.svg`, `mount_kailash.svg`, `ancient_temple_ruins.svg`), and technical infographic diagrams with GSAP `DrawSVGPlugin` paths (`black_hole_anatomy.svg`, `gravitational_time_dilation_clock.svg`, `kailash_axis_alignments.svg`).
-  - Open-canvas editorial typography for callouts (hairline gold rules, no boxed slide cards).
-  - HyperFrames lint: 0 errors.
-- **End-to-End Sample Production (Clean-Canvas & Broadcast Mastering):**
-  - **Sample 1 (`sample_01_cosmos`):** 43.10s, 1080x1920 @ 30fps, H.264/AAC, -14.0 LUFS, KinoCut Score: **95.2 / 100**, voice: `am_fenrir:0.60+am_onyx:0.40`.
-  - **Sample 2 (`sample_02_epics`):** 44.50s, 1080x1920 @ 30fps, H.264/AAC, -14.0 LUFS, KinoCut Score: **98.3 / 100**, voice: `bm_george:0.60+am_fenrir:0.40`.
-- **Full Test Suite Verification:** `python -m unittest discover -s tests -v` — **Ran 35 tests ... OK** (100% pass rate).
-- **Database Immutability Verified:** Root `episodes.db` confirmed untouched (SHA-256: `729acce0...`, size: 36,864 bytes).
+#### Phase 5 — Production Calibration & Scheduled Publishing Unlock: FINAL
+- Run full 3-episode mini-series in `private_review` mode.
+- Creator visual and narrative approval audit.
+- Unlock `publishing.upload_mode: "scheduled"` and `publishing.allow_public_or_scheduled: true` for autonomous public YouTube distribution.

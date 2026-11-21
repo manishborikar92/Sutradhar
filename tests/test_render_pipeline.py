@@ -108,6 +108,41 @@ class TestRenderPipeline(unittest.TestCase):
         self.assertIn("format", info)
         self.assertAlmostEqual(float(info["format"]["duration"]), 1.0, places=1)
 
+    def test_05_thumbnail_generation(self) -> None:
+        """Verify generate_episode_thumbnail produces 1080x1920 JPEG <= 2 MB."""
+        dummy_mp4 = self.root / "dummy.mp4"
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-f",
+                "lavfi",
+                "-i",
+                "testsrc=size=1080x1920:rate=30",
+                "-t",
+                "2",
+                "-pix_fmt",
+                "yuv420p",
+                str(dummy_mp4),
+            ],
+            capture_output=True,
+            check=True,
+        )
+        thumb_out = self.root / "thumbnail.jpg"
+        manifest = {
+            "scenes": [
+                {"scene_index": 1, "shot_type": "wide_establishing", "midpoint_sec": 0.5},
+                {"scene_index": 2, "shot_type": "close_up_wrath", "midpoint_sec": 1.2},
+            ]
+        }
+        res_thumb = render_and_qa.generate_episode_thumbnail(dummy_mp4, thumb_out, manifest, 2.0)
+        self.assertTrue(res_thumb.is_file())
+        self.assertLessEqual(res_thumb.stat().st_size, 2 * 1024 * 1024)
+
+        with Image.open(res_thumb) as im:
+            self.assertEqual(im.size, (1080, 1920))
+            self.assertEqual(im.format, "JPEG")
+
 
 if __name__ == "__main__":
     unittest.main()

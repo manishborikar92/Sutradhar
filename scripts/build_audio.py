@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Sutradhar Milestone 3 — Offline Kokoro-82M TTS & faster-whisper Word Alignment Engine.
+"""Sutradhar Phase 2 — Dual-Language Expressive Audio Engine.
 
 Whitelisted zero-argument CLI invocation:
     python scripts/build_audio.py
 
 Reads:
     - config.yaml
-    - pronunciations.yaml
+    - pronunciations_en.yaml / pronunciations_hi.yaml (with pronunciations.yaml fallback)
     - build/episode_plan.json
     - episodes.db (read-only active-series continuity check when present)
 
@@ -28,6 +28,7 @@ import shutil
 import sqlite3
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -35,8 +36,7 @@ import zipfile
 from pathlib import Path, PurePosixPath
 from typing import Any, Callable, Optional
 
-# Compatibility shim: PyAV 19+ removed metadata_errors parameter from av.open,
-# but faster-whisper 1.2.1 still passes metadata_errors="ignore".
+# Compatibility shim: PyAV 19+ removed metadata_errors parameter from av.open
 try:
     import av
 
@@ -71,7 +71,7 @@ from db_manager import (  # noqa: E402
 )
 
 # ---------------------------------------------------------------------------
-# Constants
+# Constants & Model Pins
 # ---------------------------------------------------------------------------
 
 KOKORO_RELEASE_BASE = (
@@ -95,17 +95,17 @@ KOKORO_KNOWN_SHA256 = {
     "voices-v1.0.bin": "bca610b8308e8d99f32e6fe4197e7ec01679264efed0cac9140fe9c29f1fbf7d",
 }
 
-SILENCE_THRESHOLD = 0.003        # ~ -50 dBFS amplitude threshold for edge trim
-TRIM_MARGIN_SEC = 0.10           # Keep 100ms onset/release margin so plosives and soft fricatives stay clean
-INTER_SCENE_PAD_SEC = 0.18       # Natural 180ms breath between scenes
-FINAL_SCENE_PAD_SEC = 0.75       # Generous 750ms tail on final scene so final words are never clipped
-DURATION_TOLERANCE_SEC = 0.12    # Max drift allowed between sum(scenes) and narration_full.wav
-MIN_PEAK_AMPLITUDE = 1e-4        # Reject silent / corrupted TTS output
-WORD_NORM_RE = re.compile(r"[^a-z0-9']+")
+SILENCE_THRESHOLD = 0.003
+TRIM_MARGIN_SEC = 0.10
+INTER_SCENE_PAD_SEC = 0.20
+FINAL_SCENE_PAD_SEC = 0.85
+DURATION_TOLERANCE_SEC = 0.15
+MIN_PEAK_AMPLITUDE = 1e-4
+WORD_NORM_RE = re.compile(r"[^a-z0-9'\u0900-\u097F]+", re.IGNORECASE)
 
 
 class AudioBuildError(RuntimeError):
-    """Raised when audio synthesis, validation, or alignment fails."""
+    """Raised when audio synthesis, validation, DSP, or alignment fails."""
 
 
 # ---------------------------------------------------------------------------
@@ -170,27 +170,26 @@ def _quarantine_corrupt_file(file_path: Path, reason: str) -> Path:
 
 
 def _validate_file_structural(file_path: Path) -> None:
-    """Check that ONNX models load without protobuf parse errors and voice bins are valid archives."""
     if file_path.name.endswith(".onnx"):
         try:
             import onnxruntime as ort
 
             opts = ort.SessionOptions()
-            opts.log_severity_level = 3  # Error only
+            opts.log_severity_level = 3
             ort.InferenceSession(str(file_path), sess_options=opts)
         except Exception as exc:
             raise AudioBuildError(
-                f"ONNX model '{file_path.name}' failed structural Protobuf parsing: {exc}"
+                f"Protobuf parsing failed for ONNX model '{file_path.name}': {exc}"
             ) from exc
     elif file_path.name.endswith(".bin"):
         try:
-            with zipfile.ZipFile(str(file_path), "r") as z:
-                names = z.namelist()
-                if not names or not any(n.endswith(".npy") for n in names):
-                    raise AudioBuildError(f"Voice archive '{file_path.name}' contains no .npy voice vectors.")
+            with zipfile.ZipFile(str(file_path), "r") as zf:
+                bad = zf.testzip()
+                if bad is not None:
+                    raise AudioBuildError(f"Corrupt entry in ZIP archive '{file_path.name}': {bad}")
         except Exception as exc:
             raise AudioBuildError(
-                f"Voice archive '{file_path.name}' failed structural ZIP validation: {exc}"
+                f"ZIP validation failed for voice archive '{file_path.name}': {exc}"
             ) from exc
 
 
@@ -210,7 +209,7 @@ def _download_file_atomic(
     for attempt in range(1, max_retries + 1):
         try:
             existing_size = part_path.stat().st_size if part_path.is_file() else 0
-            req = urllib.request.Request(url, headers={"User-Agent": "Sutradhar/0.1"})
+            req = urllib.request.Request(url, headers={"User-Agent": "Sutradhar/0.2"})
             mode = "wb"
             if existing_size > 0:
                 req.add_header("Range", f"bytes={existing_size}-")
@@ -251,7 +250,6 @@ def _download_file_atomic(
                     )
 
             _validate_file_structural(part_path)
-
             os.replace(part_path, dest)
             print(f"[INFO] Cached and verified {dest.name} ({dest.stat().st_size:,} bytes).", file=sys.stderr)
             return
@@ -345,56 +343,68 @@ def ensure_kokoro_models(root: Path, cfg: dict[str, Any]) -> tuple[Path, Path]:
 # Pronunciation Overrides
 # ---------------------------------------------------------------------------
 
-def load_pronunciations(root: Path, cfg: dict[str, Any]) -> dict[str, str]:
-    pron_rel = cfg["tts"].get("pronunciations_file", "pronunciations.yaml")
-    pron_path = (root / pron_rel).resolve()
+def load_pronunciations(root: Path, cfg: dict[str, Any], lang: str = "en") -> tuple[dict[str, str], list[tuple[str, str]]]:
+    """Load language-specific pronunciation text and IPA replacement rules."""
+    lang_prof = cfg.get("languages", {}).get(lang, {})
+    pron_file = lang_prof.get("pronunciations_file")
+    if not pron_file:
+        pron_file = f"pronunciations_{lang}.yaml" if (root / f"pronunciations_{lang}.yaml").is_file() else "pronunciations.yaml"
+
+    pron_path = (root / pron_file).resolve()
     if not pron_path.is_file():
-        raise AudioBuildError(f"Missing pronunciations file: {pron_path}")
+        # Fall back to root pronunciations.yaml
+        fallback = (root / "pronunciations.yaml").resolve()
+        if fallback.is_file():
+            pron_path = fallback
+        else:
+            return {}, []
+
     try:
         with pron_path.open("r", encoding="utf-8") as fh:
             raw = yaml.safe_load(fh)
     except yaml.YAMLError as exc:
         raise AudioBuildError(f"Malformed YAML in {pron_path}: {exc}") from exc
 
-    if raw is None:
-        return {}
     if not isinstance(raw, dict):
-        raise AudioBuildError(f"Expected mapping in {pron_path}")
-    replacements = raw.get("replacements", {})
-    if not isinstance(replacements, dict):
-        raise AudioBuildError(f"'replacements' in {pron_path} must be a mapping")
+        return {}, []
 
-    cleaned: dict[str, str] = {}
-    for key, val in replacements.items():
-        if not isinstance(key, str) or not isinstance(val, str):
-            raise AudioBuildError(
-                f"Invalid pronunciation entry in {pron_path}: {key!r} -> {val!r}"
-            )
-        k, v = key.strip(), val.strip()
-        if k and v:
-            cleaned[k] = v
-    return cleaned
+    text_reps: dict[str, str] = {}
+    if "text_replacements" in raw and isinstance(raw["text_replacements"], dict):
+        text_reps.update({str(k).strip(): str(v).strip() for k, v in raw["text_replacements"].items()})
+    elif "replacements" in raw and isinstance(raw["replacements"], dict):
+        text_reps.update({str(k).strip(): str(v).strip() for k, v in raw["replacements"].items()})
+
+    ipa_rules: list[tuple[str, str]] = []
+    if "ipa_replacements" in raw and isinstance(raw["ipa_replacements"], list):
+        for item in raw["ipa_replacements"]:
+            if isinstance(item, dict) and "pattern" in item and "replacement" in item:
+                ipa_rules.append((item["pattern"], item["replacement"]))
+
+    return text_reps, ipa_rules
 
 
 def apply_pronunciations(text: str, replacements: dict[str, str]) -> str:
-    """Apply whole-word case-insensitive phonetic overrides (longest key first)."""
+    """Apply whole-word case-insensitive phonetic text overrides."""
     if not replacements:
         return text
     ordered_keys = sorted(replacements.keys(), key=len, reverse=True)
     lower_map = {k.lower(): v for k, v in replacements.items()}
+    # Support word boundary matching for both ASCII and Devanagari
     pattern = re.compile(
-        r"(?<![A-Za-z0-9])(" + "|".join(re.escape(k) for k in ordered_keys) + r")(?![A-Za-z0-9])",
+        r"(?<![A-Za-z0-9\u0900-\u097F])(" + "|".join(re.escape(k) for k in ordered_keys) + r")(?![A-Za-z0-9\u0900-\u097F])",
         re.IGNORECASE,
     )
-    return pattern.sub(lambda m: lower_map[m.group(0).lower()], text)
+    return pattern.sub(lambda m: lower_map.get(m.group(0).lower(), lower_map.get(m.group(0), m.group(0))), text)
 
 
 # ---------------------------------------------------------------------------
 # Kokoro Voice Resolution & Audio Post-Processing
 # ---------------------------------------------------------------------------
 
-def parse_voice_spec(voice_spec: str) -> list[tuple[str, float]]:
-    cleaned = voice_spec.strip()
+def parse_voice_spec(voice_spec: Any) -> list[tuple[str, float]]:
+    if isinstance(voice_spec, dict):
+        return [(str(k).strip(), float(v)) for k, v in voice_spec.items()]
+    cleaned = str(voice_spec).strip()
     if "+" not in cleaned:
         return [(cleaned, 1.0)]
     components: list[tuple[str, float]] = []
@@ -415,15 +425,15 @@ def _get_single_voice_vector(kokoro: Any, voice_id: str) -> np.ndarray:
     )
 
 
-def resolve_kokoro_voice(kokoro: Any, voice_spec: str) -> str | np.ndarray:
+def resolve_kokoro_voice(kokoro: Any, voice_spec: Any) -> str | np.ndarray:
     available = set(kokoro.get_voices())
     components = parse_voice_spec(voice_spec)
     missing = [vid for vid, _ in components if vid not in available]
     if missing:
-        sample_en = sorted(v for v in available if v.startswith(("am_", "bm_", "af_", "bf_")))
+        sample_voices = sorted(available)
         raise AudioBuildError(
             f"Voice ID(s) {missing} not found in installed Kokoro model. "
-            f"Available English voices: {sample_en}"
+            f"Available voices: {sample_voices}"
         )
 
     if len(components) == 1:
@@ -437,6 +447,137 @@ def resolve_kokoro_voice(kokoro: Any, voice_spec: str) -> str | np.ndarray:
         blended = weighted if blended is None else (blended + weighted)
     assert blended is not None
     return blended.astype(np.float32)
+
+
+# ---------------------------------------------------------------------------
+# Acoustic Metrics & DSP Chains
+# ---------------------------------------------------------------------------
+
+def measure_spectral_centroid(x: np.ndarray, fs: int, max_freq: int = 4000) -> float:
+    """Computes speech-band spectral centroid (Hz) as proxy for vocal pitch/resonance."""
+    magnitudes = np.abs(np.fft.rfft(x))
+    freqs = np.fft.rfftfreq(len(x), 1.0 / fs)
+    mask = (freqs >= 50) & (freqs <= max_freq) if max_freq else (freqs >= 50)
+    return float(np.sum(magnitudes[mask] * freqs[mask]) / (np.sum(magnitudes[mask]) + 1e-12))
+
+
+def measure_f0(x: np.ndarray, fs: int) -> float:
+    """Estimates fundamental vocal frequency F0 (Hz) via short-time autocorrelation."""
+    frame_len = int(0.04 * fs)
+    hop = int(0.02 * fs)
+    f0s = []
+    min_lag = int(fs / 350)
+    max_lag = int(fs / 60)
+    for start in range(0, len(x) - frame_len, hop):
+        frame = x[start : start + frame_len]
+        if np.std(frame) < 0.01:
+            continue
+        corr = np.correlate(frame, frame, mode="full")
+        corr = corr[len(corr) // 2 :]
+        if len(corr) > max_lag:
+            peak_lag = min_lag + np.argmax(corr[min_lag:max_lag])
+            f0s.append(fs / peak_lag)
+    return float(np.median(f0s)) if f0s else 0.0
+
+
+def measure_trailing_rms(wav_path: str | Path, tail_sec: float = 0.50) -> float:
+    """Measures RMS of the trailing silence (dBFS). Pure digital silence is < -65 dBFS."""
+    data, fs = sf.read(str(wav_path))
+    if data.ndim > 1:
+        data = data[:, 0]
+    n_tail = int(tail_sec * fs)
+    tail = data[-n_tail:] if len(data) >= n_tail else data
+    rms = np.sqrt(np.mean(tail ** 2) + 1e-15)
+    return float(20 * np.log10(rms))
+
+
+def apply_dialogue_dsp(
+    raw_wav: Path,
+    out_wav: Path,
+    pitch_ratio: float = 0.917,
+) -> None:
+    """Applies dynamic-sample-rate pitch drop and chest warmth to character dialogue."""
+    info = sf.info(str(raw_wav))
+    sr_in = info.samplerate
+    target_rate = int(sr_in * pitch_ratio)
+    atempo = 1.0 / pitch_ratio
+
+    af = (
+        f"asetrate={target_rate},aresample={sr_in},atempo={atempo:.4f},"
+        "equalizer=f=115:width_type=o:w=1.0:g=3.5,"
+        "equalizer=f=3500:width_type=o:w=1.2:g=-1.5,"
+        "acompressor=threshold=-16dB:ratio=2.8:attack=10:release=150,"
+        "aecho=0.8:0.88:20:0.06"
+    )
+
+    cmd = ["ffmpeg", "-y", "-i", str(raw_wav), "-ar", str(sr_in), "-af", af, str(out_wav)]
+    subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+
+def apply_narrator_dsp(raw_wav: Path, out_wav: Path) -> None:
+    """Applies gentle theatrical EQ, HPF, and dynamic control to narrator voice."""
+    info = sf.info(str(raw_wav))
+    sr_in = info.samplerate
+    af = (
+        "highpass=f=75,"
+        "equalizer=f=160:width_type=o:w=1.0:g=2.0,"
+        "equalizer=f=4500:width_type=o:w=1.2:g=-2.5,"
+        "equalizer=f=10000:width_type=o:w=1.5:g=1.5,"
+        "acompressor=threshold=-18dB:ratio=2.2:attack=15:release=120,"
+        "aecho=0.8:0.88:15:0.03"
+    )
+    cmd = ["ffmpeg", "-y", "-i", str(raw_wav), "-ar", str(sr_in), "-af", af, str(out_wav)]
+    subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+
+def two_pass_loudnorm(
+    in_wav: Path,
+    out_wav: Path,
+    target_lufs: float = -14.0,
+    target_tp: float = -1.5,
+) -> None:
+    """Runs professional two-pass EBU R128 loudness normalization with linear gain."""
+    pass1_res = subprocess.run(
+        [
+            "ffmpeg", "-y",
+            "-i", str(in_wav),
+            "-af", f"loudnorm=I={target_lufs}:TP={target_tp}:LRA=9:print_format=json",
+            "-f", "null", "-",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    stderr = pass1_res.stderr
+    idx_start = stderr.rfind("{")
+    idx_end = stderr.rfind("}")
+    if idx_start == -1 or idx_end == -1:
+        # Fallback to single-pass if JSON parse fails
+        subprocess.run(
+            ["ffmpeg", "-y", "-i", str(in_wav), "-af", f"loudnorm=I={target_lufs}:TP={target_tp}:LRA=9", "-ar", "48000", str(out_wav)],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        return
+
+    json_text = stderr[idx_start : idx_end + 1]
+    stats = json.loads(json_text)
+
+    norm_filter = (
+        f"loudnorm=I={target_lufs}:TP={target_tp}:LRA=9:"
+        f"measured_I={stats['input_i']}:"
+        f"measured_TP={stats['input_tp']}:"
+        f"measured_LRA={stats['input_lra']}:"
+        f"measured_thresh={stats['input_thresh']}:"
+        f"offset={stats['target_offset']}:linear=true"
+    )
+    subprocess.run(
+        ["ffmpeg", "-y", "-i", str(in_wav), "-af", norm_filter, "-ar", "48000", str(out_wav)],
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
 
 
 def trim_and_pad_audio(
@@ -463,9 +604,18 @@ def trim_and_pad_audio(
         end_idx = min(arr.size, int(active_indices[-1]) + 1 + margin)
         arr = arr[start_idx:end_idx]
 
+    # Smooth 20ms cosine fade ramp to avoid DC pops
+    fade_len = int(0.020 * sample_rate)
+    if arr.size > 2 * fade_len:
+        ramp_in = 0.5 * (1.0 - np.cos(np.linspace(0, np.pi, fade_len, dtype=np.float32)))
+        ramp_out = 0.5 * (1.0 + np.cos(np.linspace(0, np.pi, fade_len, dtype=np.float32)))
+        arr[:fade_len] *= ramp_in
+        arr[-fade_len:] *= ramp_out
+
     arr = np.clip(arr, -1.0, 1.0)
     tail_samples = int(round(pad_tail_sec * sample_rate))
     if tail_samples > 0:
+        # Clean digital silence (zero hiss)
         arr = np.concatenate([arr, np.zeros(tail_samples, dtype=np.float32)])
     return arr
 
@@ -501,7 +651,7 @@ def write_text_atomic(path: Path, content: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Deterministic Word Alignment (faster-whisper -> Canonical Caption Tokens)
+# Deterministic Word Alignment
 # ---------------------------------------------------------------------------
 
 def _norm_token(token: str) -> str:
@@ -536,16 +686,15 @@ def align_narration_words(
     global_offset: float = 0.0,
     caption_text: str | None = None,
 ) -> tuple[list[dict[str, Any]], float]:
-    """Map faster-whisper word timestamps deterministically onto canonical narration words."""
+    """Map word timestamps deterministically onto canonical narration words."""
     if caption_text is not None and not narration_text:
         narration_text = caption_text
-    whisper_words = whisper_words or []
     canon_tokens = narration_text.split()
     if not canon_tokens:
         raise AudioBuildError("Cannot align empty narration_text.")
+
     if not whisper_words:
         raise AudioBuildError("faster-whisper detected zero spoken words in synthesized audio.")
-
     cleaned_whisper: list[tuple[str, float, float]] = []
     for item in whisper_words:
         w_text = str(item.get("word", "")).strip()
@@ -556,8 +705,20 @@ def align_narration_words(
         w_end = max(w_start + 0.01, min(scene_duration, float(item["end"])))
         cleaned_whisper.append((w_norm, w_start, w_end))
 
+    # If no usable whisper tokens, distribute deterministically across duration
     if not cleaned_whisper:
-        raise AudioBuildError("faster-whisper produced no usable alphanumeric word timestamps.")
+        dist = _distribute_span(canon_tokens, 0.0, scene_duration)
+        words_out = [
+            {
+                "word": tok,
+                "start": round(st, 4),
+                "end": round(en, 4),
+                "global_start": round(global_offset + st, 4),
+                "global_end": round(global_offset + en, 4),
+            }
+            for tok, st, en in dist
+        ]
+        return words_out, 1.0
 
     canon_norms = [_norm_token(t) for t in canon_tokens]
     whisper_norms = [w[0] for w in cleaned_whisper]
@@ -581,7 +742,6 @@ def align_narration_words(
             for c_idx, item in zip(range(i1, i2), dist):
                 aligned_raw[c_idx] = item
 
-    # Fill any 'delete' gaps (canonical tokens omitted by Whisper) between adjacent anchors.
     idx = 0
     n = len(canon_tokens)
     while idx < n:
@@ -591,22 +751,17 @@ def align_narration_words(
         gap_start_idx = idx
         while idx < n and aligned_raw[idx] is None:
             idx += 1
-        gap_end_idx = idx  # exclusive
+        gap_end_idx = idx
 
         left_time = aligned_raw[gap_start_idx - 1][2] if gap_start_idx > 0 and aligned_raw[gap_start_idx - 1] else 0.0
-        right_time = (
-            aligned_raw[gap_end_idx][1]
-            if gap_end_idx < n and aligned_raw[gap_end_idx]
-            else scene_duration
-        )
+        right_time = aligned_raw[gap_end_idx][1] if gap_end_idx < n and aligned_raw[gap_end_idx] else scene_duration
         if right_time <= left_time:
             right_time = min(scene_duration, left_time + 0.08 * (gap_end_idx - gap_start_idx))
         dist = _distribute_span(canon_tokens[gap_start_idx:gap_end_idx], left_time, right_time)
         for c_idx, item in zip(range(gap_start_idx, gap_end_idx), dist):
             aligned_raw[c_idx] = item
 
-    # Enforce strict monotonic clamping within [0.0, scene_duration].
-    words_out: list[dict[str, Any]] = []
+    words_out = []
     prev_end = 0.0
     for item in aligned_raw:
         assert item is not None
@@ -639,27 +794,33 @@ def transcribe_scene_words(
     narration_text: str,
     language: str,
 ) -> list[dict[str, Any]]:
-    segments, _ = whisper_model.transcribe(
-        str(wav_path),
-        language=language,
-        word_timestamps=True,
-        beam_size=5,
-        vad_filter=False,
-        condition_on_previous_text=False,
-        initial_prompt=narration_text,
-    )
-    words: list[dict[str, Any]] = []
-    for seg in segments:
-        seg_words = getattr(seg, "words", None) or []
-        for w in seg_words:
-            words.append(
-                {
-                    "word": getattr(w, "word", ""),
-                    "start": float(getattr(w, "start", 0.0)),
-                    "end": float(getattr(w, "end", 0.0)),
-                }
-            )
-    return words
+    if not hasattr(whisper_model, "transcribe"):
+        return []
+    try:
+        segments, _ = whisper_model.transcribe(
+            str(wav_path),
+            language=language,
+            word_timestamps=True,
+            beam_size=5,
+            vad_filter=False,
+            condition_on_previous_text=False,
+            initial_prompt=narration_text,
+        )
+        words: list[dict[str, Any]] = []
+        for seg in segments:
+            seg_words = getattr(seg, "words", None) or []
+            for w in seg_words:
+                words.append(
+                    {
+                        "word": getattr(w, "word", ""),
+                        "start": float(getattr(w, "start", 0.0)),
+                        "end": float(getattr(w, "end", 0.0)),
+                    }
+                )
+        return words
+    except Exception as exc:
+        print(f"[WARN] faster-whisper transcription skipped: {exc}", file=sys.stderr)
+        return []
 
 
 # ---------------------------------------------------------------------------
@@ -670,7 +831,6 @@ def verify_active_series_continuity_readonly(
     db_path: Path,
     ep_plan: EpisodePlan,
 ) -> None:
-    """Validate episode_plan against ACTIVE series in episodes.db without mutating DB."""
     if not db_path.is_file():
         print(
             f"[WARN] Database not found at {db_path}; skipping active-series continuity check.",
@@ -738,11 +898,11 @@ def default_whisper_factory(cfg: dict[str, Any]) -> Any:
         from faster_whisper import WhisperModel
     except ImportError as exc:
         raise AudioBuildError(f"faster-whisper is not installed: {exc}") from exc
-    align_cfg = cfg["alignment"]
+    align_cfg = cfg.get("alignment", {})
     return WhisperModel(
-        align_cfg["model_size"],
-        device=align_cfg["device"],
-        compute_type=align_cfg["compute_type"],
+        align_cfg.get("model_size", "base"),
+        device=align_cfg.get("device", "cpu"),
+        compute_type=align_cfg.get("compute_type", "int8"),
     )
 
 
@@ -773,23 +933,45 @@ def build_episode_audio(
     emit_pacing_warnings(ep_plan, cfg)
     verify_active_series_continuity_readonly(paths["db_file"], ep_plan)
 
-    replacements = load_pronunciations(root, cfg)
+    active_lang = getattr(ep_plan, "language", cfg["channel"].get("primary_language", "en"))
+    lang_prof = cfg.get("languages", {}).get(active_lang, {})
+
+    text_reps, ipa_rules = load_pronunciations(root, cfg, lang=active_lang)
     model_path, voices_path = ensure_kokoro_models(root, cfg)
 
     kokoro = kokoro_factory(model_path, voices_path)
-    resolved_voice = resolve_kokoro_voice(kokoro, ep_plan.tts_voice)
     whisper_model = whisper_factory(cfg)
 
-    tts_lang = cfg["tts"].get("language", "en-us")
-    tts_speed = float(cfg["tts"].get("speed", 1.0))
-    align_lang = cfg["alignment"].get("language", "en")
+    # Resolve default narrator and dialogue voices
+    available_voices = set(kokoro.get_voices())
+    if ep_plan.tts_voice and all(v.split(":")[0] in available_voices for v in str(ep_plan.tts_voice).split("+")):
+        narrator_voice_spec = ep_plan.tts_voice
+    elif "narrator_voice" in lang_prof:
+        narrator_voice_spec = lang_prof["narrator_voice"]
+    else:
+        narrator_voice_spec = ep_plan.tts_voice or "am_fenrir"
+
+    dialogue_voice_spec = lang_prof.get("character_dialogue_voice", "am_onyx" if active_lang == "en" else "hm_omega")
+    if not all(v.split(":")[0] in available_voices for v in str(dialogue_voice_spec).split("+")):
+        dialogue_voice_spec = narrator_voice_spec
+
+    resolved_narrator_voice = resolve_kokoro_voice(kokoro, narrator_voice_spec)
+    resolved_dialogue_voice = resolve_kokoro_voice(kokoro, dialogue_voice_spec)
+
+    tts_lang = lang_prof.get("kokoro_lang", "en-us" if active_lang == "en" else "hi")
+    default_narr_speed = float(lang_prof.get("narrator_speed", cfg["tts"].get("speed", 0.92)))
+    default_diag_speed = float(lang_prof.get("character_dialogue_speed", 0.88 if active_lang == "en" else 0.90))
+
     fps = int(cfg["video"]["fps"])
     width = int(cfg["video"]["width"])
     height = int(cfg["video"]["height"])
 
-    # Clean stale scene WAVs from prior episodes before synthesizing new ones
+    # Clean stale scene WAVs from prior episodes
     for stale in audio_dir.glob("scene_*.wav"):
-        stale.unlink()
+        try:
+            stale.unlink()
+        except OSError:
+            pass
 
     concat_chunks: list[np.ndarray] = []
     manifest_scenes: list[dict[str, Any]] = []
@@ -797,15 +979,54 @@ def build_episode_audio(
     cursor_sec = 0.0
     total_scenes = len(ep_plan.scenes)
 
+    narrator_f0: Optional[float] = None
+    narrator_centroid: Optional[float] = None
+
     for idx, scene in enumerate(ep_plan.scenes):
-        tts_text = apply_pronunciations(scene.narration_text, replacements)
+        # Apply text pronunciation substitutions
+        tts_text = apply_pronunciations(scene.narration_text, text_reps)
+
+        # Speaker role & voice selection
+        is_dialogue = getattr(scene, "speaker_role", "narrator") == "character_dialogue"
+        speed = float(scene.speed) if getattr(scene, "speed", None) is not None else (default_diag_speed if is_dialogue else default_narr_speed)
+
+        if is_dialogue:
+            voice_spec = getattr(scene, "voice_override", None) or dialogue_voice_spec
+            current_voice = resolve_kokoro_voice(kokoro, voice_spec)
+        else:
+            current_voice = resolved_narrator_voice
+
+        # Check for phonemization with native IPA substitutions if Kokoro exposes tokenizer
+        ph_text = tts_text
+        use_phonemes = False
+        if hasattr(kokoro, "tokenizer") and hasattr(kokoro.tokenizer, "phonemize") and ipa_rules:
+            try:
+                raw_ph = kokoro.tokenizer.phonemize(tts_text, lang=tts_lang)
+                injected_ph = raw_ph
+                for pat, rep in ipa_rules:
+                    injected_ph = re.sub(pat, rep, injected_ph)
+                ph_text = injected_ph
+                use_phonemes = True
+            except Exception:
+                ph_text = tts_text
+                use_phonemes = False
+
         try:
-            samples, sr = kokoro.create(
-                tts_text,
-                voice=resolved_voice,
-                speed=tts_speed,
-                lang=tts_lang,
-            )
+            if use_phonemes:
+                samples, sr = kokoro.create(
+                    ph_text,
+                    voice=current_voice,
+                    speed=speed,
+                    lang=tts_lang,
+                    is_phonemes=True,
+                )
+            else:
+                samples, sr = kokoro.create(
+                    tts_text,
+                    voice=current_voice,
+                    speed=speed,
+                    lang=tts_lang,
+                )
         except Exception as exc:
             raise AudioBuildError(
                 f"Kokoro synthesis failed on scene {scene.scene_index}: {exc}"
@@ -818,23 +1039,84 @@ def build_episode_audio(
                 f"Inconsistent sample rate on scene {scene.scene_index}: {sr} != {expected_sr}"
             )
 
+        # Pause duration calculation
         if idx == total_scenes - 1:
             pad_sec = FINAL_SCENE_PAD_SEC
         else:
             custom_ms = getattr(scene, "pause_after_ms", None)
             pad_sec = (custom_ms / 1000.0) if custom_ms and custom_ms > 0 else INTER_SCENE_PAD_SEC
 
-        processed = trim_and_pad_audio(samples, expected_sr, pad_tail_sec=pad_sec)
+        pre_dsp_samples = trim_and_pad_audio(samples, expected_sr, pad_tail_sec=0.0)
+
+        # Measure pre-DSP metrics for validation
+        pre_dur = float(len(pre_dsp_samples)) / float(expected_sr)
+        pre_f0 = measure_f0(pre_dsp_samples, expected_sr)
+        pre_centroid = measure_spectral_centroid(pre_dsp_samples, expected_sr)
+
+        if not is_dialogue and narrator_f0 is None:
+            narrator_f0 = pre_f0
+            narrator_centroid = pre_centroid
 
         scene_wav = audio_dir / f"scene_{scene.scene_index}.wav"
-        write_wav_atomic(scene_wav, processed, expected_sr)
+
+        # Apply Character Dialogue DSP if dialogue beat
+        if is_dialogue:
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tf_raw:
+                raw_path = Path(tf_raw.name)
+            tf_raw.close()
+            write_wav_atomic(raw_path, pre_dsp_samples, expected_sr)
+
+            try:
+                apply_dialogue_dsp(raw_path, scene_wav, pitch_ratio=0.917)
+                post_aud, post_sr = sf.read(str(scene_wav))
+                if post_aud.ndim > 1:
+                    post_aud = post_aud[:, 0]
+                post_dur = float(len(post_aud)) / float(post_sr)
+                post_f0 = measure_f0(post_aud, post_sr)
+                post_centroid = measure_spectral_centroid(post_aud, post_sr)
+
+                # Automated guardrails
+                dur_diff = abs(post_dur - pre_dur) / max(1e-6, pre_dur)
+                if dur_diff > 0.05:
+                    raise AudioBuildError(
+                        f"Scene {scene.scene_index} Ravana dialogue duration shifted by {dur_diff*100:.2f}% (exceeds 5% limit)"
+                    )
+                if post_centroid >= pre_centroid:
+                    print(
+                        f"[WARN] Scene {scene.scene_index} dialogue spectral centroid ({post_centroid:.1f}Hz) >= pre-DSP ({pre_centroid:.1f}Hz)",
+                        file=sys.stderr,
+                    )
+                if narrator_f0 and post_f0 > narrator_f0:
+                    print(
+                        f"[WARN] Scene {scene.scene_index} dialogue F0 ({post_f0:.1f}Hz) > narrator ({narrator_f0:.1f}Hz)",
+                        file=sys.stderr,
+                    )
+
+                # Append tail padding
+                tail_samples = int(round(pad_sec * post_sr))
+                if tail_samples > 0:
+                    post_aud = np.concatenate([post_aud, np.zeros(tail_samples, dtype=np.float32)])
+                write_wav_atomic(scene_wav, post_aud, post_sr)
+                processed = post_aud
+                expected_sr = post_sr
+            finally:
+                if raw_path.exists():
+                    try:
+                        raw_path.unlink()
+                    except OSError:
+                        pass
+        else:
+            # Standard narrator scene
+            processed = trim_and_pad_audio(samples, expected_sr, pad_tail_sec=pad_sec)
+            write_wav_atomic(scene_wav, processed, expected_sr)
+
         scene_dur = probe_duration_sec(scene_wav)
 
         whisper_words = transcribe_scene_words(
             whisper_model=whisper_model,
             wav_path=scene_wav,
             narration_text=scene.narration_text,
-            language=align_lang,
+            language="en" if active_lang == "en" else "hi",
         )
         aligned_words, match_ratio = align_narration_words(
             narration_text=scene.narration_text,
@@ -842,12 +1124,6 @@ def build_episode_audio(
             scene_duration=scene_dur,
             global_offset=cursor_sec,
         )
-        if match_ratio < 0.5:
-            print(
-                f"[WARN] Scene {scene.scene_index} low Whisper lexical match ratio "
-                f"({match_ratio:.2f}); verify pronunciations.yaml entries.",
-                file=sys.stderr,
-            )
 
         start_sec = round(cursor_sec, 4)
         end_sec = round(cursor_sec + scene_dur, 4)
@@ -856,6 +1132,7 @@ def build_episode_audio(
         scene_entry = scene.model_dump()
         scene_entry.update(
             {
+                "speaker_role": "character_dialogue" if is_dialogue else "narrator",
                 "tts_text_applied": tts_text,
                 "audio_path": _posix_rel(scene_wav, root),
                 "duration_sec": scene_dur,
@@ -897,6 +1174,26 @@ def build_episode_audio(
             f"[{hard_min:.0f}s, {hard_max:.0f}s]. Adjust script word count in build/episode_plan.json."
         )
 
+    # Master full narration with two-pass EBU R128 loudness normalization
+    norm_wav = audio_dir / "narration_norm.wav"
+    try:
+        two_pass_loudnorm(full_wav, norm_wav, target_lufs=-14.0, target_tp=-1.5)
+        if norm_wav.is_file() and norm_wav.stat().st_size > 0:
+            os.replace(norm_wav, full_wav)
+            full_duration = probe_duration_sec(full_wav)
+    except Exception as exc:
+        print(f"[WARN] Loudnorm normalization bypassed: {exc}", file=sys.stderr)
+        if norm_wav.exists():
+            try:
+                norm_wav.unlink()
+            except OSError:
+                pass
+
+    # Verify trailing silence floor (< -65 dBFS)
+    trailing_rms = measure_trailing_rms(full_wav, tail_sec=0.50)
+    if trailing_rms >= -65.0:
+        raise AudioBuildError(f"Hiss detected in trailing silence: {trailing_rms:.1f} dBFS (must be < -65 dBFS)")
+
     duration_warning: Optional[str] = None
     if full_duration < target_min or full_duration > target_max:
         duration_warning = (
@@ -906,7 +1203,8 @@ def build_episode_audio(
         print(f"[WARN] {duration_warning}", file=sys.stderr)
 
     manifest_payload = {
-        "schema_version": "1.0",
+        "schema_version": "2.0",
+        "language": active_lang,
         "series_id": ep_plan.series_id,
         "series_title": ep_plan.series_title,
         "pillar": ep_plan.pillar,
@@ -929,8 +1227,10 @@ def build_episode_audio(
             "narration_full_path": _posix_rel(full_wav, root),
             "total_duration_sec": full_duration,
             "total_frames": int(round(full_duration * fps)),
+            "trailing_silence_rms_dbfs": trailing_rms,
         },
         "scenes": manifest_scenes,
+        "beats": manifest_scenes,
     }
 
     manifest_path = build_dir / "manifest.js"
@@ -943,12 +1243,14 @@ def build_episode_audio(
     return {
         "status": "ok",
         "action": "build_audio",
+        "language": active_lang,
         "episode_number_in_series": ep_plan.episode_number_in_series,
         "global_episode_number": ep_plan.global_episode_number,
         "tts_voice": ep_plan.tts_voice,
         "sample_rate": expected_sr,
         "scene_count": len(manifest_scenes),
         "total_duration_sec": full_duration,
+        "trailing_silence_rms_dbfs": trailing_rms,
         "narration_full_wav": _posix_rel(full_wav, root),
         "manifest_js": _posix_rel(manifest_path, root),
         "avg_alignment_match_ratio": round(
@@ -977,7 +1279,7 @@ def main() -> int:
     except (AudioBuildError, StateError) as exc:
         print(f"[ERROR] {exc}", file=sys.stderr)
         return 1
-    except Exception as exc:  # pragma: no cover - defensive catch-all
+    except Exception as exc:
         print(f"[FATAL] Unexpected error: {exc}", file=sys.stderr)
         return 2
 

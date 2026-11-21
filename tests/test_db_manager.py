@@ -267,8 +267,8 @@ class TestDbManagerCompliance(unittest.TestCase):
     def test_02_invalid_config_handling(self) -> None:
         self.assertEqual(self.run_cli("--init").returncode, 0)
 
-        # Non-English language lock violation
-        self.update_config(lambda c: c["channel"].__setitem__("primary_language", "hi"))
+        # Unsupported language lock violation
+        self.update_config(lambda c: c["channel"].__setitem__("primary_language", "es"))
         res = self.run_cli("--context")
         self.assertEqual(res.returncode, 1)
         self.assertIn("language lock violated", res.stderr)
@@ -589,8 +589,8 @@ class TestDbManagerCompliance(unittest.TestCase):
 
         # Unconfigured SFX
         assert_ep_rejected(lambda e: e["scenes"][0].__setitem__("transition_sfx", "laser.wav"), "sfx_tracks")
-        # Scene count too low (6)
-        assert_ep_rejected(lambda e: e.__setitem__("scenes", e["scenes"][:6]), "scenes count")
+        # Scene count too low (4)
+        assert_ep_rejected(lambda e: e.__setitem__("scenes", e["scenes"][:4]), "scenes count")
         # Non-sequential scene_index
         assert_ep_rejected(lambda e: e["scenes"][2].__setitem__("scene_index", 9), "strictly sequential")
         # character_drama missing primary_character

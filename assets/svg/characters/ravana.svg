@@ -1,115 +1,608 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1200" width="800" height="1200">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1200" width="800" height="1200" id="ravana_puppet_rig">
   <defs>
-    <!-- Ember Crimson & Gold Backlight Gradients -->
-    <radialGradient id="ember_titan_aura" cx="50%" cy="36%" r="55%">
-      <stop offset="0%" stop-color="#C84B31" stop-opacity="0.55" />
-      <stop offset="40%" stop-color="#8B1E0F" stop-opacity="0.25" />
-      <stop offset="100%" stop-color="#07090F" stop-opacity="0" />
+    <!-- Shaded Olive Skin Gradients -->
+    <linearGradient id="skin_base" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#768f56"/>
+      <stop offset="50%" stop-color="#586e3f"/>
+      <stop offset="100%" stop-color="#3c4c28"/>
+    </linearGradient>
+    <linearGradient id="skin_highlight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#9bb778"/>
+      <stop offset="100%" stop-color="#607645"/>
+    </linearGradient>
+    <linearGradient id="skin_shadow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#46582f"/>
+      <stop offset="100%" stop-color="#243016"/>
+    </linearGradient>
+
+    <!-- Rich Indian Gold & Jewelry Gradients -->
+    <linearGradient id="gold_sheen" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff8cc"/>
+      <stop offset="25%" stop-color="#f5c242"/>
+      <stop offset="65%" stop-color="#c69214"/>
+      <stop offset="100%" stop-color="#7a5400"/>
+    </linearGradient>
+    <linearGradient id="gold_prabhavali" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f5c242"/>
+      <stop offset="60%" stop-color="#b8860b"/>
+      <stop offset="100%" stop-color="#5a3d00"/>
+    </linearGradient>
+
+    <!-- Royal Crimson Dhoti & Velvet Gradients -->
+    <linearGradient id="crimson_silk" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#dc2626"/>
+      <stop offset="45%" stop-color="#991b1b"/>
+      <stop offset="100%" stop-color="#450a0a"/>
+    </linearGradient>
+    <linearGradient id="crimson_fold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444"/>
+      <stop offset="50%" stop-color="#b91c1c"/>
+      <stop offset="100%" stop-color="#550c0c"/>
+    </linearGradient>
+
+    <!-- Ruby Gem Inlay -->
+    <radialGradient id="ruby_glow" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#ff8787"/>
+      <stop offset="40%" stop-color="#e03131"/>
+      <stop offset="85%" stop-color="#670505"/>
+      <stop offset="100%" stop-color="#2a0000"/>
     </radialGradient>
-    <linearGradient id="ember_rim_grad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#FF7A59" />
-      <stop offset="35%" stop-color="#C84B31" />
-      <stop offset="70%" stop-color="#E5B869" />
-      <stop offset="100%" stop-color="#07090F" stop-opacity="0" />
+
+    <!-- Brass / Gold Puppet Rivet Gradient -->
+    <radialGradient id="rivet_metal" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#fff9db"/>
+      <stop offset="30%" stop-color="#f59f00"/>
+      <stop offset="75%" stop-color="#975a16"/>
+      <stop offset="100%" stop-color="#3b2003"/>
+    </radialGradient>
+
+    <!-- Chandrahas Steel Glow -->
+    <linearGradient id="blade_steel" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="35%" stop-color="#f1f3f5"/>
+      <stop offset="70%" stop-color="#ced4da"/>
+      <stop offset="100%" stop-color="#495057"/>
     </linearGradient>
-    <linearGradient id="titan_armor_grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1A1215" />
-      <stop offset="50%" stop-color="#0F0A0D" />
-      <stop offset="100%" stop-color="#060406" />
-    </linearGradient>
-    <filter id="ember-radiance" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="7" result="blur" />
-      <feMerge>
-        <feMergeNode in="blur" />
-        <feMergeNode in="SourceGraphic" />
-      </feMerge>
-    </filter>
+
+    <!-- Bold Solid Folk-Art Sunburst Aura (Balanced Folk-Art Amber/Bronze Glow) -->
+    <radialGradient id="wrath_burst_core" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffd43b" stop-opacity="0.80"/>
+      <stop offset="40%" stop-color="#f59e0b" stop-opacity="0.65"/>
+      <stop offset="75%" stop-color="#b45309" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#1e1828" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- CRITICAL FIX: Torso ClipPath to lock Janeu permanently inside torso (Defect 1) -->
+    <clipPath id="torso_clip">
+      <path d="M 265 465 Q 240 625 295 705 L 505 705 Q 560 625 535 465 Z"/>
+    </clipPath>
+
+    <!-- Puppet Joint Pin Template -->
+    <g id="puppet_pin">
+      <circle cx="0" cy="0" r="11" fill="#2d1d05" />
+      <circle cx="0" cy="0" r="9" fill="url(#rivet_metal)" stroke="#442a08" stroke-width="1.8"/>
+      <circle cx="-3" cy="-3" r="2.8" fill="#fffbe6" opacity="0.9"/>
+      <circle cx="0" cy="0" r="2.5" fill="#2d1d05" />
+    </g>
   </defs>
 
-  <!-- 1. Geometric Energy Halo & Ember Radiance -->
-  <g id="char_aura">
-    <circle cx="400" cy="360" r="350" fill="url(#ember_titan_aura)" />
-    <!-- Jagged Yantra Wheel (10 Cardinal Spikes) -->
-    <g id="char_mandala" transform-origin="400 360">
-      <circle cx="400" cy="360" r="290" fill="none" stroke="#C84B31" stroke-width="2" stroke-dasharray="14 8" opacity="0.6" />
-      <circle cx="400" cy="360" r="260" fill="none" stroke="#E5B869" stroke-width="1.5" opacity="0.4" />
-      <polygon points="400,80 460,260 640,160 520,320 680,360 520,400 640,560 460,460 400,640 340,460 160,560 280,400 120,360 280,320 160,160 340,260" fill="none" stroke="#C84B31" stroke-width="1.8" opacity="0.35" />
+  <style>
+    /* CSS Custom Property Hierarchical Rivet Rig Engine */
+    #thigh_left_rot { transform: rotate(var(--rot-thigh-left, 0deg)); transform-origin: 0px 0px; }
+    #shin_left_rot { transform: rotate(var(--rot-shin-left, 0deg)); transform-origin: 0px 0px; }
+    #thigh_right_rot { transform: rotate(var(--rot-thigh-right, 0deg)); transform-origin: 0px 0px; }
+    #shin_right_rot { transform: rotate(var(--rot-shin-right, 0deg)); transform-origin: 0px 0px; }
+
+    #shoulder_rear_left_rot { transform: rotate(var(--rot-shoulder-rear-left, 0deg)); transform-origin: 0px 0px; }
+    #elbow_rear_left_rot { transform: rotate(var(--rot-elbow-rear-left, 0deg)); transform-origin: 0px 0px; }
+    #wrist_rear_left_rot { transform: rotate(var(--rot-wrist-rear-left, 0deg)); transform-origin: 0px 0px; }
+
+    #shoulder_rear_right_rot { transform: rotate(var(--rot-shoulder-rear-right, 0deg)); transform-origin: 0px 0px; }
+    #elbow_rear_right_rot { transform: rotate(var(--rot-elbow-rear-right, 0deg)); transform-origin: 0px 0px; }
+    #wrist_rear_right_rot { transform: rotate(var(--rot-wrist-rear-right, 0deg)); transform-origin: 0px 0px; }
+
+    #shoulder_front_left_rot { transform: rotate(var(--rot-shoulder-front-left, 0deg)); transform-origin: 0px 0px; }
+    #elbow_front_left_rot { transform: rotate(var(--rot-elbow-front-left, 0deg)); transform-origin: 0px 0px; }
+    #wrist_front_left_rot { transform: rotate(var(--rot-wrist-front-left, 0deg)); transform-origin: 0px 0px; }
+
+    #shoulder_front_right_rot { transform: rotate(var(--rot-shoulder-front-right, 0deg)); transform-origin: 0px 0px; }
+    #elbow_front_right_rot { transform: rotate(var(--rot-elbow-front-right, 0deg)); transform-origin: 0px 0px; }
+    #wrist_front_right_rot { transform: rotate(var(--rot-wrist-front-right, 0deg)); transform-origin: 0px 0px; }
+
+    #torso_group { transform: translate(var(--trans-torso-x, 0px), var(--trans-torso-y, 0px)) rotate(var(--rot-torso, 0deg)); transform-origin: 400px 700px; }
+    #kamarband { transform: translate(var(--trans-torso-x, 0px), var(--trans-torso-y, 0px)); }
+    #dhoti_skirt { transform: translate(var(--trans-torso-x, 0px), var(--trans-torso-y, 0px)); }
+    #hip_left_joint { transform: translate(340px, calc(770px + var(--trans-torso-y, 0px))); }
+    #hip_right_joint { transform: translate(460px, calc(770px + var(--trans-torso-y, 0px))); }
+    #heads_fan_mount { transform: translate(400px, calc(375px + var(--trans-torso-y, 0px))) rotate(var(--rot-torso, 0deg)); transform-origin: 0px 0px; }
+    #prabhavali_mount { transform: translate(400px, calc(345px + var(--trans-torso-y, 0px))) rotate(var(--rot-torso, 0deg)); transform-origin: 0px 0px; }
+    #wrath_mount { transform: translate(400px, calc(310px + var(--trans-torso-y, 0px))); }
+  </style>
+
+  <!-- BACKGROUND WRATH SUNBURST / AURA (Revealed on Dialogue/Climax) -->
+  <g id="wrath_mount">
+    <g id="wrath_sunburst" opacity="0">
+      <circle cx="0" cy="0" r="390" fill="url(#wrath_burst_core)"/>
+      <!-- Radiating Folk-Art Triangular Solar Rays -->
+      <g id="solar_rays" fill="url(#gold_sheen)" stroke="#5c4000" stroke-width="1.5">
+        <polygon points="0,-380 -18,-240 18,-240" />
+        <polygon points="0,380 -18,240 18,240" />
+        <polygon points="-380,0 -240,-18 -240,18" />
+        <polygon points="380,0 240,-18 240,18" />
+        <polygon points="-268,-268 -150,-180 -180,-150" />
+        <polygon points="268,-268 180,-150 150,-180" />
+        <polygon points="-268,268 -180,150 -150,180" />
+        <polygon points="268,268 150,180 180,150" />
+        <!-- Intermediate fine rays -->
+        <polygon points="-145,-350 -90,-230 -115,-220" opacity="0.85"/>
+        <polygon points="145,-350 115,-220 90,-230" opacity="0.85"/>
+        <polygon points="-145,350 -115,220 -90,230" opacity="0.85"/>
+        <polygon points="145,350 90,230 115,220" opacity="0.85"/>
+        <polygon points="-350,-145 -220,-115 -230,-90" opacity="0.85"/>
+        <polygon points="350,-145 230,-90 220,-115" opacity="0.85"/>
+        <polygon points="-350,145 -230,90 -220,115" opacity="0.85"/>
+        <polygon points="350,145 220,115 230,90" opacity="0.85"/>
+      </g>
+      <circle cx="0" cy="0" r="235" fill="none" stroke="#fcc419" stroke-width="4" stroke-dasharray="12 16"/>
     </g>
   </g>
 
-  <!-- 2. Colossal Muscular Torso & Sharp Armor Plates -->
-  <g id="char_body" transform-origin="400 700">
-    <!-- Massive Silhouette Torso Mass -->
-    <path d="M 230,440 L 570,440 L 530,900 L 270,900 Z" fill="url(#titan_armor_grad)" />
+  <!-- MAIN CHARACTER ROOT CONTAINER -->
+  <g id="ravana_character">
 
-    <!-- Jagged Pauldrons (Spiked Shoulder Armor) -->
-    <!-- Left Pauldron -->
-    <path d="M 250,440 L 150,380 L 180,480 L 140,520 L 240,540 Z" fill="#0C080A" stroke="#E5B869" stroke-width="2" filter="url(#ember-radiance)" />
-    <path d="M 180,430 L 140,370" fill="none" stroke="#FF7A59" stroke-width="2.5" />
-    <!-- Right Pauldron -->
-    <path d="M 550,440 L 650,380 L 620,480 L 660,520 L 560,540 Z" fill="#0C080A" stroke="#E5B869" stroke-width="2" filter="url(#ember-radiance)" />
-    <path d="M 620,430 L 660,370" fill="none" stroke="#FF7A59" stroke-width="2.5" />
+    <!-- LOWER BODY (Legs, Feet, Royal Dhoti, Waistband) -->
+    <g id="lower_body">
+      <!-- Left Leg (Articulated Thigh, Knee, Shin, Ankle, Foot) -->
+      <g id="hip_left_joint" transform="translate(340, 770)">
+        <g id="thigh_left_rot">
+          <!-- Sculpted muscular olive thigh -->
+          <path d="M -25 -10 L -45 150 L 15 155 L 25 -10 Z" fill="url(#skin_shadow)" stroke="#141c0e" stroke-width="2.5"/>
+          <!-- Left Knee Joint -->
+          <g id="knee_left_joint" transform="translate(-15, 150)">
+            <g id="shin_left_rot">
+              <!-- Sculpted Muscular Calf -->
+              <path d="M -20 0 Q -38 75 -24 160 L 26 160 Q 35 75 22 0 Z" fill="url(#skin_base)" stroke="#141c0e" stroke-width="2.5"/>
+              <!-- Ornate Gold Ankle Ghungroo Bracelet -->
+              <ellipse cx="1" cy="155" rx="28" ry="10" fill="url(#gold_sheen)" stroke="#593c00" stroke-width="2"/>
+              <circle cx="1" cy="155" r="4" fill="url(#ruby_glow)"/>
+              <!-- Pointed Royal Leather Sandal Foot -->
+              <path d="M -24 158 L -72 188 C -52 208 10 208 26 158 Z" fill="url(#skin_shadow)" stroke="#141c0e" stroke-width="2.5"/>
+              <path d="M -72 188 Q -85 192 -80 180 Q -65 175 -50 178 Z" fill="url(#gold_sheen)" stroke="#593c00" stroke-width="1.5"/>
+              <use href="#puppet_pin" x="0" y="0"/>
+            </g>
+          </g>
+          <use href="#puppet_pin" x="0" y="0"/>
+        </g>
+      </g>
 
-    <!-- Gilded Chest Plate Strata (Asura Cuirass) -->
-    <path d="M 310,470 L 400,530 L 490,470 L 400,600 Z" fill="#0E080B" stroke="#E5B869" stroke-width="2.5" />
-    <circle cx="400" cy="530" r="14" fill="#C84B31" stroke="#FFF4DC" stroke-width="2" filter="url(#ember-radiance)" />
-    <path d="M 330,620 L 400,670 L 470,620" fill="none" stroke="#E5B869" stroke-width="2" />
-    <path d="M 350,690 L 400,730 L 450,690" fill="none" stroke="#E5B869" stroke-width="2" opacity="0.7" />
+      <!-- Right Leg (Articulated Thigh, Knee, Shin, Ankle, Foot) -->
+      <g id="hip_right_joint" transform="translate(460, 770)">
+        <g id="thigh_right_rot">
+          <path d="M -25 -10 L -15 155 L 45 150 L 25 -10 Z" fill="url(#skin_shadow)" stroke="#141c0e" stroke-width="2.5"/>
+          <!-- Right Knee Joint -->
+          <g id="knee_right_joint" transform="translate(15, 150)">
+            <g id="shin_right_rot">
+              <!-- Sculpted Muscular Calf -->
+              <path d="M -22 0 Q -35 75 -26 160 L 24 160 Q 38 75 20 0 Z" fill="url(#skin_base)" stroke="#141c0e" stroke-width="2.5"/>
+              <!-- Ornate Gold Ankle Ghungroo Bracelet -->
+              <ellipse cx="-1" cy="155" rx="28" ry="10" fill="url(#gold_sheen)" stroke="#593c00" stroke-width="2"/>
+              <circle cx="-1" cy="155" r="4" fill="url(#ruby_glow)"/>
+              <!-- Pointed Royal Leather Sandal Foot -->
+              <path d="M 24 158 L 72 188 C 52 208 -10 208 -26 158 Z" fill="url(#skin_shadow)" stroke="#141c0e" stroke-width="2.5"/>
+              <path d="M 72 188 Q 85 192 80 180 Q 65 175 50 178 Z" fill="url(#gold_sheen)" stroke="#593c00" stroke-width="1.5"/>
+              <use href="#puppet_pin" x="0" y="0"/>
+            </g>
+          </g>
+          <use href="#puppet_pin" x="0" y="0"/>
+        </g>
+      </g>
 
-    <!-- War Skirt / Armor Tassets -->
-    <path d="M 260,890 L 400,940 L 540,890 L 510,1180 L 290,1180 Z" fill="#0A0608" stroke="#C84B31" stroke-width="1.5" />
-    <path d="M 400,940 L 400,1180" fill="none" stroke="#E5B869" stroke-width="2" stroke-dasharray="8 6" />
-  </g>
+      <!-- ROYAL PLEATED CRIMSON DHOTI -->
+      <g id="dhoti_skirt">
+        <path d="M 265 700 Q 400 735 535 700 L 575 925 Q 400 975 225 925 Z" fill="url(#crimson_silk)" stroke="#2b0202" stroke-width="3"/>
+        <path d="M 310 715 L 265 920 M 350 722 L 325 940 M 400 728 L 400 962 M 450 722 L 475 940 M 490 715 L 535 920" stroke="url(#crimson_fold)" stroke-width="4.5" stroke-linecap="round"/>
+        <!-- Gold Brocade Hem Border -->
+        <path d="M 225 925 Q 400 975 575 925 L 580 955 Q 400 1005 220 955 Z" fill="url(#gold_sheen)" stroke="#593c00" stroke-width="2"/>
+        <path d="M 225 940 Q 400 990 575 940" stroke="#7a0000" stroke-width="3" stroke-dasharray="8 6"/>
+        <!-- Central Ornate Silk Sash & Pleats -->
+        <path d="M 355 710 L 345 970 L 400 1015 L 455 970 L 445 710 Z" fill="url(#crimson_fold)" stroke="url(#gold_sheen)" stroke-width="3.5"/>
+        <path d="M 400 745 L 420 772 L 400 800 L 380 772 Z M 400 828 L 420 855 L 400 882 L 380 855 Z M 400 910 L 420 938 L 400 965 L 380 938 Z" fill="url(#gold_sheen)" stroke="#593c00" stroke-width="1.5"/>
+        <path d="M 345 970 L 455 970" stroke="url(#gold_sheen)" stroke-width="5"/>
+      </g>
 
-  <!-- 3. Iconic Ten-Crowned Titan Head Silhouette -->
-  <g id="char_head" transform-origin="400 320">
-    <!-- Powerful Muscular Neck with Ember Rim -->
-    <path d="M 350,390 L 350,450 L 450,450 L 450,390 Z" fill="#0A0608" stroke="#C84B31" stroke-width="2" />
-
-    <!-- Majestic Shadow-Theater Silhouette of 10 Symmetrical Crowns -->
-    <!-- Crown Spikes (Outer Far Left to Outer Far Right) -->
-    <g id="ten_crown_spikes" stroke="#E5B869" stroke-width="2" filter="url(#ember-radiance)">
-      <!-- Far Left Crowns (4) -->
-      <polygon points="210,270 240,240 250,290" fill="#0E0709" />
-      <polygon points="245,250 280,210 290,270" fill="#0E0709" />
-      <polygon points="285,230 320,180 330,250" fill="#0E0709" />
-      <polygon points="325,210 360,150 370,230" fill="#0E0709" />
-
-      <!-- Central Sovereign Crown (Grand Peak) -->
-      <polygon points="365,190 400,90 435,190" fill="#14080B" stroke="#FFF4DC" stroke-width="2.5" />
-      <circle cx="400" cy="115" r="7" fill="#C84B31" />
-
-      <!-- Far Right Crowns (4) -->
-      <polygon points="370,230 440,150 475,210" fill="#0E0709" />
-      <polygon points="470,250 480,180 515,230" fill="#0E0709" />
-      <polygon points="510,270 520,210 555,250" fill="#0E0709" />
-      <polygon points="550,290 560,240 590,270" fill="#0E0709" />
+      <!-- GOLDEN WAISTBAND (Kamarband) -->
+      <g id="kamarband">
+        <rect x="260" y="685" width="280" height="36" rx="10" fill="url(#gold_sheen)" stroke="#4a3200" stroke-width="2.5"/>
+        <line x1="275" y1="703" x2="525" y2="703" stroke="#ffffff" stroke-width="2" opacity="0.7"/>
+        <circle cx="400" cy="703" r="18" fill="url(#ruby_glow)" stroke="url(#gold_sheen)" stroke-width="4"/>
+        <circle cx="400" cy="703" r="6" fill="#fffbe6"/>
+        <use href="#puppet_pin" x="300" y="703"/>
+        <use href="#puppet_pin" x="500" y="703"/>
+      </g>
     </g>
 
-    <!-- Sculptured Central Fierce Visage Silhouette (Chiseled Jaw, No Cartoon Eyes) -->
-    <path d="
-      M 370,260
-      Q 400,245 430,260
-      L 445,300
-      Q 455,325 440,350
-      L 425,380
-      L 400,395
-      L 375,380
-      L 360,350
-      Q 345,325 355,300 Z
-    " fill="#080406" stroke="url(#ember_rim_grad)" stroke-width="3" filter="url(#ember-radiance)" />
+    <!-- UPPER BODY HIERARCHY ROOT: TORSO -->
+    <!-- All arms, head, chest armor, and Janeu are strictly nested inside or relative to Torso -->
+    <g id="torso_group">
 
-    <!-- Fierce Third-Eye Ruby Gem / Agni Mark -->
-    <path d="M 400,290 L 406,305 L 400,320 L 394,305 Z" fill="#FF4D2E" filter="url(#ember-radiance)" />
-    <!-- Golden Diadem Band -->
-    <path d="M 360,285 Q 400,270 440,285" fill="none" stroke="#E5B869" stroke-width="3" />
-  </g>
+      <!-- REAR ARMS (Drawn behind torso but kinematically attached to Torso shoulders) -->
+      <g id="rear_arms_layer">
+        <!-- Upper Left Rear Arm (Raised Chandrahas Divine Blade - Compact Inward Arc, Defect 2 Fix) -->
+        <g id="shoulder_rear_left_joint" transform="translate(290, 480)">
+          <g id="shoulder_rear_left_rot">
+            <!-- Upper Arm drawn from (0,0) to elbow at (-75, -85) - inward natural arc -->
+            <path d="M 0 0 L -85 -70 L -60 -100 L 15 -15 Z" fill="url(#skin_shadow)" stroke="#1a2410" stroke-width="2.5"/>
+            <rect x="-65" y="-75" width="30" height="18" rx="4" fill="url(#gold_sheen)" stroke="#5c4000" stroke-width="2" transform="rotate(-35, -50, -66)"/>
+            
+            <!-- Elbow Joint: NESTED INSIDE UPPER ARM -->
+            <g id="elbow_rear_left_joint" transform="translate(-75, -85)">
+              <g id="elbow_rear_left_rot">
+                <!-- Forearm drawn from (0,0) to wrist at (15, -95) - curving INWARD towards crown -->
+                <path d="M -10 -5 L 10 -90 L 30 -85 L 10 10 Z" fill="url(#skin_base)" stroke="#1a2410" stroke-width="2.5"/>
+                <circle cx="18" cy="-88" r="14" fill="url(#skin_base)" stroke="#1a2410" stroke-width="2"/>
+                <ellipse cx="18" cy="-88" rx="12" ry="7" fill="url(#gold_sheen)" stroke="#5c4000" stroke-width="1.5"/>
+                
+                <!-- Wrist & Chandrahas Weapon: NESTED INSIDE FOREARM -->
+                <g id="wrist_rear_left_joint" transform="translate(18, -90)">
+                  <g id="wrist_rear_left_rot">
+                    <!-- Chandrahas Divine Blade: Sweeps gracefully inward towards center (safe from x < 90) -->
+                    <path d="M -8 0 L 8 0 L 6 22 L -6 22 Z" fill="url(#gold_sheen)" stroke="#5c4000" stroke-width="2"/>
+                    <circle cx="0" cy="25" r="7" fill="url(#ruby_glow)" stroke="#ffd700" stroke-width="1.5"/>
+                    <path d="M -20 -4 Q 0 4 20 -4 L 24 -12 Q 0 -2 -24 -12 Z" fill="url(#gold_sheen)" stroke="#5c4000" stroke-width="2"/>
+                    <!-- Curved scimitar blade sweeping upward and slightly inward -->
+                    <path d="M -5 -8 Q 15 -95 -25 -195 Q -5 -105 5 -8 Z" fill="url(#blade_steel)" stroke="#343a40" stroke-width="2.5"/>
+                    <path d="M 0 -8 Q 18 -90 -22 -190" stroke="#ffffff" stroke-width="3" fill="none"/>
+                    <circle cx="5" cy="-90" r="4.5" fill="url(#ruby_glow)"/>
+                  </g>
+                  <use href="#puppet_pin" x="0" y="0"/>
+                </g>
+                <use href="#puppet_pin" x="0" y="0"/>
+              </g>
+            </g>
+            <use href="#puppet_pin" x="0" y="0"/>
+          </g>
+        </g>
 
-  <!-- 4. Raised Weapon Arm (Chandrahas Sword / Cosmic Spear Silhouette) -->
-  <g id="arm_right" transform-origin="580 440">
-    <path d="M 560,440 L 680,310 L 710,340 L 590,470 Z" fill="#0D0709" stroke="#E5B869" stroke-width="2" />
-    <!-- Weapon Hilt & Blade -->
-    <path d="M 670,300 L 780,130" stroke="#FFF4DC" stroke-width="4.5" filter="url(#ember-radiance)" />
-    <path d="M 680,140 L 785,125 L 770,230" fill="none" stroke="#E5B869" stroke-width="2.5" />
+        <!-- Upper Right Rear Arm (Raised Golden Royal Gada / Mace - Inward Arc, Defect 2 Fix) -->
+        <g id="shoulder_rear_right_joint" transform="translate(510, 480)">
+          <g id="shoulder_rear_right_rot">
+            <!-- Upper Arm drawn from (0,0) to elbow at (75, -85) - inward natural arc -->
+            <path d="M 0 0 L 85 -70 L 60 -100 L -15 -15 Z" fill="url(#skin_shadow)" stroke="#1a2410" stroke-width="2.5"/>
+            <rect x="35" y="-75" width="30" height="18" rx="4" fill="url(#gold_sheen)" stroke="#5c4000" stroke-width="2" transform="rotate(35, 50, -66)"/>
+            
+            <!-- Elbow Joint: NESTED INSIDE UPPER ARM -->
+            <g id="elbow_rear_right_joint" transform="translate(75, -85)">
+              <g id="elbow_rear_right_rot">
+                <!-- Forearm drawn from (0,0) to wrist at (-15, -95) - curving INWARD towards crown -->
+                <path d="M 10 -5 L -10 -90 L -30 -85 L -10 10 Z" fill="url(#skin_base)" stroke="#1a2410" stroke-width="2.5"/>
+                <circle cx="-18" cy="-88" r="14" fill="url(#skin_base)" stroke="#1a2410" stroke-width="2"/>
+                <ellipse cx="-18" cy="-88" rx="12" ry="7" fill="url(#gold_sheen)" stroke="#5c4000" stroke-width="1.5"/>
+                
+                <!-- Wrist & Royal Gada: NESTED INSIDE FOREARM -->
+                <g id="wrist_rear_right_joint" transform="translate(-18, -90)">
+                  <g id="wrist_rear_right_rot">
+                    <!-- Golden Royal Gada: Points upright/inward (safe from x > 990) -->
+                    <line x1="0" y1="25" x2="0" y2="-85" stroke="url(#gold_sheen)" stroke-width="11" stroke-linecap="round"/>
+                    <line x1="-2" y1="20" x2="-2" y2="-80" stroke="#fffbe6" stroke-width="2.8"/>
+                    <circle cx="0" cy="28" r="11" fill="url(#gold_sheen)" stroke="#4a3200" stroke-width="2.2"/>
+                    <circle cx="0" cy="28" r="4.5" fill="url(#ruby_glow)"/>
+                    <path d="M -24 -85 C -36 -98 -30 -135 0 -150 C 30 -135 36 -98 24 -85 Z" fill="url(#gold_sheen)" stroke="#4a3200" stroke-width="2.5"/>
+                    <path d="M -12 -85 C -19 -98 -15 -130 0 -150 C 15 -130 19 -98 12 -85 Z" fill="url(#gold_prabhavali)" stroke="#4a3200" stroke-width="1.5"/>
+                    <line x1="0" y1="-85" x2="0" y2="-150" stroke="#ffffff" stroke-width="2.2"/>
+                    <circle cx="0" cy="-118" r="7" fill="url(#ruby_glow)" stroke="#ffd700" stroke-width="1.8"/>
+                    <polygon points="0,-162 -7,-150 7,-150" fill="url(#gold_sheen)" stroke="#4a3200" stroke-width="1.5"/>
+                  </g>
+                  <use href="#puppet_pin" x="0" y="0"/>
+                </g>
+                <use href="#puppet_pin" x="0" y="0"/>
+              </g>
+            </g>
+            <use href="#puppet_pin" x="0" y="0"/>
+          </g>
+        </g>
+      </g>
+
+      <!-- TORSO CHEST & ANATOMY -->
+      <g id="torso_chest">
+        <!-- Heroic Tapered Broad-Shouldered Torso -->
+        <path d="M 265 465 Q 240 625 295 705 L 505 705 Q 560 625 535 465 Z" fill="url(#skin_base)" stroke="#141c0e" stroke-width="3.5"/>
+        <path d="M 315 540 Q 400 575 485 540" stroke="url(#skin_shadow)" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <path d="M 400 560 L 400 685" stroke="url(#skin_shadow)" stroke-width="4" stroke-linecap="round"/>
+        <path d="M 340 615 Q 400 635 460 615" stroke="url(#skin_shadow)" stroke-width="4" fill="none"/>
+        <path d="M 345 660 Q 400 675 455 660" stroke="url(#skin_shadow)" stroke-width="4" fill="none"/>
+
+        <!-- SACRED WHITE JANEU THREAD (Diagonally Across Torso - CLIPPED VIA clip-path, DEFECT 1 RESOLUTION) -->
+        <g clip-path="url(#torso_clip)">
+          <path d="M 300 455 Q 365 580 495 710" stroke="#ffffff" stroke-width="5" fill="none" stroke-linecap="round"/>
+          <path d="M 303 455 Q 368 580 498 710" stroke="#f1f3f5" stroke-width="2.5" fill="none"/>
+          <ellipse cx="482" cy="690" rx="4" ry="7" fill="#ffffff" stroke="#991b1b" stroke-width="1.5"/>
+        </g>
+
+        <!-- HEAVY ROYAL GOLD CHEST COLLAR (Kanthi Necklace) -->
+        <path d="M 280 460 Q 400 525 520 460 L 500 415 Q 400 475 300 415 Z" fill="url(#gold_sheen)" stroke="#4a3200" stroke-width="3"/>
+        <circle cx="400" cy="495" r="10" fill="url(#ruby_glow)" stroke="#ffd700" stroke-width="2"/>
+        <circle cx="350" cy="482" r="8" fill="url(#ruby_glow)" stroke="#ffd700" stroke-width="1.5"/>
+        <circle cx="450" cy="482" r="8" fill="url(#ruby_glow)" stroke="#ffd700" stroke-width="1.5"/>
+        <circle cx="305" cy="458" r="7" fill="url(#gold_sheen)" stroke="#4a3200" stroke-width="1.5"/>
+        <circle cx="495" cy="458" r="7" fill="url(#gold_sheen)" stroke="#4a3200" stroke-width="1.5"/>
+      </g>
+
+      <!-- FOREGROUND ARMS (Drawn in front of Torso) -->
+      <g id="fore_arms_layer">
+        <!-- Front Left Arm (Articulated at Shoulder -> Elbow -> Wrist -> Hand) -->
+        <g id="shoulder_front_left_joint" transform="translate(285, 480)">
+          <g id="shoulder_front_left_rot">
+            <!-- Upper Arm drawn from (0,0) downward/forward to elbow at (-55, 95) -->
+            <path d="M -10 -20 L -65 85 L -35 105 L 18 -5 Z" fill="url(#skin_base)" stroke="#141c0e" stroke-width="2.5"/>
+            <rect x="-55" y="45" width="28" height="18" rx="4" fill="url(#gold_sheen)" stroke="#4a3200" stroke-width="2" transform="rotate(20, -41, 54)"/>
+            <circle cx="-41" cy="54" r="3.5" fill="url(#ruby_glow)"/>
+            
+            <!-- Elbow Joint: NESTED INSIDE UPPER ARM -->
+            <g id="elbow_front_left_joint" transform="translate(-50, 95)">
+              <g id="elbow_front_left_rot">
+                <!-- Forearm drawn from (0,0) to wrist at (35, 75) -->
+                <path d="M -12 -8 L 25 72 L 48 60 L 12 -12 Z" fill="url(#skin_highlight)" stroke="#141c0e" stroke-width="2.5"/>
+                <rect x="18" y="48" width="26" height="15" rx="3.5" fill="url(#gold_sheen)" stroke="#4a3200" stroke-width="2" transform="rotate(-25, 31, 55)"/>
+                
+                <!-- Hand: NESTED INSIDE FOREARM (Supports Clenched Fist or Flat Push Palm) -->
+                <g id="wrist_front_left_joint" transform="translate(35, 70)">
+                  <g id="wrist_front_left_rot">
+                    <ellipse cx="0" cy="0" rx="16" ry="13" fill="url(#skin_base)" stroke="#141c0e" stroke-width="2"/>
+                    <path d="M -8 -8 Q -20 -20 -12 -28 Q 0 -24 4 -12" stroke="#141c0e" stroke-width="2.8" fill="url(#skin_highlight)"/>
+                    <path d="M 0 -10 Q -8 -28 2 -32 Q 12 -26 8 -10" stroke="#141c0e" stroke-width="2.8" fill="url(#skin_highlight)"/>
+                    <path d="M 8 -8 Q 4 -24 16 -26 Q 22 -18 12 -6" stroke="#141c0e" stroke-width="2.8" fill="url(#skin_highlight)"/>
+                  </g>
+                  <use href="#puppet_pin" x="0" y="0"/>
+                </g>
+                <use href="#puppet_pin" x="0" y="0"/>
+              </g>
+            </g>
+            <use href="#puppet_pin" x="0" y="0"/>
+          </g>
+        </g>
+
+        <!-- Front Right Arm (Articulated at Shoulder -> Elbow -> Wrist -> Hand) -->
+        <g id="shoulder_front_right_joint" transform="translate(515, 480)">
+          <g id="shoulder_front_right_rot">
+            <!-- Upper Arm drawn from (0,0) downward/forward to elbow at (55, 95) -->
+            <path d="M 10 -20 L 65 85 L 35 105 L -18 -5 Z" fill="url(#skin_base)" stroke="#141c0e" stroke-width="2.5"/>
+            <rect x="27" y="45" width="28" height="18" rx="4" fill="url(#gold_sheen)" stroke="#4a3200" stroke-width="2" transform="rotate(-20, 41, 54)"/>
+            <circle cx="41" cy="54" r="3.5" fill="url(#ruby_glow)"/>
+            
+            <!-- Elbow Joint: NESTED INSIDE UPPER ARM -->
+            <g id="elbow_front_right_joint" transform="translate(50, 95)">
+              <g id="elbow_front_right_rot">
+                <!-- Forearm drawn from (0,0) to wrist at (-35, 75) -->
+                <path d="M 12 -8 L -25 72 L -48 60 L -12 -12 Z" fill="url(#skin_highlight)" stroke="#141c0e" stroke-width="2.5"/>
+                <rect x="-44" y="48" width="26" height="15" rx="3.5" fill="url(#gold_sheen)" stroke="#4a3200" stroke-width="2" transform="rotate(25, -31, 55)"/>
+                
+                <!-- Hand: NESTED INSIDE FOREARM -->
+                <g id="wrist_front_right_joint" transform="translate(-35, 70)">
+                  <g id="wrist_front_right_rot">
+                    <ellipse cx="0" cy="0" rx="16" ry="13" fill="url(#skin_base)" stroke="#141c0e" stroke-width="2"/>
+                    <path d="M 8 -8 Q 20 -20 12 -28 Q 0 -24 -4 -12" stroke="#141c0e" stroke-width="2.8" fill="url(#skin_highlight)"/>
+                    <path d="M 0 -10 Q 8 -28 -2 -32 Q -12 -26 -8 -10" stroke="#141c0e" stroke-width="2.8" fill="url(#skin_highlight)"/>
+                    <path d="M -8 -8 Q -4 -24 -16 -26 Q -22 -18 -12 -6" stroke="#141c0e" stroke-width="2.8" fill="url(#skin_highlight)"/>
+                  </g>
+                  <use href="#puppet_pin" x="0" y="0"/>
+                </g>
+                <use href="#puppet_pin" x="0" y="0"/>
+              </g>
+            </g>
+            <use href="#puppet_pin" x="0" y="0"/>
+          </g>
+        </g>
+      </g>
+
+    </g> <!-- end torso_group -->
+
+    <!-- ORNATE GOLDEN PRABHAVALI (ROYAL BACKING HALO FOR 5 HEADS) -->
+    <g id="prabhavali_mount">
+      <g id="prabhavali_halo">
+        <path d="M -220 50 Q -240 -110 0 -140 Q 240 -110 220 50 L 190 60 Q 200 -80 0 -110 Q -200 -80 -190 60 Z" fill="url(#gold_prabhavali)" stroke="#4a3200" stroke-width="3"/>
+        <g stroke="url(#gold_sheen)" stroke-width="3" stroke-linecap="round">
+          <line x1="-210" y1="20" x2="-235" y2="10"/>
+          <line x1="-190" y1="-30" x2="-215" y2="-45"/>
+          <line x1="-150" y1="-75" x2="-170" y2="-100"/>
+          <line x1="-90" y1="-110" x2="-105" y2="-135"/>
+          <line x1="0" y1="-125" x2="0" y2="-155"/>
+          <line x1="90" y1="-110" x2="105" y2="-135"/>
+          <line x1="150" y1="-75" x2="170" y2="-100"/>
+          <line x1="190" y1="-30" x2="215" y2="-45"/>
+          <line x1="210" y1="20" x2="235" y2="10"/>
+        </g>
+      </g>
+    </g>
+
+    <!-- 5 HARMONIC HEADS IN ROYAL ARCH -->
+    <g id="heads_fan_mount">
+      <g id="heads_fan">
+
+        <!-- HEAD 1: Far Left -->
+        <g id="head_flank_left2" transform="translate(-140, -5) rotate(-14) scale(0.86)">
+          <path d="M -45 -40 L 0 -125 L 45 -40 Q 0 -28 -45 -40 Z" fill="url(#gold_sheen)" stroke="#4a3200" stroke-width="2"/>
+          <circle cx="0" cy="-65" r="7" fill="url(#ruby_glow)"/>
+          <path d="M -40 -35 Q -55 20 -25 52 Q 0 70 25 52 Q 55 20 40 -35 Z" fill="url(#skin_base)" stroke="#141c0e" stroke-width="2.5"/>
+          <path d="M -26 2 Q -15 -8 -4 2 Q -15 12 -26 2 Z" fill="#ffffff" stroke="#111" stroke-width="2"/>
+          <circle cx="-15" cy="2" r="4" fill="#111"/>
+          <circle cx="-16" cy="1" r="1.5" fill="#fff"/>
+          <path d="M 4 2 Q 15 -8 26 2 Q 15 12 4 2 Z" fill="#ffffff" stroke="#111" stroke-width="2"/>
+          <circle cx="15" cy="2" r="4" fill="#111"/>
+          <circle cx="14" cy="1" r="1.5" fill="#fff"/>
+          <path d="M -28 -8 Q -16 -18 -4 -8" stroke="#111" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M 4 -8 Q 16 -18 28 -8" stroke="#111" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M -28 26 Q -12 18 0 26 Q 12 18 28 26 Q 38 16 30 36 Q 0 30 -30 36 Q -38 16 -28 26 Z" fill="#111"/>
+          <circle cx="-44" cy="16" r="8" fill="url(#gold_sheen)" stroke="#4a3200" stroke-width="1.5"/>
+          <circle cx="-44" cy="16" r="3" fill="url(#ruby_glow)"/>
+          <use href="#puppet_pin" x="0" y="55"/>
+        </g>
+
+        <!-- HEAD 2: Inner Left -->
+        <g id="head_flank_left1" transform="translate(-72, -20) rotate(-7) scale(0.93)">
+          <path d="M -48 -45 L 0 -140 L 48 -45 Q 0 -30 -48 -45 Z" fill="url(#gold_sheen)" stroke="#4a3200" stroke-width="2"/>
+          <circle cx="0" cy="-75" r="8" fill="url(#ruby_glow)"/>
+          <path d="M -44 -40 Q -58 22 -28 58 Q 0 76 28 58 Q 58 22 44 -40 Z" fill="url(#skin_base)" stroke="#141c0e" stroke-width="2.5"/>
+          <path d="M -28 2 Q -16 -9 -4 2 Q -16 13 -28 2 Z" fill="#ffffff" stroke="#111" stroke-width="2"/>
+          <circle cx="-16" cy="2" r="4.5" fill="#111"/>
+          <circle cx="-17" cy="1" r="1.5" fill="#fff"/>
+          <path d="M 4 2 Q 16 -9 28 2 Q 16 13 4 2 Z" fill="#ffffff" stroke="#111" stroke-width="2"/>
+          <circle cx="16" cy="2" r="4.5" fill="#111"/>
+          <circle cx="15" cy="1" r="1.5" fill="#fff"/>
+          <path d="M -30 -9 Q -18 -19 -5 -9" stroke="#111" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <path d="M 5 -9 Q 18 -19 30 -9" stroke="#111" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <path d="M -30 28 Q -12 20 0 28 Q 12 20 30 28 Q 40 18 32 38 Q 0 32 -32 38 Q -40 18 -30 28 Z" fill="#111"/>
+          <circle cx="-47" cy="18" r="9" fill="url(#gold_sheen)" stroke="#4a3200" stroke-width="2"/>
+          <circle cx="-47" cy="18" r="3.5" fill="url(#ruby_glow)"/>
+          <use href="#puppet_pin" x="0" y="60"/>
+        </g>
+
+        <!-- HEAD 4: Inner Right -->
+        <g id="head_flank_right1" transform="translate(72, -20) rotate(7) scale(0.93)">
+          <path d="M -48 -45 L 0 -140 L 48 -45 Q 0 -30 -48 -45 Z" fill="url(#gold_sheen)" stroke="#4a3200" stroke-width="2"/>
+          <circle cx="0" cy="-75" r="8" fill="url(#ruby_glow)"/>
+          <path d="M -44 -40 Q -58 22 -28 58 Q 0 76 28 58 Q 58 22 44 -40 Z" fill="url(#skin_base)" stroke="#141c0e" stroke-width="2.5"/>
+          <path d="M -28 2 Q -16 -9 -4 2 Q -16 13 -28 2 Z" fill="#ffffff" stroke="#111" stroke-width="2"/>
+          <circle cx="-16" cy="2" r="4.5" fill="#111"/>
+          <circle cx="-17" cy="1" r="1.5" fill="#fff"/>
+          <path d="M 4 2 Q 16 -9 28 2 Q 16 13 4 2 Z" fill="#ffffff" stroke="#111" stroke-width="2"/>
+          <circle cx="16" cy="2" r="4.5" fill="#111"/>
+          <circle cx="15" cy="1" r="1.5" fill="#fff"/>
+          <path d="M -30 -9 Q -18 -19 -5 -9" stroke="#111" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <path d="M 5 -9 Q 18 -19 30 -9" stroke="#111" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <path d="M -30 28 Q -12 20 0 28 Q 12 20 30 28 Q 40 18 32 38 Q 0 32 -32 38 Q -40 18 -30 28 Z" fill="#111"/>
+          <circle cx="47" cy="18" r="9" fill="url(#gold_sheen)" stroke="#4a3200" stroke-width="2"/>
+          <circle cx="47" cy="18" r="3.5" fill="url(#ruby_glow)"/>
+          <use href="#puppet_pin" x="0" y="60"/>
+        </g>
+
+        <!-- HEAD 5: Far Right -->
+        <g id="head_flank_right2" transform="translate(140, -5) rotate(14) scale(0.86)">
+          <path d="M -45 -40 L 0 -125 L 45 -40 Q 0 -28 -45 -40 Z" fill="url(#gold_sheen)" stroke="#4a3200" stroke-width="2"/>
+          <circle cx="0" cy="-65" r="7" fill="url(#ruby_glow)"/>
+          <path d="M -40 -35 Q -55 20 -25 52 Q 0 70 25 52 Q 55 20 40 -35 Z" fill="url(#skin_base)" stroke="#141c0e" stroke-width="2.5"/>
+          <path d="M -26 2 Q -15 -8 -4 2 Q -15 12 -26 2 Z" fill="#ffffff" stroke="#111" stroke-width="2"/>
+          <circle cx="-15" cy="2" r="4" fill="#111"/>
+          <circle cx="-16" cy="1" r="1.5" fill="#fff"/>
+          <path d="M 4 2 Q 15 -8 26 2 Q 15 12 4 2 Z" fill="#ffffff" stroke="#111" stroke-width="2"/>
+          <circle cx="15" cy="2" r="4" fill="#111"/>
+          <circle cx="14" cy="1" r="1.5" fill="#fff"/>
+          <path d="M -28 -8 Q -16 -18 -4 -8" stroke="#111" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M 4 -8 Q 16 -18 28 -8" stroke="#111" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M -28 26 Q -12 18 0 26 Q 12 18 28 26 Q 38 16 30 36 Q 0 30 -30 36 Q -38 16 -28 26 Z" fill="#111"/>
+          <circle cx="44" cy="16" r="8" fill="url(#gold_sheen)" stroke="#4a3200" stroke-width="1.5"/>
+          <circle cx="44" cy="16" r="3" fill="url(#ruby_glow)"/>
+          <use href="#puppet_pin" x="0" y="55"/>
+        </g>
+
+        <!-- HEAD 3: DOMINANT CENTRAL HEAD WITH SWITCHABLE EXPRESSIONS -->
+        <g id="head_center" transform="translate(0, -35) scale(1.12)">
+          <!-- TIERED ORNATE MUKUT CROWN -->
+          <g id="center_mukut">
+            <path d="M -65 -45 L -52 -75 L 52 -75 L 65 -45 Q 0 -34 -65 -45 Z" fill="url(#gold_sheen)" stroke="#4a3200" stroke-width="2.5"/>
+            <line x1="-50" y1="-60" x2="50" y2="-60" stroke="#fffbe6" stroke-width="2.5"/>
+            <circle cx="-30" cy="-60" r="3.5" fill="url(#ruby_glow)"/>
+            <circle cx="0" cy="-60" r="5" fill="url(#ruby_glow)"/>
+            <circle cx="30" cy="-60" r="3.5" fill="url(#ruby_glow)"/>
+            <path d="M -48 -75 L -35 -125 L 35 -125 L 48 -75 Z" fill="url(#gold_sheen)" stroke="#4a3200" stroke-width="2.5"/>
+            <circle cx="0" cy="-100" r="12" fill="url(#ruby_glow)" stroke="#ffe066" stroke-width="2.5"/>
+            <circle cx="0" cy="-100" r="4" fill="#ffffff"/>
+            <path d="M -28 -125 L 0 -195 L 28 -125 Z" fill="url(#gold_sheen)" stroke="#4a3200" stroke-width="3"/>
+            <circle cx="0" cy="-155" r="7" fill="url(#ruby_glow)"/>
+            <circle cx="0" cy="-195" r="6" fill="#fffbe6" stroke="#4a3200" stroke-width="1.5"/>
+          </g>
+
+          <!-- NOBLE / FIERCE WARRIOR FACE -->
+          <path d="M -52 -40 Q -72 32 -34 76 Q 0 100 34 76 Q 72 32 52 -40 Z" fill="url(#skin_base)" stroke="#141c0e" stroke-width="3"/>
+
+          <!-- SACRED TRIPUNDRA & TILAK -->
+          <g id="tripundra">
+            <line x1="-26" y1="-26" x2="26" y2="-26" stroke="#f8f9fa" stroke-width="3" stroke-linecap="round"/>
+            <line x1="-30" y1="-20" x2="30" y2="-20" stroke="#f8f9fa" stroke-width="3" stroke-linecap="round"/>
+            <line x1="-26" y1="-14" x2="26" y2="-14" stroke="#f8f9fa" stroke-width="3" stroke-linecap="round"/>
+            <ellipse cx="0" cy="-20" rx="5" ry="9" fill="url(#ruby_glow)" stroke="#ffe066" stroke-width="1.5"/>
+            <circle cx="0" cy="-20" r="2" fill="#ffffff"/>
+          </g>
+
+          <!-- EYEBROWS: NEUTRAL (Default) -->
+          <g id="brows_neutral">
+            <path d="M -38 -6 Q -22 -19 -4 -5" stroke="#111" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+            <path d="M 4 -5 Q 22 -19 38 -6" stroke="#111" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+          </g>
+
+          <!-- EYEBROWS: ANGRY / SLANTED (Wrath) -->
+          <g id="brows_angry" opacity="0">
+            <path d="M -38 -15 Q -20 -11 -4 2" stroke="#111" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <path d="M 4 2 Q 20 -11 38 -15" stroke="#111" stroke-width="5" fill="none" stroke-linecap="round"/>
+          </g>
+
+          <!-- EYES: NORMAL (Default) -->
+          <g id="eyes_normal">
+            <path d="M -36 5 Q -20 -9 -4 5 Q -20 19 -36 5 Z" fill="#ffffff" stroke="#111" stroke-width="2.5"/>
+            <circle cx="-20" cy="5" r="5.5" fill="#111"/>
+            <circle cx="-22" cy="3" r="2" fill="#fff"/>
+            <path d="M 4 5 Q 20 -9 36 5 Q 20 19 4 5 Z" fill="#ffffff" stroke="#111" stroke-width="2.5"/>
+            <circle cx="20" cy="5" r="5.5" fill="#111"/>
+            <circle cx="18" cy="3" r="2" fill="#fff"/>
+          </g>
+
+          <!-- EYES: WRATH (Crimson Burning Glow) -->
+          <g id="eyes_wrath" opacity="0">
+            <path d="M -37 5 Q -20 -11 -3 5 Q -20 21 -37 5 Z" fill="#ffc9c9" stroke="#c92a2a" stroke-width="3"/>
+            <circle cx="-20" cy="5" r="7" fill="#e03131"/>
+            <circle cx="-20" cy="5" r="3.5" fill="#ffe066"/>
+            <path d="M 3 5 Q 20 -11 37 5 Q 20 21 3 5 Z" fill="#ffc9c9" stroke="#c92a2a" stroke-width="3"/>
+            <circle cx="20" cy="5" r="7" fill="#e03131"/>
+            <circle cx="20" cy="5" r="3.5" fill="#ffe066"/>
+          </g>
+
+          <!-- NOSE -->
+          <path d="M 0 -8 L -5 22 L 5 22 Z" fill="url(#skin_shadow)"/>
+          <path d="M -9 20 Q 0 28 9 20" stroke="#141c0e" stroke-width="2.5" fill="none"/>
+
+          <!-- ROYAL CURLED MUSTACHE -->
+          <path d="M -38 34 Q -16 23 0 34 Q 16 23 38 34 Q 52 21 42 49 Q 0 40 -42 49 Q -52 21 -38 34 Z" fill="#111" stroke="#000" stroke-width="1"/>
+
+          <!-- SWITCHABLE MOUTH STATES -->
+          <!-- 1. MOUTH CALM (Closed regal lips) -->
+          <g id="mouth_calm">
+            <path d="M -16 53 Q 0 58 16 53" stroke="#800000" stroke-width="4" fill="none" stroke-linecap="round"/>
+            <path d="M -10 54 Q 0 57 10 54" stroke="#c92a2a" stroke-width="2" fill="none"/>
+          </g>
+
+          <!-- 2. MOUTH TALK (Parted lips with teeth) -->
+          <g id="mouth_talk" opacity="0">
+            <path d="M -18 50 Q 0 46 18 50 Q 14 62 0 63 Q -14 62 -18 50 Z" fill="#2b0202" stroke="#800000" stroke-width="2.5"/>
+            <!-- White teeth strip -->
+            <path d="M -12 51 Q 0 49 12 51 L 10 55 Q 0 54 -10 55 Z" fill="#ffffff"/>
+            <!-- Tongue -->
+            <ellipse cx="0" cy="60" rx="8" ry="3" fill="#e03131"/>
+          </g>
+
+          <!-- 3. MOUTH SHOUT (Wide shouting grimace with fangs) -->
+          <g id="mouth_shout" opacity="0">
+            <path d="M -24 48 Q 0 42 24 48 Q 20 72 0 74 Q -20 72 -24 48 Z" fill="#1a0000" stroke="#800000" stroke-width="3"/>
+            <!-- Upper sharp demon fangs & teeth -->
+            <path d="M -18 49 L -14 56 L -10 49 L -5 55 L 0 49 L 5 55 L 10 49 L 14 56 L 18 49 Z" fill="#ffffff" stroke="#2b0202" stroke-width="1"/>
+            <!-- Lower teeth -->
+            <path d="M -15 67 L -10 61 L -5 66 L 0 61 L 5 66 L 10 61 L 15 67 Z" fill="#ffffff" stroke="#2b0202" stroke-width="1"/>
+            <!-- Deep throat crimson glow -->
+            <ellipse cx="0" cy="60" rx="12" ry="5" fill="#c92a2a"/>
+          </g>
+
+          <!-- HEAVY GOLD KUNDAL EARRINGS -->
+          <g id="kundal_left" transform="translate(-58, 22)">
+            <circle cx="0" cy="0" r="12" fill="url(#gold_sheen)" stroke="#4a3200" stroke-width="2.5"/>
+            <circle cx="0" cy="0" r="5" fill="url(#ruby_glow)"/>
+          </g>
+          <g id="kundal_right" transform="translate(58, 22)">
+            <circle cx="0" cy="0" r="12" fill="url(#gold_sheen)" stroke="#4a3200" stroke-width="2.5"/>
+            <circle cx="0" cy="0" r="5" fill="url(#ruby_glow)"/>
+          </g>
+
+          <use href="#puppet_pin" x="0" y="80"/>
+        </g>
+      </g>
+    </g>
+
   </g>
 </svg>

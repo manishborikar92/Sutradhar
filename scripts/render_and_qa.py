@@ -42,6 +42,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from db_manager import get_project_root, load_config  # noqa: E402
+from generate_composition import generate_root_composition  # noqa: E402
 
 
 class RenderPipelineError(RuntimeError):
@@ -103,7 +104,7 @@ def build_audio_mix(
     # Collect transition SFX from scenes
     sfx_inputs: list[tuple[Path, float]] = []
     for scene in manifest.get("scenes", []):
-        sfx_name = scene.get("transition_sfx")
+        sfx_name = scene.get("sfx_cue") or scene.get("transition_sfx")
         if sfx_name:
             sfx_file = root / "assets" / "sfx" / sfx_name
             if sfx_file.is_file():
@@ -254,6 +255,58 @@ def decode_qa_frames(video_path: Path, output_grid_path: Path, duration_sec: flo
     shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
+def generate_episode_thumbnail(
+    final_video_path: Path,
+    output_thumbnail_path: Path,
+    manifest: dict[str, Any],
+    duration_sec: float,
+) -> Path:
+    """Extract clean-canvas high-impact JPEG <= 2 MB from peak hero shot."""
+    t_thumb = round(0.45 * duration_sec, 2)
+    scenes = manifest.get("scenes", [])
+    for s in scenes:
+        if s.get("shot_type") == "close_up_wrath" or s.get("speaker_role") == "character_dialogue":
+            t_thumb = float(s.get("midpoint_sec", t_thumb))
+            break
+        elif s.get("scene_index") == 3:
+            t_thumb = float(s.get("midpoint_sec", t_thumb))
+
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-ss",
+        str(t_thumb),
+        "-i",
+        str(final_video_path),
+        "-vframes",
+        "1",
+        "-q:v",
+        "2",
+        str(output_thumbnail_path),
+    ]
+    subprocess.run(cmd, capture_output=True, check=False)
+    if not output_thumbnail_path.is_file():
+        raise RenderPipelineError(f"Failed to generate thumbnail at '{output_thumbnail_path}'.")
+
+    # Verify dimensions and enforce size <= 2MB
+    with Image.open(output_thumbnail_path) as im:
+        w, h = im.size
+        if w != 1080 or h != 1920:
+            im_resized = im.resize((1080, 1920), Image.Resampling.LANCZOS)
+            im_resized.save(output_thumbnail_path, "JPEG", quality=92)
+
+    max_size_bytes = 2 * 1024 * 1024  # 2MB YouTube hard limit
+    if output_thumbnail_path.stat().st_size > max_size_bytes:
+        with Image.open(output_thumbnail_path) as im:
+            im.save(output_thumbnail_path, "JPEG", quality=85)
+
+    print(
+        f"[INFO] Generated thumbnail at {output_thumbnail_path.name} ({output_thumbnail_path.stat().st_size:,} bytes, 1080x1920 @ {t_thumb:.2f}s)",
+        file=sys.stderr,
+    )
+    return output_thumbnail_path
+
+
 def sync_index_html_duration(root: Path, duration_sec: float) -> None:
     index_file = root / "index.html"
     if not index_file.is_file():
@@ -277,15 +330,14 @@ def run_render_and_qa_pipeline(root: Path) -> dict[str, Any]:
     manifest_path = build_dir / "manifest.js"
     manifest = parse_manifest_js(manifest_path)
 
-    # Sync HyperFrames root composition duration to audio length + 0.30s safety tail
-    total_dur = float(manifest["audio"]["total_duration_sec"])
-    render_dur = round(total_dur + 0.30, 2)
-    sync_index_html_duration(root, render_dur)
+    # Ensure root composition files are generated & synchronized
+    generate_root_composition(root)
 
     raw_video = build_dir / "raw_video.mp4"
     mixed_temp = build_dir / "mixed_temp.mp4"
     final_short = build_dir / "final_short.mp4"
     final_qa_grid = build_dir / "final_qa_grid.jpg"
+    thumbnail_path = build_dir / "thumbnail.jpg"
 
     # Step 1: HyperFrames High Quality Render
     npx_exe = shutil.which("npx") or ("npx.cmd" if sys.platform == "win32" else "npx")
@@ -316,6 +368,9 @@ def run_render_and_qa_pipeline(root: Path) -> dict[str, Any]:
     min_score = float(cfg.get("audio_mastering", {}).get("kinocut_min_score", 80.0))
     profile = cfg.get("audio_mastering", {}).get("kinocut_profile", "ui-capture-dark")
     print(f"[INFO] Running KinoCut release checkpoint (profile='{profile}', min_score={min_score})...", file=sys.stderr)
+    release_review_dir = build_dir / f"{final_short.stem}_release_review"
+    if release_review_dir.exists():
+        shutil.rmtree(release_review_dir, ignore_errors=True)
     checkpoint_res = kino_client.release_checkpoint(
         input_path=str(final_short),
         min_score=min_score,
@@ -356,9 +411,12 @@ def run_render_and_qa_pipeline(root: Path) -> dict[str, Any]:
             f"Duration mismatch: final MP4 ({actual_duration:.2f}s) vs expected ({expected_render_dur:.2f}s)."
         )
 
-    # Step 6: Decode QA frames for contact sheet
+    # Step 6: Decode QA frames for contact sheet & generate high-impact hero thumbnail
     print(f"[INFO] Decoding representative frames to {final_qa_grid.name} ...", file=sys.stderr)
     decode_qa_frames(final_short, final_qa_grid, actual_duration)
+
+    print(f"[INFO] Generating episode thumbnail at {thumbnail_path.name} ...", file=sys.stderr)
+    generate_episode_thumbnail(final_short, thumbnail_path, manifest, actual_duration)
 
     report = {
         "status": "ok",
@@ -366,6 +424,7 @@ def run_render_and_qa_pipeline(root: Path) -> dict[str, Any]:
         "raw_video": "build/raw_video.mp4",
         "final_short": "build/final_short.mp4",
         "final_qa_grid_jpg": "build/final_qa_grid.jpg",
+        "thumbnail_jpg": "build/thumbnail.jpg",
         "width": width,
         "height": height,
         "duration_sec": actual_duration,

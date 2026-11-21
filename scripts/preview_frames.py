@@ -36,6 +36,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from db_manager import get_project_root, load_config  # noqa: E402
+from generate_composition import generate_root_composition  # noqa: E402
 
 
 class PreviewPipelineError(RuntimeError):
@@ -152,10 +153,8 @@ def run_preview_pipeline(root: Path) -> dict[str, Any]:
     manifest_path = build_dir / "manifest.js"
     manifest = parse_manifest_js(manifest_path)
 
-    # Sync HyperFrames root composition duration to audio length + 0.30s safety tail
-    total_dur = float(manifest.get("audio", {}).get("total_duration_sec", 45.0))
-    render_dur = round(total_dur + 0.30, 2)
-    sync_index_html_duration(root, render_dur)
+    # Ensure root composition files are generated & synchronized
+    generate_root_composition(root)
 
     scenes = manifest.get("scenes", [])
     if not scenes:
@@ -206,7 +205,7 @@ def run_preview_pipeline(root: Path) -> dict[str, Any]:
     # Match frame files to scenes
     scene_frames = frame_files[: len(scenes)]
     scene_labels = [
-        f"S{s['scene_index']} ({s['visual_mode'][:4]}) @ {s['midpoint_sec']}s"
+        f"S{s['scene_index']} ({(s.get('shot_type') or s.get('visual_mode') or 'shot')[:6]}) @ {s['midpoint_sec']}s"
         for s in scenes
     ]
 

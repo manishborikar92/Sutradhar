@@ -128,11 +128,27 @@ def validate_config(cfg: Any, config_path: Path) -> dict[str, Any]:
         raise StateError(f"config.yaml missing or invalid sections: {', '.join(missing)}")
 
     channel = cfg["channel"]
-    if channel.get("language_mode") != "global_english" or channel.get("primary_language") != "en":
+    primary_lang = channel.get("primary_language")
+    lang_mode = channel.get("language_mode")
+    if lang_mode not in ("global_english", "per_channel") or primary_lang not in ("en", "hi"):
         raise StateError(
             "config.yaml language lock violated: Sutradhar requires "
-            "channel.language_mode='global_english' and channel.primary_language='en'."
+            f"channel.primary_language in ('en', 'hi') and language_mode in ('global_english', 'per_channel') "
+            f"(got primary_language={primary_lang!r}, language_mode={lang_mode!r})."
         )
+
+    # Validate languages profile when configured
+    if "languages" in cfg:
+        langs = cfg["languages"]
+        if not isinstance(langs, dict) or "en" not in langs or "hi" not in langs:
+            raise StateError("config.yaml languages must define profiles for both 'en' and 'hi'.")
+        for lcode in ("en", "hi"):
+            lprof = langs[lcode]
+            if not isinstance(lprof, dict):
+                raise StateError(f"config.yaml languages.{lcode} profile must be a mapping.")
+            for req_key in ("narrator_voice", "character_dialogue_voice", "narrator_speed", "character_dialogue_speed", "pronunciations_file"):
+                if req_key not in lprof:
+                    raise StateError(f"config.yaml languages.{lcode} missing required key: '{req_key}'.")
     pillars = channel.get("pillars")
     if not isinstance(pillars, list) or not pillars or not all(isinstance(p, str) and p.strip() for p in pillars):
         raise StateError("config.yaml channel.pillars must be a non-empty list of strings.")
@@ -151,8 +167,17 @@ def validate_config(cfg: Any, config_path: Path) -> dict[str, Any]:
         raise StateError("config.yaml episode_pacing.min_scenes cannot exceed max_scenes.")
 
     tts = cfg["tts"]
-    if not isinstance(tts.get("engine"), str) or not isinstance(tts.get("default_voice"), str):
-        raise StateError("config.yaml tts.engine and tts.default_voice must be strings.")
+    if not isinstance(tts.get("engine"), str):
+        raise StateError("config.yaml tts.engine must be a string.")
+    if "default_voice" not in tts and "languages" in cfg:
+        active_lprof = cfg["languages"].get(primary_lang, {})
+        narr_v = active_lprof.get("narrator_voice")
+        if isinstance(narr_v, dict):
+            tts["default_voice"] = "+".join(f"{k}:{v}" for k, v in narr_v.items())
+        elif isinstance(narr_v, str):
+            tts["default_voice"] = narr_v
+    if not isinstance(tts.get("default_voice"), str):
+        raise StateError("config.yaml tts.default_voice must be a string or resolvable from languages profile.")
 
     assets = cfg["assets"]
     bgm_map = assets.get("bgm_by_pillar")
@@ -451,6 +476,17 @@ class ScenePlan(BaseModel):
     transition_sfx: Optional[str] = None
     pause_after_ms: Optional[int] = Field(default=None, ge=50, le=1200)
     emphasis_word: Optional[str] = None
+    # V2 Multi-Shot / Beat-Level Storytelling Attributes
+    speaker_role: Literal["narrator", "character_dialogue"] = "narrator"
+    voice_override: Optional[str] = None
+    speed: Optional[float] = Field(default=None, ge=0.5, le=2.0)
+    shot_type: Optional[str] = None
+    transition_type: Optional[str] = None
+    sfx_cue: Optional[str] = None
+    fx_theme: Optional[str] = None
+    characters: Optional[list[str]] = None
+    pose_preset: Optional[str] = None
+    expression_preset: Optional[str] = None
 
     @field_validator(
         "diagram_rig",
@@ -460,6 +496,13 @@ class ScenePlan(BaseModel):
         "callout_subtext",
         "transition_sfx",
         "emphasis_word",
+        "voice_override",
+        "shot_type",
+        "transition_type",
+        "sfx_cue",
+        "fx_theme",
+        "pose_preset",
+        "expression_preset",
         mode="before",
     )
     @classmethod
@@ -577,7 +620,28 @@ class EpisodePlan(BaseModel):
     youtube_title: str = Field(..., min_length=5, max_length=100)
     youtube_description: str = Field(..., min_length=10, max_length=5000)
     summary: str = Field(..., min_length=10, max_length=1000)
+    language: Literal["en", "hi"] = "en"
     scenes: list[ScenePlan]
+
+    @model_validator(mode="before")
+    @classmethod
+    def remap_shots_to_scenes(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if "scenes" not in data and "shots" in data:
+                data["scenes"] = data["shots"]
+        return data
+
+    @field_validator("language")
+    @classmethod
+    def check_language(cls, v: str, info: ValidationInfo) -> str:
+        cfg = (info.context or {}).get("config")
+        if cfg:
+            expected = cfg["channel"].get("primary_language", "en")
+            if v != expected:
+                raise ValueError(
+                    f"episode_plan language '{v}' must match channel.primary_language '{expected}'"
+                )
+        return v
 
     @field_validator("pillar")
     @classmethod
@@ -975,10 +1039,11 @@ def cmd_context(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
         "channel_config": {
             "language_mode": cfg["channel"]["language_mode"],
             "primary_language": cfg["channel"]["primary_language"],
+            "locked_voice_profile": cfg["languages"].get(cfg["channel"]["primary_language"]) if "languages" in cfg else None,
             "pillars": cfg["channel"]["pillars"],
             "tts_engine": cfg["tts"]["engine"],
             "tts_voice": cfg["tts"]["default_voice"],
-            "voice_provisional": cfg["tts"].get("voice_provisional", True),
+            "voice_provisional": cfg["languages"][cfg["channel"]["primary_language"]].get("voice_provisional", False) if "languages" in cfg else cfg["tts"].get("voice_provisional", True),
             "upload_mode": cfg["publishing"]["upload_mode"],
             "allow_public_or_scheduled": cfg["publishing"]["allow_public_or_scheduled"],
             "calibration_episodes_required": cfg["publishing"].get("calibration_episodes_required", 3),

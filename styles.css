@@ -1,62 +1,4 @@
-/* Sutradhar Master Stylesheet (1080x1920 YouTube Shorts) */
-/* Clean-Canvas & Editorial High-Craft Design System */
-
-:root {
-  /* Default Mood: Golden Imperial */
-  --sky-top: #07090F;
-  --sky-bottom: #1B150A;
-  --accent-glow: #E5B869;
-  --accent-crimson: #C84B31;
-  --ivory-text: #F8F4EC;
-  --shadow-tint: #040508;
-}
-
-/* Mood Palettes (Strictly Obsidian, Indigo, Burnished Gold, Ivory, Ember Crimson - NO TEAL) */
-.mood-golden_imperial {
-  --sky-top: #07090F;
-  --sky-bottom: #1B150A;
-  --accent-glow: #E5B869;
-  --accent-crimson: #C84B31;
-  --ivory-text: #F8F4EC;
-  --shadow-tint: #040508;
-}
-
-.mood-cosmic_indigo {
-  --sky-top: #07090F;
-  --sky-bottom: #111827;
-  --accent-glow: #E5B869;
-  --accent-crimson: #C84B31;
-  --ivory-text: #F8F4EC;
-  --shadow-tint: #030407;
-}
-
-.mood-crimson_wrath {
-  --sky-top: #07090F;
-  --sky-bottom: #240C0A;
-  --accent-glow: #C84B31;
-  --accent-crimson: #E5B869;
-  --ivory-text: #F8F4EC;
-  --shadow-tint: #040202;
-}
-
-.mood-mystic_slate {
-  --sky-top: #07090F;
-  --sky-bottom: #151D28;
-  --accent-glow: #E5B869;
-  --accent-crimson: #C84B31;
-  --ivory-text: #F8F4EC;
-  --shadow-tint: #040609;
-}
-
-.mood-obsidian_amber {
-  --sky-top: #07090F;
-  --sky-bottom: #1E140B;
-  --accent-glow: #E5B869;
-  --accent-crimson: #C84B31;
-  --ivory-text: #F8F4EC;
-  --shadow-tint: #040302;
-}
-
+/* Sutradhar v2.2 Master Theatrical Styles (Clean Canvas, Folk Art) */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -66,163 +8,222 @@
 body {
   width: 1080px;
   height: 1920px;
+  background-color: #060814;
   overflow: hidden;
-  background-color: #07090F;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  color: #F8F4EC;
-  user-select: none;
+  position: relative;
+  font-family: Georgia, serif;
 }
 
-#root {
-  position: relative;
+#stage {
   width: 1080px;
   height: 1920px;
+  position: absolute;
+  top: 0;
+  left: 0;
   overflow: hidden;
-  background-color: #07090F;
+  transform-origin: 540px 960px;
 }
 
-.layer-fullscreen {
+/* Shot Containers */
+.shot-container {
+  width: 1080px;
+  height: 1920px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  opacity: 0;
+  display: none;
+}
+
+.active-shot {
+  display: block;
+  opacity: 1;
+}
+
+/* Background SVGs */
+.bg-svg {
+  width: 1080px;
+  height: 1920px;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* Velvet Theatrical Curtains (Shot 1) */
+.curtain {
+  position: absolute;
+  top: 0;
+  width: 550px;
+  height: 1920px;
+  background: linear-gradient(90deg, #1e0505 0%, #450a0a 30%, #7f1d1d 50%, #450a0a 75%, #0f0202 100%);
+  box-shadow: 0 0 50px rgba(0,0,0,0.9);
+  z-index: 100;
+  overflow: hidden;
+}
+
+#curtain_left {
+  left: 0;
+  border-right: 4px solid #b45309;
+}
+
+#curtain_right {
+  right: 0;
+  border-left: 4px solid #b45309;
+}
+
+.curtain-fold {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  background: linear-gradient(90deg, rgba(180,30,30,0.35), rgba(45,10,10,0.7));
+}
+
+/* Puppet Wrapper */
+#puppet_wrapper {
+  position: absolute;
+  top: 240px;
+  left: 140px;
+  width: 800px;
+  height: 1200px;
+  z-index: 40;
+  transform-origin: 400px 700px;
+  display: none;
+  opacity: 0;
+}
+
+/* Floating Atmospheric Embers */
+.ember {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: radial-gradient(circle, #fef08a 0%, #f59e0b 60%, transparent 100%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 80;
+  opacity: 0;
+}
+
+/* Screen Flashes */
+#wrath_flash {
   position: absolute;
   top: 0;
   left: 0;
   width: 1080px;
   height: 1920px;
+  background: radial-gradient(circle at 50% 40%, rgba(254, 240, 138, 0.65) 0%, rgba(234, 88, 12, 0.45) 50%, transparent 85%);
+  z-index: 150;
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* Shot 5 Granite Foregound Container */
+#foreground_mountain_container {
+  position: absolute;
+  top: -80px;
+  left: 0;
+  width: 1080px;
+  height: 1920px;
+  z-index: 60;
   pointer-events: none;
 }
 
-/* HyperFrames Clips */
-.clip {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 1080px;
-  height: 1920px;
-  overflow: hidden;
+/* ========================================================================= */
+/* HIERARCHICAL RIVET RIG (CSS Custom Properties with 0px 0px Joint Origins) */
+/* ========================================================================= */
+#leg_left_group {
+  transform: rotate(var(--rot-thigh-left, 0deg)) !important;
+  transform-origin: 0px 0px !important;
+}
+#shin_left_rot {
+  transform: rotate(var(--rot-shin-left, 0deg)) !important;
+  transform-origin: 0px 0px !important;
 }
 
-/* Primary Visual Focal Area (Comfortably clears bottom ~420px title/channel area and right ~170px UI stack) */
-.scene-focal-stage {
-  position: absolute;
-  top: 300px;
-  left: 80px;
-  width: 880px;
-  height: 1120px;
-  z-index: 20;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+#leg_right_group {
+  transform: rotate(var(--rot-thigh-right, 0deg)) !important;
+  transform-origin: 0px 0px !important;
+}
+#shin_right_rot {
+  transform: rotate(var(--rot-shin-right, 0deg)) !important;
+  transform-origin: 0px 0px !important;
 }
 
-.backdrop-layer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 1080px;
-  height: 1920px;
-  z-index: 10;
+#shoulder_rear_left_rot {
+  transform: rotate(var(--rot-shoulder-rear-left, 0deg)) !important;
+  transform-origin: 0px 0px !important;
+}
+#elbow_rear_left_rot {
+  transform: rotate(var(--rot-elbow-rear-left, 0deg)) !important;
+  transform-origin: 0px 0px !important;
+}
+#wrist_rear_left_rot {
+  transform: rotate(var(--rot-wrist-rear-left, 0deg)) !important;
+  transform-origin: 0px 0px !important;
 }
 
-.backdrop-layer svg {
-  width: 1080px;
-  height: 1920px;
+#shoulder_rear_right_rot {
+  transform: rotate(var(--rot-shoulder-rear-right, 0deg)) !important;
+  transform-origin: 0px 0px !important;
+}
+#elbow_rear_right_rot {
+  transform: rotate(var(--rot-elbow-rear-right, 0deg)) !important;
+  transform-origin: 0px 0px !important;
+}
+#wrist_rear_right_rot {
+  transform: rotate(var(--rot-wrist-rear-right, 0deg)) !important;
+  transform-origin: 0px 0px !important;
 }
 
-/* Mode A: Character Drama (Sculptural Gilded Silhouette) */
-.character-host {
-  position: absolute;
-  bottom: -40px;
-  width: 760px;
-  height: 1140px;
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
+#shoulder_front_left_rot {
+  transform: rotate(var(--rot-shoulder-front-left, 0deg)) !important;
+  transform-origin: 0px 0px !important;
+}
+#elbow_front_left_rot {
+  transform: rotate(var(--rot-elbow-front-left, 0deg)) !important;
+  transform-origin: 0px 0px !important;
+}
+#wrist_front_left_rot {
+  transform: rotate(var(--rot-wrist-front-left, 0deg)) !important;
+  transform-origin: 0px 0px !important;
 }
 
-.character-host svg {
-  width: 100%;
-  height: 100%;
-  filter: drop-shadow(0 14px 40px rgba(0, 0, 0, 0.95));
+#shoulder_front_right_rot {
+  transform: rotate(var(--rot-shoulder-front-right, 0deg)) !important;
+  transform-origin: 0px 0px !important;
+}
+#elbow_front_right_rot {
+  transform: rotate(var(--rot-elbow-front-right, 0deg)) !important;
+  transform-origin: 0px 0px !important;
+}
+#wrist_front_right_rot {
+  transform: rotate(var(--rot-wrist-front-right, 0deg)) !important;
+  transform-origin: 0px 0px !important;
 }
 
-/* Mode B: Explainer Diagram (DrawSVG animated technical infographics) */
-.diagram-host {
-  width: 860px;
-  height: 860px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+#torso_group {
+  transform: translate(var(--trans-torso-x, 0px), var(--trans-torso-y, 0px)) rotate(var(--rot-torso, 0deg)) !important;
+  transform-origin: 400px 700px !important;
 }
-
-.diagram-host svg {
-  width: 100%;
-  height: 100%;
-  filter: drop-shadow(0 12px 36px rgba(0, 0, 0, 0.9));
+#kamarband {
+  transform: translate(var(--trans-torso-x, 0px), var(--trans-torso-y, 0px)) !important;
 }
-
-/* Mode C: Open-Canvas Editorial Typography (No boxed cards, full-bleed cinematic elegance) */
-.callout-card {
-  width: 820px;
-  padding: 60px 40px;
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-  text-align: center;
-  backdrop-filter: none;
-  position: relative;
+#dhoti_skirt {
+  transform: translate(var(--trans-torso-x, 0px), var(--trans-torso-y, 0px)) !important;
 }
-
-.callout-card::before {
-  content: "";
-  position: absolute;
-  top: 20px;
-  left: 15%;
-  right: 15%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, #E5B869, transparent);
-  opacity: 0.8;
+#hip_left_joint {
+  transform: translate(340px, calc(770px + var(--trans-torso-y, 0px))) !important;
 }
-
-.callout-card::after {
-  content: "";
-  position: absolute;
-  bottom: 20px;
-  left: 25%;
-  right: 25%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, #E5B869, transparent);
-  opacity: 0.5;
+#hip_right_joint {
+  transform: translate(460px, calc(770px + var(--trans-torso-y, 0px))) !important;
 }
-
-.callout-card-headline {
-  color: var(--accent-glow, #E5B869);
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 54px;
-  font-weight: 800;
-  line-height: 1.25;
-  text-transform: uppercase;
-  letter-spacing: 3px;
-  margin-bottom: 28px;
-  text-shadow: 0 0 30px rgba(229, 184, 105, 0.45);
+#heads_fan_mount {
+  transform: translate(400px, calc(375px + var(--trans-torso-y, 0px))) rotate(var(--rot-torso, 0deg)) !important;
 }
-
-.callout-card-subtext {
-  color: var(--ivory-text, #F8F4EC);
-  font-family: 'Inter', system-ui, sans-serif;
-  font-size: 32px;
-  font-weight: 500;
-  line-height: 1.45;
-  letter-spacing: 0.5px;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+#prabhavali_mount {
+  transform: translate(400px, calc(345px + var(--trans-torso-y, 0px))) rotate(var(--rot-torso, 0deg)) !important;
 }
-
-/* Canvas overlay for frame-locked particles */
-#fx-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 1080px;
-  height: 1920px;
-  z-index: 30;
-  pointer-events: none;
+#wrath_mount {
+  transform: translate(400px, calc(310px + var(--trans-torso-y, 0px))) !important;
 }

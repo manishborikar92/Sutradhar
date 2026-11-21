@@ -1,78 +1,109 @@
 project:
-  name: "Sutradhar"
-  version: "0.1.0"
-  docs_dir: "docs"
-
+  name: Sutradhar
+  version: 0.2.0
+  docs_dir: docs
 channel:
-  language_mode: "global_english"
-  primary_language: "en"
-  default_audio_language: "en"
-  default_language: "en"
-  category_id: "27"                # YouTube Education category
+  language_mode: per_channel
+  primary_language: en
+  default_audio_language: en
+  default_language: en
+  category_id: '27'
   self_declared_made_for_kids: false
   contains_synthetic_media: true
   pillars:
-    - "Ancient Epics & Lore"
-    - "Hidden History"
-    - "Cosmic & Scientific Paradoxes"
-
+  - Ancient Epics & Lore
+  - Hidden History
+  - Cosmic & Scientific Paradoxes
+languages:
+  en:
+    code: en
+    name: English
+    kokoro_lang: en-us
+    voice_provisional: false
+    narrator_voice:
+      bm_fable: 0.55
+      am_fenrir: 0.45
+    narrator_speed: 0.91
+    character_dialogue_voice: am_onyx
+    character_dialogue_speed: 0.88
+    pronunciations_file: pronunciations_en.yaml
+    dsp:
+      narrator:
+        highpass_hz: 75
+        warmth_eq: equalizer=f=160:width_type=o:w=1.0:g=2.0
+        deharsh_eq: equalizer=f=4500:width_type=o:w=1.2:g=-2.5
+        air_eq: equalizer=f=10000:width_type=o:w=1.5:g=1.5
+        compressor: acompressor=threshold=-18dB:ratio=2.2:attack=15:release=120
+        echo: aecho=0.8:0.88:15:0.03
+      dialogue:
+        pitch_ratio: 0.917
+        tempo_compensation: 1.0905
+        warmth_eq: equalizer=f=115:width_type=o:w=1.0:g=3.5
+        deharsh_eq: equalizer=f=3500:width_type=o:w=1.2:g=-1.5
+        compressor: acompressor=threshold=-16dB:ratio=2.8:attack=10:release=150
+        echo: aecho=0.8:0.88:20:0.06
+  hi:
+    code: hi
+    name: Hindi
+    kokoro_lang: hi
+    voice_provisional: false
+    narrator_voice:
+      hf_alpha: 0.7
+      hf_beta: 0.3
+    narrator_speed: 0.95
+    character_dialogue_voice: hm_omega
+    character_dialogue_speed: 0.9
+    pronunciations_file: pronunciations_hi.yaml
+    dsp:
+      narrator:
+        highpass_hz: 75
+        warmth_eq: equalizer=f=160:width_type=o:w=1.0:g=2.0
+        deharsh_eq: equalizer=f=4500:width_type=o:w=1.2:g=-2.5
+        air_eq: equalizer=f=10000:width_type=o:w=1.5:g=1.5
+        compressor: acompressor=threshold=-18dB:ratio=2.2:attack=15:release=120
+        echo: aecho=0.8:0.88:15:0.03
+      dialogue:
+        pitch_ratio: 0.917
+        tempo_compensation: 1.0905
+        warmth_eq: equalizer=f=115:width_type=o:w=1.0:g=3.5
+        deharsh_eq: equalizer=f=3500:width_type=o:w=1.2:g=-1.5
+        compressor: acompressor=threshold=-16dB:ratio=2.8:attack=10:release=150
+        echo: aecho=0.8:0.88:20:0.06
 series:
   min_episodes: 3
   max_episodes: 6
   completed_history_window: 20
   require_bespoke_asset_per_episode: true
-
 episode_pacing:
   target_duration_min_sec: 36
   target_duration_max_sec: 46
   hard_duration_min_sec: 34
   hard_duration_max_sec: 50
-  min_scenes: 7
+  min_scenes: 5
   max_scenes: 8
-  min_words_per_scene: 12          # Kokoro-82M prosody sweet spot
-  max_words_per_scene: 22
-
+  min_words_per_scene: 10
+  max_words_per_scene: 25
 tts:
-  engine: "kokoro_onnx"
-  language: "en-us"
+  engine: kokoro_onnx
   sample_rate: 24000
-  speed: 0.92
-  # PROVISIONAL: Lock final voice after completing Milestone 3 voice audition
-  voice_provisional: true
-  default_voice: "am_fenrir"
-  audition_candidates:
-    - "am_fenrir"
-    - "am_michael"
-    - "bm_george"
-    - "am_fenrir:0.65+bm_george:0.35"
-  model_dir: "models/kokoro"
-  model_file: "kokoro-v1.0.onnx"
-  voices_file: "voices-v1.0.bin"
-  pronunciations_file: "pronunciations.yaml"
-
-alignment:
-  engine: "faster_whisper"
-  model_size: "base"
-  device: "cpu"
-  compute_type: "int8"
-  language: "en"
-  word_timestamps: true
-
+  model_dir: models/kokoro
+  model_file: kokoro-v1.0.onnx
+  voices_file: voices-v1.0.bin
 video:
   width: 1080
   height: 1920
   fps: 30
-  render_quality: "high"
+  render_quality: high
   safe_zones:
     top_clear_px: 288
     bottom_clear_px: 520
     right_clear_px: 192
     left_clear_px: 48
-    series_badge_top_px: 300
-    subtitles_bottom_px: 560
-
 audio_mastering:
   target_lufs: -14.0
+  true_peak_max_dbtp: -1.0
+  trailing_silence_min_sec: 0.7
+  silence_floor_max_dbfs: -65.0
   bgm_base_gain_db: -22.0
   sfx_gain_db: -10.0
   sidechain_ducking:
@@ -82,41 +113,40 @@ audio_mastering:
     attack_ms: 20
     release_ms: 250
   kinocut_min_score: 80
-
 assets:
   bgm_by_pillar:
-    "Ancient Epics & Lore": "dramatic_mythology.mp3"
-    "Hidden History": "epic_history.mp3"
-    "Cosmic & Scientific Paradoxes": "cosmic_mystery.mp3"
+    Ancient Epics & Lore: dramatic_mythology.mp3
+    Hidden History: epic_history.mp3
+    Cosmic & Scientific Paradoxes: cosmic_mystery.mp3
   sfx_tracks:
-    - "whoosh_soft.wav"
-    - "sub_hit.wav"
-    - "tension_swell.wav"
+  - whoosh_soft.wav
+  - sub_hit.wav
+  - tension_swell.wav
   mood_palettes:
-    - "golden_imperial"
-    - "cosmic_indigo"
-    - "crimson_wrath"
-    - "mystic_slate"
-    - "obsidian_amber"
+  - theatrical_folk_art
+  - golden_imperial
+  - cosmic_indigo
+  - crimson_wrath
+  - kailash_himalayan
+  - mystic_slate
+  - obsidian_amber
   particle_themes:
-    - "golden_embers"
-    - "starfield_warp"
-    - "quantum_nodes"
-    - "mystic_mist"
-
+  - golden_embers
+  - starfield_warp
+  - quantum_nodes
+  - himalayan_snow
+  - crimson_embers
+  - mystic_mist
 publishing:
-  env_file: ".env.youtube"
-  # LOCKED in private_review during development and 3-episode calibration.
-  # Flip to "scheduled" + allow_public_or_scheduled: true ONLY after all 3 calibration episodes pass QA.
-  upload_mode: "private_review"
+  env_file: .env.youtube
+  upload_mode: private_review
   allow_public_or_scheduled: false
   calibration_episodes_required: 3
-  scheduled_publish_time_ist: "18:30"
-  scheduled_publish_time_utc: "13:00"
+  scheduled_publish_time_ist: '18:30'
+  scheduled_publish_time_utc: '13:00'
   auto_create_series_playlist: true
-
 paths:
-  db_file: "episodes.db"
-  build_dir: "build"
-  assets_dir: "assets"
-  docs_dir: "docs"
+  db_file: episodes.db
+  build_dir: build
+  assets_dir: assets
+  docs_dir: docs
