@@ -267,7 +267,7 @@ class TestBuildAudio(unittest.TestCase):
     # 4. Full end-to-end build produces WAVs, ffprobe durations & valid manifest.js
     def test_04_end_to_end_audio_build_and_manifest_contract(self) -> None:
         self.write_plan(make_episode_plan(scene_count=7))
-        fake_kokoro = FakeKokoro(sec_per_scene=5.5)  # 7 * ~5.62s = ~39.4s (inside 36-46s target)
+        fake_kokoro = FakeKokoro(sec_per_scene=6.0)  # 7 * ~6.12s = ~43s (inside 40-60s target)
         fake_whisper = FakeWhisper(drop_word_idx=2)
 
         result = self.mod.build_episode_audio(
@@ -278,7 +278,7 @@ class TestBuildAudio(unittest.TestCase):
         self.assertEqual(result["status"], "ok")
         self.assertEqual(result["scene_count"], 7)
         self.assertIsNone(result["duration_warning"])
-        self.assertTrue(36.0 <= result["total_duration_sec"] <= 46.0)
+        self.assertTrue(40.0 <= result["total_duration_sec"] <= 60.0)
 
         # Verify pronunciation was applied to TTS input while narration remained canonical
         self.assertIn("Sootradaar", fake_kokoro.calls[0]["text"])
@@ -304,11 +304,11 @@ class TestBuildAudio(unittest.TestCase):
             manifest["scenes"][0]["narration_text"].split(),
         )
 
-    # 5. Duration bounds enforcement (hard <34s / >50s fail; 35s warns cleanly)
+    # 5. Duration bounds enforcement (hard <30s / >180s fail; 34s warns cleanly against 40s target)
     def test_05_duration_hard_and_target_bounds(self) -> None:
         self.write_plan(make_episode_plan(scene_count=7))
 
-        # Too short (~21s < 34s) -> hard error
+        # Too short (~18s < 30s) -> hard error
         with self.assertRaises(self.mod.AudioBuildError) as ctx_short:
             self.mod.build_episode_audio(
                 root=self.root,
@@ -317,19 +317,19 @@ class TestBuildAudio(unittest.TestCase):
             )
         self.assertIn("violates hard bounds", str(ctx_short.exception))
 
-        # Too long (~56s > 50s) -> hard error
+        # Too long (~195s > 180s) -> hard error
         with self.assertRaises(self.mod.AudioBuildError) as ctx_long:
             self.mod.build_episode_audio(
                 root=self.root,
-                kokoro_factory=lambda m, v: FakeKokoro(sec_per_scene=7.5),
+                kokoro_factory=lambda m, v: FakeKokoro(sec_per_scene=27.5),
                 whisper_factory=lambda c: FakeWhisper(),
             )
         self.assertIn("violates hard bounds", str(ctx_long.exception))
 
-        # Between hard & target (~34.8s) -> succeeds with duration_warning
+        # Between hard & target (~34s, where hard_min=30s and target_min=40s) -> succeeds with duration_warning
         res_warn = self.mod.build_episode_audio(
             root=self.root,
-            kokoro_factory=lambda m, v: FakeKokoro(sec_per_scene=4.7),
+            kokoro_factory=lambda m, v: FakeKokoro(sec_per_scene=4.6),
             whisper_factory=lambda c: FakeWhisper(),
         )
         self.assertIsNotNone(res_warn["duration_warning"])
@@ -459,6 +459,75 @@ class TestBuildAudio(unittest.TestCase):
         with self.assertRaises(self.mod.AudioBuildError) as ctx_bin:
             self.mod._validate_file_structural(bogus_bin)
         self.assertIn("ZIP validation", str(ctx_bin.exception))
+
+    # 11. Standalone & Extended Duration Manifest Verification
+    def test_11_standalone_and_extended_duration_manifest(self) -> None:
+        """Verify audio build handles standalone format, extended duration (140s), and custom story_arc."""
+        # 1. Initialize DB and create an ACTIVE series in db to ensure standalone ignores it cleanly
+        cfg = self.mod.load_config(self.root)
+        db_mod = load_module(DB_MANAGER_SCRIPT, "db_manager_mod_for_audio")
+        db_mod.cmd_init(self.root, cfg)
+        conn = self.mod.connect_db(self.root / "episodes.db")
+        try:
+            conn.execute(
+                """
+                INSERT INTO series (series_id, series_title, pillar, tts_voice, bgm_track,
+                                    series_bible_json, total_planned_episodes, completed_episodes, status, created_at)
+                VALUES (99, 'Conflicting Series', 'Hidden History', 'bm_fable', 'bgm.mp3', '{}', 3, 0, 'ACTIVE', '2026-01-01T00:00:00Z')
+                """
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+        # 2. 10-scene plan for ~140s total duration
+        plan = make_episode_plan(scene_count=10)
+        plan["content_format"] = "standalone"
+        plan["series_id"] = None
+        plan["series_title"] = None
+        plan["episode_number_in_series"] = None
+        plan["total_planned_episodes"] = None
+        plan["target_duration_sec"] = 150.0
+        plan["target_duration_range"] = {"min_seconds": 120.0, "max_seconds": 180.0}
+        plan["narrative_structure"] = "eight_phase_complete_arc"
+        plan["story_arc"] = {
+            "arc_title": "Mythological Confrontation",
+            "premise": "Ravana ascends to conquer planetary spheres in pride.",
+            "central_conflict": "Shani resists submission as cosmic arbiter.",
+            "resolution": "Shani casts his downward glance, crushing arrogance.",
+            "phases": [
+                {"phase_index": 1, "phase_name": "hook", "narrative_goal": "Initial dilemma."},
+                {"phase_index": 2, "phase_name": "climax", "narrative_goal": "Downward glance."},
+            ],
+            "thematic_lesson": "Cosmic law prevails over ego.",
+        }
+        self.write_plan(plan)
+
+        # 3. Build audio with FakeKokoro yielding ~14s per scene = ~140s total
+        res = self.mod.build_episode_audio(
+            root=self.root,
+            kokoro_factory=lambda m, v: FakeKokoro(sec_per_scene=14.0),
+            whisper_factory=lambda c: FakeWhisper(),
+        )
+        self.assertEqual(res["status"], "ok")
+        self.assertEqual(res["scene_count"], 10)
+        self.assertGreaterEqual(res["total_duration_sec"], 120.0)
+        self.assertLessEqual(res["total_duration_sec"], 180.0)
+
+        # 4. Parse manifest.js and verify metadata fields
+        manifest_path = self.root / "build/manifest.js"
+        self.assertTrue(manifest_path.is_file())
+        raw_js = manifest_path.read_text(encoding="utf-8")
+        prefix = "window.EPISODE_MANIFEST = "
+        json_body = raw_js.split(prefix, 1)[1].strip().rstrip(";")
+        manifest = json.loads(json_body)
+        self.assertEqual(manifest["content_format"], "standalone")
+        self.assertIsNone(manifest["series_id"])
+        self.assertEqual(manifest["duration_target_seconds"], 150.0)
+        self.assertEqual(manifest["target_duration_range"], {"min_seconds": 120.0, "max_seconds": 180.0})
+        self.assertEqual(manifest["narrative_structure"], "eight_phase_complete_arc")
+        self.assertIsNotNone(manifest["story_arc"])
+        self.assertEqual(len(manifest["scenes"]), 10)
 
 
 if __name__ == "__main__":

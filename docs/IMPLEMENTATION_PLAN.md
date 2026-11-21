@@ -316,3 +316,58 @@ flowchart LR
 - **Step 1 (Pre-Launch Calibration):** Execute 3 consecutive daily calibration episodes across the 3 editorial pillars in strict `private_review` mode (`allow_public_or_scheduled: false`).
 - **Step 2 (Mobile Quality Audit):** Review each private Short in YouTube Studio on mobile devices to verify pacing, audio loudness (-14 LUFS), zero mobile DAC clipping, and clean-canvas aesthetics.
 - **Step 3 (Scheduled Publishing Unlock):** Once all 3 calibration episodes pass inspection, toggle `publishing.upload_mode: "scheduled"` and `publishing.allow_public_or_scheduled: true` in `config.yaml` to begin scheduled distribution (defaulting to 18:30 IST / 13:00 UTC).
+
+---
+
+### 11. Reference Video Evolution Roadmap
+
+Based on detailed frame-by-frame and audio analysis of the reference video (*Shani Katha Episode 1: Ravana Made Shani His Staircase… Then Shani Looked Down*, 150s, 480×854, 8-phase narrative arc), Sutradhar is evolving into an autonomous mythological storytelling and video-generation system.
+
+#### Phase 1: Foundation — Content Format & Duration Flexibility: COMPLETED
+- **Fully Automated Content Planning & Zero-Manual-Input Showrunner:**
+  - The pipeline operates 100% autonomously: user involvement is limited solely to sending the Master Automation Prompt.
+  - Antigravity autonomously inspects database state, rotates across editorial pillars, selects compelling mythological/historical/scientific topics, decides between standalone or episodic series format, and sets the optimal duration.
+- **Dual Content Formats (`standalone` & `episodic_series`):**
+  - **Standalone Videos:** Self-contained stories with full 8-phase dramatic arcs (Hook $\to$ Premise $\to$ Rising Action $\to$ Escalation $\to$ Confrontation $\to$ Climax $\to$ Resolution $\to$ Concluding Thought). No active series required; `series_id` is null.
+  - **Episodic Series:** Connected narratives where **each individual episode delivers a complete, resolved story** while maintaining cross-episode character and visual continuity.
+- **Flexible Duration Spectrum (30s – 180s):**
+  - **Absolute Minimum Duration:** 30.0 seconds.
+  - **Absolute Maximum Duration:** 180.0 seconds (3 minutes).
+  - **Preferred Duration Sweet Spot:** 40.0 seconds to 120.0 seconds (2 minutes).
+  - **Dynamic Pacing:** Duration adapts to story complexity: concise paradoxes (~40–60s, 5–7 scenes), character dramas (~70–110s, 8–11 scenes), epic clashes (~120–180s, 11–15 scenes).
+- **Config Schema Modernization (`config.yaml`):**
+  - Added root `content_format: episodic_series` and `target_duration_range: {min_seconds: 30, max_seconds: 180, preferred_min_seconds: 40, preferred_max_seconds: 120}`.
+  - Updated `format_pacing` matrix with format-specific pacing bounds (`serial`: 30–180s hard, 40–60s target, 5–8 scenes; `episodic_series`: 30–180s hard, 40–120s target, 5–15 scenes; `standalone`: 30–180s hard, 40–120s target, 5–15 scenes).
+  - Added `contextual_text` settings (strictly no burned-in subtitles by default; animated vector callouts permitted for infographics/proper nouns).
+- **Database Schema & Safe Migration (`docs/schema.sql` & `scripts/db_manager.py`):**
+  - Updated `episodes` table: `series_id` is nullable, `episode_number_in_series` is nullable, `content_format TEXT NOT NULL DEFAULT 'serial'` added.
+  - Partial unique index: `idx_unique_non_failed_episode_slot` updated with `WHERE status != 'FAILED' AND series_id IS NOT NULL`.
+  - Added automated non-destructive schema migration (`ensure_episodes_table_columns`) to alter existing tables seamlessly.
+- **Pydantic Storytelling & Plan Models (`scripts/db_manager.py`):**
+  - Implemented `StoryPhase` and `StoryArc` models capturing narrative phases, goals, and climax/resolution indices.
+  - Updated `EpisodePlan` with `content_format`, `story_arc`, `target_duration_sec` (ge=30, le=180), `target_duration_range`, `narrative_structure`, and optional series fields for standalone videos.
+  - Updated `cmd_context` to output format capabilities, standalone planning permissions, and autonomous planning guidelines.
+  - Updated `cmd_record_published` to record standalone episodes with `series_id=NULL` without requiring an active series in the database.
+- **Dynamic Audio Pacing & Manifest Generation (`scripts/build_audio.py`):**
+  - Updated `verify_active_series_continuity_readonly` to skip series matching when `content_format == "standalone"` or `series_id is None`.
+  - Dynamically calculates `hard_min` (min 30s), `hard_max` (max 180s), `target_min`, and `target_max` from `format_pacing` and `target_duration_range`.
+  - Injects `content_format`, `duration_target_seconds`, `story_arc`, and `narrative_structure` into `build/manifest.js`.
+- **GSAP Choreography Engine Scaling (`scripts/generate_composition.py`):**
+  - Scaled atmospheric ember particles across long-form durations using `emberRepeats = Math.max(8, Math.ceil(total_dur / 4.0))`.
+  - Added `dramatic_zoom` camera motion handler (`power3.out` scale 1.35x zoom) for high-impact dramatic revelations.
+  - Verified support for 5 to 15 scenes per composition.
+- **Format-Aware Quality Gate (`scripts/render_and_qa.py`):**
+  - Dynamic duration bounds check enforcing `[30.0s, 180.0s]` global bounds and plan-specific target duration ranges.
+- **Automated Test Suite Expansion (`tests/`):**
+  - Added unit tests across `test_db_manager.py`, `test_build_audio.py`, and `test_render_pipeline.py`.
+  - Test suite covers 47 automated tests.
+- **Subtitles & On-Screen Text Policy:**
+  - Final production videos contain **zero burned-in subtitles or captions by default**. All dialogue and narration remain clean on canvas; YouTube native closed captions handle accessibility.
+- **Master Daily Automation (`docs/MASTER_AUTOMATION_PROMPT.md`):**
+  - Completely updated to guide autonomous topic selection, format determination, and 30s–180s duration setting.
+- **Next Phases in Roadmap:**
+  - **Phase 2:** Story Planning & Scriptwriting Engine (8-phase dramatic arc, natural character dialogue, standalone/episodic prompt templates).
+  - **Phase 3:** Character Art & Puppet Rigs (Shani Dev, Ravana, 4+ expressions, gesture library).
+  - **Phase 4:** Animation & Visual Staging (Multi-character choreography, visual effects, dynamic transitions).
+  - **Phase 5:** Audio & Atmosphere (Multi-voice Kokoro blend, EBU R128 mastering, sidechain ducking).
+  - **Phase 6:** Production Calibration & Clean Start (Channel video cleanup, build/ directory purge, DB re-indexing, clean verification).

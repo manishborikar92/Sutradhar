@@ -426,9 +426,30 @@ def run_render_and_qa_pipeline(root: Path) -> dict[str, Any]:
     actual_duration = float(media_info.get("format", {}).get("duration", 0.0))
     expected_duration = float(manifest["audio"]["total_duration_sec"])
 
-    # Hard bounds 34–50s
-    if actual_duration < 34.0 or actual_duration > 50.0:
-        raise RenderPipelineError(f"Final video duration {actual_duration:.2f}s is outside hard bounds [34s, 50s].")
+    # Dynamic format-aware duration bounds check
+    active_format = manifest.get("content_format") or cfg.get("content_format", "serial")
+    format_pacing = cfg.get("format_pacing", {}).get(active_format, {})
+    default_pacing = cfg.get("episode_pacing", {})
+
+    hard_min = float(format_pacing.get("hard_duration_min_sec", default_pacing.get("hard_duration_min_sec", 30.0)))
+    hard_max = float(format_pacing.get("hard_duration_max_sec", default_pacing.get("hard_duration_max_sec", 180.0)))
+
+    plan_range = manifest.get("target_duration_range")
+    if isinstance(plan_range, dict):
+        p_min = plan_range.get("min_seconds")
+        p_max = plan_range.get("max_seconds")
+        if p_min is not None and p_max is not None:
+            hard_min = max(30.0, float(p_min) * 0.85)
+            hard_max = min(180.0, float(p_max) * 1.15)
+
+    hard_min = max(30.0, hard_min)
+    hard_max = min(180.0, hard_max)
+
+    if actual_duration < hard_min or actual_duration > hard_max:
+        raise RenderPipelineError(
+            f"Final video duration {actual_duration:.2f}s is outside format '{active_format}' hard bounds "
+            f"[{hard_min:.1f}s, {hard_max:.1f}s]."
+        )
 
     expected_render_dur = round(expected_duration + 0.30, 2)
     if abs(actual_duration - expected_render_dur) > 0.6:

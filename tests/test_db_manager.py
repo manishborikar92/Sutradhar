@@ -882,6 +882,183 @@ class TestDbManagerCompliance(unittest.TestCase):
         self.assertEqual(s2_out["series_id"], 2)
         self.assertEqual(s2_out["series_status"], "ACTIVE")
 
+    def test_12_standalone_episode_plan_validation(self) -> None:
+        """Verify EpisodePlan model allows standalone format without series fields."""
+        mod = load_db_manager_module()
+        cfg = mod.load_config(self.root)
+        plan_data = make_valid_episode_plan()
+        plan_data["content_format"] = "standalone"
+        plan_data["series_id"] = None
+        plan_data["series_title"] = None
+        plan_data["episode_number_in_series"] = None
+        plan_data["total_planned_episodes"] = None
+        plan_data["target_duration_sec"] = 150.0
+        plan_data["target_duration_range"] = {"min_seconds": 120.0, "max_seconds": 180.0}
+
+        plan = mod.EpisodePlan.model_validate(plan_data, context={"config": cfg})
+        self.assertEqual(plan.content_format, "standalone")
+        self.assertIsNone(plan.series_id)
+        self.assertIsNone(plan.series_title)
+        self.assertEqual(plan.target_duration_sec, 150.0)
+
+        # serial format must require series_id
+        plan_data["content_format"] = "serial"
+        with self.assertRaises(ValueError) as ctx:
+            mod.EpisodePlan.model_validate(plan_data, context={"config": cfg})
+        self.assertIn("series_id is required", str(ctx.exception))
+
+    def test_13_story_arc_pydantic_validation(self) -> None:
+        """Verify StoryPhase and StoryArc structured storytelling models."""
+        mod = load_db_manager_module()
+
+        phase = mod.StoryPhase(
+            phase_index=1,
+            phase_name="hook",
+            narrative_goal="Intriguing question drawing audience into cosmic mystery.",
+            target_duration_sec=15.0,
+        )
+        self.assertEqual(phase.phase_name, "hook")
+        self.assertEqual(phase.target_duration_sec, 15.0)
+
+        arc = mod.StoryArc(
+            arc_title="Mythological Confrontation",
+            premise="Ravana ascends to conquer the planetary spheres in celestial arrogance.",
+            central_conflict="Shani resists submission as cosmic arbiter of deeds.",
+            resolution="Shani casts his downward glance, crushing Ravana's pride beneath cosmic destiny.",
+            phases=[
+                mod.StoryPhase(phase_index=1, phase_name="hook", narrative_goal="Initial cosmic dilemma.", target_duration_sec=15.0),
+                mod.StoryPhase(phase_index=2, phase_name="premise", narrative_goal="Golden court context.", target_duration_sec=18.0),
+                mod.StoryPhase(phase_index=3, phase_name="rising_action", narrative_goal="Escalation of planetary chains.", target_duration_sec=22.0),
+                mod.StoryPhase(phase_index=4, phase_name="escalation", narrative_goal="Direct defiance of fate.", target_duration_sec=22.0),
+                mod.StoryPhase(phase_index=5, phase_name="confrontation", narrative_goal="Clash of titans.", target_duration_sec=25.0),
+                mod.StoryPhase(phase_index=6, phase_name="climax", narrative_goal="Downward glance released.", target_duration_sec=18.0),
+                mod.StoryPhase(phase_index=7, phase_name="resolution", narrative_goal="Shattered illusions.", target_duration_sec=15.0),
+                mod.StoryPhase(phase_index=8, phase_name="concluding_thought", narrative_goal="Philosophical wrap.", target_duration_sec=15.0),
+            ],
+            thematic_lesson="Pride inevitably bends before universal law.",
+        )
+        self.assertEqual(len(arc.phases), 8)
+        self.assertEqual(arc.arc_title, "Mythological Confrontation")
+
+    def test_14_flexible_scene_count_validation(self) -> None:
+        """Verify 5 to 15 scenes are allowed; <5 and >15 are rejected."""
+        mod = load_db_manager_module()
+        cfg = mod.load_config(self.root)
+
+        def make_n_scenes(n: int) -> list[dict[str, Any]]:
+            base_scenes = make_valid_scenes("test_asset")
+            if n <= len(base_scenes):
+                res = base_scenes[:n]
+            else:
+                res = list(base_scenes)
+                while len(res) < n:
+                    idx = len(res) + 1
+                    res.append({
+                        "scene_index": idx,
+                        "narration_text": f"Extra scene narration text number {idx} describing epic story beats in detail.",
+                        "visual_mode": "kinetic_callout",
+                        "backdrop_rig": "quantum_grid_void",
+                        "diagram_rig": None,
+                        "active_diagram_stage": None,
+                        "primary_character": None,
+                        "secondary_character": None,
+                        "callout_headline": f"STAGE {idx}",
+                        "callout_subtext": "Chronological progression",
+                        "emotion": "calm",
+                        "action_gesture": "idle_breathe",
+                        "mood_palette": "obsidian_amber",
+                        "particle_theme": "starfield_warp",
+                        "camera_motion": "slow_pull",
+                        "transition_sfx": "tension_swell.wav",
+                    })
+            for i, sc in enumerate(res):
+                sc["scene_index"] = i + 1
+            return res
+
+        base_plan = make_valid_episode_plan(bespoke_stem="test_asset")
+        base_plan["content_format"] = "episodic_series"
+
+        # 5 scenes -> valid for episodic_series
+        base_plan["scenes"] = make_n_scenes(5)
+        p5 = mod.EpisodePlan.model_validate(base_plan, context={"config": cfg})
+        self.assertEqual(len(p5.scenes), 5)
+
+        # 10 scenes -> valid for episodic_series
+        base_plan["scenes"] = make_n_scenes(10)
+        p10 = mod.EpisodePlan.model_validate(base_plan, context={"config": cfg})
+        self.assertEqual(len(p10.scenes), 10)
+
+        # 15 scenes -> valid for episodic_series
+        base_plan["scenes"] = make_n_scenes(15)
+        p15 = mod.EpisodePlan.model_validate(base_plan, context={"config": cfg})
+        self.assertEqual(len(p15.scenes), 15)
+
+        # 4 scenes -> invalid (< 5)
+        base_plan["scenes"] = make_n_scenes(4)
+        with self.assertRaises(ValueError) as ctx4:
+            mod.EpisodePlan.model_validate(base_plan, context={"config": cfg})
+        self.assertIn("scenes count must be between 5 and 15 (got 4)", str(ctx4.exception))
+
+        # 16 scenes -> invalid (> 15)
+        base_plan["scenes"] = make_n_scenes(16)
+        with self.assertRaises(ValueError) as ctx16:
+            mod.EpisodePlan.model_validate(base_plan, context={"config": cfg})
+        self.assertIn("scenes count must be between 5 and 15 (got 16)", str(ctx16.exception))
+
+        # Serial format pacing enforcement (5..8 scenes)
+        serial_plan = make_valid_episode_plan(bespoke_stem="test_asset")
+        serial_plan["content_format"] = "serial"
+        serial_plan["scenes"] = make_n_scenes(8)
+        p_serial = mod.EpisodePlan.model_validate(serial_plan, context={"config": cfg})
+        self.assertEqual(len(p_serial.scenes), 8)
+
+        serial_plan["scenes"] = make_n_scenes(9)
+        with self.assertRaises(ValueError) as ctx_serial:
+            mod.EpisodePlan.model_validate(serial_plan, context={"config": cfg})
+        self.assertIn("scenes count must be between 5 and 8 (got 9)", str(ctx_serial.exception))
+
+    def test_15_standalone_publishing_db_recording(self) -> None:
+        """Verify cmd_record_published records standalone episodes without requiring active series."""
+        mod = load_db_manager_module()
+        self.assertEqual(self.run_cli("--init").returncode, 0)
+
+        # Write standalone episode plan
+        bespoke_stem = "standalone_diagram"
+        plan = make_valid_episode_plan(bespoke_stem=bespoke_stem)
+        plan["content_format"] = "standalone"
+        plan["series_id"] = None
+        plan["series_title"] = None
+        plan["episode_number_in_series"] = None
+        plan["total_planned_episodes"] = None
+        plan["global_episode_number"] = 1
+        plan["bespoke_asset_path"] = f"assets/svg/diagrams/{bespoke_stem}.svg"
+        plan["youtube_title"] = "Standalone Epic Tale of Cosmic Balance #Mythology"
+        self.write_build_json("episode_plan.json", plan)
+
+        # Write publish result
+        pub_result = {
+            "video_id": "standalone_vid_999",
+            "playlist_id": None,
+            "upload_status": "PRIVATE_REVIEW",
+        }
+        self.write_build_json("publish_result.json", pub_result)
+
+        res = self.run_cli("--record-published")
+        self.assertEqual(res.returncode, 0, res.stderr)
+        out = json.loads(res.stdout)
+        self.assertEqual(out["content_format"], "standalone")
+        self.assertIsNone(out["series_id"])
+        self.assertEqual(out["youtube_video_id"], "standalone_vid_999")
+
+        # Verify DB contents
+        conn = mod.connect_db(self.root / "episodes.db")
+        row = conn.execute("SELECT * FROM episodes WHERE youtube_video_id = 'standalone_vid_999'").fetchone()
+        conn.close()
+        self.assertIsNotNone(row)
+        self.assertIsNone(row["series_id"])
+        self.assertEqual(row["content_format"], "standalone")
+        self.assertEqual(row["status"], "PRIVATE_REVIEW")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

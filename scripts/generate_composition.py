@@ -678,13 +678,14 @@ function initTimeline() {
     if (ms) gsap.set(ms, { opacity: 0 });
   });
 
-  // Continuous floating embers
+  // Continuous floating embers across long-form or short-form timeline
+  const emberRepeats = Math.max(8, Math.ceil(total_dur / 4.0));
   embers.forEach((ember, i) => {
     const dur = 4.5 + (i % 3) * 1.2;
     const delay = (i * 0.4) % 3.0;
     masterTl.fromTo(ember,
       { y: 1950, x: "+=" + ((i % 4) * 35 - 50), opacity: 0 },
-      { y: -60, opacity: 0.85, duration: dur, ease: "none", repeat: 8 },
+      { y: -60, opacity: 0.85, duration: dur, ease: "none", repeat: emberRepeats },
       delay
     );
   });
@@ -731,6 +732,8 @@ function initTimeline() {
       masterTl.fromTo(shotEl, { x: 25 }, { x: -25, duration: dur, ease: "sine.inOut" }, t_start);
     } else if (camMotion === "close_up") {
       masterTl.to(shotEl, { scale: 1.25, y: -35, duration: dur, ease: "power2.out" }, t_start);
+    } else if (camMotion === "dramatic_zoom") {
+      masterTl.fromTo(shotEl, { scale: 1.0, y: 0 }, { scale: 1.35, y: -50, duration: Math.min(dur, 1.2), ease: "power3.out" }, t_start);
     } else if (camMotion === "micro_shake") {
       masterTl.to(stage, { x: 15, duration: 0.04, yoyo: true, repeat: 14, ease: "none" }, t_start + 0.15);
     }

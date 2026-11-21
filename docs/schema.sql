@@ -19,9 +19,10 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_single_active_series
 
 CREATE TABLE IF NOT EXISTS episodes (
     episode_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    series_id INTEGER NOT NULL,
-    episode_number_in_series INTEGER NOT NULL CHECK (episode_number_in_series >= 1),
+    series_id INTEGER,
+    episode_number_in_series INTEGER CHECK (episode_number_in_series IS NULL OR episode_number_in_series >= 1),
     global_episode_number INTEGER NOT NULL UNIQUE CHECK (global_episode_number >= 1),
+    content_format TEXT NOT NULL DEFAULT 'serial' CHECK (content_format IN ('standalone', 'episodic_series', 'serial')),
     youtube_title TEXT NOT NULL,
     summary TEXT NOT NULL,
     bespoke_asset_path TEXT NOT NULL,
@@ -35,7 +36,7 @@ CREATE TABLE IF NOT EXISTS episodes (
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_non_failed_episode_slot
     ON episodes (series_id, episode_number_in_series)
-    WHERE status != 'FAILED';
+    WHERE status != 'FAILED' AND series_id IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS idx_episodes_series_id
     ON episodes (series_id, episode_number_in_series);

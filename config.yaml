@@ -74,15 +74,54 @@ series:
   max_episodes: 6
   completed_history_window: 20
   require_bespoke_asset_per_episode: true
+content_format: episodic_series
+target_duration_range:
+  min_seconds: 30
+  max_seconds: 180
+  preferred_min_seconds: 40
+  preferred_max_seconds: 120
+format_pacing:
+  serial:
+    target_duration_min_sec: 40
+    target_duration_max_sec: 60
+    hard_duration_min_sec: 30
+    hard_duration_max_sec: 180
+    min_scenes: 5
+    max_scenes: 8
+    min_words_per_scene: 8
+    max_words_per_scene: 25
+  episodic_series:
+    target_duration_min_sec: 40
+    target_duration_max_sec: 120
+    hard_duration_min_sec: 30
+    hard_duration_max_sec: 180
+    min_scenes: 5
+    max_scenes: 15
+    min_words_per_scene: 8
+    max_words_per_scene: 35
+  standalone:
+    target_duration_min_sec: 40
+    target_duration_max_sec: 120
+    hard_duration_min_sec: 30
+    hard_duration_max_sec: 180
+    min_scenes: 5
+    max_scenes: 15
+    min_words_per_scene: 8
+    max_words_per_scene: 35
 episode_pacing:
-  target_duration_min_sec: 36
-  target_duration_max_sec: 46
-  hard_duration_min_sec: 34
-  hard_duration_max_sec: 50
+  target_duration_min_sec: 40
+  target_duration_max_sec: 120
+  hard_duration_min_sec: 30
+  hard_duration_max_sec: 180
   min_scenes: 5
-  max_scenes: 8
-  min_words_per_scene: 10
-  max_words_per_scene: 25
+  max_scenes: 15
+  min_words_per_scene: 8
+  max_words_per_scene: 35
+contextual_text:
+  title_cards: true
+  infographics: true
+  character_labels: true
+  cta_cards: true
 tts:
   engine: kokoro_onnx
   sample_rate: 24000

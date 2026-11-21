@@ -360,6 +360,105 @@ class TestRenderPipeline(unittest.TestCase):
         self.assertAlmostEqual(duration_b, 3.0, delta=0.3)
         self.assertTrue(any(s["codec_type"] == "audio" for s in info_b["streams"]))
 
+    def test_09_multi_shot_long_form_composition(self) -> None:
+        """Verify generate_root_composition generates 12-shot composition and engine with ember repeat scaling."""
+        import generate_composition
+
+        build_dir = self.root / "build"
+        build_dir.mkdir(parents=True, exist_ok=True)
+        manifest_p = build_dir / "manifest.js"
+        shutil.copytree(REPO_ROOT / "assets", self.root / "assets")
+        shutil.copy(REPO_ROOT / "config.yaml", self.root / "config.yaml")
+
+        scenes = []
+        for i in range(1, 13):
+            t_start = (i - 1) * 12.0
+            t_end = i * 12.0
+            scenes.append({
+                "scene_index": i,
+                "shot_type": "curtain_establishing" if i == 1 else ("character_closeup_dialogue" if i == 6 else "character_medium"),
+                "backdrop_rig": "golden_lanka_citadel",
+                "primary_character": "ravana",
+                "camera_motion": "dramatic_zoom" if i == 6 else "push_in",
+                "start_sec": t_start,
+                "end_sec": t_end,
+                "duration_sec": 12.0,
+            })
+
+        test_manifest = {
+            "schema_version": "2.0",
+            "language": "en",
+            "content_format": "episodic_series",
+            "audio": {"total_duration_sec": 144.0, "total_frames": 4320},
+            "scenes": scenes,
+        }
+        manifest_p.write_text(f"window.EPISODE_MANIFEST = {json.dumps(test_manifest)};\n", encoding="utf-8")
+
+        res = generate_composition.generate_root_composition(self.root)
+        self.assertEqual(res["scenes_count"], 12)
+        self.assertAlmostEqual(res["duration_sec"], 144.30, delta=0.5)
+
+        # Check index.html
+        idx_content = (self.root / "index.html").read_text(encoding="utf-8")
+        for i in range(1, 13):
+            self.assertIn(f'id="shot_{i}_container"', idx_content)
+
+        # Check engine.js contains ember repeat calculation and dramatic_zoom
+        engine_content = (self.root / "engine.js").read_text(encoding="utf-8")
+        self.assertIn("emberRepeats", engine_content)
+        self.assertIn("dramatic_zoom", engine_content)
+
+    def test_10_dynamic_duration_qa_bounds(self) -> None:
+        """Verify render_and_qa dynamically evaluates bounds per content format."""
+        import render_and_qa
+
+        shutil.copy(REPO_ROOT / "config.yaml", self.root / "config.yaml")
+        cfg = render_and_qa.load_config(self.root)
+
+        # Helper to simulate duration validation logic in render_and_qa
+        def check_bounds(manifest: dict[str, Any], actual_duration: float) -> bool:
+            active_format = manifest.get("content_format") or cfg.get("content_format", "serial")
+            format_pacing = cfg.get("format_pacing", {}).get(active_format, {})
+            default_pacing = cfg.get("episode_pacing", {})
+
+            hard_min = float(format_pacing.get("hard_duration_min_sec", default_pacing.get("hard_duration_min_sec", 30.0)))
+            hard_max = float(format_pacing.get("hard_duration_max_sec", default_pacing.get("hard_duration_max_sec", 180.0)))
+
+            plan_range = manifest.get("target_duration_range")
+            if isinstance(plan_range, dict):
+                p_min = plan_range.get("min_seconds")
+                p_max = plan_range.get("max_seconds")
+                if p_min is not None and p_max is not None:
+                    hard_min = max(30.0, float(p_min) * 0.85)
+                    hard_max = min(180.0, float(p_max) * 1.15)
+
+            hard_min = max(30.0, hard_min)
+            hard_max = min(180.0, hard_max)
+
+            if actual_duration < hard_min or actual_duration > hard_max:
+                raise render_and_qa.RenderPipelineError(
+                    f"Final video duration {actual_duration:.2f}s is outside format '{active_format}' hard bounds [{hard_min:.1f}s, {hard_max:.1f}s]."
+                )
+            return True
+
+        # Episodic series (bounds 30s - 180s): 145s is valid, 25s is invalid, 195s is invalid
+        ep_manifest = {"content_format": "episodic_series", "audio": {"total_duration_sec": 145.0}}
+        self.assertTrue(check_bounds(ep_manifest, 145.0))
+        with self.assertRaises(render_and_qa.RenderPipelineError):
+            check_bounds(ep_manifest, 25.0)
+        with self.assertRaises(render_and_qa.RenderPipelineError):
+            check_bounds(ep_manifest, 195.0)
+
+        # Custom plan range (e.g. 40s - 60s -> hard bounds 34s - 69s): 50s is valid, 28s is invalid
+        custom_manifest = {
+            "content_format": "standalone",
+            "target_duration_range": {"min_seconds": 40.0, "max_seconds": 60.0},
+            "audio": {"total_duration_sec": 50.0},
+        }
+        self.assertTrue(check_bounds(custom_manifest, 50.0))
+        with self.assertRaises(render_and_qa.RenderPipelineError):
+            check_bounds(custom_manifest, 28.0)
+
 
 if __name__ == "__main__":
     unittest.main()

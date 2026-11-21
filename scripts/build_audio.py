@@ -831,6 +831,9 @@ def verify_active_series_continuity_readonly(
     db_path: Path,
     ep_plan: EpisodePlan,
 ) -> None:
+    if getattr(ep_plan, "content_format", "serial") == "standalone" or ep_plan.series_id is None:
+        return
+
     if not db_path.is_file():
         print(
             f"[WARN] Database not found at {db_path}; skipping active-series continuity check.",
@@ -1162,16 +1165,33 @@ def build_episode_audio(
             f"sum(scenes)={sum_duration}s (tolerance={DURATION_TOLERANCE_SEC}s)."
         )
 
-    pacing_cfg = cfg["episode_pacing"]
-    hard_min = float(pacing_cfg["hard_duration_min_sec"])
-    hard_max = float(pacing_cfg["hard_duration_max_sec"])
-    target_min = float(pacing_cfg["target_duration_min_sec"])
-    target_max = float(pacing_cfg["target_duration_max_sec"])
+    active_format = getattr(ep_plan, "content_format", None) or cfg.get("content_format", "serial")
+    format_pacing = cfg.get("format_pacing", {}).get(active_format, {})
+    default_pacing = cfg.get("episode_pacing", {})
+
+    hard_min = float(format_pacing.get("hard_duration_min_sec", default_pacing.get("hard_duration_min_sec", 30.0)))
+    hard_max = float(format_pacing.get("hard_duration_max_sec", default_pacing.get("hard_duration_max_sec", 180.0)))
+    target_min = float(format_pacing.get("target_duration_min_sec", default_pacing.get("target_duration_min_sec", 40.0)))
+    target_max = float(format_pacing.get("target_duration_max_sec", default_pacing.get("target_duration_max_sec", 120.0)))
+
+    if getattr(ep_plan, "target_duration_range", None):
+        plan_range = ep_plan.target_duration_range
+        if isinstance(plan_range, dict):
+            p_min = plan_range.get("min_seconds")
+            p_max = plan_range.get("max_seconds")
+            if p_min is not None and p_max is not None:
+                target_min = float(p_min)
+                target_max = float(p_max)
+                hard_min = max(30.0, target_min * 0.85)
+                hard_max = min(180.0, target_max * 1.15)
+
+    hard_min = max(30.0, hard_min)
+    hard_max = min(180.0, hard_max)
 
     if full_duration < hard_min or full_duration > hard_max:
         raise AudioBuildError(
             f"Total narration duration {full_duration:.2f}s violates hard bounds "
-            f"[{hard_min:.0f}s, {hard_max:.0f}s]. Adjust script word count in build/episode_plan.json."
+            f"[{hard_min:.0f}s, {hard_max:.0f}s] for format '{active_format}'. Adjust script word count in build/episode_plan.json."
         )
 
     # Master full narration with two-pass EBU R128 loudness normalization
@@ -1205,6 +1225,7 @@ def build_episode_audio(
     manifest_payload = {
         "schema_version": "2.0",
         "language": active_lang,
+        "content_format": active_format,
         "series_id": ep_plan.series_id,
         "series_title": ep_plan.series_title,
         "pillar": ep_plan.pillar,
@@ -1212,6 +1233,10 @@ def build_episode_audio(
         "total_planned_episodes": ep_plan.total_planned_episodes,
         "global_episode_number": ep_plan.global_episode_number,
         "youtube_title": ep_plan.youtube_title,
+        "duration_target_seconds": getattr(ep_plan, "target_duration_sec", None),
+        "target_duration_range": getattr(ep_plan, "target_duration_range", None),
+        "story_arc": ep_plan.story_arc.model_dump() if getattr(ep_plan, "story_arc", None) else None,
+        "narrative_structure": getattr(ep_plan, "narrative_structure", None),
         "tts_engine": cfg["tts"]["engine"],
         "tts_voice": ep_plan.tts_voice,
         "bgm_track": ep_plan.bgm_track,
