@@ -8,7 +8,7 @@
   <script src="build/manifest.js"></script>
   <script src="engine.js"></script>
 </head>
-<body data-composition-id="main" data-width="1080" data-height="1920" data-duration="42.64">
+<body data-composition-id="main" data-width="1080" data-height="1920" data-duration="38.38">
 
   <!-- MASTER THEATRICAL STAGE -->
   <div id="stage" data-layout-allow-overflow="true" data-layout-ignore="true">
@@ -37,8 +37,8 @@
     </div>
 
     <!-- DYNAMIC MANIFEST SHOT CONTAINERS -->
-    <!-- SHOT 1: (wide_establishing) -->
-    <div id="shot_1_container" class="shot-container active-shot" data-shot-type="wide_establishing" data-layout-allow-overflow="true" data-layout-ignore="true">
+    <!-- SHOT 1: (curtain_establishing) -->
+    <div id="shot_1_container" class="shot-container active-shot" data-shot-type="curtain_establishing" data-layout-allow-overflow="true" data-layout-ignore="true">
       <div class="bg-svg" data-layout-ignore="true">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920" id="lanka_fullbleed_svg">
   <defs>
@@ -730,8 +730,8 @@
 
 
     </div>
-    <!-- SHOT 4: (cosmic_strike) -->
-    <div id="shot_4_container" class="shot-container" data-shot-type="cosmic_strike" data-layout-allow-overflow="true" data-layout-ignore="true">
+    <!-- SHOT 4: (landscape_cutaway) -->
+    <div id="shot_4_container" class="shot-container" data-shot-type="landscape_cutaway" data-layout-allow-overflow="true" data-layout-ignore="true">
       <div class="bg-svg" data-layout-ignore="true">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920" id="kailash_folk_art_svg">
   <defs>
@@ -928,40 +928,113 @@
 
 
     </div>
-    <!-- SHOT 5: (crushed_submission) -->
-    <div id="shot_5_container" class="shot-container" data-shot-type="crushed_submission" data-layout-allow-overflow="true" data-layout-ignore="true">
+    <!-- SHOT 5: (dramatic_climax) -->
+    <div id="shot_5_container" class="shot-container" data-shot-type="dramatic_climax" data-layout-allow-overflow="true" data-layout-ignore="true">
       <div class="bg-svg" data-layout-ignore="true">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920" id="crushed_atmosphere_svg">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920" id="kailash_subterranean_svg">
   <defs>
-    <!-- Crushed Himalayan Night Atmosphere -->
-    <linearGradient id="crushed_sky" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#020308"/>
-      <stop offset="35%" stop-color="#080d1a"/>
-      <stop offset="65%" stop-color="#14142b"/>
-      <stop offset="85%" stop-color="#241432"/>
-      <stop offset="100%" stop-color="#180720"/>
+    <!-- Deep Obsidian Cavern Gradient -->
+    <linearGradient id="cavern_deep_bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#04060d"/>
+      <stop offset="30%" stop-color="#0e0a16"/>
+      <stop offset="60%" stop-color="#1c0e0b"/>
+      <stop offset="85%" stop-color="#3b1607"/>
+      <stop offset="100%" stop-color="#651e04"/>
     </linearGradient>
+
+    <!-- Molten Gold Tectonic Fissure Gradient -->
+    <linearGradient id="molten_gold_vein" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#451a03"/>
+      <stop offset="25%" stop-color="#d97706"/>
+      <stop offset="50%" stop-color="#fef08a"/>
+      <stop offset="75%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#451a03"/>
+    </linearGradient>
+
+    <!-- Basalt Strata Gradient -->
+    <linearGradient id="basalt_pillar_lit" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2d2232"/>
+      <stop offset="50%" stop-color="#18131d"/>
+      <stop offset="100%" stop-color="#09070c"/>
+    </linearGradient>
+
+    <!-- Mountain Bedrock Arch Gradient -->
+    <linearGradient id="bedrock_roof" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#05070f"/>
+      <stop offset="50%" stop-color="#1a1424"/>
+      <stop offset="100%" stop-color="#2a1208"/>
+    </linearGradient>
+
+    <!-- Subterranean Core Magma Glow -->
+    <radialGradient id="core_magma_glow" cx="50%" cy="85%" r="65%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
+      <stop offset="20%" stop-color="#fef08a" stop-opacity="0.85"/>
+      <stop offset="45%" stop-color="#f59e0b" stop-opacity="0.6"/>
+      <stop offset="75%" stop-color="#b45309" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#1c0701" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Ancient Folk-Art Mandala Stamp for Bedrock Shrines -->
+    <radialGradient id="shrine_halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fef08a" stop-opacity="0.7"/>
+      <stop offset="50%" stop-color="#d97706" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
   </defs>
 
-  <!-- SKY BACKGROUND -->
-  <rect width="1080" height="1920" fill="url(#crushed_sky)"/>
+  <!-- 1. FULL-BLEED CAVERN BACKGROUND -->
+  <rect width="1080" height="1920" fill="url(#cavern_deep_bg)"/>
 
-  <!-- DISTANT STARS & MOON -->
-  <g opacity="0.6">
-    <circle cx="160" cy="180" r="1.5" fill="#fff"/>
-    <circle cx="320" cy="240" r="2" fill="#fff"/>
-    <circle cx="780" cy="160" r="1.5" fill="#fef08a"/>
-    <circle cx="920" cy="220" r="2" fill="#fff"/>
-    <!-- Crescent Moon -->
-    <path d="M 880 160 A 35 35 0 1 0 915 210 A 28 28 0 1 1 880 160 Z" fill="#f8fafc" opacity="0.8"/>
+  <!-- 2. DISTANT BACKGROUND CORE GLOW -->
+  <circle cx="540" cy="1550" r="750" fill="url(#core_magma_glow)"/>
+
+  <!-- 3. DEEP TECTONIC ROCK VEINS & CRUST FRACTURES -->
+  <g id="tectonic_fissures" opacity="0.85">
+    <path d="M 540 1850 Q 520 1450 480 1150 T 560 750 T 510 350 L 535 350 Q 590 750 515 1150 T 575 1450 Z" fill="url(#molten_gold_vein)"/>
+    <path d="M 320 1920 Q 360 1520 280 1280 T 380 920" stroke="#f59e0b" stroke-width="4" fill="none" opacity="0.6"/>
+    <path d="M 760 1920 Q 720 1520 800 1280 T 700 920" stroke="#f59e0b" stroke-width="4" fill="none" opacity="0.6"/>
+    <path d="M 180 1800 Q 240 1400 160 1100" stroke="#d97706" stroke-width="3" fill="none" opacity="0.5"/>
+    <path d="M 900 1800 Q 840 1400 920 1100" stroke="#d97706" stroke-width="3" fill="none" opacity="0.5"/>
   </g>
 
-  <!-- LOW DISTANT SILHOUETTES AT BASE OF SCREEN (y > 1400) -->
-  <g fill="#020306" opacity="0.95">
-    <path d="M 0 1480 L 180 1390 L 360 1460 L 580 1380 L 790 1450 L 980 1370 L 1080 1440 L 1080 1920 L 0 1920 Z"/>
-    <path d="M 0 1600 L 240 1520 L 490 1580 L 740 1500 L 1080 1590 L 1080 1920 L 0 1920 Z" fill="#000002"/>
+  <!-- 4. MASSIVE BASALT STRATA COLUMNS (Flanking Pillars) -->
+  <g id="basalt_pillars">
+    <!-- Left Colonnade -->
+    <path d="M 0 0 L 220 0 L 190 780 L 240 1380 L 160 1920 L 0 1920 Z" fill="url(#basalt_pillar_lit)" stroke="#09070c" stroke-width="4"/>
+    <path d="M 220 0 L 270 420 L 230 920 L 290 1450 L 220 1920 L 160 1920 L 240 1380 L 190 780 Z" fill="#150f1b" opacity="0.9"/>
+    <!-- Right Colonnade -->
+    <path d="M 1080 0 L 860 0 L 890 780 L 840 1380 L 920 1920 L 1080 1920 Z" fill="url(#basalt_pillar_lit)" stroke="#09070c" stroke-width="4"/>
+    <path d="M 860 0 L 810 420 L 850 920 L 790 1450 L 860 1920 L 920 1920 L 840 1380 L 890 780 Z" fill="#150f1b" opacity="0.9"/>
+  </g>
+
+  <!-- 5. CEILING BEDROCK ARCH & JAGGED STALACTITES -->
+  <g id="subterranean_ceiling">
+    <path d="M 0 0 L 1080 0 L 1080 340 L 940 280 L 840 380 L 740 310 L 640 430 L 540 330 L 440 450 L 340 310 L 240 390 L 120 290 L 0 350 Z" fill="url(#bedrock_roof)" stroke="#05070f" stroke-width="5"/>
+    <!-- Deep Crevasses on Roof -->
+    <path d="M 120 220 Q 540 320 960 220" stroke="#05070f" stroke-width="6" fill="none"/>
+    <path d="M 180 290 Q 540 380 900 290" stroke="#05070f" stroke-width="5" fill="none"/>
+    <polygon points="520,330 540,490 560,330" fill="#1c0e0b" stroke="#05070f" stroke-width="2"/>
+    <polygon points="320,310 340,430 360,310" fill="#1c0e0b" stroke="#05070f" stroke-width="2"/>
+    <polygon points="720,310 740,440 760,310" fill="#1c0e0b" stroke="#05070f" stroke-width="2"/>
+  </g>
+
+  <!-- 6. SACRED FOLK-ART ROCK RELIEFS & RIVETS -->
+  <g id="folk_rock_carvings" opacity="0.75">
+    <circle cx="540" cy="880" r="140" fill="url(#shrine_halo)"/>
+    <circle cx="540" cy="880" r="110" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="10 8"/>
+    <circle cx="540" cy="880" r="85" fill="none" stroke="#d97706" stroke-width="2" stroke-dasharray="6 4"/>
+    <polygon points="540,810 565,860 615,880 565,900 540,950 515,900 465,880 515,860" fill="none" stroke="#fef08a" stroke-width="3"/>
+  </g>
+
+  <!-- 7. CAVERN BASE BEDROCK LEDGES & MAGMA POOL -->
+  <g id="cavern_floor">
+    <path d="M 0 1620 Q 280 1560 540 1600 T 1080 1610 L 1080 1920 L 0 1920 Z" fill="#190702"/>
+    <path d="M 0 1720 Q 340 1680 620 1710 T 1080 1700 L 1080 1920 L 0 1920 Z" fill="url(#molten_gold_vein)"/>
+    <ellipse cx="540" cy="1840" rx="460" ry="80" fill="#f59e0b" opacity="0.6"/>
+    <ellipse cx="540" cy="1860" rx="340" ry="50" fill="#fef08a" opacity="0.8"/>
   </g>
 </svg>
+
       </div>
 
 
