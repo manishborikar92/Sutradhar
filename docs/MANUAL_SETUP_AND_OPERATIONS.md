@@ -1,6 +1,6 @@
 # Sutradhar — Manual Setup, Operations & Handoff Guide
 
-This document is the authoritative operations manual for the **Sutradhar** autonomous YouTube Shorts production pipeline. It details completed infrastructure setup, verified production baselines, live YouTube API read-back proof, routine operational workflows, and the exact handoff checklist for **Stage 3D (Antigravity `/automation` Scheduling Setup)**.
+This document is the authoritative operations manual for the **Sutradhar** autonomous YouTube Shorts production pipeline. It details completed infrastructure setup, verified production baselines, live YouTube API read-back proof, the primary **Manual Daily Execution** workflow, and operational guidance for optional **Antigravity App `/automation`** scheduling.
 
 ---
 
@@ -16,7 +16,7 @@ This document is the authoritative operations manual for the **Sutradhar** auton
 | **Step 4** | Refresh Token Generation Script | **COMPLETED** | Long-lived refresh token issued |
 | **Step 5** | Secure Storage in `.env.youtube` | **COMPLETED** | Excluded from Git (`.gitignore`); 621 bytes |
 | **Step 6** | YouTube Studio Auto-Dubbing Settings | **COMPLETED** | Studio auto-dubbing enabled |
-| **Step 7 (Stage 3D)** | Antigravity `/automation` Scheduling | **PENDING USER UI SETUP** | See Section C for exact 5-minute setup instructions |
+| **Step 7 (Phase 3D)** | Operational Workflow & Automation Guide | **COMPLETED** | Manual Daily Execution on Pro established as primary; `/automation` documented as optional upgrade |
 
 > [!NOTE]
 > **Optional Custom Thumbnails Note:** During our live API test, the custom thumbnail upload returned HTTP 403 (`"The caller does not have permission for custom thumbnails"`). This is standard for newer YouTube channels: custom thumbnail uploads require one-time phone verification (**YouTube Studio > Settings > Channel > Feature Eligibility > Intermediate Features**). The pipeline handles this gracefully without crashing or losing the video ID, and YouTube automatically selects a high-quality frame from the uploaded video. Once you verify your phone number in Studio, custom thumbnails upload automatically.
@@ -107,11 +107,11 @@ A real end-to-end `private_review` upload was executed against YouTube Data API 
 
 ---
 
-## SECTION C — Routine Operations & Stage 3D Handoff Checklist
+## SECTION C — Daily Operations & Operational Workflows
 
 ### The 7-Stage Autonomous Execution Cycle
 
-In daily production, Antigravity executes these 7 static commands sequentially with zero dynamic arguments:
+In daily production, Antigravity executes these 7 static commands sequentially with zero dynamic arguments using the explicit Windows virtual environment Python executable:
 
 ```mermaid
 flowchart TD
@@ -125,83 +125,98 @@ flowchart TD
 
 1. **Context & State Inspection:**
    ```powershell
-   python scripts/db_manager.py --context
+   .\.venv\Scripts\python.exe scripts/db_manager.py --context
    ```
 2. **Series Initialization (Only when starting a new series):**
    ```powershell
-   python scripts/db_manager.py --create-series
+   .\.venv\Scripts\python.exe scripts/db_manager.py --create-series
    ```
 3. **Audio Synthesis & Alignment:**
    ```powershell
-   python scripts/build_audio.py
+   .\.venv\Scripts\python.exe scripts/build_audio.py
    ```
 4. **Snapshot QA & Safe-Zone Lint:**
    ```powershell
-   python scripts/preview_frames.py
+   .\.venv\Scripts\python.exe scripts/preview_frames.py
    ```
 5. **Master Rendering, Audio Engineering & Thumbnail:**
    ```powershell
-   python scripts/render_and_qa.py
+   .\.venv\Scripts\python.exe scripts/render_and_qa.py
    ```
    Renders `1080x1920 @ 30fps` MP4, applies dynamic sidechain ducking, masters to `-14.0 LUFS` via KinoCut (quality gate $\ge 80.0$), extracts `build/thumbnail.jpg` ($\le 2\text{ MB}$), and decodes QA frames into `build/final_qa_grid.jpg`.
 6. **Upload & Series Grouping:**
    ```powershell
-   python scripts/publish_youtube.py
+   .\.venv\Scripts\python.exe scripts/publish_youtube.py
    ```
-   Uploads `build/final_short.mp4` and `build/thumbnail.jpg`, verifies private status, adds video to series playlist, and performs read-back verification.
+   Uploads `build/final_short.mp4` and `build/thumbnail.jpg`, verifies private status, adds video to series playlist, and performs live read-back verification (`build/publish_verification.json`).
 7. **State Persistence:**
    ```powershell
-   python scripts/db_manager.py --record-published
+   .\.venv\Scripts\python.exe scripts/db_manager.py --record-published
    ```
    Persists video ID, increments completed series episodes, and rotates thematic pillars upon completion.
 
 ---
 
-### Stage 3D Handoff Checklist for Channel Creator
+### Operational Workflows
 
-Follow these simple steps in your Antigravity chat and YouTube Studio:
+#### 1. Recommended Primary Daily Workflow: Manual Daily Execution
 
-#### Step 1: Inspect and Clean Up the Test Private Video in YouTube Studio
-1. Open [YouTube Studio](https://studio.youtube.com/).
-2. Navigate to **Content > Shorts**.
-3. Verify the private test video: **`[TEST PRIVATE REVIEW] The Secret Geometry Beneath Mount Kailash (Part 1/3) #Shorts`** (`vdkMMm5ucPQ`).
-4. Play it in Studio to verify the clean canvas, British prestige narration, deep dialogue, and sync.
-5. You can keep or delete this test video at your convenience.
-6. *(Optional)* Go to **Settings > Channel > Feature Eligibility > Intermediate Features** and complete one-time phone verification to enable custom thumbnail uploads.
+**Manual Daily Execution** is Sutradhar's authoritative production workflow. 
 
-#### Step 2: Configure Antigravity `/automation` Daily Schedule
-In the Antigravity chat UI, trigger the `/automation` command:
+**Why Manual Daily Execution is Primary:**
+- **Model Tier:** Sutradhar's theatrical Kathputli hierarchical SVG directing, narrative pacing, and visual error detection require **Gemini 2.5 Pro**. Antigravity `/automation` defaults to Flash, which is insufficient for multi-shot puppet anatomy and visual QA reasoning.
+- **Multimodal Visual Oversight:** Directing in chat gives the creator instant visual inspection of `build/qa_grid.jpg`, `build/final_qa_grid.jpg`, and `build/thumbnail.jpg`, ensuring zero detached limbs or styling drift before any upload occurs.
+- **Local Sandbox Reliability:** Antigravity App `/automation` runs as a local sidecar and by default enforces strict unattended auto-denial for network calls and `.env` file reading. Manual execution eliminates sandbox permission timeouts and guarantees smooth YouTube API connectivity.
+- **Host Availability:** The creator initiates production when the workstation is active, avoiding machine-sleep failures.
+
+**Daily 3-Step Execution Procedure:**
+1. **Open Antigravity IDE:** Ensure the workspace is set to `C:\Users\manis\Projects\Sutradhar` and model selection is set to **Gemini 2.5 Pro**.
+2. **Trigger Master Prompt:** Copy and send the contents of [docs/MASTER_AUTOMATION_PROMPT.md](file:///c:/Users/manis/Projects/Sutradhar/docs/MASTER_AUTOMATION_PROMPT.md) in the chat.
+3. **Review End-of-Run Report:**
+   - Confirm all 7 steps executed with exit code `0`.
+   - Inspect the generated `build/final_qa_grid.jpg` and `build/thumbnail.jpg` images displayed by the agent.
+   - Confirm `build/publish_verification.json` reflects `upload_status: "PRIVATE_REVIEW"` and `publishAt: null`.
+   - Inspect the private Short in [YouTube Studio > Content > Shorts](https://studio.youtube.com/).
+
+---
+
+#### 2. Optional Upgrade: Antigravity App `/automation` (Scheduled)
+
+Antigravity App `/automation` is supported as an optional future upgrade for scheduled unattended runs, provided the following verified requirements and constraints are met:
+
+- **Surface Limitation:** `/automation` runs strictly within the **Antigravity Desktop App** (via local background sidecar processes). It cannot run as a cloud cron or in browser-only / standalone CLI environments.
+- **Machine-Awake Requirement:** The host Windows PC must remain powered on, awake, and unlocked at the scheduled time (`CRON_TZ=Asia/Kolkata`). If the machine is sleeping or off, scheduled events fail or stall.
+- **Model Configuration:** You must explicitly switch the automation model configuration from default `Flash` to **`Gemini 2.5 Pro`**.
+- **Interactive Permissions Record:** Because the Windows Terminal Sandbox restricts `.env` file reads and outbound network access by default, an interactive first run is **mandatory** to record and persist `agent_permissions` for:
+  - All 7 whitelisted `.\.venv\Scripts\python.exe` commands.
+  - Outbound HTTPS network access to `www.googleapis.com` and `oauth2.googleapis.com`.
+  - Read access to `.env.youtube`.
+- **Strict Private Review Lock:** The channel must remain strictly locked to `upload_mode: "private_review"` (`allow_public_or_scheduled: false`) in `config.yaml` until at least 3 calibration episodes pass mobile review in YouTube Studio.
+
+To schedule `/automation` in the Antigravity App chat:
 ```text
 /automation schedule daily morning run of Sutradhar pipeline at 06:00
 ```
-When prompted for instructions, point the agent to:
-`docs/MASTER_AUTOMATION_PROMPT.md`
+Point the automation prompt to: `docs/MASTER_AUTOMATION_PROMPT.md`.
 
-#### Step 3: Approve Static Command Whitelist
-When Antigravity requests permissions for unattended execution, approve the 7 static commands in `agent_permissions`:
-```text
-python scripts/db_manager.py --context
-python scripts/db_manager.py --create-series
-python scripts/build_audio.py
-python scripts/preview_frames.py
-python scripts/render_and_qa.py
-python scripts/publish_youtube.py
-python scripts/db_manager.py --record-published
-```
+---
 
-#### Step 4: Run One Controlled Private Review Test Run
-Trigger a single unattended run in `private_review` mode. Once completed, inspect the newly generated episode in YouTube Studio.
+### Phase Gate & Milestone Transition
 
-#### Step 5: Phase 5 Gate Criteria (Before Ever Unlocking Scheduled Mode)
-Do NOT unlock public/scheduled publishing until:
-1. Phase 4 (Kathputli Cast Expansion & Real Audio Library) is completed.
-2. A full 3-episode mini-series has been produced and reviewed in `private_review` mode.
-3. You explicitly change `config.yaml`:
-   ```yaml
-   publishing:
-     upload_mode: "scheduled"
-     allow_public_or_scheduled: true
-   ```
+- **Phase 1 (Environment & Audio Pipeline Fixes):** **COMPLETED**
+- **Phase 2 (Production Core V2 Migration):** **COMPLETED**
+- **Phase 3 (Operational Readiness, Cleanup, Live Verification & Docs):** **COMPLETED**
+  - Steps 1–6 (One-Time YouTube Setup) verified and operational.
+  - Live E2E `private_review` upload verified (`vdkMMm5ucPQ`).
+  - Master daily prompt hardened with `.venv` whitelist and duplicate guards.
+  - Primary manual workflow and optional `/automation` upgrade established.
+- **Phase 4 (Kathputli Cast Expansion & Real Audio Library):** **NEXT**
+  - Expand character SVGs (Lord Shiva, Narad Muni, Shani Dev, Ashwatthama) with verified hierarchical rivet rigging.
+  - Curate authentic royalty-free Indian acoustic instruments and transition SFX.
+- **Phase 5 (3-Episode Calibration & Scheduled Unlock):** **FINAL**
+  - Run full 3-episode mini-series in `private_review` mode.
+  - Creator mobile review and quality audit.
+  - Once verified, toggle `upload_mode: "scheduled"` and `allow_public_or_scheduled: true` in `config.yaml`.
 
 ---
 
@@ -217,4 +232,5 @@ Do NOT unlock public/scheduled publishing until:
 | **KinoCut Quality Gate** | **VERIFIED** | -14.0 LUFS, score $\ge 82/100$, True Peak $\le -1.1\text{ dBTP}$ | None (operational) |
 | **YouTube Data API v3** | **VERIFIED** | Live `private_review` upload (`vdkMMm5ucPQ`) + API read-back | Phone verification for custom thumbnails |
 | **SQLite State Manager** | **VERIFIED** | 37/37 automated tests passing; root `episodes.db` 100% immutable | None (operational) |
-| **Antigravity `/automation`**| **READY FOR SETUP** | Whitelisted 7 commands, clear daily execution prompt | Complete Stage 3D in Antigravity chat |
+| **Master Production Prompt**| **VERIFIED** | Self-contained, `.venv` explicit, duplicate guard, clean canvas | Trigger daily via Antigravity on Pro |
+| **Operational Workflow** | **VERIFIED** | Manual Daily Execution primary; `/automation` documented as optional upgrade | Ready for Phase 4 or first real episode |

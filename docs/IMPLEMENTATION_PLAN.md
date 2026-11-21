@@ -33,8 +33,8 @@ This specification defines **Sutradhar**, a **100% Antigravity-native, zero-recu
 7. **Deterministic Thumbnail Generation & Live Verified Publishing:**
    - `scripts/render_and_qa.py` extracts a clean-canvas, high-impact JPEG thumbnail (`build/thumbnail.jpg` $\le 2\text{ MB}$, 1080×1920) from the episode's peak hero shot.
    - `scripts/publish_youtube.py` uploads the video and custom thumbnail via `thumbnails().set()`, handles 403 phone verification gates gracefully, and executes mandatory live API read-back verification (`videos().list` and `playlistItems().list`), recording a structured audit in `build/publish_verification.json`.
-8. **7 Static Pre-Whitelisted Commands (Zero Dynamic CLI Arguments):**
-   - All stateful handoffs occur via JSON files inside `build/`, enabling unattended Antigravity `/automation` runs with 7 static commands.
+8. **7 Static Pre-Whitelisted Commands (Windows `.venv` Explicit — Zero Dynamic CLI Arguments):**
+   - All stateful handoffs occur via JSON files inside `build/`, enabling Manual Daily Execution on Pro and optional unattended Antigravity `/automation` runs with 7 static commands.
 
 ---
 
@@ -42,7 +42,7 @@ This specification defines **Sutradhar**, a **100% Antigravity-native, zero-recu
 
 | Pipeline Layer | Tool / Dependency | Configuration / Version | License / Tier | Operational Ceiling | External Cost |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Orchestrator & Vision QA** | Google Antigravity IDE + `/automation` | Built-in frontier models | Developer Plan | Runs locally via Antigravity Desktop / CLI | **$0 extra** |
+| **Orchestrator & Vision QA** | Google Antigravity IDE (Gemini 2.5 Pro) + optional `/automation` | Built-in frontier models | Developer Plan | Runs locally via Antigravity Desktop / CLI | **$0 extra** |
 | **Agent Skills** | `hyperframes` + `svg-character-animation` | Global: `C:\Users\manis\.agents\skills\` | Apache 2.0 | Global rules & HyperFrames templates | **$0.00** |
 | **Local Neural TTS (EN & HI)** | `kokoro-onnx` (Kokoro-82M v1.0) | `kokoro-onnx==0.6.1`, ONNX Runtime | **Apache 2.0** | Unlimited offline CPU synthesis; 0 API keys | **$0.00** |
 | **Word Alignment (Audition)** | `faster-whisper` (CTranslate2) | `faster-whisper==1.2.1` (`base`, `int8`) | MIT | Used for voice auditions; video uses `ffprobe` | **$0.00** |
@@ -59,8 +59,8 @@ This specification defines **Sutradhar**, a **100% Antigravity-native, zero-recu
 Sutradhar/
 ├── docs/
 │   ├── IMPLEMENTATION_PLAN.md          # Authoritative architectural specification & project roadmap
-│   ├── MASTER_AUTOMATION_PROMPT.md     # Daily prompt executed by Antigravity /automation
-│   ├── MANUAL_SETUP_AND_OPERATIONS.md  # Setup guide, verification records & Stage 3D handoff
+│   ├── MASTER_AUTOMATION_PROMPT.md     # Daily prompt for Manual Execution (Pro) & optional /automation
+│   ├── MANUAL_SETUP_AND_OPERATIONS.md  # Operations manual, manual workflow guide & verification records
 │   └── schema.sql                      # Reference SQLite schema for episodes.db
 ├── assets/
 │   ├── bgm/
@@ -213,7 +213,7 @@ During `render_and_qa.py`, FFmpeg extracts a clean-canvas, high-impact JPEG thum
 ```mermaid
 flowchart LR
     P1["Phase 1: Pipeline & Model Fixes<br/>(COMPLETED)"] --> P2["Phase 2: Core V2 Migration<br/>(COMPLETED)"]
-    P2 --> P3["Phase 3: Cleanup & Live Verification<br/>(COMPLETED 3A-3C; 3D Ready)"]
+    P2 --> P3["Phase 3: Cleanup, Live Verification & Ops Docs<br/>(COMPLETED)"]
     P3 --> P4["Phase 4: Kathputli Cast & Audio Library<br/>(NEXT)"]
     P4 --> P5["Phase 5: Production Calibration & Unlock<br/>(FINAL)"]
 ```
@@ -231,7 +231,7 @@ flowchart LR
   - `prod_hi_ravana_kailash` (44.3s, KinoCut **82.4 / 100**, PASS)
 - Root `episodes.db` confirmed bit-for-bit unchanged (SHA-256: `729ACCE0CD4F31CC69CECA61470D331ABCBCE5E62B51728AB372CD28F83F8011`).
 
-#### Phase 3 — Operational Readiness, Codebase Cleanup & Live Verification: COMPLETED (3A–3C)
+#### Phase 3 — Operational Readiness, Codebase Cleanup, Live Verification & Operations Docs: COMPLETED
 - **Stage 3A (Cleanup):** Audited and removed obsolete scratch files, old benchmark directories, and quarantined model files. Verified zero broken references. Full test suite: **37/37 PASSED**.
 - **Stage 3B (Thumbnail & Live YouTube Verification):** Added `build/thumbnail.jpg` generation ($\le 2\text{ MB}$, 1080×1920) in `render_and_qa.py`. Upgraded `publish_youtube.py` with `thumbnails.set`, 403 handling, and mandatory API read-back verification. Successfully executed a real live `private_review` upload in an isolated workspace:
   - Video ID: `vdkMMm5ucPQ` (`https://youtu.be/vdkMMm5ucPQ`)
@@ -240,7 +240,7 @@ flowchart LR
   - Read-back verification: **PASSED** (all fields verified against YouTube Data API).
   - Recorded in `build/youtube_e2e_verification.json`.
 - **Stage 3C (Documentation):** Complete rewrite of `IMPLEMENTATION_PLAN.md`, `MASTER_AUTOMATION_PROMPT.md`, and `MANUAL_SETUP_AND_OPERATIONS.md`. Retired obsolete interim docs.
-- **Stage 3D (Antigravity `/automation` Setup):** Ready for user UI configuration.
+- **Stage 3D (Operational Workflow Selection & Automation Documentation):** Established **Manual Daily Execution** on Gemini 2.5 Pro as Sutradhar's recommended primary daily workflow. Documented Antigravity App `/automation` as an optional future upgrade with verified local sidecar, machine-awake, Pro model, and Windows Terminal Sandbox permission requirements.
 
 #### Phase 4 — Kathputli Cast Expansion & Real Audio Library: NEXT
 - Expand Kathputli character roster in `assets/svg/characters/` (Lord Shiva, Narad Muni, Shani Dev, Ashwatthama) following the verified rivet rig standard.

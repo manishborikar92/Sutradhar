@@ -12,16 +12,16 @@ Execute ONE complete episode production run end-to-end strictly following the ru
 2. **Strict Publishing Safety Lock:**
    - NEVER modify `config.yaml` to change `publishing.upload_mode` or `publishing.allow_public_or_scheduled`.
    - While `upload_mode == "private_review"` or `allow_public_or_scheduled == false`, NEVER attempt public or scheduled publishing (`publishAt`).
-   - NEVER read, print, echo, or log any credentials or tokens from `.env.youtube`.
+   - NEVER read, print, echo, or log any credentials, secrets, or tokens from `.env.youtube`. Keep OAuth tokens 100% confidential.
 3. **Git & Database Protection:**
    - Do NOT run `git add`, `git commit`, `git push`, `git reset`, `git checkout`, or `git switch`.
    - NEVER delete, recreate, or manually edit `episodes.db`. All DB state changes happen strictly via `scripts/db_manager.py`.
-4. **Clean-Canvas Visual Rule (Permanent):**
-   - ZERO on-screen captions or subtitles (YouTube generates captions from spoken narration).
+4. **Clean-Canvas Visual Rule (Permanent & Non-Negotiable):**
+   - ZERO on-screen captions or subtitles (YouTube generates captions automatically from clean spoken narration).
    - ZERO on-screen episode titles, series names, episode numbers, or part badges (`PART X OF Y`).
-   - Strictly warm Indian folk-art / obsidian-gold theatrical palette (**zero teal**).
+   - Strictly warm Indian folk-art / obsidian-gold theatrical palette (**zero teal**, zero generic modern wireframes).
 5. **Strict 7-Command Static Whitelist (Windows `.venv` Explicit — Zero Dynamic Arguments, Zero Shell Chaining):**
-   Execute ONLY these exact static commands (one command per call; never alter flags or append arguments):
+   Execute ONLY these exact static commands (one command per call; never alter flags, prepend environment switches, or append arguments) so fresh shells never accidentally run system Python:
    1. `.\.venv\Scripts\python.exe scripts/db_manager.py --context`
    2. `.\.venv\Scripts\python.exe scripts/db_manager.py --create-series`
    3. `.\.venv\Scripts\python.exe scripts/build_audio.py`
