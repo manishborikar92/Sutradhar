@@ -407,4 +407,60 @@ Based on detailed frame-by-frame and audio analysis of the reference video (*Sha
       4. Strict Clean Canvas Rule: **ZERO burned-in subtitles or dialogue captions**. Subtitles are left entirely to native YouTube closed captions.
     - **Task 5.6 (Configuration & DB Alignment):** Updated `config.yaml` with all 13 SFX tracks and 6 BGM tracks with `bgm_by_mood` mapping. Updated `scripts/db_manager.py` to validate `bgm_tracks` and `bgm_by_mood`.
     - **Acceptance Criterion Verified:** Full audio pipeline with timestamped SFX, multi-track BGM mood crossfades, and contextual text rendering verified in `tests/test_render_pipeline.py` (`test_17`, `test_18`, `test_19`, `test_20`). Full test suite: **64/64 tests passing**, HyperFrames check passing with **0 errors**.
-  - **Phase 6:** Cleanup & Fresh Start (Pre-cleanup backups, YouTube channel video deletion with explicit confirmation, build/ directory purge, DB reset).
+  - **Phase 6: Autonomous Story Research & Open-Ended Recurring Episodic Architecture: NEXT**
+    - **Task 6.1 (Purge Legacy Serial Remnants & Universal Anti-Cliffhanger Gate):**
+      - Remove `'serial'` format option and defaults across `config.yaml`, `scripts/db_manager.py`, `scripts/build_audio.py`, `scripts/render_and_qa.py`. Supported formats strictly: `standalone` and `episodic_series`.
+      - Replace `cliffhanger_or_payoff` in `SeriesBibleEpisode` with `satisfying_takeaway` (moral, philosophical, or cosmological resolution).
+      - Enforce strict story completeness and regex rejection of forward-continuation cliffhangers (*"to be continued"*, *"part 2"*, *"in the next episode"*, *"stay tuned"*) on **BOTH** `standalone` and `episodic_series`.
+    - **Task 6.2 (Open-Ended Multi-Series Universe Schema):**
+      - Redesign `series` table in SQLite `episodes.db`:
+        - Remove `idx_single_active_series` unique constraint to allow multiple recurring series universes to be active concurrently (e.g. *Shani Katha*, *Hanuman Katha*, *Krishna Katha*, *Ancient Mysteries*).
+        - Remove the `CHECK (total_planned_episodes BETWEEN 3 AND 6)` ceiling. Replace with open-ended `total_episodes_produced INTEGER NOT NULL DEFAULT 0`.
+        - Series remain ongoing indefinitely unless explicitly archived.
+      - Update `episodes` table:
+        - Remove strict sequential numbering constraint (`episode_number_in_series` becomes an internal index/counter, not a sequential gate).
+        - Add `research_sources_json TEXT` column storing structured research citations and verified facts.
+    - **Task 6.3 (Autonomous Story Research & Source Provenance Engine):**
+      - Implement `StoryResearch` Pydantic model in `scripts/db_manager.py`:
+        - `source_tradition`: e.g. "Skanda Purana, Kashi Khanda, Chapter 32" / "Valmiki Ramayana, Yuddha Kanda"
+        - `canonical_story_summary`: authentic traditional narrative summary
+        - `key_verified_facts`: list of canonical facts preserved in the script
+        - `cross_checked_variants`: notes on regional/textual variants where applicable
+        - `source_references`: list of books, chapters, scripture references, URLs
+      - Integrate autonomous research discovery into `cmd_context` and `docs/MASTER_AUTOMATION_PROMPT.md`:
+        - Antigravity uses web research to discover authentic, verified versions of mythological/historical tales.
+        - Preserves traditional storylines without inventing ungrounded fiction or presenting fake details as scripture.
+    - **Task 6.4 (YouTube Metadata & Citation Integration):**
+      - YouTube Video Titles:
+        - Format for series episodes: `<Specific Story Title> | <Series Name>` (e.g., `When Ravana Made Shani His Staircase | Shani Katha`). Strictly zero sequential episode numbering.
+        - Format for standalone videos: `<Specific Story Title>`.
+      - YouTube Video Descriptions:
+        - Automatically append formatted research references section at the bottom of the description:
+          ```text
+          --- Traditional Sources & References ---
+          • Scripture/Source: Skanda Purana (Kashi Khanda, Chapter 32)
+          • Tradition: Ancient Indian Vedic Katha
+          • Reference: https://...
+          ```
+        - Strict Clean Canvas Rule maintained on video screen (zero on-screen text citations, subtitles, or captions).
+    - **Task 6.5 (Intelligent Multi-Series Rotation & Topic History):**
+      - Update `cmd_context` in `scripts/db_manager.py`:
+        - List all existing recurring series universes with their produced episode counts and last active dates.
+        - Provide a comprehensive `previously_covered_topics` list (recording story titles, legends, and characters previously featured) to prevent repeating stories.
+        - Guide autonomous showrunner decisions:
+          1) Revisit an existing series universe with a fresh, unrepeated self-contained legend.
+          2) Introduce a brand-new series universe and automatically trigger its YouTube playlist creation.
+          3) Produce a one-off standalone story.
+    - **Task 6.6 (Automated Playlist Management for Recurring Series):**
+      - Update `scripts/publish_youtube.py` to ensure every series has a corresponding YouTube playlist created on demand if not already present.
+      - Re-assign existing playlist IDs when revisiting a recurring series so all episodes under *Shani Katha* accumulate cleanly in the *Shani Katha* playlist regardless of when they are published.
+    - **Task 6.7 (Verification & Acceptance Testing):**
+      - Unit tests for open-ended series schema, multi-series concurrent activity, and removal of serial continuation.
+      - Unit tests for universal anti-cliffhanger validation on both standalone and episodic series.
+      - Unit tests for `StoryResearch` validation and automated YouTube description citation formatting.
+      - Integration test: Multi-series rotation test proving Antigravity can publish to *Shani Katha*, switch to *Ancient Mysteries*, and return to *Shani Katha* with proper playlist tracking and zero cross-episode dependency.
+  - **Phase 7: Cleanup & Fresh Start: PENDING / FINAL**
+    - Pre-cleanup backups (database dump, build sample archives, YouTube channel video inventory, config snapshot).
+    - YouTube channel cleanup (review video inventory and delete existing legacy videos upon explicit confirmation).
+    - Build directory cleanup (purge temporary files, rendered media, QA grids).
+    - Database reset and vacuum for clean starting state.
