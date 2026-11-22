@@ -4,6 +4,9 @@ build/
 *.wav
 !assets/sfx/*.wav
 
+# Local backups
+backup/
+
 # Local database state
 episodes.db
 episodes.db-journal
