@@ -103,8 +103,12 @@ Sutradhar/
 │   ├── build_audio.py                  # Dual-language Kokoro synthesis + dialogue DSP + -14.0 LUFS
 │   ├── preview_frames.py               # Composition sync + mid-scene snapshots -> qa_grid.jpg
 │   ├── render_and_qa.py                # HyperFrames render + FFmpeg ducking + KinoCut gate + thumbnail.jpg
-│   ├── publish_youtube.py              # Private review upload + thumbnails.set + API read-back verification
-│   └── generate_composition.py         # Deterministic index.html / styles.css / engine.js synchronizer
+│   ├── publish_youtube.py              # YouTube upload + playlist assignment + API read-back verification
+│   ├── generate_composition.py         # Deterministic index.html / styles.css / engine.js synchronizer
+│   ├── generate_pose_sheets.py         # Character puppet rig and expression QA sheet generator
+│   ├── audition_voices.py              # Kokoro blend audition and RMS dBFS calibration utility
+│   ├── cleanup_project.py              # Project build/HyperFrames artifact and database reset utility
+│   └── cleanup_youtube.py              # YouTube channel inventory audit and safe deletion utility
 ├── tests/
 │   ├── test_audition_voices.py         # Kokoro blend math, RMS dBFS, and immutability tests
 │   ├── test_build_audio.py             # Audio pipeline, duration bounds, and model quarantine tests
@@ -421,3 +425,4 @@ Based on detailed frame-by-frame and audio analysis of the reference video (*Sha
     - **Task 7.3 (Build Directory & HyperFrames Artifact Cleanup):** Authored and executed `scripts/cleanup_project.py`. Safely removed 18 temporary and rendered artifacts from `build/` (preserving `build/.gitkeep`), and purged `.hyperframes/artifacts/checks/` and `snapshots/`.
     - **Task 7.4 (Database Reset & Vacuum):** Cleared all legacy series and episode records from `episodes.db`, reset `sqlite_sequence` auto-increment counters to 0, and executed `VACUUM;` (reducing database size to 36KB). Verified database schema integrity (`PRAGMA integrity_check;` returned `ok`).
     - **Task 7.5 (Post-Cleanup Verification):** Verified `db_manager.py --context` returns clean starting state with 10 character rigs, 13 backdrops, 4 diagrams, 5 VFX, 5 infographics, 6 BGMs, and 13 SFX detected and ready. Ran full regression test suite: **70/70 tests passing (100%)** and HyperFrames check passing with **0 errors**.
+    - **Task 7.6 (Codebase Audit & Obsolete Script Purge):** Thoroughly audited the entire codebase for redundant, obsolete, and unused scripts. Verified active pipeline commands and utility tools, safely removed one-off audio synthesis build script `scripts/build_sfx_bgm.py` and its cached bytecodes, expanded `scripts/generate_pose_sheets.py` to cover all 10 character rigs, and updated `assets/AUDIO_LIBRARY_MANIFEST.md` to document the full library of 6 BGM and 13 SFX tracks.

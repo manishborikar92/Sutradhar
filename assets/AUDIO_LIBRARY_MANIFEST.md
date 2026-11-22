@@ -22,22 +22,35 @@ This document defines the strict audio asset contracts, technical specifications
 ## 2. Required Core Audio Assets
 
 ### A. Background Music (`assets/bgm/`)
-Each editorial pillar maps directly to a primary BGM track in `config.yaml`:
+Each editorial pillar and emotional mood maps directly to a high-fidelity BGM track in `config.yaml`:
 
-| Filename | Editorial Pillar | Aesthetic Character | Target Mood |
+| Filename | Mood / Editorial Pillar | Aesthetic Character | Target Mood |
 | :--- | :--- | :--- | :--- |
-| `dramatic_mythology.mp3` | **Ancient Epics & Lore** | Classical Indian instrumentation (Rudra Veena, Pakhawaj, Sitar, low cinematic drones). Epic, grand, solemn. | Sovereign defiance, divine confrontation, mythical grandeur. |
-| `epic_history.mp3` | **Hidden History** | War drums, Nagara, Bansuri, ancient bronze gongs, low cello strings. Driving, narrative, investigative. | Lost civilizations, archaeological discoveries, ancient tactical warfare. |
-| `cosmic_mystery.mp3` | **Cosmic & Scientific Paradoxes** | Deep analog synthesizer drones, tanpura overtone drones, bowed glass, subtle celestial pulses. Wonder, tension, paradox. | Event horizons, cosmic geometry, time dilation, Vedic astronomy. |
+| `dramatic_mythology.mp3` | **Dramatic** / Ancient Epics | Classical Indian instrumentation (Rudra Veena, Pakhawaj, Sitar, low cinematic drones). Epic, grand, solemn. | Sovereign defiance, divine confrontation, mythical grandeur. |
+| `epic_history.mp3` | **Epic** / Hidden History | War drums, Nagara, Bansuri, ancient bronze gongs, low cello strings. Driving, narrative, investigative. | Lost civilizations, archaeological discoveries, ancient tactical warfare. |
+| `cosmic_mystery.mp3` | **Mystic / Cosmic** / Paradoxes | Deep analog synthesizer drones, tanpura overtone drones, bowed glass, subtle celestial pulses. Wonder, tension, paradox. | Event horizons, cosmic geometry, time dilation, Vedic astronomy. |
+| `wrath_confrontation.mp3` | **Wrath / Tension** | Aggressive war percussion (132 BPM), minor drone bed, distorted acoustic resonance. | Direct confrontation, climactic defiance, impending battle. |
+| `sorrow_tragedy.mp3` | **Sorrow / Tragedy** | Melancholy raga drone, slow bowing cello, emotional lament. | Tragedy, defeat, sacrifice, cosmic remorse. |
+| `serene_blessing.mp3` | **Serene / Blessing** | Meditative Tanpura drone, bamboo flute harmonics, gentle celestial bells. | Divine boon, resolution, wisdom, transcendental blessing. |
 
 ### B. Sound Effects (`assets/sfx/`)
-Synchronized with shot cuts, character kinetic gestures, and narrative climax impacts:
+Synchronized with shot cuts, character kinetic gestures, visual effects, and narrative climax impacts:
 
 | Filename | Type | Typical Duration | Usage Cue |
 | :--- | :--- | :--- | :--- |
 | `whoosh_soft.wav` | Transition / Motion | 0.60s – 0.90s | Theatrical curtain opening, rapid camera whip pan, sudden shot transition. |
 | `sub_hit.wav` | Impact / Climax | 1.20s – 1.80s | Cosmic strike, weapon impact, sudden realization, climax reveal. |
 | `tension_swell.wav` | Riser / Atmosphere | 2.50s – 4.00s | Building tension before dialogue shout, climax anticipation. |
+| `laser_strike.wav` | VFX / Impact | 1.20s | Divine laser beam, Sudarshana chakra strike, celestial energy burst. |
+| `crystal_shatter.wav` | VFX / Transition | 1.60s | Screen shatter transition, crystalline fracture, barrier collapse. |
+| `thunder_rumble.wav` | Emotion / Atmosphere | 3.50s | Wrath / rage expression shifts, stormy skies, divine anger. |
+| `conch_blast.wav` | Theatrical / Proclamation | 2.80s | Sacred shankha proclamation, battle call, theatrical outro fanfare. |
+| `sword_clash.wav` | Impact / Duel | 1.40s | Weapon clash, physical martial impact, confrontation beats. |
+| `magma_crack.wav` | VFX / Geological | 2.50s | Tectonic fracture cracks, subterranean fissure opening. |
+| `cosmic_chime.wav` | VFX / Celestial | 2.60s | Sunburst flare, celestial revelation, divine appearance. |
+| `curtain_whoosh.wav` | Theatrical Transition | 1.60s | Velvet curtain open / close during establishing and outro. |
+| `footstep_heavy.wav` | Kinetic Motion | 1.10s | Heavy character entry (Ravana, Shiva, warrior arrival). |
+| `energy_hum.wav` | Drone / Aura | 3.00s | Lingering divine prabhavali aura, cosmic meditation energy. |
 
 ---
 

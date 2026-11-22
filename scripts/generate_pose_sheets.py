@@ -35,6 +35,7 @@ CHARACTERS = [
     "surya_dev",
     "indra_dev",
     "shiva",
+    "sutradhar_narrator",
 ]
 
 
