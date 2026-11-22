@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Automated unit tests for scripts/audition_voices.py (Milestone 3 Calibration Utility).
+"""Automated unit tests for scripts/audition_voices.py (Calibration Utility).
 
 Verifies voice filtering, candidate blend logic, report JSON schema,
 and guarantees that config.yaml and episodes.db remain untouched.

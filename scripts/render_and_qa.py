@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sutradhar Milestone 5 — Render, Audio Mastering & KinoCut Quality Gate.
+"""Sutradhar — Render, Audio Mastering & KinoCut Quality Gate.
 
 Whitelisted zero-argument CLI invocation:
     python scripts/render_and_qa.py

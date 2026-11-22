@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sutradhar Phase 4A — Character Pose Verification Sheet Generator.
+"""Sutradhar — Character Pose Verification Sheet Generator.
 
 Renders 4-pose verification contact sheets under `build/phase4_qa/<char>_pose_sheet.png`
 (Idle, Action Raised inside x: 90..990, Close-up Dialogue with open mouth, Alternate/Calm)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Automated unit tests for scripts/preview_frames.py and scripts/render_and_qa.py (Milestone 5)."""
+"""Automated unit tests for scripts/preview_frames.py and scripts/render_and_qa.py."""
 
 from __future__ import annotations
 

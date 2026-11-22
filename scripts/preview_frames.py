@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sutradhar Milestone 5 — Pre-Render Visual QA & Snapshot Grid Generator.
+"""Sutradhar — Pre-Render Visual QA & Snapshot Grid Generator.
 
 Whitelisted zero-argument CLI invocation:
     python scripts/preview_frames.py

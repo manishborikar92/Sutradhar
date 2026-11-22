@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Sutradhar YouTube Automated Publishing Pipeline.
 
-Implements Milestone 6 YouTube Data API v3 publishing integration.
+Implements YouTube Data API v3 publishing integration.
 Supports:
 1. Zero CLI arguments (Antigravity 7-command whitelist).
 2. Fully automated public uploading (upload_mode='public', privacy_status='public').

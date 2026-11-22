@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sutradhar Phase 2 — Dual-Language Expressive Audio Engine.
+"""Sutradhar — Dual-Language Expressive Audio Engine.
 
 Whitelisted zero-argument CLI invocation:
     python scripts/build_audio.py

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Automated unit & integration tests for scripts/build_audio.py (Milestone 3)."""
+"""Automated unit & integration tests for scripts/build_audio.py."""
 
 from __future__ import annotations
 

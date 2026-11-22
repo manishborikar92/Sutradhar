@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sutradhar Phase 4A — Generalized Manifest-Driven Multi-Shot Composition Engine.
+"""Sutradhar — Generalized Manifest-Driven Multi-Shot Composition Engine.
 
 Generates root `index.html`, `styles.css`, and `engine.js` dynamically from
 active `build/manifest.js` (or fallback manifest) and modular SVGs under `assets/svg/`.
