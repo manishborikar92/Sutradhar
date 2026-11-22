@@ -75,21 +75,56 @@ Execute ONE complete episode production run end-to-end strictly following the ru
 ### Step 3: Author High-Retention Multi-Shot Episode Plan (`build/episode_plan.json`)
 Create `build/episode_plan.json` matching the active `primary_language` (`en` or `hi`), specifying:
 - `content_format`: `"standalone"` or `"episodic_series"` (or `"serial"`).
-- `target_duration_sec`: autonomously selected float (30.0 – 180.0).
+- `target_duration_sec`: autonomously selected float (30.0 – 180.0, preferred 40.0 – 120.0).
 - `target_duration_range`: `{"min_seconds": ..., "max_seconds": ...}`.
-- `narrative_structure`: `"eight_phase_complete_arc"`.
-- `story_arc`: Structured multi-phase arc (`arc_title`, `premise`, `central_conflict`, `resolution`, `phases` with `phase_index`, `phase_name`, `narrative_goal`).
+- `narrative_structure`: `"eight_phase_complete_arc"`, `"five_phase_compact_arc"`, or `"in_medias_res"`.
+- `story_arc`: Structured multi-phase arc with `arc_title`, `premise`, `central_conflict`, `resolution`, `climax_scene_index`, `resolution_scene_index`, and `phases`.
 - **5 to 15 dynamic theatrical shots** reflecting the story length.
 
-1. **Storytelling Craft (Zero Textbook Prose):**
+1. **Multi-Phase Narrative Arc Architectures:**
+   - **Eight-Phase Complete Dramatic Arc (`eight_phase_complete_arc`, 70–180s):**
+     1. *Phase 1: Hook / Opening Mystery* (0–6s): Intense visual enigma or impossible dramatic question.
+     2. *Phase 2: Premise & Backstory* (6–18s): Establish core characters, motives, and the cosmic rule at stake.
+     3. *Phase 3: Rising Action / First Move* (18–35s): Hubris or fateful action initiates the clash; stakes begin to mount.
+     4. *Phase 4: Complication / Escalation* (35–55s): Counter-move or divine intervention raises the tension.
+     5. *Phase 5: Direct Confrontation* (55–75s): The two opposing wills or cosmic principles collide head-on.
+     6. *Phase 6: Dramatic Climax* (75–95s): The peak turning point, moral reckoning, or unstoppable strike.
+     7. *Phase 7: Conflict Resolution* (95–110s): The primary conflict is decisively settled with lasting consequence.
+     8. *Phase 8: Concluding Thought / Lesson* (110–130s): Philosophical closure, timeless moral resonance, or series connection.
+   - **Five-Phase Compact Arc (`five_phase_compact_arc`, 40–60s):**
+     1. *Hook*: Instant paradox or dramatic visual.
+     2. *Setup & Premise*: The rule and stakes established.
+     3. *Crisis Escalation*: Boiling point of confrontation.
+     4. *Climax*: The turning point.
+     5. *Resolution & Lesson*: Decisive aftermath and memorable takeaway.
+   - **In Medias Res Structure (`in_medias_res`):**
+     Open Scene 1 at the boiling point of confrontation with zero preamble, flashback to the origin mistake/vow in Scenes 2–3, push back into the climax in Scene 4, and resolve in Scene 5.
+
+2. **Story Completeness & Non-Negotiable Resolution Rules:**
+   - **Standalone Videos:** Must be 100% self-contained. The `central_conflict` MUST be fully resolved in `resolution`. Strictly ZERO cliffhanger hooks (phrases like *"to be continued"*, *"part 2"*, *"stay tuned"*, *"in the next episode"* are forbidden and fail validation).
+   - **Episodic Series:** Every episode must resolve its primary conflict with a satisfying climax and resolution. Subtle thematic bridges or future episode setups are permitted, but never leave today's central conflict dangling.
+
+3. **Dynamic Pacing & Emotional Delivery Rules:**
+   - Narration speed varies dynamically based on scene emotion:
+     - *Calm / Meditative / Solemn*: ~0.88–0.92 for dramatic gravity and awe.
+     - *Wrath / Shock / Climax*: ~0.94–0.96 for urgency and high-stakes tension.
+     - *Dialogue*: Expressive character voice with deep acoustic DSP.
+   - Inter-scene pauses breathe with the story:
+     - Dramatic pause after climax or major revelation: 350–500ms to allow viewers to absorb the impact.
+     - Snappy pause between rapid dialogue/action beats: 150–200ms.
+     - Final scene tail pause: 850ms (`FINAL_SCENE_PAD_SEC`).
+
+4. **Storytelling Craft & Oral Voice (Zero Textbook Prose):**
    - Open Scene 1 (0–4s) with an immediate curiosity hook, paradox, or dramatic confrontation—zero channel intros or greetings.
    - Write crisp, natural oral storytelling in `narration_text` ONLY (never include `caption_text`).
    - Use `speaker_role: "narrator"` for narration and `"character_dialogue"` for impactful character lines (automatically triggering deep dialogue DSP).
    - Check `pronunciations_en.yaml` (for `en`) or `pronunciations_hi.yaml` (for `hi`); if new names appear, append clean verified entries.
-2. **Visual Directing & Originality (YPP Compliance):**
+
+5. **Visual Directing & Originality (YPP Compliance):**
    - Assign distinct `shot_type`, `backdrop_rig`, `characters`, `camera_motion` (including `dramatic_zoom`), `transition_type`, and `sfx_cue` so visuals evolve every 3–6 seconds—never leave a static hold.
    - Feature at least **one unique, unused bespoke SVG asset** (`bespoke_asset_path`, not present in `previous_bespoke_assets`).
-3. **Clean Metadata for YouTube (Never Rendered On-Screen):**
+
+6. **Clean Metadata for YouTube (Never Rendered On-Screen):**
    - Write an engaging `youtube_title` (`<= 100` chars, no `<` or `>`, includes `#Shorts` or relevant hashtags), rich `youtube_description`, and concise `summary`.
 
 ### Step 4: Verify & Author Modular Hierarchical SVG Assets (`assets/svg/`)

@@ -1059,6 +1059,304 @@ class TestDbManagerCompliance(unittest.TestCase):
         self.assertEqual(row["content_format"], "standalone")
         self.assertEqual(row["status"], "PRIVATE_REVIEW")
 
+    def test_16_narrative_templates_and_story_arc_models(self) -> None:
+        """Verify narrative arc templates and StoryArc/StoryPhase model validation."""
+        mod = load_db_manager_module()
+        self.assertIn("eight_phase_complete_arc", mod.NARRATIVE_TEMPLATES)
+        self.assertIn("five_phase_compact_arc", mod.NARRATIVE_TEMPLATES)
+        self.assertIn("in_medias_res", mod.NARRATIVE_TEMPLATES)
+
+        eight_tmpl = mod.NARRATIVE_TEMPLATES["eight_phase_complete_arc"]
+        self.assertEqual(len(eight_tmpl["phases"]), 8)
+        self.assertEqual(eight_tmpl["phases"][0]["structure_type"], "hook")
+        self.assertEqual(eight_tmpl["phases"][5]["structure_type"], "climax")
+        self.assertEqual(eight_tmpl["phases"][6]["structure_type"], "resolution")
+
+        five_tmpl = mod.NARRATIVE_TEMPLATES["five_phase_compact_arc"]
+        self.assertEqual(len(five_tmpl["phases"]), 5)
+
+        # Test StoryArc model instantiation
+        arc = mod.StoryArc(
+            arc_title="Clash of the Planetary Titans",
+            premise="Ravana subjects the Navagrahas to serve as stepping stones.",
+            central_conflict="Shani refuses moral submission and turns his gaze downward.",
+            resolution="Ravana's pride is shattered as the gaze precipitates his doom.",
+            narrative_structure="eight_phase_complete_arc",
+            climax_scene_index=7,
+            resolution_scene_index=8,
+            phases=[
+                mod.StoryPhase(
+                    phase_index=1,
+                    phase_name="Hook",
+                    structure_type="hook",
+                    narrative_goal="Shocking visual of Shani beneath the throne.",
+                    scenes=[1],
+                ),
+                mod.StoryPhase(
+                    phase_index=2,
+                    phase_name="Climax & Resolution",
+                    structure_type="climax",
+                    narrative_goal="Downward glance seals fate.",
+                    scenes=[7, 8],
+                ),
+            ],
+            thematic_lesson="Even kings cannot escape the gravity of justice.",
+        )
+        self.assertEqual(arc.climax_scene_index, 7)
+        self.assertEqual(arc.resolution_scene_index, 8)
+        self.assertEqual(len(arc.phases), 2)
+
+    def test_17_story_completeness_validation(self) -> None:
+        """Verify EpisodePlan enforces story completeness across formats."""
+        mod = load_db_manager_module()
+        cfg = yaml.safe_load((self.root / "config.yaml").read_text(encoding="utf-8"))
+
+        base_plan = make_valid_episode_plan(bespoke_stem="test_asset")
+        base_plan["content_format"] = "standalone"
+        base_plan["series_id"] = None
+        base_plan["series_title"] = None
+        base_plan["episode_number_in_series"] = None
+        base_plan["total_planned_episodes"] = None
+
+        # 1. Valid complete story arc passes cleanly
+        base_plan["story_arc"] = {
+            "arc_title": "The Fall of Lanka's Hubris",
+            "premise": "Ravana imprisons cosmic forces within his citadel.",
+            "central_conflict": "Will cosmic law bend to mortal tyranny?",
+            "resolution": "Justice triumphs completely and cosmic harmony returns to the realms.",
+            "narrative_structure": "eight_phase_complete_arc",
+            "climax_scene_index": 5,
+            "resolution_scene_index": 7,
+            "phases": [
+                {"phase_index": 1, "phase_name": "Hook", "narrative_goal": "Opening mystery.", "scenes": [1, 2]},
+                {"phase_index": 2, "phase_name": "Climax", "narrative_goal": "The strike.", "scenes": [5, 6, 7]},
+            ],
+        }
+        plan_obj = mod.EpisodePlan.model_validate(base_plan, context={"config": cfg})
+        self.assertIsNotNone(plan_obj.story_arc)
+
+        # 2. Climax after resolution fails validation
+        bad_plan = json.loads(json.dumps(base_plan))
+        bad_plan["story_arc"]["climax_scene_index"] = 7
+        bad_plan["story_arc"]["resolution_scene_index"] = 4
+        with self.assertRaises(ValueError) as ctx_order:
+            mod.EpisodePlan.model_validate(bad_plan, context={"config": cfg})
+        self.assertIn("cannot come after", str(ctx_order.exception))
+
+        # 3. Invalid scene index in phase fails validation
+        bad_plan2 = json.loads(json.dumps(base_plan))
+        bad_plan2["story_arc"]["phases"][0]["scenes"] = [1, 99]
+        with self.assertRaises(ValueError) as ctx_idx:
+            mod.EpisodePlan.model_validate(bad_plan2, context={"config": cfg})
+        self.assertIn("references invalid scene_index 99", str(ctx_idx.exception))
+
+        # 4. Standalone video with dangling cliffhanger fails validation
+        bad_plan3 = json.loads(json.dumps(base_plan))
+        bad_plan3["scenes"][-1]["narration_text"] = "Will Lanka survive? To be continued in Part 2 next week."
+        with self.assertRaises(ValueError) as ctx_cliff:
+            mod.EpisodePlan.model_validate(bad_plan3, context={"config": cfg})
+        self.assertIn("Standalone story completeness violation", str(ctx_cliff.exception))
+        self.assertIn("to be continued", str(ctx_cliff.exception))
+
+    def test_18_episodic_series_bible_schema(self) -> None:
+        """Verify SeriesBibleEpisode and NewSeriesPlan support episodic series format."""
+        mod = load_db_manager_module()
+        cfg = yaml.safe_load((self.root / "config.yaml").read_text(encoding="utf-8"))
+
+        episodic_bible = {
+            "arc_summary": "An anthology of cosmic justice through mythological encounters.",
+            "content_format": "episodic_series",
+            "continuity_notes": "Each episode features a self-contained clash resolved by cosmic law.",
+            "episodes": [
+                {
+                    "episode_number": 1,
+                    "working_title": "Shani and the Stepping Stone",
+                    "hook": "Why did the demon king face his stairs downward?",
+                    "narrative_direction": "Explore Ravana's hubris and Shani's gaze.",
+                    "planned_bespoke_asset": "assets/svg/diagrams/ep1_diagram.svg",
+                    "cliffhanger_or_payoff": "Ravana's pride cracks under Shani's unwavering gaze.",
+                    "standalone_story_synopsis": "Ravana forces Shani face down, but Shani's glance turns Lanka's fortune.",
+                    "central_conflict": "Mortal arrogance attempts to conquer divine justice.",
+                    "resolution": "Shani's gaze seals the doom of Lanka, delivering complete poetic justice.",
+                    "series_connection": "Sets up the recurring theme of cosmic karma for future episodes.",
+                },
+                {
+                    "episode_number": 2,
+                    "working_title": "The Liberation by Maruti",
+                    "hook": "Who could survive entering the prison of the planetary god?",
+                    "narrative_direction": "Hanuman encounters Shani trapped in Lanka's vaults.",
+                    "planned_bespoke_asset": "assets/svg/diagrams/ep2_diagram.svg",
+                    "cliffhanger_or_payoff": "Hanuman breaks the chains with selfless devotion.",
+                    "standalone_story_synopsis": "Hanuman frees Shani and receives the blessing that protects devotees.",
+                    "central_conflict": "Physical chains versus spiritual devotion.",
+                    "resolution": "Shani grants the eternal boon of protection to all who honor the wind-god.",
+                    "series_connection": "Deepens the lore of the Navagrahas across the epic.",
+                },
+                {
+                    "episode_number": 3,
+                    "working_title": "The Test of King Harishchandra",
+                    "hook": "Can a king surrender his crown, family, and breath for truth?",
+                    "narrative_direction": "The ultimate test of cosmic rectitude.",
+                    "planned_bespoke_asset": "assets/svg/diagrams/ep3_diagram.svg",
+                    "cliffhanger_or_payoff": "Truth vindicated at the burning ghats.",
+                    "standalone_story_synopsis": "Harishchandra endures the supreme trial without breaking his vow of truth.",
+                    "central_conflict": "Uncompromising truth versus relentless suffering.",
+                    "resolution": "The gods restore his kingdom, crowning truth as supreme eternal law.",
+                    "series_connection": "Final celebration of cosmic dharma in the trilogy.",
+                },
+            ],
+        }
+
+        series_plan = {
+            "content_format": "episodic_series",
+            "series_title": "Chronicles of Cosmic Justice",
+            "pillar": "Ancient Epics & Lore",
+            "tts_voice": "am_fenrir:0.65+bm_george:0.35",
+            "bgm_track": "dramatic_mythology.mp3",
+            "total_planned_episodes": 3,
+            "series_bible_json": episodic_bible,
+        }
+
+        # Validate with NewSeriesPlan
+        plan_obj = mod.NewSeriesPlan.model_validate(series_plan, context={"config": cfg})
+        self.assertEqual(plan_obj.content_format, "episodic_series")
+        self.assertEqual(len(plan_obj.series_bible_json.episodes), 3)
+        self.assertEqual(
+            plan_obj.series_bible_json.episodes[0].central_conflict,
+            "Mortal arrogance attempts to conquer divine justice.",
+        )
+        self.assertIn("doom of Lanka", plan_obj.series_bible_json.episodes[0].resolution)
+
+    def test_19_context_output_autonomous_planning_guidelines(self) -> None:
+        """Verify db_manager.py --context provides rich autonomous storytelling guidelines."""
+        self.assertEqual(self.run_cli("--init").returncode, 0)
+        res = self.run_cli("--context")
+        self.assertEqual(res.returncode, 0, res.stderr)
+        out = json.loads(res.stdout)
+
+        guidelines = out["autonomous_planning_guidelines"]
+        self.assertIn("narrative_templates", guidelines)
+        self.assertIn("eight_phase_complete_arc", guidelines["narrative_templates"])
+        self.assertIn("five_phase_compact_arc", guidelines["narrative_templates"])
+        self.assertIn("in_medias_res", guidelines["narrative_templates"])
+
+        self.assertIn("story_completeness_rules", guidelines)
+        self.assertIn("standalone_mandate", guidelines["story_completeness_rules"])
+        self.assertIn("pacing_rules", guidelines)
+
+    def test_20_acceptance_standalone_eight_phase_complete_story(self) -> None:
+        """Verify acceptance criterion: complete 8-phase standalone story resolves central conflict."""
+        mod = load_db_manager_module()
+        self.assertEqual(self.run_cli("--init").returncode, 0)
+        cfg = yaml.safe_load((self.root / "config.yaml").read_text(encoding="utf-8"))
+
+        bespoke_stem = "shani_staircase_diagram"
+        (self.root / f"assets/svg/diagrams/{bespoke_stem}.svg").write_text("<svg/>", encoding="utf-8")
+
+        # Construct 8 scenes corresponding to the 8 phases
+        scenes = []
+        phase_names = [
+            ("Hook / Opening Mystery", "hook", "shock", "curtain_establishing"),
+            ("Premise & Backstory", "premise", "calm", "slow_push"),
+            ("Rising Action / First Move", "rising_action", "calm", "pan_left"),
+            ("Complication / Escalation", "escalation", "smirk", "slow_pull"),
+            ("Direct Confrontation", "confrontation", "wrath", "dramatic_zoom"),
+            ("Dramatic Climax", "climax", "shock", "dramatic_zoom"),
+            ("Conflict Resolution", "resolution", "calm", "slow_pull"),
+            ("Concluding Thought / Lesson", "concluding_thought", "meditating", "slow_push"),
+        ]
+
+        for i, (p_name, s_type, emo, cam) in enumerate(phase_names, start=1):
+            if i == 1:
+                v_mode = "explainer_diagram"
+                diag_rig = bespoke_stem
+                p_char = None
+                diag_stage = 1
+            else:
+                v_mode = "character_drama"
+                diag_rig = None
+                p_char = "sutradhar_narrator"
+                diag_stage = None
+
+            scenes.append(
+                {
+                    "scene_index": i,
+                    "narration_text": f"Scene {i} narration establishing dramatic mythological stakes and moral reckoning.",
+                    "visual_mode": v_mode,
+                    "backdrop_rig": "deep_cosmos_nebula",
+                    "diagram_rig": diag_rig,
+                    "active_diagram_stage": diag_stage,
+                    "primary_character": p_char,
+                    "secondary_character": None,
+                    "callout_headline": None,
+                    "callout_subtext": None,
+                    "emotion": emo,
+                    "action_gesture": "idle_breathe",
+                    "mood_palette": "obsidian_amber",
+                    "particle_theme": "golden_embers",
+                    "camera_motion": cam,
+                    "transition_sfx": "sub_hit.wav",
+                }
+            )
+
+        standalone_plan = {
+            "content_format": "standalone",
+            "series_id": None,
+            "series_title": None,
+            "episode_number_in_series": None,
+            "total_planned_episodes": None,
+            "global_episode_number": 1,
+            "pillar": "Ancient Epics & Lore",
+            "tts_voice": "am_fenrir:0.65+bm_george:0.35",
+            "bgm_track": "dramatic_mythology.mp3",
+            "bespoke_asset_path": f"assets/svg/diagrams/{bespoke_stem}.svg",
+            "youtube_title": "Why Ravana Made Shani His Staircase #Mythology",
+            "youtube_description": "The complete untold story of Ravana's hubris and Shani's fatal glance. #Shorts",
+            "summary": "Ravana subjugates the Navagrahas, but Shani's downward glance brings Lanka's ultimate downfall.",
+            "target_duration_sec": 120.0,
+            "target_duration_range": {"min_seconds": 100.0, "max_seconds": 140.0},
+            "narrative_structure": "eight_phase_complete_arc",
+            "story_arc": {
+                "arc_title": "The Humbling of Ravana",
+                "premise": "Ravana imprisons the planetary deities to serve as stepping stones for his throne.",
+                "central_conflict": "Ravana demands that Shani submit; Shani refuses spiritual subjugation.",
+                "resolution": "Shani casts his dread glance downward upon Lanka's foundations, sealing the golden city's doom.",
+                "narrative_structure": "eight_phase_complete_arc",
+                "climax_scene_index": 6,
+                "resolution_scene_index": 7,
+                "phases": [
+                    {"phase_index": idx, "phase_name": p[0], "structure_type": p[1], "narrative_goal": f"Execute phase {idx} goal.", "scenes": [idx]}
+                    for idx, p in enumerate(phase_names, start=1)
+                ],
+                "thematic_lesson": "No monarch's crown can overturn the eternal law of karma.",
+            },
+            "scenes": scenes,
+        }
+
+        # 1. Validate EpisodePlan
+        plan_obj = mod.EpisodePlan.model_validate(standalone_plan, context={"config": cfg})
+        self.assertEqual(plan_obj.content_format, "standalone")
+        self.assertEqual(len(plan_obj.scenes), 8)
+        self.assertEqual(plan_obj.story_arc.climax_scene_index, 6)
+        self.assertEqual(plan_obj.story_arc.resolution_scene_index, 7)
+
+        # 2. Record published standalone episode into SQLite
+        self.write_build_json("episode_plan.json", standalone_plan)
+        pub_result = {
+            "video_id": "shani_katha_ep1_vid",
+            "playlist_id": None,
+            "upload_status": "PUBLISHED",
+            "privacy_status": "public",
+        }
+        self.write_build_json("publish_result.json", pub_result)
+
+        res = self.run_cli("--record-published")
+        self.assertEqual(res.returncode, 0, res.stderr)
+        out = json.loads(res.stdout)
+        self.assertEqual(out["content_format"], "standalone")
+        self.assertEqual(out["youtube_video_id"], "shani_katha_ep1_vid")
+        self.assertEqual(out["episode_status"], "PUBLISHED")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

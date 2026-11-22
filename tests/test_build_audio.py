@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+import yaml
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 BUILD_AUDIO_SCRIPT = REPO_ROOT / "scripts" / "build_audio.py"
@@ -528,6 +529,164 @@ class TestBuildAudio(unittest.TestCase):
         self.assertEqual(manifest["narrative_structure"], "eight_phase_complete_arc")
         self.assertIsNotNone(manifest["story_arc"])
         self.assertEqual(len(manifest["scenes"]), 10)
+
+    def test_12_dynamic_pacing_and_pause_calculation(self) -> None:
+        """Verify build_episode_audio dynamically computes emotion-aware speed and narrative pauses."""
+        # Setup clean standalone DB & plan
+        db_mod = load_module(DB_MANAGER_SCRIPT, "db_manager_mod")
+        cfg = yaml.safe_load((self.root / "config.yaml").read_text(encoding="utf-8"))
+        db_mod.cmd_init(self.root, cfg)
+
+        plan = make_episode_plan(scene_count=5)
+        plan["content_format"] = "standalone"
+        plan["series_id"] = None
+        plan["series_title"] = None
+        plan["episode_number_in_series"] = None
+        plan["total_planned_episodes"] = None
+        plan["target_duration_sec"] = 45.0
+        plan["target_duration_range"] = {"min_seconds": 40.0, "max_seconds": 60.0}
+        plan["narrative_structure"] = "five_phase_compact_arc"
+        plan["story_arc"] = {
+            "arc_title": "The Celestial Reckoning",
+            "premise": "An immortal king defies the cosmic balance of karma.",
+            "central_conflict": "Will absolute power withstand inescapable cosmic law?",
+            "resolution": "The king bows before eternal truth, restoring universal balance.",
+            "narrative_structure": "five_phase_compact_arc",
+            "climax_scene_index": 3,
+            "resolution_scene_index": 4,
+            "phases": [
+                {"phase_index": 1, "phase_name": "Hook", "narrative_goal": "Opening paradox."},
+                {"phase_index": 2, "phase_name": "Climax", "narrative_goal": "Cosmic reckoning."},
+            ],
+            "thematic_lesson": "No power surpasses eternal dharma.",
+        }
+
+        # Configure specific scene emotions and overrides
+        # Scene 1: calm / curtain_establishing -> measured pace (~0.96x)
+        plan["scenes"][0]["emotion"] = "calm"
+        plan["scenes"][0]["shot_type"] = "curtain_establishing"
+        plan["scenes"][0]["speed"] = None
+        plan["scenes"][0]["pause_after_ms"] = None
+
+        # Scene 2: wrath / confrontation -> accelerated pace (~1.04x)
+        plan["scenes"][1]["emotion"] = "wrath"
+        plan["scenes"][1]["shot_type"] = "confrontation"
+        plan["scenes"][1]["speed"] = None
+        plan["scenes"][1]["pause_after_ms"] = None
+
+        # Scene 3: climax scene -> accelerated pace (~1.04x) & dramatic pause (0.40s)
+        plan["scenes"][2]["emotion"] = "shock"
+        plan["scenes"][2]["shot_type"] = "dramatic_climax"
+        plan["scenes"][2]["speed"] = None
+        plan["scenes"][2]["pause_after_ms"] = None
+
+        # Scene 4: explicit speed and pause overrides
+        plan["scenes"][3]["emotion"] = "calm"
+        plan["scenes"][3]["speed"] = 1.05
+        plan["scenes"][3]["pause_after_ms"] = 350
+
+        # Scene 5: final scene
+        plan["scenes"][4]["emotion"] = "calm"
+        plan["scenes"][4]["speed"] = None
+        plan["scenes"][4]["pause_after_ms"] = None
+
+        self.write_plan(plan)
+
+        res = self.mod.build_episode_audio(
+            root=self.root,
+            kokoro_factory=lambda m, v: FakeKokoro(sec_per_scene=8.0),
+            whisper_factory=lambda c: FakeWhisper(),
+        )
+        self.assertEqual(res["status"], "ok")
+
+        manifest_path = self.root / "build/manifest.js"
+        raw_js = manifest_path.read_text(encoding="utf-8")
+        prefix = "window.EPISODE_MANIFEST = "
+        json_body = raw_js.split(prefix, 1)[1].strip().rstrip(";")
+        manifest = json.loads(json_body)
+        scenes = manifest["scenes"]
+
+        # Scene 1: calm pace slower than default (0.92 * 0.96 = 0.883)
+        self.assertLess(scenes[0]["applied_speed"], 0.92)
+        self.assertAlmostEqual(scenes[0]["applied_pause_sec"], 0.20, places=2)
+
+        # Scene 2: wrath pace faster than default (0.92 * 1.04 = 0.957)
+        self.assertGreater(scenes[1]["applied_speed"], 0.92)
+
+        # Scene 3: climax scene gets dramatic pause (0.40s)
+        self.assertAlmostEqual(scenes[2]["applied_pause_sec"], 0.40, places=2)
+
+        # Scene 4: explicit overrides honored
+        self.assertEqual(scenes[3]["applied_speed"], 1.05)
+        self.assertAlmostEqual(scenes[3]["applied_pause_sec"], 0.35, places=2)
+
+        # Scene 5: final scene gets FINAL_SCENE_PAD_SEC (0.85s)
+        self.assertAlmostEqual(scenes[4]["applied_pause_sec"], self.mod.FINAL_SCENE_PAD_SEC, places=2)
+
+    def test_13_acceptance_standalone_two_minute_eight_phase_audio(self) -> None:
+        """Verify acceptance criterion: 2-minute standalone video with 8-phase narrative arc audio build."""
+        db_mod = load_module(DB_MANAGER_SCRIPT, "db_manager_mod")
+        cfg = yaml.safe_load((self.root / "config.yaml").read_text(encoding="utf-8"))
+        db_mod.cmd_init(self.root, cfg)
+
+        plan = make_episode_plan(scene_count=8)
+        plan["content_format"] = "standalone"
+        plan["series_id"] = None
+        plan["series_title"] = None
+        plan["episode_number_in_series"] = None
+        plan["total_planned_episodes"] = None
+        plan["target_duration_sec"] = 120.0
+        plan["target_duration_range"] = {"min_seconds": 100.0, "max_seconds": 140.0}
+        plan["narrative_structure"] = "eight_phase_complete_arc"
+        plan["story_arc"] = {
+            "arc_title": "The Humbling of Ravana",
+            "premise": "Ravana imprisons the planetary deities to serve as stepping stones for his throne.",
+            "central_conflict": "Ravana demands that Shani submit; Shani refuses spiritual subjugation.",
+            "resolution": "Shani casts his dread glance downward upon Lanka's foundations, sealing the golden city's doom.",
+            "narrative_structure": "eight_phase_complete_arc",
+            "climax_scene_index": 6,
+            "resolution_scene_index": 7,
+            "phases": [
+                {"phase_index": 1, "phase_name": "Hook", "narrative_goal": "Opening visual hook.", "scenes": [1]},
+                {"phase_index": 2, "phase_name": "Backstory", "narrative_goal": "Context of conquest.", "scenes": [2]},
+                {"phase_index": 3, "phase_name": "Rising Action", "narrative_goal": "Navagrahas subjugated.", "scenes": [3]},
+                {"phase_index": 4, "phase_name": "Complication", "narrative_goal": "Narada intervenes.", "scenes": [4]},
+                {"phase_index": 5, "phase_name": "Confrontation", "narrative_goal": "Throne room challenge.", "scenes": [5]},
+                {"phase_index": 6, "phase_name": "Climax", "narrative_goal": "Downward glance unleashed.", "scenes": [6]},
+                {"phase_index": 7, "phase_name": "Resolution", "narrative_goal": "Lanka's doom sealed.", "scenes": [7]},
+                {"phase_index": 8, "phase_name": "Concluding Lesson", "narrative_goal": "Karma reigns supreme.", "scenes": [8]},
+            ],
+            "thematic_lesson": "No monarch's crown can overturn the eternal law of karma.",
+        }
+
+        # Set climax emotion, shot type, and clear explicit pause to test dynamic climax pause
+        plan["scenes"][5]["emotion"] = "shock"
+        plan["scenes"][5]["shot_type"] = "dramatic_climax"
+        plan["scenes"][5]["pause_after_ms"] = None
+
+        self.write_plan(plan)
+
+        # Build audio with FakeKokoro at 14.5s/scene = ~116s narration + ~3s padding = ~119s
+        res = self.mod.build_episode_audio(
+            root=self.root,
+            kokoro_factory=lambda m, v: FakeKokoro(sec_per_scene=14.5),
+            whisper_factory=lambda c: FakeWhisper(),
+        )
+        self.assertEqual(res["status"], "ok")
+        self.assertEqual(res["scene_count"], 8)
+        self.assertGreaterEqual(res["total_duration_sec"], 100.0)
+        self.assertLessEqual(res["total_duration_sec"], 140.0)
+
+        # Parse manifest and verify
+        manifest_path = self.root / "build/manifest.js"
+        raw_js = manifest_path.read_text(encoding="utf-8")
+        prefix = "window.EPISODE_MANIFEST = "
+        json_body = raw_js.split(prefix, 1)[1].strip().rstrip(";")
+        manifest = json.loads(json_body)
+        self.assertEqual(manifest["content_format"], "standalone")
+        self.assertEqual(manifest["narrative_structure"], "eight_phase_complete_arc")
+        self.assertEqual(len(manifest["scenes"]), 8)
+        self.assertAlmostEqual(manifest["scenes"][5]["applied_pause_sec"], 0.40, places=2)
 
 
 if __name__ == "__main__":

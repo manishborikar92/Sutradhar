@@ -377,6 +377,22 @@ class SeriesBibleEpisode(BaseModel):
     narrative_direction: str = Field(..., min_length=15, max_length=1000)
     planned_bespoke_asset: str = Field(..., min_length=10, max_length=255)
     cliffhanger_or_payoff: str = Field(..., min_length=10, max_length=400)
+    # Episodic series extensions (optional for backwards compatibility)
+    standalone_story_synopsis: Optional[str] = Field(default=None, min_length=15, max_length=1000)
+    central_conflict: Optional[str] = Field(default=None, min_length=10, max_length=500)
+    resolution: Optional[str] = Field(default=None, min_length=10, max_length=500)
+    series_connection: Optional[str] = Field(default=None, max_length=500)
+
+    @field_validator(
+        "standalone_story_synopsis",
+        "central_conflict",
+        "resolution",
+        "series_connection",
+        mode="before",
+    )
+    @classmethod
+    def clean_optional_bible_strings(cls, v: Any) -> Any:
+        return _blank_to_none(v)
 
     @field_validator("planned_bespoke_asset")
     @classmethod
@@ -388,6 +404,7 @@ class SeriesBible(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     arc_summary: str = Field(..., min_length=15, max_length=1500)
+    content_format: Optional[Literal["episodic_series", "serial"]] = "serial"
     continuity_notes: Optional[str] = Field(default=None, max_length=1000)
     episodes: list[SeriesBibleEpisode] = Field(..., min_length=1)
 
@@ -400,6 +417,7 @@ class SeriesBible(BaseModel):
 class NewSeriesPlan(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
+    content_format: Optional[Literal["episodic_series", "serial"]] = "serial"
     series_title: str = Field(..., min_length=3, max_length=150)
     pillar: str = Field(..., min_length=2, max_length=100)
     tts_voice: str = Field(..., min_length=4, max_length=120)
@@ -629,6 +647,50 @@ class ScenePlan(BaseModel):
         return self
 
 
+# ---------------------------------------------------------------------------
+# Narrative Arc Templates & Constants
+# ---------------------------------------------------------------------------
+
+NARRATIVE_TEMPLATES: dict[str, dict[str, Any]] = {
+    "eight_phase_complete_arc": {
+        "name": "Eight-Phase Complete Dramatic Arc",
+        "description": "Reference-quality narrative arc for 70-180s videos with complete story development and resolution.",
+        "phases": [
+            {"phase_index": 1, "phase_name": "Hook / Opening Mystery", "structure_type": "hook", "narrative_goal": "Establish intense stakes, visual intrigue, or central dramatic question immediately."},
+            {"phase_index": 2, "phase_name": "Premise & Backstory", "structure_type": "premise", "narrative_goal": "Introduce core characters, context, motivation, and the underlying condition."},
+            {"phase_index": 3, "phase_name": "Rising Action / First Move", "structure_type": "rising_action", "narrative_goal": "Initial action or hubris initiates the conflict; stakes begin to mount."},
+            {"phase_index": 4, "phase_name": "Complication / Escalation", "structure_type": "escalation", "narrative_goal": "Counter-action or unexpected twist raises the difficulty and tension."},
+            {"phase_index": 5, "phase_name": "Direct Confrontation", "structure_type": "confrontation", "narrative_goal": "The two opposing forces or moral principles collide directly."},
+            {"phase_index": 6, "phase_name": "Dramatic Climax", "structure_type": "climax", "narrative_goal": "The peak moment of reckoning, turning point, or fateful choice."},
+            {"phase_index": 7, "phase_name": "Conflict Resolution", "structure_type": "resolution", "narrative_goal": "The primary conflict is settled with clear, decisive consequence."},
+            {"phase_index": 8, "phase_name": "Concluding Thought / Lesson", "structure_type": "concluding_thought", "narrative_goal": "Philosophical closure, moral resonance, or teaser connection for series."}
+        ]
+    },
+    "five_phase_compact_arc": {
+        "name": "Five-Phase Compact Dramatic Arc",
+        "description": "Streamlined arc optimized for 40-60s concise stories and sharp paradoxes.",
+        "phases": [
+            {"phase_index": 1, "phase_name": "Dramatic Hook", "structure_type": "hook", "narrative_goal": "Direct question or impossible paradox hooks the viewer instantly."},
+            {"phase_index": 2, "phase_name": "Setup & Context", "structure_type": "premise", "narrative_goal": "Establish the rule, characters, or cosmic principle at play."},
+            {"phase_index": 3, "phase_name": "Crisis Escalation", "structure_type": "escalation", "narrative_goal": "The tension peaks as the inevitable collision approaches."},
+            {"phase_index": 4, "phase_name": "Climax / Turning Point", "structure_type": "climax", "narrative_goal": "The decisive turning point or revelation occurs."},
+            {"phase_index": 5, "phase_name": "Resolution & Lesson", "structure_type": "resolution", "narrative_goal": "Conflict resolved, concluding with a memorable philosophical takeaway."}
+        ]
+    },
+    "in_medias_res": {
+        "name": "In Medias Res Dramatic Structure",
+        "description": "Non-linear structure opening at the boiling point of confrontation, then rewinding to reveal origins before concluding.",
+        "phases": [
+            {"phase_index": 1, "phase_name": "Boiling Point Hook", "structure_type": "in_medias_res", "narrative_goal": "Open at the height of confrontation or disaster with zero preamble."},
+            {"phase_index": 2, "phase_name": "Origin Rewind / Flashback", "structure_type": "flashback", "narrative_goal": "Rewind to the pivotal mistake or fateful vow that caused this clash."},
+            {"phase_index": 3, "phase_name": "Escalation", "structure_type": "escalation", "narrative_goal": "Fast-forward through the chain of events leading right back to the crisis."},
+            {"phase_index": 4, "phase_name": "Climax Continuation", "structure_type": "climax", "narrative_goal": "Resume the opening confrontation and push it past the breaking point."},
+            {"phase_index": 5, "phase_name": "Resolution & Closure", "structure_type": "resolution", "narrative_goal": "Decisive aftermath and philosophical meaning of the outcome."}
+        ]
+    }
+}
+
+
 class StoryPhase(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
@@ -637,6 +699,12 @@ class StoryPhase(BaseModel):
     narrative_goal: str = Field(..., min_length=5, max_length=500)
     target_duration_sec: Optional[float] = Field(default=None, ge=1.0, le=180.0)
     scenes: Optional[list[int]] = None
+    structure_type: Optional[str] = None
+
+    @field_validator("structure_type", mode="before")
+    @classmethod
+    def clean_structure_type(cls, v: Any) -> Any:
+        return _blank_to_none(v)
 
 
 class StoryArc(BaseModel):
@@ -647,8 +715,23 @@ class StoryArc(BaseModel):
     central_conflict: str = Field(..., min_length=10, max_length=1000)
     resolution: str = Field(..., min_length=10, max_length=1000)
     phases: list[StoryPhase] = Field(..., min_length=1)
+    narrative_structure: Optional[
+        Literal[
+            "eight_phase_complete_arc",
+            "in_medias_res",
+            "linear_escalation",
+            "five_phase_compact_arc",
+        ]
+    ] = None
+    climax_scene_index: Optional[int] = Field(default=None, ge=1)
+    resolution_scene_index: Optional[int] = Field(default=None, ge=1)
     character_arcs: Optional[dict[str, str]] = None
     thematic_lesson: Optional[str] = None
+
+    @field_validator("narrative_structure", "thematic_lesson", mode="before")
+    @classmethod
+    def clean_arc_optional_strings(cls, v: Any) -> Any:
+        return _blank_to_none(v)
 
 
 class EpisodePlan(BaseModel):
@@ -812,6 +895,69 @@ class EpisodePlan(BaseModel):
                 )
         return self
 
+    @model_validator(mode="after")
+    def validate_story_completeness(self) -> "EpisodePlan":
+        fmt = self.content_format or "serial"
+        total_scenes = len(self.scenes)
+
+        if self.story_arc is not None:
+            arc = self.story_arc
+            if len(arc.central_conflict.strip()) < 10:
+                raise ValueError("story_arc.central_conflict must contain at least 10 characters")
+            if len(arc.resolution.strip()) < 10:
+                raise ValueError("story_arc.resolution must contain at least 10 characters")
+
+            if arc.climax_scene_index is not None:
+                if not (1 <= arc.climax_scene_index <= total_scenes):
+                    raise ValueError(
+                        f"story_arc.climax_scene_index ({arc.climax_scene_index}) must be within 1..{total_scenes}"
+                    )
+            if arc.resolution_scene_index is not None:
+                if not (1 <= arc.resolution_scene_index <= total_scenes):
+                    raise ValueError(
+                        f"story_arc.resolution_scene_index ({arc.resolution_scene_index}) must be within 1..{total_scenes}"
+                    )
+            if arc.climax_scene_index is not None and arc.resolution_scene_index is not None:
+                if arc.climax_scene_index > arc.resolution_scene_index:
+                    raise ValueError(
+                        f"story_arc.climax_scene_index ({arc.climax_scene_index}) cannot come after "
+                        f"story_arc.resolution_scene_index ({arc.resolution_scene_index})"
+                    )
+
+            # Check that scene indices in phases are valid
+            for phase in arc.phases:
+                if phase.scenes:
+                    for s_idx in phase.scenes:
+                        if not (1 <= s_idx <= total_scenes):
+                            raise ValueError(
+                                f"StoryPhase {phase.phase_index} ('{phase.phase_name}') references "
+                                f"invalid scene_index {s_idx} (total scenes: {total_scenes})"
+                            )
+
+            # Story completeness for standalone videos: NO dangling cliffhangers!
+            if fmt == "standalone":
+                cliffhanger_triggers = (
+                    "to be continued",
+                    "part 2",
+                    "in part 2",
+                    "stay tuned for part",
+                    "in the next episode",
+                    "in our next episode",
+                    "find out in the next",
+                    "find out in part",
+                )
+                last_scene_text = self.scenes[-1].narration_text.lower()
+                res_text = arc.resolution.lower()
+                summary_text = self.summary.lower()
+
+                for trigger in cliffhanger_triggers:
+                    if trigger in last_scene_text or trigger in res_text or trigger in summary_text:
+                        raise ValueError(
+                            f"Standalone story completeness violation: found cliffhanger phrase '{trigger}'. "
+                            "Standalone videos must fully resolve their central conflict without unresolved serial hooks."
+                        )
+        return self
+
 
 class PublishResult(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
@@ -929,6 +1075,9 @@ class PublishResult(BaseModel):
         return self
 
 
+SeriesBibleEpisode.model_rebuild()
+SeriesBible.model_rebuild()
+NewSeriesPlan.model_rebuild()
 StoryPhase.model_rebuild()
 StoryArc.model_rebuild()
 ScenePlan.model_rebuild()
@@ -1175,6 +1324,20 @@ def cmd_context(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
                 "guidance": "Autonomously set duration based on story complexity: concise ~40-60s (5-7 scenes), standard ~70-110s (8-11 scenes), epic ~120-180s (11-15 scenes)."
             },
             "storytelling_rule": "Every episode (standalone or series) must have a complete, satisfying story with proper beginning, middle, climax, and resolution.",
+            "narrative_templates": {
+                "eight_phase_complete_arc": "Reference dramatic structure (70-180s): 1. Hook/In Medias Res -> 2. Premise/Backstory -> 3. Rising Action -> 4. Escalation -> 5. Confrontation -> 6. Climax -> 7. Resolution -> 8. Concluding Thought.",
+                "five_phase_compact_arc": "Compact structure for 40-60s stories: 1. Hook -> 2. Setup & Premise -> 3. Crisis Escalation -> 4. Climax -> 5. Resolution & Lesson.",
+                "in_medias_res": "Non-linear structure: Open at the height of confrontation/disaster, flashback to origin, build back to climax, and resolve."
+            },
+            "story_completeness_rules": {
+                "rule": "Every episode (standalone or series) must resolve its primary conflict within the episode.",
+                "standalone_mandate": "Standalone videos must be 100% self-contained with no cliffhangers ('to be continued', 'part 2', etc.).",
+                "episodic_series_mandate": "Each episode tells a complete story with beginning, middle, climax, and resolution, while sharing characters, world-building, and thematic continuity."
+            },
+            "pacing_rules": {
+                "emotion_speed_guidance": "Calm/meditative/solemn: ~0.88-0.92; Urgent/wrath/climax: ~0.94-0.96; Dialogue: 0.88-0.92.",
+                "pause_guidance": "Dramatic pause after climax/revelation: 350-500ms; rapid dialogue: 150-200ms; final scene: 850ms."
+            },
             "canvas_rule": "Strict clean canvas: zero burned-in subtitles by default (YouTube generates closed captions automatically)."
         },
         "active_series": active_series,

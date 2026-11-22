@@ -991,7 +991,27 @@ def build_episode_audio(
 
         # Speaker role & voice selection
         is_dialogue = getattr(scene, "speaker_role", "narrator") == "character_dialogue"
-        speed = float(scene.speed) if getattr(scene, "speed", None) is not None else (default_diag_speed if is_dialogue else default_narr_speed)
+        if getattr(scene, "speed", None) is not None:
+            speed = float(scene.speed)
+        else:
+            base_speed = default_diag_speed if is_dialogue else default_narr_speed
+            # Dynamic emotion- and dramatic-role aware pacing adjustment
+            emotion = getattr(scene, "emotion", "calm")
+            shot_type = getattr(scene, "shot_type", None) or ""
+            is_climax_scene = (
+                getattr(ep_plan, "story_arc", None) is not None
+                and ep_plan.story_arc.climax_scene_index == scene.scene_index
+            )
+
+            multiplier = 1.0
+            if emotion in ("wrath", "shock") or shot_type in ("dramatic_climax", "confrontation", "climax") or is_climax_scene:
+                multiplier = 1.04
+            elif emotion in ("calm", "meditating") or shot_type in ("curtain_establishing", "philosophical_outro"):
+                multiplier = 0.96
+            elif emotion == "smirk":
+                multiplier = 1.01
+
+            speed = round(min(1.15, max(0.80, base_speed * multiplier)), 3)
 
         if is_dialogue:
             voice_spec = getattr(scene, "voice_override", None) or dialogue_voice_spec
@@ -1047,7 +1067,26 @@ def build_episode_audio(
             pad_sec = FINAL_SCENE_PAD_SEC
         else:
             custom_ms = getattr(scene, "pause_after_ms", None)
-            pad_sec = (custom_ms / 1000.0) if custom_ms and custom_ms > 0 else INTER_SCENE_PAD_SEC
+            if custom_ms and custom_ms > 0:
+                pad_sec = custom_ms / 1000.0
+            else:
+                # Dynamic narrative-aware pause calculation
+                is_climax = (
+                    getattr(ep_plan, "story_arc", None) is not None
+                    and ep_plan.story_arc.climax_scene_index == scene.scene_index
+                )
+                shot_type = getattr(scene, "shot_type", None) or ""
+                next_is_dialogue = (
+                    idx + 1 < total_scenes
+                    and getattr(ep_plan.scenes[idx + 1], "speaker_role", "narrator") == "character_dialogue"
+                )
+
+                if is_climax or shot_type in ("dramatic_climax", "revelation"):
+                    pad_sec = 0.40  # 400ms pause after dramatic climax/revelation for emotional resonance
+                elif next_is_dialogue or is_dialogue:
+                    pad_sec = 0.18  # 180ms crisp conversational pause
+                else:
+                    pad_sec = INTER_SCENE_PAD_SEC  # default 0.20s (200ms)
 
         pre_dsp_samples = trim_and_pad_audio(samples, expected_sr, pad_tail_sec=0.0)
 
@@ -1146,6 +1185,8 @@ def build_episode_audio(
                 "end_frame": int(round(end_sec * fps)),
                 "alignment_match_ratio": match_ratio,
                 "words": aligned_words,
+                "applied_speed": speed,
+                "applied_pause_sec": pad_sec,
             }
         )
         manifest_scenes.append(scene_entry)

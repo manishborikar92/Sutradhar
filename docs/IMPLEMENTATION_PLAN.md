@@ -366,8 +366,15 @@ Based on detailed frame-by-frame and audio analysis of the reference video (*Sha
 - **Master Daily Automation (`docs/MASTER_AUTOMATION_PROMPT.md`):**
   - Completely updated to guide autonomous topic selection, format determination, and 30s–180s duration setting.
 - **Next Phases in Roadmap:**
-  - **Phase 2:** Story Planning & Scriptwriting Engine (8-phase dramatic arc, natural character dialogue, standalone/episodic prompt templates).
-  - **Phase 3:** Character Art & Puppet Rigs (Shani Dev, Ravana, 4+ expressions, gesture library).
-  - **Phase 4:** Animation & Visual Staging (Multi-character choreography, visual effects, dynamic transitions).
-  - **Phase 5:** Audio & Atmosphere (Multi-voice Kokoro blend, EBU R128 mastering, sidechain ducking).
-  - **Phase 6:** Production Calibration & Clean Start (Channel video cleanup, build/ directory purge, DB re-indexing, clean verification).
+  - **Phase 2: Storytelling & Narrative Quality: COMPLETED**
+    - **Task 2.1 (Multi-Phase Narrative Arc Templates):** Formally codified 8-phase complete dramatic arc, 5-phase compact arc, and in medias res templates in `scripts/db_manager.py` via `NARRATIVE_TEMPLATES`, `StoryPhase`, and `StoryArc`.
+    - **Task 2.2 (In Medias Res & Non-Linear Structures):** Implemented non-linear story support opening at boiling point confrontation, rewinding to origin backstory, returning to climax, and resolving.
+    - **Task 2.3 (Episodic Series Planning Workflow):** Codified episodic series planning where every episode delivers a complete, concluded story while sharing characters, world-building, and thematic continuity.
+    - **Task 2.4 (Story Completeness Validation):** Added `@model_validator(mode="after") def validate_story_completeness` in `EpisodePlan`, enforcing substantive central conflict, resolution, proper climax-to-resolution scene ordering (`climax <= resolution <= total_scenes`), phase scene boundary validation, and strict rejection of dangling cliffhangers in standalone format.
+    - **Task 2.5 (Series Bible Format for Episodic Mode):** Extended `SeriesBibleEpisode` with `standalone_story_synopsis`, `central_conflict`, `resolution`, and `series_connection`, while maintaining 100% backwards compatibility with serial bibles.
+    - **Task 2.6 (Dynamic Pacing Variation in Audio Synthesis):** Implemented dynamic speech speed multipliers based on scene emotion (0.96x for calm/meditative gravity, 1.04x for wrath/shock/climax urgency) and dynamic inter-scene pauses (400ms dramatic pause after climax/revelation, 180ms crisp conversational pause, 850ms final tail pause) in `scripts/build_audio.py`.
+    - **Acceptance Criterion Verified:** Standalone 2-minute video with complete 8-phase dramatic arc resolving its central conflict verified in both `test_db_manager.py` (`test_20`) and `test_build_audio.py` (`test_13`).
+  - **Phase 3:** Visual Effects & Transitions (VFX engine in engine.js: laser, sunburst, shatter, fracture, ripple; wipe transitions, SVG templates).
+  - **Phase 4:** Character Expression & Multi-Character Scenes (4+ character expressions, multi-puppet choreography, new character rigs, outro curtain call).
+  - **Phase 5:** Audio Enhancement & Polish (SFX library expansion, multi-mood BGM, contextual text SVG rendering).
+  - **Phase 6:** Cleanup & Fresh Start (Pre-cleanup backups, YouTube channel video deletion with explicit confirmation, build/ directory purge, DB reset).
