@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920" id="vfx_screen_shatter">
+  <defs>
+    <!-- Facet Gradients for Crystalline Shards -->
+    <linearGradient id="shardGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
+      <stop offset="25%" stop-color="#fef08a" stop-opacity="0.8" />
+      <stop offset="60%" stop-color="#d97706" stop-opacity="0.5" />
+      <stop offset="100%" stop-color="#180d05" stop-opacity="0.9" />
+    </linearGradient>
+
+    <linearGradient id="shardGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
+      <stop offset="30%" stop-color="#fbbf24" stop-opacity="0.75" />
+      <stop offset="70%" stop-color="#b45309" stop-opacity="0.55" />
+      <stop offset="100%" stop-color="#0c0704" stop-opacity="0.95" />
+    </linearGradient>
+
+    <radialGradient id="shatterFlashGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1.0" />
+      <stop offset="30%" stop-color="#fef08a" stop-opacity="0.85" />
+      <stop offset="60%" stop-color="#f59e0b" stop-opacity="0.5" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- IMPACT FLASH AT EPICENTER (540, 960) -->
+  <circle id="shatter_center_flash" cx="540" cy="960" r="300" fill="url(#shatterFlashGrad)" opacity="0.9" />
+
+  <!-- RADIATING FRACTURE NETWORK LINES -->
+  <g id="shatter_fissures" stroke="#fef08a" stroke-width="2.5" stroke-linecap="round" opacity="0.85">
+    <!-- North & North-West Fissures -->
+    <polyline points="540,960 510,780 430,600 320,410 180,180 60,0" />
+    <polyline points="540,960 580,720 540,480 610,240 570,0" />
+    <polyline points="510,780 360,720 210,610 80,520 0,460" />
+
+    <!-- North & North-East Fissures -->
+    <polyline points="540,960 690,810 840,640 980,440 1080,290" />
+    <polyline points="690,810 740,590 870,390 950,160 1010,0" />
+
+    <!-- South & South-West Fissures -->
+    <polyline points="540,960 480,1140 380,1350 250,1570 120,1780 0,1920" />
+    <polyline points="480,1140 340,1190 190,1280 60,1360 0,1410" />
+
+    <!-- South & South-East Fissures -->
+    <polyline points="540,960 620,1160 720,1390 860,1610 970,1810 1040,1920" />
+    <polyline points="620,1160 760,1210 910,1310 1010,1400 1080,1450" />
+    <polyline points="540,960 550,1260 520,1530 570,1780 540,1920" />
+  </g>
+
+  <!-- LARGE DISPERSIBLE SHARDS (Configured for GSAP Explosive Displacement) -->
+  <g id="shatter_shards" stroke="#fbbf24" stroke-width="2">
+    <!-- Center-Core Inner Shards -->
+    <polygon id="shard_c1" points="540,960 470,890 520,830 580,880" fill="url(#shardGrad1)" />
+    <polygon id="shard_c2" points="540,960 610,910 650,980 570,1020" fill="url(#shardGrad2)" />
+    <polygon id="shard_c3" points="540,960 570,1020 490,1070 450,1000" fill="url(#shardGrad1)" />
+    <polygon id="shard_c4" points="540,960 450,1000 420,930 470,890" fill="url(#shardGrad2)" />
+
+    <!-- North-West Shards -->
+    <polygon id="shard_nw1" points="470,890 420,930 310,810 380,730" fill="url(#shardGrad1)" />
+    <polygon id="shard_nw2" points="520,830 470,890 380,730 440,650" fill="url(#shardGrad2)" />
+    <polygon id="shard_nw3" points="440,650 320,580 360,420 480,490" fill="url(#shardGrad1)" />
+
+    <!-- North-East Shards -->
+    <polygon id="shard_ne1" points="580,880 670,830 730,900 610,910" fill="url(#shardGrad1)" />
+    <polygon id="shard_ne2" points="580,880 520,830 600,690 690,750" fill="url(#shardGrad2)" />
+    <polygon id="shard_ne3" points="690,750 820,680 870,810 730,900" fill="url(#shardGrad1)" />
+
+    <!-- South-West Shards -->
+    <polygon id="shard_sw1" points="450,1000 490,1070 380,1190 320,1100" fill="url(#shardGrad2)" />
+    <polygon id="shard_sw2" points="490,1070 540,1170 440,1280 380,1190" fill="url(#shardGrad1)" />
+    <polygon id="shard_sw3" points="320,1100 380,1190 260,1310 180,1210" fill="url(#shardGrad2)" />
+
+    <!-- South-East Shards -->
+    <polygon id="shard_se1" points="570,1020 650,980 740,1080 640,1140" fill="url(#shardGrad1)" />
+    <polygon id="shard_se2" points="570,1020 640,1140 590,1240 520,1170" fill="url(#shardGrad2)" />
+    <polygon id="shard_se3" points="640,1140 760,1200 710,1340 590,1240" fill="url(#shardGrad1)" />
+  </g>
+
+  <!-- SCATTERED SPECULAR DIAMOND SPLINTERS -->
+  <g id="shatter_splinters" fill="#ffffff" stroke="#fef08a" stroke-width="1.5">
+    <polygon points="490,810 496,822 490,834 484,822" />
+    <polygon points="610,840 618,854 610,868 602,854" />
+    <polygon points="630,1040 638,1052 630,1064 622,1052" />
+    <polygon points="460,1080 468,1095 460,1110 452,1095" />
+    <polygon points="340,940 348,952 340,964 332,952" />
+    <polygon points="720,950 728,962 720,974 712,962" />
+    <polygon points="535,680 543,695 535,710 527,695" />
+    <polygon points="555,1290 563,1305 555,1320 547,1305" />
+  </g>
+</svg>

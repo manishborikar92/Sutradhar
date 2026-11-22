@@ -295,6 +295,164 @@ body {
 }
 
 /* ========================================================================= */
+/* THEATRICAL TRANSITIONS LAYER                                              */
+/* ========================================================================= */
+#transition_layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1080px;
+  height: 1920px;
+  pointer-events: none;
+  z-index: 95;
+  overflow: hidden;
+}
+
+#blind_wipe_container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1080px;
+  height: 1920px;
+  display: none;
+  pointer-events: none;
+  z-index: 96;
+}
+
+.blind-slat {
+  width: 1080px;
+  height: 192px;
+  background: linear-gradient(180deg, #180d05 0%, #291204 50%, #0f0602 100%);
+  border-bottom: 2px solid #b45309;
+  transform-origin: 50% 50%;
+  transform: scaleY(0);
+}
+
+#border_wipe_bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 90px;
+  height: 1920px;
+  background: linear-gradient(90deg, transparent 0%, rgba(180,83,9,0.8) 25%, #fef08a 50%, rgba(180,83,9,0.8) 75%, transparent 100%);
+  box-shadow: 0 0 60px #f59e0b;
+  display: none;
+  pointer-events: none;
+  z-index: 97;
+  transform: translateX(-120px);
+}
+
+#iris_wipe_circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  margin: -60px 0 0 -60px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fef08a 0%, #f59e0b 35%, #180d05 70%, #060814 100%);
+  box-shadow: 0 0 80px #f59e0b;
+  transform: scale(0);
+  display: none;
+  pointer-events: none;
+  z-index: 96;
+}
+
+/* ========================================================================= */
+/* DYNAMIC VFX LAYER                                                         */
+/* ========================================================================= */
+#vfx_layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1080px;
+  height: 1920px;
+  pointer-events: none;
+  z-index: 85;
+  overflow: hidden;
+}
+
+.vfx-element {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1080px;
+  height: 1920px;
+  pointer-events: none;
+  display: none;
+  opacity: 0;
+}
+
+.vfx-element svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+#vfx_laser_beam_container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1080px;
+  height: 1920px;
+  z-index: 75;
+  pointer-events: none;
+  display: none;
+  opacity: 0;
+}
+
+#vfx_sunburst_container {
+  position: absolute;
+  top: 360px;
+  left: 140px;
+  width: 800px;
+  height: 800px;
+  z-index: 55;
+  pointer-events: none;
+  display: none;
+  opacity: 0;
+  transform-origin: 400px 400px;
+}
+
+#vfx_screen_shatter_container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1080px;
+  height: 1920px;
+  z-index: 88;
+  pointer-events: none;
+  display: none;
+  opacity: 0;
+}
+
+#vfx_fracture_cracks_container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1080px;
+  height: 1920px;
+  z-index: 50;
+  pointer-events: none;
+  display: none;
+  opacity: 0;
+}
+
+#vfx_sound_ripple_container {
+  position: absolute;
+  top: 420px;
+  left: 0;
+  width: 1080px;
+  height: 1080px;
+  z-index: 52;
+  pointer-events: none;
+  display: none;
+  opacity: 0;
+  transform-origin: 540px 540px;
+}
+
+/* ========================================================================= */
 /* UNIVERSAL HIERARCHICAL RIVET RIG (0px 0px Stable Joint Origins)            */
 /* ========================================================================= */
 #thigh_left_rot, #thigh_l_rot, #leg_left_group {
@@ -410,12 +568,14 @@ def generate_index_html(
     duration_sec: float,
     scenes_html: list[str],
     puppets_html: list[str],
+    vfx_html: str = "",
 ) -> str:
     title = f"Sutradhar Shorts Composition ({lang.upper()}) - Clean Canvas"
     comp_id = "main"
 
     scenes_str = "\n".join(scenes_html)
     puppets_str = "\n".join(puppets_html)
+    vfx_str = vfx_html if vfx_html else ""
 
     return f"""<!DOCTYPE html>
 <html lang="{lang}">
@@ -453,6 +613,29 @@ def generate_index_html(
       <div class="ember" style="left: 480px;"></div>
       <div class="ember" style="left: 740px;"></div>
       <div class="ember" style="left: 840px;"></div>
+    </div>
+
+    <!-- THEATRICAL TRANSITIONS LAYER -->
+    <div id="transition_layer" data-layout-ignore="true">
+      <div id="blind_wipe_container" data-layout-ignore="true">
+        <div class="blind-slat" data-layout-ignore="true"></div>
+        <div class="blind-slat" data-layout-ignore="true"></div>
+        <div class="blind-slat" data-layout-ignore="true"></div>
+        <div class="blind-slat" data-layout-ignore="true"></div>
+        <div class="blind-slat" data-layout-ignore="true"></div>
+        <div class="blind-slat" data-layout-ignore="true"></div>
+        <div class="blind-slat" data-layout-ignore="true"></div>
+        <div class="blind-slat" data-layout-ignore="true"></div>
+        <div class="blind-slat" data-layout-ignore="true"></div>
+        <div class="blind-slat" data-layout-ignore="true"></div>
+      </div>
+      <div id="border_wipe_bar" data-layout-ignore="true"></div>
+      <div id="iris_wipe_circle" data-layout-ignore="true"></div>
+    </div>
+
+    <!-- DYNAMIC VFX LAYER -->
+    <div id="vfx_layer" data-layout-ignore="true">
+{vfx_str}
     </div>
 
     <!-- DYNAMIC MANIFEST SHOT CONTAINERS -->
@@ -495,6 +678,20 @@ function initTimeline() {
     left: document.querySelector("#curtain_left"),
     right: document.querySelector("#curtain_right")
   };
+  let curtainsOpened = false;
+
+  // Theatrical Transitions Elements
+  const blindWipeContainer = document.querySelector("#blind_wipe_container");
+  const blindSlats = document.querySelectorAll(".blind-slat");
+  const borderWipeBar = document.querySelector("#border_wipe_bar");
+  const irisWipeCircle = document.querySelector("#iris_wipe_circle");
+
+  // Dynamic VFX Layer Elements
+  const vfxLaser = document.querySelector("#vfx_laser_beam_container");
+  const vfxSunburst = document.querySelector("#vfx_sunburst_container");
+  const vfxShatter = document.querySelector("#vfx_screen_shatter_container");
+  const vfxCracks = document.querySelector("#vfx_fracture_cracks_container");
+  const vfxRipple = document.querySelector("#vfx_sound_ripple_container");
 
   // Puppet elements map
   const allPuppets = Array.from(document.querySelectorAll(".puppet-wrapper"));
@@ -705,21 +902,81 @@ function initTimeline() {
     const camMotion = (scene.camera_motion || "push_in").toLowerCase();
     const emotion = (scene.emotion || "calm").toLowerCase();
     const posePreset = scene.pose_preset || (shotType.includes("climax") ? "humbled_braced" : (shotType.includes("close") ? "wrath_dialogue" : "idle_royal"));
+    const transitionType = (scene.transition_type || (idx === 0 ? "curtain_open" : "fade")).toLowerCase();
+    const vfxElements = scene.vfx_elements || [];
 
-    // Shot container display & fade-in
-    masterTl.set(shotEl, { display: "block" }, t_start);
+    // Scene Transition Execution
     if (idx === 0) {
-      masterTl.set(shotEl, { opacity: 1 }, 0.0);
+      masterTl.set(shotEl, { display: "block", opacity: 1 }, 0.0);
+      if (transitionType === "curtain_open" && curtains.left && curtains.right && !curtainsOpened) {
+        masterTl.to(curtains.left, { xPercent: -102, duration: 1.8, ease: "power2.inOut" }, t_start + 0.4);
+        masterTl.to(curtains.right, { xPercent: 102, duration: 1.8, ease: "power2.inOut" }, t_start + 0.4);
+        curtainsOpened = true;
+      }
     } else {
-      masterTl.fromTo(shotEl, { opacity: 0 }, { opacity: 1, duration: 0.30, ease: "power2.inOut" }, t_start);
-    }
-
-    // Previous shot fade-out
-    if (idx > 0) {
       const prevShotEl = document.getElementById("shot_" + idx + "_container");
-      if (prevShotEl) {
-        masterTl.to(prevShotEl, { opacity: 0, duration: 0.30, ease: "power2.inOut" }, t_start);
-        masterTl.set(prevShotEl, { display: "none" }, t_start + 0.30);
+
+      if (transitionType === "blind_wipe" && blindWipeContainer && blindSlats.length > 0) {
+        const t_trans = Math.max(0, t_start - 0.20);
+        masterTl.set(blindWipeContainer, { display: "block" }, t_trans);
+        masterTl.fromTo(blindSlats, { scaleY: 0 }, { scaleY: 1, duration: 0.20, stagger: 0.015, ease: "power2.in" }, t_trans);
+        masterTl.set(shotEl, { display: "block", opacity: 1 }, t_start);
+        if (prevShotEl) {
+          masterTl.set(prevShotEl, { display: "none", opacity: 0 }, t_start);
+        }
+        masterTl.to(blindSlats, { scaleY: 0, duration: 0.20, stagger: 0.015, ease: "power2.out" }, t_start + 0.05);
+        masterTl.set(blindWipeContainer, { display: "none" }, t_start + 0.35);
+      }
+      else if (transitionType === "border_wipe" && borderWipeBar) {
+        const t_trans = Math.max(0, t_start - 0.22);
+        masterTl.set(borderWipeBar, { display: "block", x: -120, opacity: 1 }, t_trans);
+        masterTl.to(borderWipeBar, { x: 1200, duration: 0.45, ease: "power2.inOut" }, t_trans);
+        masterTl.set(shotEl, { display: "block", opacity: 1 }, t_start);
+        if (prevShotEl) {
+          masterTl.set(prevShotEl, { display: "none", opacity: 0 }, t_start);
+        }
+        masterTl.set(borderWipeBar, { display: "none" }, t_start + 0.25);
+      }
+      else if (transitionType === "shatter_transition" && vfxShatter) {
+        const t_trans = Math.max(0, t_start - 0.15);
+        masterTl.set(vfxShatter, { display: "block", opacity: 1 }, t_trans);
+        masterTl.fromTo(vfxShatter, { scale: 0.95 }, { scale: 1.05, duration: 0.15, ease: "power4.in" }, t_trans);
+        if (wrathFlash) {
+          masterTl.fromTo(wrathFlash, { opacity: 0 }, { opacity: 0.70, duration: 0.08, ease: "power1.in" }, t_trans + 0.05);
+          masterTl.to(wrathFlash, { opacity: 0, duration: 0.15, ease: "power1.out" }, t_trans + 0.13);
+        }
+        masterTl.set(shotEl, { display: "block", opacity: 1 }, t_start);
+        if (prevShotEl) {
+          masterTl.set(prevShotEl, { display: "none", opacity: 0 }, t_start);
+        }
+        masterTl.to(vfxShatter, { opacity: 0, scale: 1.25, duration: 0.35, ease: "power2.out" }, t_start);
+        masterTl.set(vfxShatter, { display: "none" }, t_start + 0.35);
+      }
+      else if (transitionType === "radial_wipe" && irisWipeCircle) {
+        const t_trans = Math.max(0, t_start - 0.25);
+        masterTl.set(irisWipeCircle, { display: "block", scale: 0, opacity: 1 }, t_trans);
+        masterTl.to(irisWipeCircle, { scale: 24, duration: 0.25, ease: "power2.in" }, t_trans);
+        masterTl.set(shotEl, { display: "block", opacity: 1 }, t_start);
+        if (prevShotEl) {
+          masterTl.set(prevShotEl, { display: "none", opacity: 0 }, t_start);
+        }
+        masterTl.to(irisWipeCircle, { opacity: 0, scale: 28, duration: 0.25, ease: "power2.out" }, t_start);
+        masterTl.set(irisWipeCircle, { display: "none" }, t_start + 0.26);
+      }
+      else if (transitionType === "cut") {
+        masterTl.set(shotEl, { display: "block", opacity: 1 }, t_start);
+        if (prevShotEl) {
+          masterTl.set(prevShotEl, { display: "none", opacity: 0 }, t_start);
+        }
+      }
+      else {
+        // Default: fade (smooth crossfade)
+        masterTl.set(shotEl, { display: "block" }, t_start);
+        masterTl.fromTo(shotEl, { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.inOut" }, t_start);
+        if (prevShotEl) {
+          masterTl.to(prevShotEl, { opacity: 0, duration: 0.35, ease: "power2.inOut" }, t_start);
+          masterTl.set(prevShotEl, { display: "none" }, t_start + 0.35);
+        }
       }
     }
 
@@ -741,9 +998,10 @@ function initTimeline() {
     // Specific Shot Type Choreography
     if (shotType === "curtain_establishing" || shotType === "wide_establishing") {
       // Opening velvet curtains
-      if (curtains.left && curtains.right) {
+      if (curtains.left && curtains.right && !curtainsOpened) {
         masterTl.to(curtains.left, { xPercent: -102, duration: 1.8, ease: "power2.inOut" }, t_start + 0.4);
         masterTl.to(curtains.right, { xPercent: 102, duration: 1.8, ease: "power2.inOut" }, t_start + 0.4);
+        curtainsOpened = true;
       }
       // Puppets hidden
       allPuppets.forEach(p => masterTl.set(p, { display: "none", opacity: 0 }, t_start));
@@ -886,6 +1144,112 @@ function initTimeline() {
         }, t_start);
       }
     }
+
+    // Dynamic VFX Elements Choreography
+    vfxElements.forEach(vfxType => {
+      const vType = vfxType.toLowerCase().trim();
+      const t_vfx = t_start + Math.min(0.2, dur * 0.1);
+
+      if (vType === "laser_beam" && vfxLaser) {
+        masterTl.set(vfxLaser, { display: "block", opacity: 1 }, t_vfx);
+        const laserCol = vfxLaser.querySelector("#laser_column");
+        const impactBurst = vfxLaser.querySelector("#laser_impact_burst");
+        const laserCore = vfxLaser.querySelector("#laser_core");
+
+        if (laserCol) {
+          masterTl.fromTo(laserCol, { scaleY: 0, opacity: 0 }, { scaleY: 1, opacity: 1, duration: 0.18, ease: "power4.in", transformOrigin: "540px 0px" }, t_vfx);
+        }
+        if (wrathFlash) {
+          masterTl.fromTo(wrathFlash, { opacity: 0 }, { opacity: 0.85, duration: 0.08, ease: "power1.in" }, t_vfx + 0.12);
+          masterTl.to(wrathFlash, { opacity: 0, duration: 0.25, ease: "power2.out" }, t_vfx + 0.20);
+        }
+        if (impactBurst) {
+          masterTl.fromTo(impactBurst, { scale: 0.3, opacity: 0 }, { scale: 1.15, opacity: 1, duration: 0.22, ease: "back.out(2)", transformOrigin: "540px 1680px" }, t_vfx + 0.15);
+        }
+        if (laserCore) {
+          masterTl.to(laserCore, { opacity: 0.65, yoyo: true, repeat: 4, duration: 0.05 }, t_vfx + 0.18);
+        }
+        const fadeDur = Math.min(0.5, dur * 0.3);
+        const fadeStart = t_vfx + Math.min(0.6, dur * 0.5);
+        masterTl.to(vfxLaser, { opacity: 0, duration: fadeDur, ease: "power2.out" }, fadeStart);
+        masterTl.set(vfxLaser, { display: "none" }, fadeStart + fadeDur);
+      }
+      else if (vType === "sunburst" && vfxSunburst) {
+        masterTl.set(vfxSunburst, { display: "block" }, t_vfx);
+        masterTl.fromTo(vfxSunburst,
+          { opacity: 0, scale: 0.25, rotation: 0 },
+          { opacity: 0.90, scale: 1.15, rotation: 35, duration: 0.60, ease: "back.out(1.7)", transformOrigin: "400px 400px" },
+          t_vfx
+        );
+        masterTl.to(vfxSunburst, {
+          rotation: 90,
+          duration: Math.max(1.5, dur - 0.5),
+          ease: "none"
+        }, t_vfx + 0.60);
+        masterTl.to(vfxSunburst, {
+          opacity: 0,
+          scale: 1.25,
+          duration: 0.45,
+          ease: "power2.in"
+        }, Math.max(t_vfx + 0.60, t_end - 0.45));
+        masterTl.set(vfxSunburst, { display: "none" }, t_end);
+      }
+      else if (vType === "screen_shatter" && vfxShatter) {
+        masterTl.set(vfxShatter, { display: "block" }, t_vfx);
+        masterTl.fromTo(vfxShatter,
+          { opacity: 0, scale: 0.95 },
+          { opacity: 1, scale: 1.0, duration: 0.10, ease: "power4.in" },
+          t_vfx
+        );
+        if (wrathFlash) {
+          masterTl.fromTo(wrathFlash, { opacity: 0 }, { opacity: 0.65, duration: 0.08, ease: "power1.in" }, t_vfx + 0.05);
+          masterTl.to(wrathFlash, { opacity: 0, duration: 0.20, ease: "power1.out" }, t_vfx + 0.13);
+        }
+        masterTl.to(stage, { x: 14, duration: 0.03, yoyo: true, repeat: 10, ease: "none" }, t_vfx + 0.08);
+
+        masterTl.to("[id^='shard_nw']", { x: -80, y: -80, rotation: -14, duration: 0.45, ease: "power2.out" }, t_vfx + 0.08);
+        masterTl.to("[id^='shard_ne']", { x: 80, y: -80, rotation: 14, duration: 0.45, ease: "power2.out" }, t_vfx + 0.08);
+        masterTl.to("[id^='shard_sw']", { x: -80, y: 80, rotation: -12, duration: 0.45, ease: "power2.out" }, t_vfx + 0.08);
+        masterTl.to("[id^='shard_se']", { x: 80, y: 80, rotation: 12, duration: 0.45, ease: "power2.out" }, t_vfx + 0.08);
+        masterTl.to("[id^='shard_c']", { scale: 1.3, opacity: 0, duration: 0.40, ease: "power2.out" }, t_vfx + 0.08);
+
+        masterTl.to(vfxShatter, { opacity: 0, duration: 0.35, ease: "power2.out" }, t_vfx + 0.40);
+        masterTl.set(vfxShatter, { display: "none" }, t_vfx + 0.75);
+      }
+      else if (vType === "fracture_cracks" && vfxCracks) {
+        masterTl.set(vfxCracks, { display: "block" }, t_vfx);
+        masterTl.fromTo(vfxCracks,
+          { opacity: 0, scaleY: 0.35 },
+          { opacity: 0.95, scaleY: 1.0, duration: 0.40, ease: "power3.out", transformOrigin: "540px 1920px" },
+          t_vfx
+        );
+        masterTl.to(stage, { y: 8, duration: 0.04, yoyo: true, repeat: 8, ease: "none" }, t_vfx + 0.15);
+        const baseGlow = vfxCracks.querySelector("#fracture_base_glow");
+        if (baseGlow) {
+          masterTl.to(baseGlow, { opacity: 0.95, duration: 0.35, yoyo: true, repeat: Math.max(2, Math.floor(dur / 0.7)), ease: "sine.inOut" }, t_vfx + 0.30);
+        }
+        masterTl.to(vfxCracks, { opacity: 0, duration: 0.50, ease: "power2.in" }, Math.max(t_vfx + 0.50, t_end - 0.50));
+        masterTl.set(vfxCracks, { display: "none" }, t_end);
+      }
+      else if (vType === "sound_ripple" && vfxRipple) {
+        masterTl.set(vfxRipple, { display: "block" }, t_vfx);
+        masterTl.fromTo(vfxRipple,
+          { opacity: 0, scale: 0.30 },
+          { opacity: 0.90, scale: 1.0, duration: 0.45, ease: "sine.out", transformOrigin: "540px 540px" },
+          t_vfx
+        );
+        const r1 = vfxRipple.querySelector("#ripple_ring_1");
+        const r2 = vfxRipple.querySelector("#ripple_ring_2");
+        if (r1) {
+          masterTl.fromTo(r1, { scale: 0.8, opacity: 1 }, { scale: 1.6, opacity: 0, duration: 1.0, ease: "power2.out", transformOrigin: "540px 540px", repeat: Math.max(1, Math.floor(dur / 1.3)) }, t_vfx + 0.1);
+        }
+        if (r2) {
+          masterTl.fromTo(r2, { scale: 0.8, opacity: 0.9 }, { scale: 1.5, opacity: 0, duration: 1.2, delay: 0.2, ease: "power2.out", transformOrigin: "540px 540px", repeat: Math.max(1, Math.floor(dur / 1.3)) }, t_vfx + 0.2);
+        }
+        masterTl.to(vfxRipple, { opacity: 0, duration: 0.45, ease: "power2.in" }, Math.max(t_vfx + 0.50, t_end - 0.45));
+        masterTl.set(vfxRipple, { display: "none" }, t_end);
+      }
+    });
   });
 
   // Smooth final fade to black
@@ -1048,21 +1412,45 @@ def generate_root_composition(root: Optional[Path] = None) -> dict[str, Any]:
     </div>"""
         puppets_html.append(p_html)
 
-    # 3. Write styles.css
+    # 3. Resolve Dynamic VFX Elements
+    vfx_dir = svg_root / "vfx"
+    vfx_elements_html: list[str] = []
+    vfx_assets = [
+        ("vfx_laser_beam_container", "laser_beam.svg"),
+        ("vfx_sunburst_container", "sunburst.svg"),
+        ("vfx_screen_shatter_container", "screen_shatter.svg"),
+        ("vfx_fracture_cracks_container", "fracture_cracks.svg"),
+        ("vfx_sound_ripple_container", "sound_ripple.svg"),
+    ]
+    for container_id, filename in vfx_assets:
+        file_path = vfx_dir / filename
+        if file_path.is_file():
+            svg_text = file_path.read_text(encoding="utf-8")
+            if "data-layout-ignore" not in svg_text:
+                svg_text = svg_text.replace("<svg ", '<svg data-layout-ignore="true" ', 1)
+            vfx_elements_html.append(
+                f'      <div id="{container_id}" class="vfx-element" data-layout-ignore="true">\n'
+                f"        {svg_text}\n"
+                f"      </div>"
+            )
+    vfx_html = "\n".join(vfx_elements_html)
+
+    # 4. Write styles.css
     styles_path = root / "styles.css"
     styles_path.write_text(generate_styles_css(), encoding="utf-8")
 
-    # 4. Write engine.js
+    # 5. Write engine.js
     engine_path = root / "engine.js"
     engine_path.write_text(generate_engine_js(), encoding="utf-8")
 
-    # 5. Write index.html
+    # 6. Write index.html
     index_path = root / "index.html"
     index_content = generate_index_html(
         lang=lang,
         duration_sec=render_dur,
         scenes_html=scenes_html,
         puppets_html=puppets_html,
+        vfx_html=vfx_html,
     )
     index_path.write_text(index_content, encoding="utf-8")
 

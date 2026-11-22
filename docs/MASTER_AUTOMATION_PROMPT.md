@@ -120,8 +120,14 @@ Create `build/episode_plan.json` matching the active `primary_language` (`en` or
    - Use `speaker_role: "narrator"` for narration and `"character_dialogue"` for impactful character lines (automatically triggering deep dialogue DSP).
    - Check `pronunciations_en.yaml` (for `en`) or `pronunciations_hi.yaml` (for `hi`); if new names appear, append clean verified entries.
 
-5. **Visual Directing & Originality (YPP Compliance):**
-   - Assign distinct `shot_type`, `backdrop_rig`, `characters`, `camera_motion` (including `dramatic_zoom`), `transition_type`, and `sfx_cue` so visuals evolve every 3–6 seconds—never leave a static hold.
+5. **Visual Directing, Transitions & Dynamic VFX (YPP Compliance):**
+   - Assign distinct `shot_type`, `backdrop_rig`, `characters`, `camera_motion` (including `dramatic_zoom`), `transition_type`, `vfx_elements`, and `sfx_cue` so visuals evolve dynamically every 3–6 seconds—never leave a static hold.
+   - **Transition Choreography (Minimum 3 Distinct Types per Episode):**
+     - Select from: `curtain_open` (theatrical velvet curtains on hook), `blind_wipe` (horizontal folk slats), `border_wipe` (sweeping golden border), `shatter_transition` (crystalline fracture wipe on climax/crisis), `radial_wipe` (golden iris aperture), `fade` (smooth cinematic crossfade), or `cut` (hard cut).
+     - Every episode plan MUST utilize at least **3 distinct transition types** across its scenes to maintain visual rhythm.
+   - **Dynamic Folk-Art VFX Elements (Minimum 2 Elements per Episode):**
+     - Select from: `laser_beam` (vertical cosmic strike), `sunburst` (radiant solar corona), `screen_shatter` (explosive shard fracture), `fracture_cracks` (bedrock magma fissures), `sound_ripple` (concentric harmonic conch/mantra waves).
+     - Synchronize VFX elements with climax, shock, or divine revelation beats. Every episode plan MUST feature at least **2 distinct VFX elements** across its scenes.
    - Feature at least **one unique, unused bespoke SVG asset** (`bespoke_asset_path`, not present in `previous_bespoke_assets`).
 
 6. **Clean Metadata for YouTube (Never Rendered On-Screen):**

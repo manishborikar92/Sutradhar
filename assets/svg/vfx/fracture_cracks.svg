@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920" id="vfx_fracture_cracks">
+  <defs>
+    <linearGradient id="crackGlowGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#ea580c" stop-opacity="0.9" />
+      <stop offset="50%" stop-color="#f59e0b" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="#fef08a" stop-opacity="0.2" />
+    </linearGradient>
+
+    <radialGradient id="epicenterMagma" cx="50%" cy="80%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1.0" />
+      <stop offset="20%" stop-color="#fef08a" stop-opacity="0.9" />
+      <stop offset="50%" stop-color="#f97316" stop-opacity="0.7" />
+      <stop offset="85%" stop-color="#7c2d12" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- SUBTERRANEAN MAGMA GLOW AT BEDROCK BASE (y: 1350 - 1920) -->
+  <g id="fracture_base_glow">
+    <ellipse cx="540" cy="1720" rx="480" ry="160" fill="url(#epicenterMagma)" opacity="0.75" />
+    <ellipse cx="360" cy="1650" rx="220" ry="80" fill="url(#epicenterMagma)" opacity="0.5" />
+    <ellipse cx="720" cy="1680" rx="250" ry="90" fill="url(#epicenterMagma)" opacity="0.55" />
+  </g>
+
+  <!-- DEEP FISSURE UNDERGLOW (Thick Soft-Edge Radiation) -->
+  <g id="fissure_thick_glow" stroke="#f97316" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" opacity="0.45">
+    <!-- Main Central Trunk from Bottom Center Spreading Upward -->
+    <path d="M540,1920 L535,1780 L560,1650 L520,1520 L550,1410 L480,1320 L510,1230" />
+    <!-- West Branch -->
+    <path d="M535,1780 L420,1720 L310,1640 L190,1580 L90,1540 L0,1520" />
+    <path d="M420,1720 L380,1810 L260,1870 L140,1920" />
+    <path d="M310,1640 L280,1510 L200,1430 L110,1380" />
+    <!-- East Branch -->
+    <path d="M560,1650 L680,1610 L790,1540 L910,1490 L1010,1470 L1080,1460" />
+    <path d="M680,1610 L740,1730 L850,1810 L960,1880 L1020,1920" />
+    <path d="M790,1540 L840,1430 L930,1360 L1000,1310" />
+  </g>
+
+  <!-- MID CORE FRACTURES (Amber High Energy) -->
+  <g id="fissure_mid_veins" stroke="#f59e0b" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity="0.8">
+    <path d="M540,1920 L535,1780 L560,1650 L520,1520 L550,1410 L480,1320 L510,1230" />
+    <path d="M535,1780 L420,1720 L310,1640 L190,1580 L90,1540 L0,1520" />
+    <path d="M420,1720 L380,1810 L260,1870 L140,1920" />
+    <path d="M310,1640 L280,1510 L200,1430 L110,1380" />
+    <path d="M560,1650 L680,1610 L790,1540 L910,1490 L1010,1470 L1080,1460" />
+    <path d="M680,1610 L740,1730 L850,1810 L960,1880 L1020,1920" />
+    <path d="M790,1540 L840,1430 L930,1360 L1000,1310" />
+  </g>
+
+  <!-- INCANDESCENT CORE LINES (Sharp White-Gold Center) -->
+  <g id="fissure_sharp_core" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M540,1920 L535,1780 L560,1650 L520,1520 L550,1410 L480,1320 L510,1230" />
+    <path d="M535,1780 L420,1720 L310,1640 L190,1580 L90,1540 L0,1520" />
+    <path d="M420,1720 L380,1810 L260,1870 L140,1920" />
+    <path d="M310,1640 L280,1510 L200,1430 L110,1380" />
+    <path d="M560,1650 L680,1610 L790,1540 L910,1490 L1010,1470 L1080,1460" />
+    <path d="M680,1610 L740,1730 L850,1810 L960,1880 L1020,1920" />
+    <path d="M790,1540 L840,1430 L930,1360 L1000,1310" />
+
+    <!-- Sharp Secondary Tributaries -->
+    <path d="M520,1520 L460,1470 L420,1490" stroke-width="2" />
+    <path d="M550,1410 L610,1360 L650,1370" stroke-width="2" />
+    <path d="M480,1320 L440,1270 L390,1250" stroke-width="1.5" />
+    <path d="M280,1510 L330,1450 L310,1390" stroke-width="1.5" />
+    <path d="M840,1430 L800,1360 L830,1300" stroke-width="1.5" />
+  </g>
+
+  <!-- CRACKED STONE DEBRIS CHUNKS -->
+  <g id="fracture_stone_debris" fill="#291204" stroke="#fbbf24" stroke-width="1.5">
+    <polygon points="515,1665 528,1655 536,1672 522,1680" />
+    <polygon points="575,1630 590,1622 596,1638 582,1645" />
+    <polygon points="410,1730 422,1718 434,1732 418,1744" />
+    <polygon points="695,1600 710,1592 718,1608 702,1615" />
+    <polygon points="325,1625 338,1615 344,1630 330,1638" />
+  </g>
+</svg>

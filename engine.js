@@ -25,6 +25,20 @@ function initTimeline() {
     left: document.querySelector("#curtain_left"),
     right: document.querySelector("#curtain_right")
   };
+  let curtainsOpened = false;
+
+  // Theatrical Transitions Elements
+  const blindWipeContainer = document.querySelector("#blind_wipe_container");
+  const blindSlats = document.querySelectorAll(".blind-slat");
+  const borderWipeBar = document.querySelector("#border_wipe_bar");
+  const irisWipeCircle = document.querySelector("#iris_wipe_circle");
+
+  // Dynamic VFX Layer Elements
+  const vfxLaser = document.querySelector("#vfx_laser_beam_container");
+  const vfxSunburst = document.querySelector("#vfx_sunburst_container");
+  const vfxShatter = document.querySelector("#vfx_screen_shatter_container");
+  const vfxCracks = document.querySelector("#vfx_fracture_cracks_container");
+  const vfxRipple = document.querySelector("#vfx_sound_ripple_container");
 
   // Puppet elements map
   const allPuppets = Array.from(document.querySelectorAll(".puppet-wrapper"));
@@ -208,13 +222,14 @@ function initTimeline() {
     if (ms) gsap.set(ms, { opacity: 0 });
   });
 
-  // Continuous floating embers
+  // Continuous floating embers across long-form or short-form timeline
+  const emberRepeats = Math.max(8, Math.ceil(total_dur / 4.0));
   embers.forEach((ember, i) => {
     const dur = 4.5 + (i % 3) * 1.2;
     const delay = (i * 0.4) % 3.0;
     masterTl.fromTo(ember,
       { y: 1950, x: "+=" + ((i % 4) * 35 - 50), opacity: 0 },
-      { y: -60, opacity: 0.85, duration: dur, ease: "none", repeat: 8 },
+      { y: -60, opacity: 0.85, duration: dur, ease: "none", repeat: emberRepeats },
       delay
     );
   });
@@ -234,21 +249,81 @@ function initTimeline() {
     const camMotion = (scene.camera_motion || "push_in").toLowerCase();
     const emotion = (scene.emotion || "calm").toLowerCase();
     const posePreset = scene.pose_preset || (shotType.includes("climax") ? "humbled_braced" : (shotType.includes("close") ? "wrath_dialogue" : "idle_royal"));
+    const transitionType = (scene.transition_type || (idx === 0 ? "curtain_open" : "fade")).toLowerCase();
+    const vfxElements = scene.vfx_elements || [];
 
-    // Shot container display & fade-in
-    masterTl.set(shotEl, { display: "block" }, t_start);
+    // Scene Transition Execution
     if (idx === 0) {
-      masterTl.set(shotEl, { opacity: 1 }, 0.0);
+      masterTl.set(shotEl, { display: "block", opacity: 1 }, 0.0);
+      if (transitionType === "curtain_open" && curtains.left && curtains.right && !curtainsOpened) {
+        masterTl.to(curtains.left, { xPercent: -102, duration: 1.8, ease: "power2.inOut" }, t_start + 0.4);
+        masterTl.to(curtains.right, { xPercent: 102, duration: 1.8, ease: "power2.inOut" }, t_start + 0.4);
+        curtainsOpened = true;
+      }
     } else {
-      masterTl.fromTo(shotEl, { opacity: 0 }, { opacity: 1, duration: 0.30, ease: "power2.inOut" }, t_start);
-    }
-
-    // Previous shot fade-out
-    if (idx > 0) {
       const prevShotEl = document.getElementById("shot_" + idx + "_container");
-      if (prevShotEl) {
-        masterTl.to(prevShotEl, { opacity: 0, duration: 0.30, ease: "power2.inOut" }, t_start);
-        masterTl.set(prevShotEl, { display: "none" }, t_start + 0.30);
+
+      if (transitionType === "blind_wipe" && blindWipeContainer && blindSlats.length > 0) {
+        const t_trans = Math.max(0, t_start - 0.20);
+        masterTl.set(blindWipeContainer, { display: "block" }, t_trans);
+        masterTl.fromTo(blindSlats, { scaleY: 0 }, { scaleY: 1, duration: 0.20, stagger: 0.015, ease: "power2.in" }, t_trans);
+        masterTl.set(shotEl, { display: "block", opacity: 1 }, t_start);
+        if (prevShotEl) {
+          masterTl.set(prevShotEl, { display: "none", opacity: 0 }, t_start);
+        }
+        masterTl.to(blindSlats, { scaleY: 0, duration: 0.20, stagger: 0.015, ease: "power2.out" }, t_start + 0.05);
+        masterTl.set(blindWipeContainer, { display: "none" }, t_start + 0.35);
+      }
+      else if (transitionType === "border_wipe" && borderWipeBar) {
+        const t_trans = Math.max(0, t_start - 0.22);
+        masterTl.set(borderWipeBar, { display: "block", x: -120, opacity: 1 }, t_trans);
+        masterTl.to(borderWipeBar, { x: 1200, duration: 0.45, ease: "power2.inOut" }, t_trans);
+        masterTl.set(shotEl, { display: "block", opacity: 1 }, t_start);
+        if (prevShotEl) {
+          masterTl.set(prevShotEl, { display: "none", opacity: 0 }, t_start);
+        }
+        masterTl.set(borderWipeBar, { display: "none" }, t_start + 0.25);
+      }
+      else if (transitionType === "shatter_transition" && vfxShatter) {
+        const t_trans = Math.max(0, t_start - 0.15);
+        masterTl.set(vfxShatter, { display: "block", opacity: 1 }, t_trans);
+        masterTl.fromTo(vfxShatter, { scale: 0.95 }, { scale: 1.05, duration: 0.15, ease: "power4.in" }, t_trans);
+        if (wrathFlash) {
+          masterTl.fromTo(wrathFlash, { opacity: 0 }, { opacity: 0.70, duration: 0.08, ease: "power1.in" }, t_trans + 0.05);
+          masterTl.to(wrathFlash, { opacity: 0, duration: 0.15, ease: "power1.out" }, t_trans + 0.13);
+        }
+        masterTl.set(shotEl, { display: "block", opacity: 1 }, t_start);
+        if (prevShotEl) {
+          masterTl.set(prevShotEl, { display: "none", opacity: 0 }, t_start);
+        }
+        masterTl.to(vfxShatter, { opacity: 0, scale: 1.25, duration: 0.35, ease: "power2.out" }, t_start);
+        masterTl.set(vfxShatter, { display: "none" }, t_start + 0.35);
+      }
+      else if (transitionType === "radial_wipe" && irisWipeCircle) {
+        const t_trans = Math.max(0, t_start - 0.25);
+        masterTl.set(irisWipeCircle, { display: "block", scale: 0, opacity: 1 }, t_trans);
+        masterTl.to(irisWipeCircle, { scale: 24, duration: 0.25, ease: "power2.in" }, t_trans);
+        masterTl.set(shotEl, { display: "block", opacity: 1 }, t_start);
+        if (prevShotEl) {
+          masterTl.set(prevShotEl, { display: "none", opacity: 0 }, t_start);
+        }
+        masterTl.to(irisWipeCircle, { opacity: 0, scale: 28, duration: 0.25, ease: "power2.out" }, t_start);
+        masterTl.set(irisWipeCircle, { display: "none" }, t_start + 0.26);
+      }
+      else if (transitionType === "cut") {
+        masterTl.set(shotEl, { display: "block", opacity: 1 }, t_start);
+        if (prevShotEl) {
+          masterTl.set(prevShotEl, { display: "none", opacity: 0 }, t_start);
+        }
+      }
+      else {
+        // Default: fade (smooth crossfade)
+        masterTl.set(shotEl, { display: "block" }, t_start);
+        masterTl.fromTo(shotEl, { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.inOut" }, t_start);
+        if (prevShotEl) {
+          masterTl.to(prevShotEl, { opacity: 0, duration: 0.35, ease: "power2.inOut" }, t_start);
+          masterTl.set(prevShotEl, { display: "none" }, t_start + 0.35);
+        }
       }
     }
 
@@ -261,6 +336,8 @@ function initTimeline() {
       masterTl.fromTo(shotEl, { x: 25 }, { x: -25, duration: dur, ease: "sine.inOut" }, t_start);
     } else if (camMotion === "close_up") {
       masterTl.to(shotEl, { scale: 1.25, y: -35, duration: dur, ease: "power2.out" }, t_start);
+    } else if (camMotion === "dramatic_zoom") {
+      masterTl.fromTo(shotEl, { scale: 1.0, y: 0 }, { scale: 1.35, y: -50, duration: Math.min(dur, 1.2), ease: "power3.out" }, t_start);
     } else if (camMotion === "micro_shake") {
       masterTl.to(stage, { x: 15, duration: 0.04, yoyo: true, repeat: 14, ease: "none" }, t_start + 0.15);
     }
@@ -268,9 +345,10 @@ function initTimeline() {
     // Specific Shot Type Choreography
     if (shotType === "curtain_establishing" || shotType === "wide_establishing") {
       // Opening velvet curtains
-      if (curtains.left && curtains.right) {
+      if (curtains.left && curtains.right && !curtainsOpened) {
         masterTl.to(curtains.left, { xPercent: -102, duration: 1.8, ease: "power2.inOut" }, t_start + 0.4);
         masterTl.to(curtains.right, { xPercent: 102, duration: 1.8, ease: "power2.inOut" }, t_start + 0.4);
+        curtainsOpened = true;
       }
       // Puppets hidden
       allPuppets.forEach(p => masterTl.set(p, { display: "none", opacity: 0 }, t_start));
@@ -413,6 +491,112 @@ function initTimeline() {
         }, t_start);
       }
     }
+
+    // Dynamic VFX Elements Choreography
+    vfxElements.forEach(vfxType => {
+      const vType = vfxType.toLowerCase().trim();
+      const t_vfx = t_start + Math.min(0.2, dur * 0.1);
+
+      if (vType === "laser_beam" && vfxLaser) {
+        masterTl.set(vfxLaser, { display: "block", opacity: 1 }, t_vfx);
+        const laserCol = vfxLaser.querySelector("#laser_column");
+        const impactBurst = vfxLaser.querySelector("#laser_impact_burst");
+        const laserCore = vfxLaser.querySelector("#laser_core");
+
+        if (laserCol) {
+          masterTl.fromTo(laserCol, { scaleY: 0, opacity: 0 }, { scaleY: 1, opacity: 1, duration: 0.18, ease: "power4.in", transformOrigin: "540px 0px" }, t_vfx);
+        }
+        if (wrathFlash) {
+          masterTl.fromTo(wrathFlash, { opacity: 0 }, { opacity: 0.85, duration: 0.08, ease: "power1.in" }, t_vfx + 0.12);
+          masterTl.to(wrathFlash, { opacity: 0, duration: 0.25, ease: "power2.out" }, t_vfx + 0.20);
+        }
+        if (impactBurst) {
+          masterTl.fromTo(impactBurst, { scale: 0.3, opacity: 0 }, { scale: 1.15, opacity: 1, duration: 0.22, ease: "back.out(2)", transformOrigin: "540px 1680px" }, t_vfx + 0.15);
+        }
+        if (laserCore) {
+          masterTl.to(laserCore, { opacity: 0.65, yoyo: true, repeat: 4, duration: 0.05 }, t_vfx + 0.18);
+        }
+        const fadeDur = Math.min(0.5, dur * 0.3);
+        const fadeStart = t_vfx + Math.min(0.6, dur * 0.5);
+        masterTl.to(vfxLaser, { opacity: 0, duration: fadeDur, ease: "power2.out" }, fadeStart);
+        masterTl.set(vfxLaser, { display: "none" }, fadeStart + fadeDur);
+      }
+      else if (vType === "sunburst" && vfxSunburst) {
+        masterTl.set(vfxSunburst, { display: "block" }, t_vfx);
+        masterTl.fromTo(vfxSunburst,
+          { opacity: 0, scale: 0.25, rotation: 0 },
+          { opacity: 0.90, scale: 1.15, rotation: 35, duration: 0.60, ease: "back.out(1.7)", transformOrigin: "400px 400px" },
+          t_vfx
+        );
+        masterTl.to(vfxSunburst, {
+          rotation: 90,
+          duration: Math.max(1.5, dur - 0.5),
+          ease: "none"
+        }, t_vfx + 0.60);
+        masterTl.to(vfxSunburst, {
+          opacity: 0,
+          scale: 1.25,
+          duration: 0.45,
+          ease: "power2.in"
+        }, Math.max(t_vfx + 0.60, t_end - 0.45));
+        masterTl.set(vfxSunburst, { display: "none" }, t_end);
+      }
+      else if (vType === "screen_shatter" && vfxShatter) {
+        masterTl.set(vfxShatter, { display: "block" }, t_vfx);
+        masterTl.fromTo(vfxShatter,
+          { opacity: 0, scale: 0.95 },
+          { opacity: 1, scale: 1.0, duration: 0.10, ease: "power4.in" },
+          t_vfx
+        );
+        if (wrathFlash) {
+          masterTl.fromTo(wrathFlash, { opacity: 0 }, { opacity: 0.65, duration: 0.08, ease: "power1.in" }, t_vfx + 0.05);
+          masterTl.to(wrathFlash, { opacity: 0, duration: 0.20, ease: "power1.out" }, t_vfx + 0.13);
+        }
+        masterTl.to(stage, { x: 14, duration: 0.03, yoyo: true, repeat: 10, ease: "none" }, t_vfx + 0.08);
+
+        masterTl.to("[id^='shard_nw']", { x: -80, y: -80, rotation: -14, duration: 0.45, ease: "power2.out" }, t_vfx + 0.08);
+        masterTl.to("[id^='shard_ne']", { x: 80, y: -80, rotation: 14, duration: 0.45, ease: "power2.out" }, t_vfx + 0.08);
+        masterTl.to("[id^='shard_sw']", { x: -80, y: 80, rotation: -12, duration: 0.45, ease: "power2.out" }, t_vfx + 0.08);
+        masterTl.to("[id^='shard_se']", { x: 80, y: 80, rotation: 12, duration: 0.45, ease: "power2.out" }, t_vfx + 0.08);
+        masterTl.to("[id^='shard_c']", { scale: 1.3, opacity: 0, duration: 0.40, ease: "power2.out" }, t_vfx + 0.08);
+
+        masterTl.to(vfxShatter, { opacity: 0, duration: 0.35, ease: "power2.out" }, t_vfx + 0.40);
+        masterTl.set(vfxShatter, { display: "none" }, t_vfx + 0.75);
+      }
+      else if (vType === "fracture_cracks" && vfxCracks) {
+        masterTl.set(vfxCracks, { display: "block" }, t_vfx);
+        masterTl.fromTo(vfxCracks,
+          { opacity: 0, scaleY: 0.35 },
+          { opacity: 0.95, scaleY: 1.0, duration: 0.40, ease: "power3.out", transformOrigin: "540px 1920px" },
+          t_vfx
+        );
+        masterTl.to(stage, { y: 8, duration: 0.04, yoyo: true, repeat: 8, ease: "none" }, t_vfx + 0.15);
+        const baseGlow = vfxCracks.querySelector("#fracture_base_glow");
+        if (baseGlow) {
+          masterTl.to(baseGlow, { opacity: 0.95, duration: 0.35, yoyo: true, repeat: Math.max(2, Math.floor(dur / 0.7)), ease: "sine.inOut" }, t_vfx + 0.30);
+        }
+        masterTl.to(vfxCracks, { opacity: 0, duration: 0.50, ease: "power2.in" }, Math.max(t_vfx + 0.50, t_end - 0.50));
+        masterTl.set(vfxCracks, { display: "none" }, t_end);
+      }
+      else if (vType === "sound_ripple" && vfxRipple) {
+        masterTl.set(vfxRipple, { display: "block" }, t_vfx);
+        masterTl.fromTo(vfxRipple,
+          { opacity: 0, scale: 0.30 },
+          { opacity: 0.90, scale: 1.0, duration: 0.45, ease: "sine.out", transformOrigin: "540px 540px" },
+          t_vfx
+        );
+        const r1 = vfxRipple.querySelector("#ripple_ring_1");
+        const r2 = vfxRipple.querySelector("#ripple_ring_2");
+        if (r1) {
+          masterTl.fromTo(r1, { scale: 0.8, opacity: 1 }, { scale: 1.6, opacity: 0, duration: 1.0, ease: "power2.out", transformOrigin: "540px 540px", repeat: Math.max(1, Math.floor(dur / 1.3)) }, t_vfx + 0.1);
+        }
+        if (r2) {
+          masterTl.fromTo(r2, { scale: 0.8, opacity: 0.9 }, { scale: 1.5, opacity: 0, duration: 1.2, delay: 0.2, ease: "power2.out", transformOrigin: "540px 540px", repeat: Math.max(1, Math.floor(dur / 1.3)) }, t_vfx + 0.2);
+        }
+        masterTl.to(vfxRipple, { opacity: 0, duration: 0.45, ease: "power2.in" }, Math.max(t_vfx + 0.50, t_end - 0.45));
+        masterTl.set(vfxRipple, { display: "none" }, t_end);
+      }
+    });
   });
 
   // Smooth final fade to black

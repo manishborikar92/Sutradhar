@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920" id="vfx_laser_beam">
+  <defs>
+    <!-- Core Laser Linear Gradients -->
+    <linearGradient id="laserCoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#fef08a" stop-opacity="0.2" />
+      <stop offset="25%" stop-color="#ffffff" stop-opacity="0.9" />
+      <stop offset="50%" stop-color="#ffffff" stop-opacity="1.0" />
+      <stop offset="75%" stop-color="#ffffff" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#fef08a" stop-opacity="0.2" />
+    </linearGradient>
+
+    <linearGradient id="laserGlowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#d97706" stop-opacity="0" />
+      <stop offset="20%" stop-color="#f59e0b" stop-opacity="0.4" />
+      <stop offset="50%" stop-color="#fbbf24" stop-opacity="0.8" />
+      <stop offset="80%" stop-color="#f59e0b" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#d97706" stop-opacity="0" />
+    </linearGradient>
+
+    <linearGradient id="laserCoronaGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#78350f" stop-opacity="0" />
+      <stop offset="30%" stop-color="#b45309" stop-opacity="0.25" />
+      <stop offset="50%" stop-color="#f59e0b" stop-opacity="0.45" />
+      <stop offset="70%" stop-color="#b45309" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#78350f" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Base Impact Radial Gradients -->
+    <radialGradient id="laserImpactGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1.0" />
+      <stop offset="25%" stop-color="#fef08a" stop-opacity="0.9" />
+      <stop offset="55%" stop-color="#f59e0b" stop-opacity="0.6" />
+      <stop offset="80%" stop-color="#b45309" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#180d05" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- BEAM GROUP (Vertical Column from Sky to Ground) -->
+  <g id="laser_column" transform-origin="540 0">
+    <!-- Outer Radiant Corona -->
+    <rect id="laser_outer_corona" x="420" y="0" width="240" height="1680" fill="url(#laserCoronaGrad)" />
+
+    <!-- Mid Atmospheric Glow -->
+    <rect id="laser_inner_glow" x="480" y="0" width="120" height="1680" fill="url(#laserGlowGrad)" />
+
+    <!-- Pure White-Gold Core -->
+    <rect id="laser_core" x="522" y="0" width="36" height="1680" rx="18" fill="url(#laserCoreGrad)" />
+    <rect id="laser_centerline" x="534" y="0" width="12" height="1680" fill="#ffffff" />
+  </g>
+
+  <!-- IMPACT BURST AT GROUND PLANE (y: 1550 - 1750) -->
+  <g id="laser_impact_burst">
+    <!-- Ground Impact Ellipse -->
+    <ellipse id="impact_disc_outer" cx="540" cy="1680" rx="320" ry="90" fill="url(#laserImpactGlow)" />
+    <ellipse id="impact_disc_inner" cx="540" cy="1680" rx="160" ry="45" fill="#ffffff" opacity="0.85" />
+
+    <!-- Radiating Solar Shock Spikes -->
+    <g id="impact_spikes" stroke="#fef08a" stroke-width="4" stroke-linecap="round" opacity="0.8">
+      <line x1="540" y1="1680" x2="320" y2="1620" />
+      <line x1="540" y1="1680" x2="760" y2="1620" />
+      <line x1="540" y1="1680" x2="260" y2="1670" />
+      <line x1="540" y1="1680" x2="820" y2="1670" />
+      <line x1="540" y1="1680" x2="340" y2="1730" />
+      <line x1="540" y1="1680" x2="740" y2="1730" />
+      <line x1="540" y1="1680" x2="440" y2="1580" />
+      <line x1="540" y1="1680" x2="640" y2="1580" />
+    </g>
+
+    <!-- Concentric Shockwave Rings -->
+    <ellipse id="impact_ring_1" cx="540" cy="1680" rx="220" ry="60" fill="none" stroke="#fbbf24" stroke-width="3" opacity="0.75" />
+    <ellipse id="impact_ring_2" cx="540" cy="1680" rx="380" ry="105" fill="none" stroke="#d97706" stroke-width="2" opacity="0.5" />
+  </g>
+
+  <!-- AMBIENT ENERGY PARTICLES -->
+  <g id="laser_sparks" fill="#fef08a">
+    <circle cx="510" cy="420" r="4" opacity="0.8" />
+    <circle cx="575" cy="580" r="5" opacity="0.9" />
+    <circle cx="495" cy="850" r="3.5" opacity="0.75" />
+    <circle cx="580" cy="1120" r="4.5" opacity="0.85" />
+    <circle cx="505" cy="1380" r="6" opacity="0.9" />
+    <circle cx="565" cy="1520" r="5" opacity="0.8" />
+    <polygon points="540,300 544,312 556,316 544,320 540,332 536,320 524,316 536,312" fill="#ffffff" opacity="0.95" />
+    <polygon points="540,950 545,964 559,969 545,974 540,988 535,974 521,969 535,964" fill="#ffffff" opacity="0.9" />
+  </g>
+</svg>

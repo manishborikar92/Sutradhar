@@ -144,6 +144,164 @@ body {
 }
 
 /* ========================================================================= */
+/* THEATRICAL TRANSITIONS LAYER                                              */
+/* ========================================================================= */
+#transition_layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1080px;
+  height: 1920px;
+  pointer-events: none;
+  z-index: 95;
+  overflow: hidden;
+}
+
+#blind_wipe_container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1080px;
+  height: 1920px;
+  display: none;
+  pointer-events: none;
+  z-index: 96;
+}
+
+.blind-slat {
+  width: 1080px;
+  height: 192px;
+  background: linear-gradient(180deg, #180d05 0%, #291204 50%, #0f0602 100%);
+  border-bottom: 2px solid #b45309;
+  transform-origin: 50% 50%;
+  transform: scaleY(0);
+}
+
+#border_wipe_bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 90px;
+  height: 1920px;
+  background: linear-gradient(90deg, transparent 0%, rgba(180,83,9,0.8) 25%, #fef08a 50%, rgba(180,83,9,0.8) 75%, transparent 100%);
+  box-shadow: 0 0 60px #f59e0b;
+  display: none;
+  pointer-events: none;
+  z-index: 97;
+  transform: translateX(-120px);
+}
+
+#iris_wipe_circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  margin: -60px 0 0 -60px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fef08a 0%, #f59e0b 35%, #180d05 70%, #060814 100%);
+  box-shadow: 0 0 80px #f59e0b;
+  transform: scale(0);
+  display: none;
+  pointer-events: none;
+  z-index: 96;
+}
+
+/* ========================================================================= */
+/* DYNAMIC VFX LAYER                                                         */
+/* ========================================================================= */
+#vfx_layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1080px;
+  height: 1920px;
+  pointer-events: none;
+  z-index: 85;
+  overflow: hidden;
+}
+
+.vfx-element {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1080px;
+  height: 1920px;
+  pointer-events: none;
+  display: none;
+  opacity: 0;
+}
+
+.vfx-element svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+#vfx_laser_beam_container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1080px;
+  height: 1920px;
+  z-index: 75;
+  pointer-events: none;
+  display: none;
+  opacity: 0;
+}
+
+#vfx_sunburst_container {
+  position: absolute;
+  top: 360px;
+  left: 140px;
+  width: 800px;
+  height: 800px;
+  z-index: 55;
+  pointer-events: none;
+  display: none;
+  opacity: 0;
+  transform-origin: 400px 400px;
+}
+
+#vfx_screen_shatter_container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1080px;
+  height: 1920px;
+  z-index: 88;
+  pointer-events: none;
+  display: none;
+  opacity: 0;
+}
+
+#vfx_fracture_cracks_container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1080px;
+  height: 1920px;
+  z-index: 50;
+  pointer-events: none;
+  display: none;
+  opacity: 0;
+}
+
+#vfx_sound_ripple_container {
+  position: absolute;
+  top: 420px;
+  left: 0;
+  width: 1080px;
+  height: 1080px;
+  z-index: 52;
+  pointer-events: none;
+  display: none;
+  opacity: 0;
+  transform-origin: 540px 540px;
+}
+
+/* ========================================================================= */
 /* UNIVERSAL HIERARCHICAL RIVET RIG (0px 0px Stable Joint Origins)            */
 /* ========================================================================= */
 #thigh_left_rot, #thigh_l_rot, #leg_left_group {

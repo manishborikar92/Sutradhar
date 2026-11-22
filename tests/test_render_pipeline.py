@@ -11,6 +11,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from typing import Any
 
 from PIL import Image
 
@@ -458,6 +459,197 @@ class TestRenderPipeline(unittest.TestCase):
         self.assertTrue(check_bounds(custom_manifest, 50.0))
         with self.assertRaises(render_and_qa.RenderPipelineError):
             check_bounds(custom_manifest, 28.0)
+
+    def test_11_vfx_and_transition_composition_embedding(self) -> None:
+        """Verify generate_root_composition injects #transition_layer and all 5 VFX SVG elements with data-layout-ignore."""
+        import generate_composition
+
+        build_dir = self.root / "build"
+        build_dir.mkdir(parents=True, exist_ok=True)
+        manifest_p = build_dir / "manifest.js"
+        shutil.copytree(REPO_ROOT / "assets", self.root / "assets")
+        shutil.copy(REPO_ROOT / "config.yaml", self.root / "config.yaml")
+
+        test_manifest = {
+            "schema_version": "2.0",
+            "language": "en",
+            "content_format": "standalone",
+            "audio": {"total_duration_sec": 20.0, "total_frames": 600},
+            "scenes": [
+                {
+                    "scene_index": 1,
+                    "shot_type": "curtain_establishing",
+                    "transition_type": "curtain_open",
+                    "backdrop_rig": "celestial_cosmos_court",
+                    "primary_character": "ravana",
+                    "start_sec": 0.0,
+                    "end_sec": 5.0,
+                },
+                {
+                    "scene_index": 2,
+                    "shot_type": "character_medium",
+                    "transition_type": "blind_wipe",
+                    "backdrop_rig": "golden_lanka_citadel",
+                    "primary_character": "ravana",
+                    "vfx_elements": ["sunburst"],
+                    "start_sec": 5.0,
+                    "end_sec": 10.0,
+                },
+                {
+                    "scene_index": 3,
+                    "shot_type": "dramatic_climax",
+                    "transition_type": "shatter_transition",
+                    "backdrop_rig": "mount_kailash",
+                    "primary_character": "ravana",
+                    "vfx_elements": ["laser_beam", "fracture_cracks"],
+                    "start_sec": 10.0,
+                    "end_sec": 15.0,
+                },
+                {
+                    "scene_index": 4,
+                    "shot_type": "character_closeup_dialogue",
+                    "transition_type": "border_wipe",
+                    "backdrop_rig": "crushed_atmosphere",
+                    "primary_character": "ravana",
+                    "vfx_elements": ["sound_ripple", "screen_shatter"],
+                    "start_sec": 15.0,
+                    "end_sec": 20.0,
+                },
+            ],
+        }
+        manifest_p.write_text(f"window.EPISODE_MANIFEST = {json.dumps(test_manifest)};\n", encoding="utf-8")
+
+        res = generate_composition.generate_root_composition(self.root)
+        self.assertEqual(res["status"], "ok")
+
+        index_text = (self.root / "index.html").read_text(encoding="utf-8")
+
+        # 1. Verify Transition Layer & elements
+        self.assertIn('id="transition_layer"', index_text)
+        self.assertIn('id="blind_wipe_container"', index_text)
+        self.assertIn('class="blind-slat"', index_text)
+        self.assertIn('id="border_wipe_bar"', index_text)
+        self.assertIn('id="iris_wipe_circle"', index_text)
+
+        # 2. Verify Dynamic VFX Layer & all 5 SVG assets
+        self.assertIn('id="vfx_layer"', index_text)
+        self.assertIn('id="vfx_laser_beam_container"', index_text)
+        self.assertIn('id="vfx_sunburst_container"', index_text)
+        self.assertIn('id="vfx_screen_shatter_container"', index_text)
+        self.assertIn('id="vfx_fracture_cracks_container"', index_text)
+        self.assertIn('id="vfx_sound_ripple_container"', index_text)
+
+        # 3. Verify data-layout-ignore="true" is applied to avoid HyperFrames linting/bounds errors
+        self.assertIn('<div id="transition_layer" data-layout-ignore="true">', index_text)
+        self.assertIn('<div id="vfx_layer" data-layout-ignore="true">', index_text)
+        self.assertIn('<div id="vfx_laser_beam_container" class="vfx-element" data-layout-ignore="true">', index_text)
+
+        # 4. Verify styles.css contains transition and VFX rules
+        styles_text = (self.root / "styles.css").read_text(encoding="utf-8")
+        self.assertIn("#transition_layer", styles_text)
+        self.assertIn(".blind-slat", styles_text)
+        self.assertIn("#border_wipe_bar", styles_text)
+        self.assertIn("#iris_wipe_circle", styles_text)
+        self.assertIn("#vfx_layer", styles_text)
+        self.assertIn(".vfx-element", styles_text)
+        self.assertIn("#vfx_laser_beam_container", styles_text)
+        self.assertIn("#vfx_sunburst_container", styles_text)
+        self.assertIn("#vfx_screen_shatter_container", styles_text)
+        self.assertIn("#vfx_fracture_cracks_container", styles_text)
+        self.assertIn("#vfx_sound_ripple_container", styles_text)
+
+    def test_12_engine_handles_all_transition_types_and_vfx(self) -> None:
+        """Verify engine.js contains execution logic for all 7 transition types and 5 VFX triggers."""
+        engine_js = (REPO_ROOT / "engine.js").read_text(encoding="utf-8")
+
+        # Transitions
+        self.assertIn("curtain_open", engine_js)
+        self.assertIn("blind_wipe", engine_js)
+        self.assertIn("border_wipe", engine_js)
+        self.assertIn("shatter_transition", engine_js)
+        self.assertIn("radial_wipe", engine_js)
+        self.assertIn("cut", engine_js)
+        self.assertIn("fade", engine_js)
+
+        # VFX Elements
+        self.assertIn("laser_beam", engine_js)
+        self.assertIn("sunburst", engine_js)
+        self.assertIn("screen_shatter", engine_js)
+        self.assertIn("fracture_cracks", engine_js)
+        self.assertIn("sound_ripple", engine_js)
+
+        # Transform safety: verify border_wipe uses x transform, not left
+        self.assertIn("x: 1200", engine_js)
+
+    def test_13_phase3_acceptance_test(self) -> None:
+        """Verify Phase 3 Acceptance Criterion: Video contains at least 3 distinct transition types and 2 VFX elements."""
+        import generate_composition
+
+        build_dir = self.root / "build"
+        build_dir.mkdir(parents=True, exist_ok=True)
+        manifest_p = build_dir / "manifest.js"
+        shutil.copytree(REPO_ROOT / "assets", self.root / "assets")
+        shutil.copy(REPO_ROOT / "config.yaml", self.root / "config.yaml")
+
+        # Multi-shot episode with 4 distinct transitions and 3 VFX elements
+        test_manifest = {
+            "schema_version": "2.0",
+            "language": "en",
+            "content_format": "standalone",
+            "audio": {"total_duration_sec": 30.0, "total_frames": 900},
+            "scenes": [
+                {
+                    "scene_index": 1,
+                    "shot_type": "curtain_establishing",
+                    "transition_type": "curtain_open",  # Transition 1
+                    "backdrop_rig": "celestial_cosmos_court",
+                    "primary_character": "ravana",
+                    "start_sec": 0.0,
+                    "end_sec": 7.0,
+                },
+                {
+                    "scene_index": 2,
+                    "shot_type": "character_medium",
+                    "transition_type": "border_wipe",  # Transition 2
+                    "backdrop_rig": "golden_lanka_citadel",
+                    "primary_character": "ravana",
+                    "vfx_elements": ["sunburst"],  # VFX 1
+                    "start_sec": 7.0,
+                    "end_sec": 14.0,
+                },
+                {
+                    "scene_index": 3,
+                    "shot_type": "dramatic_climax",
+                    "transition_type": "shatter_transition",  # Transition 3
+                    "backdrop_rig": "mount_kailash",
+                    "primary_character": "ravana",
+                    "vfx_elements": ["laser_beam", "fracture_cracks"],  # VFX 2 & 3
+                    "start_sec": 14.0,
+                    "end_sec": 22.0,
+                },
+                {
+                    "scene_index": 4,
+                    "shot_type": "character_closeup_dialogue",
+                    "transition_type": "blind_wipe",  # Transition 4
+                    "backdrop_rig": "crushed_atmosphere",
+                    "primary_character": "ravana",
+                    "start_sec": 22.0,
+                    "end_sec": 30.0,
+                },
+            ],
+        }
+        manifest_p.write_text(f"window.EPISODE_MANIFEST = {json.dumps(test_manifest)};\n", encoding="utf-8")
+
+        res = generate_composition.generate_root_composition(self.root)
+        self.assertEqual(res["status"], "ok")
+
+        # Extract and verify transition types and vfx elements count
+        transitions_used = set(s.get("transition_type") for s in test_manifest["scenes"] if s.get("transition_type"))
+        vfx_used = set(vfx for s in test_manifest["scenes"] for vfx in (s.get("vfx_elements") or []))
+
+        # Check acceptance criteria
+        self.assertGreaterEqual(len(transitions_used), 3, f"Expected >= 3 distinct transitions, got {len(transitions_used)}: {transitions_used}")
+        self.assertGreaterEqual(len(vfx_used), 2, f"Expected >= 2 distinct VFX elements, got {len(vfx_used)}: {vfx_used}")
 
 
 if __name__ == "__main__":

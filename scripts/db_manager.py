@@ -526,6 +526,7 @@ class ScenePlan(BaseModel):
     transition_type: Optional[str] = None
     sfx_cue: Optional[str] = None
     fx_theme: Optional[str] = None
+    vfx_elements: Optional[list[str]] = None
     characters: Optional[list[str]] = None
     pose_preset: Optional[str] = None
     expression_preset: Optional[str] = None
@@ -550,6 +551,21 @@ class ScenePlan(BaseModel):
     @classmethod
     def clean_optional_strings(cls, v: Any) -> Any:
         return _blank_to_none(v)
+
+    @field_validator("vfx_elements")
+    @classmethod
+    def check_vfx_elements(cls, v: Optional[list[str]]) -> Optional[list[str]]:
+        if v is None:
+            return None
+        valid_items: list[str] = []
+        for item in v:
+            if not isinstance(item, str):
+                continue
+            cleaned = item.strip().lower()
+            if not SNAKE_CASE_RE.match(cleaned):
+                raise ValueError(f"vfx_element '{item}' must be lowercase snake_case")
+            valid_items.append(cleaned)
+        return valid_items
 
     @field_validator("backdrop_rig")
     @classmethod
@@ -1338,6 +1354,11 @@ def cmd_context(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
                 "emotion_speed_guidance": "Calm/meditative/solemn: ~0.88-0.92; Urgent/wrath/climax: ~0.94-0.96; Dialogue: 0.88-0.92.",
                 "pause_guidance": "Dramatic pause after climax/revelation: 350-500ms; rapid dialogue: 150-200ms; final scene: 850ms."
             },
+            "visual_effects_and_transitions": {
+                "available_vfx": ["laser_beam", "sunburst", "screen_shatter", "fracture_cracks", "sound_ripple"],
+                "available_transitions": ["fade", "curtain_open", "blind_wipe", "border_wipe", "shatter_transition", "radial_wipe", "cut"],
+                "guidance": "Every episode must feature at least 3 distinct transitions across scenes (e.g. curtain_open -> border_wipe -> shatter_transition) and at least 2 narrative-synchronized VFX elements (e.g. laser_beam + sunburst)."
+            },
             "canvas_rule": "Strict clean canvas: zero burned-in subtitles by default (YouTube generates closed captions automatically)."
         },
         "active_series": active_series,
@@ -1350,6 +1371,7 @@ def cmd_context(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
             "characters": _list_svg_stems(assets_dir / "svg" / "characters"),
             "backdrops": _list_svg_stems(assets_dir / "svg" / "backdrops"),
             "diagrams": _list_svg_stems(assets_dir / "svg" / "diagrams"),
+            "vfx": _list_svg_stems(assets_dir / "svg" / "vfx"),
             "bgm": _list_audio_files(assets_dir / "bgm"),
             "sfx": _list_audio_files(assets_dir / "sfx"),
         },

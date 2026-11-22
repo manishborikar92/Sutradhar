@@ -36,6 +36,451 @@
       <div class="ember" style="left: 840px;"></div>
     </div>
 
+    <!-- THEATRICAL TRANSITIONS LAYER -->
+    <div id="transition_layer" data-layout-ignore="true">
+      <div id="blind_wipe_container" data-layout-ignore="true">
+        <div class="blind-slat" data-layout-ignore="true"></div>
+        <div class="blind-slat" data-layout-ignore="true"></div>
+        <div class="blind-slat" data-layout-ignore="true"></div>
+        <div class="blind-slat" data-layout-ignore="true"></div>
+        <div class="blind-slat" data-layout-ignore="true"></div>
+        <div class="blind-slat" data-layout-ignore="true"></div>
+        <div class="blind-slat" data-layout-ignore="true"></div>
+        <div class="blind-slat" data-layout-ignore="true"></div>
+        <div class="blind-slat" data-layout-ignore="true"></div>
+        <div class="blind-slat" data-layout-ignore="true"></div>
+      </div>
+      <div id="border_wipe_bar" data-layout-ignore="true"></div>
+      <div id="iris_wipe_circle" data-layout-ignore="true"></div>
+    </div>
+
+    <!-- DYNAMIC VFX LAYER -->
+    <div id="vfx_layer" data-layout-ignore="true">
+      <div id="vfx_laser_beam_container" class="vfx-element" data-layout-ignore="true">
+        <svg data-layout-ignore="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920" id="vfx_laser_beam">
+  <defs>
+    <!-- Core Laser Linear Gradients -->
+    <linearGradient id="laserCoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#fef08a" stop-opacity="0.2" />
+      <stop offset="25%" stop-color="#ffffff" stop-opacity="0.9" />
+      <stop offset="50%" stop-color="#ffffff" stop-opacity="1.0" />
+      <stop offset="75%" stop-color="#ffffff" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#fef08a" stop-opacity="0.2" />
+    </linearGradient>
+
+    <linearGradient id="laserGlowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#d97706" stop-opacity="0" />
+      <stop offset="20%" stop-color="#f59e0b" stop-opacity="0.4" />
+      <stop offset="50%" stop-color="#fbbf24" stop-opacity="0.8" />
+      <stop offset="80%" stop-color="#f59e0b" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#d97706" stop-opacity="0" />
+    </linearGradient>
+
+    <linearGradient id="laserCoronaGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#78350f" stop-opacity="0" />
+      <stop offset="30%" stop-color="#b45309" stop-opacity="0.25" />
+      <stop offset="50%" stop-color="#f59e0b" stop-opacity="0.45" />
+      <stop offset="70%" stop-color="#b45309" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#78350f" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Base Impact Radial Gradients -->
+    <radialGradient id="laserImpactGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1.0" />
+      <stop offset="25%" stop-color="#fef08a" stop-opacity="0.9" />
+      <stop offset="55%" stop-color="#f59e0b" stop-opacity="0.6" />
+      <stop offset="80%" stop-color="#b45309" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#180d05" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- BEAM GROUP (Vertical Column from Sky to Ground) -->
+  <g id="laser_column" transform-origin="540 0">
+    <!-- Outer Radiant Corona -->
+    <rect id="laser_outer_corona" x="420" y="0" width="240" height="1680" fill="url(#laserCoronaGrad)" />
+
+    <!-- Mid Atmospheric Glow -->
+    <rect id="laser_inner_glow" x="480" y="0" width="120" height="1680" fill="url(#laserGlowGrad)" />
+
+    <!-- Pure White-Gold Core -->
+    <rect id="laser_core" x="522" y="0" width="36" height="1680" rx="18" fill="url(#laserCoreGrad)" />
+    <rect id="laser_centerline" x="534" y="0" width="12" height="1680" fill="#ffffff" />
+  </g>
+
+  <!-- IMPACT BURST AT GROUND PLANE (y: 1550 - 1750) -->
+  <g id="laser_impact_burst">
+    <!-- Ground Impact Ellipse -->
+    <ellipse id="impact_disc_outer" cx="540" cy="1680" rx="320" ry="90" fill="url(#laserImpactGlow)" />
+    <ellipse id="impact_disc_inner" cx="540" cy="1680" rx="160" ry="45" fill="#ffffff" opacity="0.85" />
+
+    <!-- Radiating Solar Shock Spikes -->
+    <g id="impact_spikes" stroke="#fef08a" stroke-width="4" stroke-linecap="round" opacity="0.8">
+      <line x1="540" y1="1680" x2="320" y2="1620" />
+      <line x1="540" y1="1680" x2="760" y2="1620" />
+      <line x1="540" y1="1680" x2="260" y2="1670" />
+      <line x1="540" y1="1680" x2="820" y2="1670" />
+      <line x1="540" y1="1680" x2="340" y2="1730" />
+      <line x1="540" y1="1680" x2="740" y2="1730" />
+      <line x1="540" y1="1680" x2="440" y2="1580" />
+      <line x1="540" y1="1680" x2="640" y2="1580" />
+    </g>
+
+    <!-- Concentric Shockwave Rings -->
+    <ellipse id="impact_ring_1" cx="540" cy="1680" rx="220" ry="60" fill="none" stroke="#fbbf24" stroke-width="3" opacity="0.75" />
+    <ellipse id="impact_ring_2" cx="540" cy="1680" rx="380" ry="105" fill="none" stroke="#d97706" stroke-width="2" opacity="0.5" />
+  </g>
+
+  <!-- AMBIENT ENERGY PARTICLES -->
+  <g id="laser_sparks" fill="#fef08a">
+    <circle cx="510" cy="420" r="4" opacity="0.8" />
+    <circle cx="575" cy="580" r="5" opacity="0.9" />
+    <circle cx="495" cy="850" r="3.5" opacity="0.75" />
+    <circle cx="580" cy="1120" r="4.5" opacity="0.85" />
+    <circle cx="505" cy="1380" r="6" opacity="0.9" />
+    <circle cx="565" cy="1520" r="5" opacity="0.8" />
+    <polygon points="540,300 544,312 556,316 544,320 540,332 536,320 524,316 536,312" fill="#ffffff" opacity="0.95" />
+    <polygon points="540,950 545,964 559,969 545,974 540,988 535,974 521,969 535,964" fill="#ffffff" opacity="0.9" />
+  </g>
+</svg>
+
+      </div>
+      <div id="vfx_sunburst_container" class="vfx-element" data-layout-ignore="true">
+        <svg data-layout-ignore="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" id="vfx_sunburst">
+  <defs>
+    <radialGradient id="sunCenterGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1.0" />
+      <stop offset="35%" stop-color="#fef08a" stop-opacity="0.95" />
+      <stop offset="65%" stop-color="#f59e0b" stop-opacity="0.8" />
+      <stop offset="85%" stop-color="#b45309" stop-opacity="0.5" />
+      <stop offset="100%" stop-color="#78350f" stop-opacity="0" />
+    </radialGradient>
+
+    <linearGradient id="primaryRayGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="30%" stop-color="#fef08a" />
+      <stop offset="70%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#b45309" stop-opacity="0.2" />
+    </linearGradient>
+
+    <linearGradient id="secondaryRayGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="50%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#991b1b" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Master Single Major Ray Definition -->
+    <g id="master_major_ray">
+      <polygon points="400,20 416,180 408,310 392,310 384,180" fill="url(#primaryRayGrad)" />
+      <!-- Diamond Ray Tip -->
+      <polygon points="400,0 408,20 400,32 392,20" fill="#ffffff" />
+    </g>
+
+    <!-- Master Single Minor Ray Definition -->
+    <g id="master_minor_ray">
+      <polygon points="400,90 412,210 405,310 395,310 388,210" fill="url(#secondaryRayGrad)" />
+      <!-- Flame Curl -->
+      <circle cx="400" cy="80" r="5" fill="#fef08a" />
+    </g>
+  </defs>
+
+  <!-- MASTER ROTATING SUNBURST GROUP -->
+  <g id="sunburst_rotating_group" transform-origin="400 400">
+    <!-- Atmospheric Corona Disc -->
+    <circle cx="400" cy="400" r="390" fill="url(#sunCenterGrad)" opacity="0.35" />
+
+    <!-- 16 MAJOR SOLAR RAYS (Every 22.5 deg) -->
+    <g id="major_rays_group">
+      <use href="#master_major_ray" />
+      <use href="#master_major_ray" transform="rotate(22.5 400 400)" />
+      <use href="#master_major_ray" transform="rotate(45 400 400)" />
+      <use href="#master_major_ray" transform="rotate(67.5 400 400)" />
+      <use href="#master_major_ray" transform="rotate(90 400 400)" />
+      <use href="#master_major_ray" transform="rotate(112.5 400 400)" />
+      <use href="#master_major_ray" transform="rotate(135 400 400)" />
+      <use href="#master_major_ray" transform="rotate(157.5 400 400)" />
+      <use href="#master_major_ray" transform="rotate(180 400 400)" />
+      <use href="#master_major_ray" transform="rotate(202.5 400 400)" />
+      <use href="#master_major_ray" transform="rotate(225 400 400)" />
+      <use href="#master_major_ray" transform="rotate(247.5 400 400)" />
+      <use href="#master_major_ray" transform="rotate(270 400 400)" />
+      <use href="#master_major_ray" transform="rotate(292.5 400 400)" />
+      <use href="#master_major_ray" transform="rotate(315 400 400)" />
+      <use href="#master_major_ray" transform="rotate(337.5 400 400)" />
+    </g>
+
+    <!-- 16 INTERLEAVED MINOR FLAME RAYS (Offset by 11.25 deg) -->
+    <g id="minor_rays_group" opacity="0.85">
+      <use href="#master_minor_ray" transform="rotate(11.25 400 400)" />
+      <use href="#master_minor_ray" transform="rotate(33.75 400 400)" />
+      <use href="#master_minor_ray" transform="rotate(56.25 400 400)" />
+      <use href="#master_minor_ray" transform="rotate(78.75 400 400)" />
+      <use href="#master_minor_ray" transform="rotate(101.25 400 400)" />
+      <use href="#master_minor_ray" transform="rotate(123.75 400 400)" />
+      <use href="#master_minor_ray" transform="rotate(146.25 400 400)" />
+      <use href="#master_minor_ray" transform="rotate(168.75 400 400)" />
+      <use href="#master_minor_ray" transform="rotate(191.25 400 400)" />
+      <use href="#master_minor_ray" transform="rotate(213.75 400 400)" />
+      <use href="#master_minor_ray" transform="rotate(236.25 400 400)" />
+      <use href="#master_minor_ray" transform="rotate(258.75 400 400)" />
+      <use href="#master_minor_ray" transform="rotate(281.25 400 400)" />
+      <use href="#master_minor_ray" transform="rotate(303.75 400 400)" />
+      <use href="#master_minor_ray" transform="rotate(326.25 400 400)" />
+      <use href="#master_minor_ray" transform="rotate(348.75 400 400)" />
+    </g>
+
+    <!-- ORNAMENTAL INNER RING (Folk Petals) -->
+    <g id="inner_petals" fill="#f59e0b" stroke="#78350f" stroke-width="2">
+      <circle cx="400" cy="400" r="145" fill="none" stroke="#fbbf24" stroke-width="4" />
+      <circle cx="400" cy="400" r="125" fill="#451a03" stroke="#fef08a" stroke-width="2" />
+    </g>
+
+    <!-- GLOWING LUMINOUS SOLAR CORE -->
+    <circle id="sunburst_core" cx="400" cy="400" r="95" fill="url(#sunCenterGrad)" />
+    <circle cx="400" cy="400" r="45" fill="#ffffff" opacity="0.9" />
+  </g>
+</svg>
+
+      </div>
+      <div id="vfx_screen_shatter_container" class="vfx-element" data-layout-ignore="true">
+        <svg data-layout-ignore="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920" id="vfx_screen_shatter">
+  <defs>
+    <!-- Facet Gradients for Crystalline Shards -->
+    <linearGradient id="shardGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
+      <stop offset="25%" stop-color="#fef08a" stop-opacity="0.8" />
+      <stop offset="60%" stop-color="#d97706" stop-opacity="0.5" />
+      <stop offset="100%" stop-color="#180d05" stop-opacity="0.9" />
+    </linearGradient>
+
+    <linearGradient id="shardGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
+      <stop offset="30%" stop-color="#fbbf24" stop-opacity="0.75" />
+      <stop offset="70%" stop-color="#b45309" stop-opacity="0.55" />
+      <stop offset="100%" stop-color="#0c0704" stop-opacity="0.95" />
+    </linearGradient>
+
+    <radialGradient id="shatterFlashGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1.0" />
+      <stop offset="30%" stop-color="#fef08a" stop-opacity="0.85" />
+      <stop offset="60%" stop-color="#f59e0b" stop-opacity="0.5" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- IMPACT FLASH AT EPICENTER (540, 960) -->
+  <circle id="shatter_center_flash" cx="540" cy="960" r="300" fill="url(#shatterFlashGrad)" opacity="0.9" />
+
+  <!-- RADIATING FRACTURE NETWORK LINES -->
+  <g id="shatter_fissures" stroke="#fef08a" stroke-width="2.5" stroke-linecap="round" opacity="0.85">
+    <!-- North & North-West Fissures -->
+    <polyline points="540,960 510,780 430,600 320,410 180,180 60,0" />
+    <polyline points="540,960 580,720 540,480 610,240 570,0" />
+    <polyline points="510,780 360,720 210,610 80,520 0,460" />
+
+    <!-- North & North-East Fissures -->
+    <polyline points="540,960 690,810 840,640 980,440 1080,290" />
+    <polyline points="690,810 740,590 870,390 950,160 1010,0" />
+
+    <!-- South & South-West Fissures -->
+    <polyline points="540,960 480,1140 380,1350 250,1570 120,1780 0,1920" />
+    <polyline points="480,1140 340,1190 190,1280 60,1360 0,1410" />
+
+    <!-- South & South-East Fissures -->
+    <polyline points="540,960 620,1160 720,1390 860,1610 970,1810 1040,1920" />
+    <polyline points="620,1160 760,1210 910,1310 1010,1400 1080,1450" />
+    <polyline points="540,960 550,1260 520,1530 570,1780 540,1920" />
+  </g>
+
+  <!-- LARGE DISPERSIBLE SHARDS (Configured for GSAP Explosive Displacement) -->
+  <g id="shatter_shards" stroke="#fbbf24" stroke-width="2">
+    <!-- Center-Core Inner Shards -->
+    <polygon id="shard_c1" points="540,960 470,890 520,830 580,880" fill="url(#shardGrad1)" />
+    <polygon id="shard_c2" points="540,960 610,910 650,980 570,1020" fill="url(#shardGrad2)" />
+    <polygon id="shard_c3" points="540,960 570,1020 490,1070 450,1000" fill="url(#shardGrad1)" />
+    <polygon id="shard_c4" points="540,960 450,1000 420,930 470,890" fill="url(#shardGrad2)" />
+
+    <!-- North-West Shards -->
+    <polygon id="shard_nw1" points="470,890 420,930 310,810 380,730" fill="url(#shardGrad1)" />
+    <polygon id="shard_nw2" points="520,830 470,890 380,730 440,650" fill="url(#shardGrad2)" />
+    <polygon id="shard_nw3" points="440,650 320,580 360,420 480,490" fill="url(#shardGrad1)" />
+
+    <!-- North-East Shards -->
+    <polygon id="shard_ne1" points="580,880 670,830 730,900 610,910" fill="url(#shardGrad1)" />
+    <polygon id="shard_ne2" points="580,880 520,830 600,690 690,750" fill="url(#shardGrad2)" />
+    <polygon id="shard_ne3" points="690,750 820,680 870,810 730,900" fill="url(#shardGrad1)" />
+
+    <!-- South-West Shards -->
+    <polygon id="shard_sw1" points="450,1000 490,1070 380,1190 320,1100" fill="url(#shardGrad2)" />
+    <polygon id="shard_sw2" points="490,1070 540,1170 440,1280 380,1190" fill="url(#shardGrad1)" />
+    <polygon id="shard_sw3" points="320,1100 380,1190 260,1310 180,1210" fill="url(#shardGrad2)" />
+
+    <!-- South-East Shards -->
+    <polygon id="shard_se1" points="570,1020 650,980 740,1080 640,1140" fill="url(#shardGrad1)" />
+    <polygon id="shard_se2" points="570,1020 640,1140 590,1240 520,1170" fill="url(#shardGrad2)" />
+    <polygon id="shard_se3" points="640,1140 760,1200 710,1340 590,1240" fill="url(#shardGrad1)" />
+  </g>
+
+  <!-- SCATTERED SPECULAR DIAMOND SPLINTERS -->
+  <g id="shatter_splinters" fill="#ffffff" stroke="#fef08a" stroke-width="1.5">
+    <polygon points="490,810 496,822 490,834 484,822" />
+    <polygon points="610,840 618,854 610,868 602,854" />
+    <polygon points="630,1040 638,1052 630,1064 622,1052" />
+    <polygon points="460,1080 468,1095 460,1110 452,1095" />
+    <polygon points="340,940 348,952 340,964 332,952" />
+    <polygon points="720,950 728,962 720,974 712,962" />
+    <polygon points="535,680 543,695 535,710 527,695" />
+    <polygon points="555,1290 563,1305 555,1320 547,1305" />
+  </g>
+</svg>
+
+      </div>
+      <div id="vfx_fracture_cracks_container" class="vfx-element" data-layout-ignore="true">
+        <svg data-layout-ignore="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920" id="vfx_fracture_cracks">
+  <defs>
+    <linearGradient id="crackGlowGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#ea580c" stop-opacity="0.9" />
+      <stop offset="50%" stop-color="#f59e0b" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="#fef08a" stop-opacity="0.2" />
+    </linearGradient>
+
+    <radialGradient id="epicenterMagma" cx="50%" cy="80%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1.0" />
+      <stop offset="20%" stop-color="#fef08a" stop-opacity="0.9" />
+      <stop offset="50%" stop-color="#f97316" stop-opacity="0.7" />
+      <stop offset="85%" stop-color="#7c2d12" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- SUBTERRANEAN MAGMA GLOW AT BEDROCK BASE (y: 1350 - 1920) -->
+  <g id="fracture_base_glow">
+    <ellipse cx="540" cy="1720" rx="480" ry="160" fill="url(#epicenterMagma)" opacity="0.75" />
+    <ellipse cx="360" cy="1650" rx="220" ry="80" fill="url(#epicenterMagma)" opacity="0.5" />
+    <ellipse cx="720" cy="1680" rx="250" ry="90" fill="url(#epicenterMagma)" opacity="0.55" />
+  </g>
+
+  <!-- DEEP FISSURE UNDERGLOW (Thick Soft-Edge Radiation) -->
+  <g id="fissure_thick_glow" stroke="#f97316" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" opacity="0.45">
+    <!-- Main Central Trunk from Bottom Center Spreading Upward -->
+    <path d="M540,1920 L535,1780 L560,1650 L520,1520 L550,1410 L480,1320 L510,1230" />
+    <!-- West Branch -->
+    <path d="M535,1780 L420,1720 L310,1640 L190,1580 L90,1540 L0,1520" />
+    <path d="M420,1720 L380,1810 L260,1870 L140,1920" />
+    <path d="M310,1640 L280,1510 L200,1430 L110,1380" />
+    <!-- East Branch -->
+    <path d="M560,1650 L680,1610 L790,1540 L910,1490 L1010,1470 L1080,1460" />
+    <path d="M680,1610 L740,1730 L850,1810 L960,1880 L1020,1920" />
+    <path d="M790,1540 L840,1430 L930,1360 L1000,1310" />
+  </g>
+
+  <!-- MID CORE FRACTURES (Amber High Energy) -->
+  <g id="fissure_mid_veins" stroke="#f59e0b" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity="0.8">
+    <path d="M540,1920 L535,1780 L560,1650 L520,1520 L550,1410 L480,1320 L510,1230" />
+    <path d="M535,1780 L420,1720 L310,1640 L190,1580 L90,1540 L0,1520" />
+    <path d="M420,1720 L380,1810 L260,1870 L140,1920" />
+    <path d="M310,1640 L280,1510 L200,1430 L110,1380" />
+    <path d="M560,1650 L680,1610 L790,1540 L910,1490 L1010,1470 L1080,1460" />
+    <path d="M680,1610 L740,1730 L850,1810 L960,1880 L1020,1920" />
+    <path d="M790,1540 L840,1430 L930,1360 L1000,1310" />
+  </g>
+
+  <!-- INCANDESCENT CORE LINES (Sharp White-Gold Center) -->
+  <g id="fissure_sharp_core" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M540,1920 L535,1780 L560,1650 L520,1520 L550,1410 L480,1320 L510,1230" />
+    <path d="M535,1780 L420,1720 L310,1640 L190,1580 L90,1540 L0,1520" />
+    <path d="M420,1720 L380,1810 L260,1870 L140,1920" />
+    <path d="M310,1640 L280,1510 L200,1430 L110,1380" />
+    <path d="M560,1650 L680,1610 L790,1540 L910,1490 L1010,1470 L1080,1460" />
+    <path d="M680,1610 L740,1730 L850,1810 L960,1880 L1020,1920" />
+    <path d="M790,1540 L840,1430 L930,1360 L1000,1310" />
+
+    <!-- Sharp Secondary Tributaries -->
+    <path d="M520,1520 L460,1470 L420,1490" stroke-width="2" />
+    <path d="M550,1410 L610,1360 L650,1370" stroke-width="2" />
+    <path d="M480,1320 L440,1270 L390,1250" stroke-width="1.5" />
+    <path d="M280,1510 L330,1450 L310,1390" stroke-width="1.5" />
+    <path d="M840,1430 L800,1360 L830,1300" stroke-width="1.5" />
+  </g>
+
+  <!-- CRACKED STONE DEBRIS CHUNKS -->
+  <g id="fracture_stone_debris" fill="#291204" stroke="#fbbf24" stroke-width="1.5">
+    <polygon points="515,1665 528,1655 536,1672 522,1680" />
+    <polygon points="575,1630 590,1622 596,1638 582,1645" />
+    <polygon points="410,1730 422,1718 434,1732 418,1744" />
+    <polygon points="695,1600 710,1592 718,1608 702,1615" />
+    <polygon points="325,1625 338,1615 344,1630 330,1638" />
+  </g>
+</svg>
+
+      </div>
+      <div id="vfx_sound_ripple_container" class="vfx-element" data-layout-ignore="true">
+        <svg data-layout-ignore="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080" width="1080" height="1080" id="vfx_sound_ripple">
+  <defs>
+    <radialGradient id="rippleCenterGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1.0" />
+      <stop offset="30%" stop-color="#fef08a" stop-opacity="0.9" />
+      <stop offset="60%" stop-color="#f59e0b" stop-opacity="0.5" />
+      <stop offset="100%" stop-color="#78350f" stop-opacity="0" />
+    </radialGradient>
+
+    <linearGradient id="rippleRingGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="50%" stop-color="#fef08a" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+
+    <linearGradient id="rippleRingGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" stop-opacity="0.9" />
+      <stop offset="50%" stop-color="#fbbf24" stop-opacity="0.7" />
+      <stop offset="100%" stop-color="#b45309" stop-opacity="0.3" />
+    </linearGradient>
+  </defs>
+
+  <!-- MASTER RIPPLE CONTAINER -->
+  <g id="sound_ripple_group" transform-origin="540 540">
+    <!-- Center Epicenter Glow -->
+    <circle id="ripple_center_pulse" cx="540" cy="540" r="75" fill="url(#rippleCenterGrad)" />
+    <circle cx="540" cy="540" r="28" fill="#ffffff" />
+
+    <!-- RING 1: Core Harmonic Shockwave -->
+    <circle id="ripple_ring_1" cx="540" cy="540" r="130" fill="none" stroke="url(#rippleRingGrad1)" stroke-width="5" opacity="0.95" />
+    <!-- Subtle Inner Petal Markers -->
+    <g id="ripple_ring_1_markers" stroke="#fef08a" stroke-width="2">
+      <line x1="540" y1="395" x2="540" y2="420" />
+      <line x1="540" y1="660" x2="540" y2="685" />
+      <line x1="395" y1="540" x2="420" y2="540" />
+      <line x1="660" y1="540" x2="685" y2="540" />
+    </g>
+
+    <!-- RING 2: Middle Rhythmic Acoustic Wave -->
+    <circle id="ripple_ring_2" cx="540" cy="540" r="250" fill="none" stroke="url(#rippleRingGrad2)" stroke-width="4" stroke-dasharray="24 12 8 12" opacity="0.85" />
+
+    <!-- RING 3: Outer Resonance Wave -->
+    <circle id="ripple_ring_3" cx="540" cy="540" r="380" fill="none" stroke="#fbbf24" stroke-width="3" stroke-dasharray="40 18" opacity="0.65" />
+
+    <!-- RING 4: Ambient Dissipation Perimeter -->
+    <circle id="ripple_ring_4" cx="540" cy="540" r="500" fill="none" stroke="#d97706" stroke-width="2" opacity="0.4" />
+
+    <!-- RADIATING HARMONIC WHISKER ARCS -->
+    <g id="harmonic_whiskers" stroke="#fef08a" stroke-width="1.5" opacity="0.75">
+      <!-- 45-degree diagonal shockwave nodes -->
+      <circle cx="632" cy="448" r="4" fill="#ffffff" />
+      <circle cx="448" cy="448" r="4" fill="#ffffff" />
+      <circle cx="448" cy="632" r="4" fill="#ffffff" />
+      <circle cx="632" cy="632" r="4" fill="#ffffff" />
+
+      <!-- Major Axis Concentric Beaded Points -->
+      <circle cx="540" cy="290" r="3" fill="#fef08a" />
+      <circle cx="540" cy="790" r="3" fill="#fef08a" />
+      <circle cx="290" cy="540" r="3" fill="#fef08a" />
+      <circle cx="790" cy="540" r="3" fill="#fef08a" />
+    </g>
+  </g>
+</svg>
+
+      </div>
+    </div>
+
     <!-- DYNAMIC MANIFEST SHOT CONTAINERS -->
     <!-- SHOT 1: (curtain_establishing) -->
     <div id="shot_1_container" class="shot-container active-shot" data-shot-type="curtain_establishing" data-layout-allow-overflow="true" data-layout-ignore="true">
