@@ -16,9 +16,18 @@ Execute ONE complete episode production run end-to-end strictly following the ru
    - **Absolute Maximum Duration:** 180.0 seconds (3 minutes).
    - **Preferred Duration Sweet Spot:** Most videos should target **40.0 seconds to 120.0 seconds** (2 minutes).
    - Dynamically adapt duration to story complexity: concise single-concept paradoxes (~40–60s), character-driven confrontations (~70–110s), or multi-stage cosmological clashes (~120–180s). Never force identical durations across stories.
-3. **Dual Content Formats (Standalone & Episodic Series):**
-   - **Standalone Video (`standalone`):** A self-contained, independent tale with a complete dramatic arc (Hook $\to$ Premise $\to$ Rising Action $\to$ Confrontation $\to$ Climax $\to$ Resolution $\to$ Wrap). Requires no prior or subsequent episodes (`series_id: null`).
-   - **Episodic Series (`episodic_series`):** A connected multi-part saga (3–6 episodes) where **every individual episode tells a complete, concluded story** with its own beginning, middle, and resolved central conflict, while building or connecting to the ongoing narrative.
+3. **Open-Ended Recurring Episodic Universes (Shinchan & Doraemon Model) & Standalone Stories:**
+   - **Open-Ended Recurring Series (`episodic_series`):** An ongoing universe (e.g. *Shani Katha*, *Hanuman Katha*, *Ancient Indian Engineering*) that continues indefinitely without arbitrary episode ceilings:
+     - **100% Self-Contained:** Every episode tells a completely independent, self-contained story with its own beginning, middle, climax, and satisfying resolution. Zero dangling cliffhangers (*"to be continued"*, *"part 2"*, *"in the next episode"*, *"stay tuned"* are strictly forbidden on ALL episodes).
+     - **Independent Viewing:** Episodes can be watched in any order without confusing viewers.
+     - **Consistent Recurring Universe:** Characters, their personalities, visual appearances, and shared universe remain consistent across episodes.
+     - **Multi-Series Rotation:** Sutradhar maintains multiple active series universes and intelligently rotates between them rather than being locked to one theme.
+   - **Standalone Video (`standalone`):** A single self-contained, independent tale with a complete dramatic arc requiring no series grouping (`series_id: null`).
+   - **Autonomous Story Research & Source Provenance (`story_research`):** Autonomously research authentic traditional sources (Puranas, Itihasas, historical/archaeological records), preserving canonical facts without inventing ungrounded fiction.
+   - **Non-Sequential Title Rules:**
+     - Series episodes: `<Specific Story Title> | <Series Name>` (e.g., `When Ravana Made Shani His Staircase | Shani Katha`). Strictly zero sequential numbers ("Ep 1", "Part 2", "#1").
+     - Standalone videos: `<Specific Story Title>`.
+   - **Automatic YouTube Description Citations:** Citations from `story_research` are automatically formatted and appended to the YouTube video description, preserving a 100% clean video canvas (zero on-screen text citations, subtitles, or captions).
 4. **Automated Public Publishing & Credential Security:**
    - Every episode is uploaded as **Public by default** (`upload_mode == "public"`, `privacy_status == "public"`, `allow_public_or_scheduled == true`) or scheduled when configured in `config.yaml`.
    - Custom thumbnail generation and upload are fully enabled; verify that `build/thumbnail.jpg` is automatically applied.
@@ -44,37 +53,45 @@ Execute ONE complete episode production run end-to-end strictly following the ru
 
 ## 2. Step-by-Step Daily Production Workflow
 
-### Step 1: Pre-Flight State, Duplicate-Upload Guard & Context Inspection
+### Step 1: Pre-Flight State, Multi-Series Inspection & Context Analysis
 1. Run `.\.venv\Scripts\python.exe scripts/db_manager.py --context` and parse the JSON output:
    - `channel_config`: locked `primary_language` (`"en"` or `"hi"`), allowed `pillars`, locked voice profile, `upload_mode`, and `allow_public_or_scheduled`.
-   - `active_series`: current `ACTIVE` series (including `series_bible_json` and `youtube_playlist_id`) or `null`.
-   - `next_episode_number_in_series` and `next_global_episode_number`.
+   - `active_series_list`: list of ALL concurrent active series universes (e.g. *Shani Katha*, *Ancient Indian Engineering*), including their produced episode counts and playlist IDs.
+   - `active_series`: current default active series or `null`.
+   - `previously_covered_topics`: complete history of previous story titles and summaries. Cross-reference this list to ensure **ZERO story repetition**.
    - `completed_series_history`, `last_completed_pillar`, `previous_bespoke_assets`, and `available_rigs`.
-   - `autonomous_planning_guidelines`: guidelines for autonomous format and duration selection.
+   - `autonomous_planning_guidelines`: guidelines for autonomous topic selection, format, duration, and storytelling.
 2. **Duplicate-Upload & Interrupted-Run Guard (CRITICAL):**
    - Inspect whether `build/publish_result.json` and `build/episode_plan.json` already exist from an earlier interrupted run.
    - If `build/publish_result.json` exists with a non-null `video_id` whose `episode_plan.json` matches current episode metadata: **DO NOT re-upload to YouTube!** Stop immediately and report the already-uploaded `video_id`.
    - Confirm `config.yaml` and `channel_config` match the intended `primary_language` (`en` or `hi`). Never mix languages on the same channel.
 
-### Step 2: Autonomous Topic, Format & Duration Planning
-- **Case A — `active_series` is NOT `null`:**
-  - Continue `active_series` strictly at `next_episode_number_in_series` of `active_series.total_planned_episodes`. Never abandon an active series.
-  - Follow `active_series.series_bible_json` while preserving locked `pillar`, `tts_voice`, and `bgm_track`.
-  - **Complete Story Guarantee:** Ensure this episode resolves its own primary dramatic conflict with a satisfying climax and ending, while bridging to the broader series arc.
-  - **Autonomous Duration:** Choose an episode duration within **30s – 180s** (preferred **40s – 120s**) appropriate to today's story beat.
-- **Case B — `active_series` IS `null`:**
-  1. **Autonomous Topic & Pillar Selection:** Choose a fresh topic from `channel_config.pillars` (*Ancient Epics & Lore*, *Hidden History*, or *Cosmic & Scientific Paradoxes*), rotating away from `last_completed_pillar` and avoiding topics in `completed_series_history`.
-  2. **Autonomous Format Decision:**
-     - **Option 1 (Standalone Video):** If the topic is best told as a single, punchy, self-contained story, set `content_format: "standalone"`, `series_id: null`, `series_title: null`, `episode_number_in_series: null`, `total_planned_episodes: null`. Proceed directly to Step 3 (no `--create-series` needed).
-     - **Option 2 (Episodic Series):** If the topic is an epic multi-part saga, set `content_format: "episodic_series"`. Plan a cohesive **3-to-6-episode mini-series** (`total_planned_episodes` 3–6) where every episode stands on its own. Write `build/new_series_plan.json` with complete `series_bible_json` and run `.\.venv\Scripts\python.exe scripts/db_manager.py --create-series`, then re-run `--context` to confirm the new `ACTIVE` `series_id`.
-  3. **Autonomous Duration Selection:** Set the target duration based on narrative needs:
-     - Concise stories: **40s – 60s** (5–7 scenes)
-     - Standard dramas: **70s – 110s** (8–11 scenes)
-     - Epic multi-stage confrontations: **120s – 180s** (11–15 scenes)
+### Step 2: Autonomous Story Research, Topic Selection & Series Universe Management
+1. **Intelligent Showrunner Decision:**
+   - **Path A (Revisit an Active Series Universe):** Select one of the ongoing series from `active_series_list` (e.g. *Shani Katha*), rotating away from the series featured yesterday. Revisit the recurring characters and world while selecting a completely fresh, unrepeated legend.
+   - **Path B (Introduce a Brand-New Series Universe):** If an exciting new mythological or historical domain is discovered, launch a new open-ended series universe! Write `build/new_series_plan.json` (setting `content_format: "episodic_series"` and `total_planned_episodes: null` for open-ended ongoing continuity) and run `.\.venv\Scripts\python.exe scripts/db_manager.py --create-series`. This automatically provisions a new YouTube playlist.
+   - **Path C (Standalone Story):** If the topic is best told as a standalone, one-off cinematic narrative without an ongoing series umbrella, set `content_format: "standalone"` (`series_id: null`, `series_title: null`). Proceed directly without `--create-series`.
+2. **Autonomous Story Research & Source Provenance (`story_research`):**
+   - Autonomously research authentic traditional scriptures and historical records (e.g. Skanda Purana, Shiva Purana, Valmiki Ramayana, Mahabharata, Harivamsa, epigraphical inscriptions, archaeological papers).
+   - Verify key canonical facts, cross-check regional variants, and preserve traditional storylines without inventing ungrounded fiction.
+   - Populate `story_research` with:
+     - `source_tradition`: Specific scripture, kanda, chapter, or historical record (e.g. `"Skanda Purana, Kashi Khanda, Chapter 32"`).
+     - `canonical_story_summary`: Authentic traditional narrative summary.
+     - `key_verified_facts`: List of core canonical facts preserved in the script.
+     - `cross_checked_variants`: Notes on textual/regional variants (or null).
+     - `source_references`: Authoritative books, chapters, and references.
+3. **Autonomous Duration Selection:**
+   - Concise paradoxes: **40s – 60s** (5–7 scenes)
+   - Standard mythological dramas: **70s – 110s** (8–11 scenes)
+   - Epic cosmic clashes: **120s – 180s** (11–15 scenes)
 
 ### Step 3: Author High-Retention Multi-Shot Episode Plan (`build/episode_plan.json`)
 Create `build/episode_plan.json` matching the active `primary_language` (`en` or `hi`), specifying:
-- `content_format`: `"standalone"` or `"episodic_series"` (or `"serial"`).
+- `content_format`: `"standalone"` or `"episodic_series"`.
+- `story_research`: Structured research provenance object (Task 6.3).
+- `youtube_title`:
+  - For series: `<Specific Story Title> | <Series Name>` (e.g. `When Ravana Made Shani His Staircase | Shani Katha`). Strictly zero sequential numbers ("Ep 1", "Part 2", "#1").
+  - For standalone: `<Specific Story Title>` (e.g. `The Cosmic Churning of the Ocean`).
 - `target_duration_sec`: autonomously selected float (30.0 – 180.0, preferred 40.0 – 120.0).
 - `target_duration_range`: `{"min_seconds": ..., "max_seconds": ...}`.
 - `narrative_structure`: `"eight_phase_complete_arc"`, `"five_phase_compact_arc"`, or `"in_medias_res"`.
@@ -100,9 +117,10 @@ Create `build/episode_plan.json` matching the active `primary_language` (`en` or
    - **In Medias Res Structure (`in_medias_res`):**
      Open Scene 1 at the boiling point of confrontation with zero preamble, flashback to the origin mistake/vow in Scenes 2–3, push back into the climax in Scene 4, and resolve in Scene 5.
 
-2. **Story Completeness & Non-Negotiable Resolution Rules:**
-   - **Standalone Videos:** Must be 100% self-contained. The `central_conflict` MUST be fully resolved in `resolution`. Strictly ZERO cliffhanger hooks (phrases like *"to be continued"*, *"part 2"*, *"stay tuned"*, *"in the next episode"* are forbidden and fail validation).
-   - **Episodic Series:** Every episode must resolve its primary conflict with a satisfying climax and resolution. Subtle thematic bridges or future episode setups are permitted, but never leave today's central conflict dangling.
+2. **Universal Story Completeness & Anti-Cliffhanger Mandate:**
+   - **Shinchan / Doraemon Cartoon Model Across ALL Videos:** Every episode (both `standalone` and `episodic_series`) MUST tell a completely self-contained, independent, and concluded story.
+   - **Strict Zero-Cliffhanger Rule:** Forward-continuation cliffhangers (*"to be continued"*, *"part 2"*, *"in the next episode"*, *"stay tuned"*, *"next time on"*, *"continued in"*) are strictly forbidden on **BOTH** standalone and episodic series, and are automatically rejected by the validator.
+   - **Satisfying Resolution:** Central conflict must be fully resolved with decisive consequence, followed by a philosophical, cosmological, or moral takeaway (`satisfying_takeaway`).
 
 3. **Dynamic Pacing & Emotional Delivery Rules:**
    - Narration speed varies dynamically based on scene emotion:

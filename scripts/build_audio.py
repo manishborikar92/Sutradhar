@@ -831,7 +831,7 @@ def verify_active_series_continuity_readonly(
     db_path: Path,
     ep_plan: EpisodePlan,
 ) -> None:
-    if getattr(ep_plan, "content_format", "serial") == "standalone" or ep_plan.series_id is None:
+    if getattr(ep_plan, "content_format", "episodic_series") == "standalone" or ep_plan.series_id is None:
         return
 
     if not db_path.is_file():
@@ -849,21 +849,22 @@ def verify_active_series_continuity_readonly(
         ).fetchone()
         if not table_exists:
             return
-        active = conn.execute("SELECT * FROM series WHERE status = 'ACTIVE'").fetchone()
+        active = conn.execute(
+            "SELECT * FROM series WHERE series_id = ? AND status = 'ACTIVE'",
+            (ep_plan.series_id,),
+        ).fetchone()
     finally:
         if conn is not None:
             conn.close()
 
     if active is None:
         print(
-            "[WARN] No ACTIVE series in episodes.db; proceeding with standalone audio build.",
+            f"[WARN] No ACTIVE series #{ep_plan.series_id} in episodes.db; proceeding with standalone audio build.",
             file=sys.stderr,
         )
         return
 
     mismatches: list[str] = []
-    if int(active["series_id"]) != ep_plan.series_id:
-        mismatches.append(f"series_id ({ep_plan.series_id} != {active['series_id']})")
     if active["series_title"] != ep_plan.series_title:
         mismatches.append(f"series_title ('{ep_plan.series_title}' != '{active['series_title']}')")
     if active["pillar"] != ep_plan.pillar:
@@ -1206,7 +1207,7 @@ def build_episode_audio(
             f"sum(scenes)={sum_duration}s (tolerance={DURATION_TOLERANCE_SEC}s)."
         )
 
-    active_format = getattr(ep_plan, "content_format", None) or cfg.get("content_format", "serial")
+    active_format = getattr(ep_plan, "content_format", None) or cfg.get("content_format", "episodic_series")
     format_pacing = cfg.get("format_pacing", {}).get(active_format, {})
     default_pacing = cfg.get("episode_pacing", {})
 

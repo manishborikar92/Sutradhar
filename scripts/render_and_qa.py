@@ -633,7 +633,7 @@ def run_render_and_qa_pipeline(root: Path) -> dict[str, Any]:
     expected_duration = float(manifest["audio"]["total_duration_sec"])
 
     # Dynamic format-aware duration bounds check
-    active_format = manifest.get("content_format") or cfg.get("content_format", "serial")
+    active_format = manifest.get("content_format") or cfg.get("content_format", "episodic_series")
     format_pacing = cfg.get("format_pacing", {}).get(active_format, {})
     default_pacing = cfg.get("episode_pacing", {})
 

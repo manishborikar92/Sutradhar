@@ -55,29 +55,25 @@ CREATE TABLE IF NOT EXISTS series (
     pillar TEXT NOT NULL,
     tts_voice TEXT NOT NULL,
     bgm_track TEXT NOT NULL,
-    total_planned_episodes INTEGER NOT NULL CHECK (total_planned_episodes BETWEEN 3 AND 6),
-    completed_episodes INTEGER NOT NULL DEFAULT 0
-        CHECK (completed_episodes >= 0 AND completed_episodes <= total_planned_episodes),
+    total_planned_episodes INTEGER DEFAULT NULL,
+    completed_episodes INTEGER NOT NULL DEFAULT 0,
     series_bible_json TEXT NOT NULL,
     youtube_playlist_id TEXT,
-    status TEXT NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'COMPLETED')),
+    status TEXT NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'COMPLETED', 'ARCHIVED')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
-CREATE UNIQUE INDEX IF NOT EXISTS idx_single_active_series
-    ON series (status)
-    WHERE status = 'ACTIVE';
 
 CREATE TABLE IF NOT EXISTS episodes (
     episode_id INTEGER PRIMARY KEY AUTOINCREMENT,
     series_id INTEGER,
     episode_number_in_series INTEGER CHECK (episode_number_in_series IS NULL OR episode_number_in_series >= 1),
     global_episode_number INTEGER NOT NULL UNIQUE CHECK (global_episode_number >= 1),
-    content_format TEXT NOT NULL DEFAULT 'serial' CHECK (content_format IN ('standalone', 'episodic_series', 'serial')),
+    content_format TEXT NOT NULL DEFAULT 'episodic_series' CHECK (content_format IN ('standalone', 'episodic_series', 'serial')),
     youtube_title TEXT NOT NULL,
     summary TEXT NOT NULL,
     bespoke_asset_path TEXT NOT NULL,
     script_json TEXT NOT NULL,
+    research_sources_json TEXT,
     youtube_video_id TEXT UNIQUE,
     scheduled_publish_at TEXT,
     status TEXT NOT NULL CHECK (status IN ('PUBLISHED', 'PRIVATE_REVIEW', 'FAILED')),
@@ -154,11 +150,12 @@ def validate_config(cfg: Any, config_path: Path) -> dict[str, Any]:
     if not isinstance(pillars, list) or not pillars or not all(isinstance(p, str) and p.strip() for p in pillars):
         raise StateError("config.yaml channel.pillars must be a non-empty list of strings.")
 
-    series_cfg = cfg["series"]
+    series_cfg = cfg.get("series", {})
     min_ep = series_cfg.get("min_episodes")
     max_ep = series_cfg.get("max_episodes")
-    if not isinstance(min_ep, int) or not isinstance(max_ep, int) or not (1 <= min_ep <= max_ep):
-        raise StateError("config.yaml series.min_episodes/max_episodes must be valid integers with min <= max.")
+    if min_ep is not None or max_ep is not None:
+        if not isinstance(min_ep, int) or not isinstance(max_ep, int) or not (1 <= min_ep <= max_ep):
+            raise StateError("config.yaml series.min_episodes/max_episodes must be valid integers with min <= max.")
 
     pacing = cfg["episode_pacing"]
     for key in ("min_scenes", "max_scenes", "min_words_per_scene", "max_words_per_scene"):
@@ -373,6 +370,21 @@ def _blank_to_none(v: Any) -> Any:
 # Pydantic Schemas
 # ---------------------------------------------------------------------------
 
+class StoryResearch(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    source_tradition: str = Field(..., min_length=3, max_length=250)
+    canonical_story_summary: str = Field(..., min_length=15, max_length=2500)
+    key_verified_facts: list[str] = Field(..., min_length=1)
+    cross_checked_variants: Optional[str] = Field(default=None, max_length=1500)
+    source_references: list[str] = Field(..., min_length=1)
+
+    @field_validator("cross_checked_variants", mode="before")
+    @classmethod
+    def clean_variants(cls, v: Any) -> Any:
+        return _blank_to_none(v)
+
+
 class SeriesBibleEpisode(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
@@ -381,12 +393,23 @@ class SeriesBibleEpisode(BaseModel):
     hook: str = Field(..., min_length=10, max_length=300)
     narrative_direction: str = Field(..., min_length=15, max_length=1000)
     planned_bespoke_asset: str = Field(..., min_length=10, max_length=255)
-    cliffhanger_or_payoff: str = Field(..., min_length=10, max_length=400)
+    cliffhanger_or_payoff: Optional[str] = Field(default=None, min_length=10, max_length=400)
+    satisfying_takeaway: Optional[str] = Field(default=None, min_length=10, max_length=400)
     # Episodic series extensions (optional for backwards compatibility)
     standalone_story_synopsis: Optional[str] = Field(default=None, min_length=15, max_length=1000)
     central_conflict: Optional[str] = Field(default=None, min_length=10, max_length=500)
     resolution: Optional[str] = Field(default=None, min_length=10, max_length=500)
     series_connection: Optional[str] = Field(default=None, max_length=500)
+
+    @model_validator(mode="after")
+    def sync_payoff_and_takeaway(self) -> "SeriesBibleEpisode":
+        if self.satisfying_takeaway and not self.cliffhanger_or_payoff:
+            self.cliffhanger_or_payoff = self.satisfying_takeaway
+        elif self.cliffhanger_or_payoff and not self.satisfying_takeaway:
+            self.satisfying_takeaway = self.cliffhanger_or_payoff
+        elif not self.satisfying_takeaway and not self.cliffhanger_or_payoff:
+            raise ValueError("Either satisfying_takeaway or cliffhanger_or_payoff must be provided")
+        return self
 
     @field_validator(
         "standalone_story_synopsis",
@@ -409,7 +432,7 @@ class SeriesBible(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     arc_summary: str = Field(..., min_length=15, max_length=1500)
-    content_format: Optional[Literal["episodic_series", "serial"]] = "serial"
+    content_format: Optional[Literal["episodic_series", "serial"]] = "episodic_series"
     continuity_notes: Optional[str] = Field(default=None, max_length=1000)
     episodes: list[SeriesBibleEpisode] = Field(..., min_length=1)
 
@@ -422,12 +445,12 @@ class SeriesBible(BaseModel):
 class NewSeriesPlan(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    content_format: Optional[Literal["episodic_series", "serial"]] = "serial"
+    content_format: Optional[Literal["episodic_series", "serial"]] = "episodic_series"
     series_title: str = Field(..., min_length=3, max_length=150)
     pillar: str = Field(..., min_length=2, max_length=100)
     tts_voice: str = Field(..., min_length=4, max_length=120)
     bgm_track: str = Field(..., min_length=5, max_length=120)
-    total_planned_episodes: int
+    total_planned_episodes: Optional[int] = None
     series_bible_json: SeriesBible
 
     @field_validator("pillar")
@@ -453,10 +476,13 @@ class NewSeriesPlan(BaseModel):
 
     @field_validator("total_planned_episodes")
     @classmethod
-    def check_episode_count(cls, v: int, info: ValidationInfo) -> int:
+    def check_episode_count(cls, v: Optional[int], info: ValidationInfo) -> Optional[int]:
+        if v is None:
+            return None
         cfg = (info.context or {}).get("config")
-        min_ep = cfg["series"]["min_episodes"] if cfg else 3
-        max_ep = cfg["series"]["max_episodes"] if cfg else 6
+        series_cfg = cfg.get("series", {}) if cfg else {}
+        min_ep = series_cfg.get("min_episodes", 1)
+        max_ep = series_cfg.get("max_episodes", 999999)
         if not (min_ep <= v <= max_ep):
             raise ValueError(
                 f"total_planned_episodes must be between {min_ep} and {max_ep} (got {v})"
@@ -477,12 +503,15 @@ class NewSeriesPlan(BaseModel):
     @model_validator(mode="after")
     def validate_bible_episode_alignment(self) -> "NewSeriesPlan":
         episodes = self.series_bible_json.episodes
-        if len(episodes) != self.total_planned_episodes:
-            raise ValueError(
-                f"series_bible_json.episodes length ({len(episodes)}) must match "
-                f"total_planned_episodes ({self.total_planned_episodes})"
-            )
-        expected_nums = list(range(1, self.total_planned_episodes + 1))
+        if self.total_planned_episodes is not None:
+            if len(episodes) != self.total_planned_episodes:
+                raise ValueError(
+                    f"series_bible_json.episodes length ({len(episodes)}) must match "
+                    f"total_planned_episodes ({self.total_planned_episodes})"
+                )
+            expected_nums = list(range(1, self.total_planned_episodes + 1))
+        else:
+            expected_nums = list(range(1, len(episodes) + 1))
         actual_nums = [ep.episode_number for ep in episodes]
         if actual_nums != expected_nums:
             raise ValueError(
@@ -784,8 +813,9 @@ class StoryArc(BaseModel):
 class EpisodePlan(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    content_format: Optional[Literal["standalone", "episodic_series", "serial"]] = "serial"
+    content_format: Optional[Literal["standalone", "episodic_series", "serial"]] = "episodic_series"
     story_arc: Optional[StoryArc] = None
+    story_research: Optional[StoryResearch] = None
     target_duration_sec: Optional[float] = Field(default=None, ge=30.0, le=180.0)
     target_duration_range: Optional[dict[str, float]] = None
     narrative_structure: Optional[str] = None
@@ -841,8 +871,9 @@ class EpisodePlan(BaseModel):
         if v is None:
             return None
         cfg = (info.context or {}).get("config")
-        min_ep = cfg["series"]["min_episodes"] if cfg else 3
-        max_ep = cfg["series"]["max_episodes"] if cfg else 6
+        series_cfg = cfg.get("series", {}) if cfg else {}
+        min_ep = series_cfg.get("min_episodes", 1)
+        max_ep = series_cfg.get("max_episodes", 999999)
         if not (min_ep <= v <= max_ep):
             raise ValueError(
                 f"total_planned_episodes must be between {min_ep} and {max_ep} (got {v})"
@@ -894,10 +925,8 @@ class EpisodePlan(BaseModel):
                 raise ValueError(f"series_title is required when content_format is '{fmt}'")
             if self.episode_number_in_series is None:
                 raise ValueError(f"episode_number_in_series is required when content_format is '{fmt}'")
-            if self.total_planned_episodes is None:
-                raise ValueError(f"total_planned_episodes is required when content_format is '{fmt}'")
 
-            if self.episode_number_in_series > self.total_planned_episodes:
+            if self.total_planned_episodes is not None and self.episode_number_in_series > self.total_planned_episodes:
                 raise ValueError(
                     f"episode_number_in_series ({self.episode_number_in_series}) exceeds "
                     f"total_planned_episodes ({self.total_planned_episodes})"
@@ -984,28 +1013,34 @@ class EpisodePlan(BaseModel):
                                 f"invalid scene_index {s_idx} (total scenes: {total_scenes})"
                             )
 
-            # Story completeness for standalone videos: NO dangling cliffhangers!
-            if fmt == "standalone":
-                cliffhanger_triggers = (
-                    "to be continued",
-                    "part 2",
-                    "in part 2",
-                    "stay tuned for part",
-                    "in the next episode",
-                    "in our next episode",
-                    "find out in the next",
-                    "find out in part",
-                )
-                last_scene_text = self.scenes[-1].narration_text.lower()
-                res_text = arc.resolution.lower()
-                summary_text = self.summary.lower()
+        # Story completeness for ALL episodes (standalone AND episodic series): NO dangling cliffhangers!
+        if fmt in ("standalone", "episodic_series", "serial"):
+            cliffhanger_triggers = (
+                "to be continued",
+                "part 2",
+                "in part 2",
+                "stay tuned for part",
+                "stay tuned",
+                "in the next episode",
+                "in our next episode",
+                "find out in the next",
+                "find out in part",
+                "next time on",
+                "next episode",
+                "continued in",
+            )
+            last_scene_text = self.scenes[-1].narration_text.lower()
+            res_text = self.story_arc.resolution.lower() if self.story_arc and self.story_arc.resolution else ""
+            summary_text = self.summary.lower()
 
-                for trigger in cliffhanger_triggers:
-                    if trigger in last_scene_text or trigger in res_text or trigger in summary_text:
-                        raise ValueError(
-                            f"Standalone story completeness violation: found cliffhanger phrase '{trigger}'. "
-                            "Standalone videos must fully resolve their central conflict without unresolved serial hooks."
-                        )
+            for trigger in cliffhanger_triggers:
+                if trigger in last_scene_text or trigger in res_text or trigger in summary_text:
+                    prefix = "Standalone story completeness violation" if fmt == "standalone" else f"Episodic series story completeness violation ({fmt})"
+                    raise ValueError(
+                        f"{prefix}: found cliffhanger phrase '{trigger}'. "
+                        "Every episode (standalone and episodic series) must fully resolve its central conflict "
+                        "without unresolved forward cliffhangers."
+                    )
         return self
 
 
@@ -1125,6 +1160,7 @@ class PublishResult(BaseModel):
         return self
 
 
+StoryResearch.model_rebuild()
 SeriesBibleEpisode.model_rebuild()
 SeriesBible.model_rebuild()
 NewSeriesPlan.model_rebuild()
@@ -1137,7 +1173,7 @@ PublishResult.model_rebuild()
 
 def emit_pacing_warnings(plan: EpisodePlan, cfg: dict[str, Any]) -> None:
     """Log non-fatal Kokoro prosody word-count warnings to stderr."""
-    fmt = getattr(plan, "content_format", None) or cfg.get("content_format", "serial")
+    fmt = getattr(plan, "content_format", None) or cfg.get("content_format", "episodic_series")
     format_pacing = cfg.get("format_pacing", {}).get(fmt, {})
     default_pacing = cfg.get("episode_pacing", {})
     min_words = format_pacing.get("min_words_per_scene", default_pacing.get("min_words_per_scene", 10))
@@ -1157,7 +1193,7 @@ def emit_pacing_warnings(plan: EpisodePlan, cfg: dict[str, Any]) -> None:
 # ---------------------------------------------------------------------------
 
 def ensure_episodes_table_columns(conn: sqlite3.Connection) -> None:
-    """Ensure backward-compatible schema migration for episodes table."""
+    """Ensure backward-compatible schema migration for episodes and series tables."""
     cur = conn.cursor()
     table_exists = cur.execute(
         "SELECT 1 FROM sqlite_master WHERE type='table' AND name='episodes'"
@@ -1165,7 +1201,12 @@ def ensure_episodes_table_columns(conn: sqlite3.Connection) -> None:
     if table_exists:
         cols = [r[1] for r in cur.execute("PRAGMA table_info(episodes)").fetchall()]
         if "content_format" not in cols:
-            cur.execute("ALTER TABLE episodes ADD COLUMN content_format TEXT NOT NULL DEFAULT 'serial'")
+            cur.execute("ALTER TABLE episodes ADD COLUMN content_format TEXT NOT NULL DEFAULT 'episodic_series'")
+        if "research_sources_json" not in cols:
+            cur.execute("ALTER TABLE episodes ADD COLUMN research_sources_json TEXT")
+
+    # Drop single active series unique index if it exists in an existing database
+    cur.execute("DROP INDEX IF EXISTS idx_single_active_series")
 
 
 def connect_db(db_path: Path) -> sqlite3.Connection:
@@ -1286,12 +1327,9 @@ def cmd_context(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
         active_rows = conn.execute(
             "SELECT * FROM series WHERE status = 'ACTIVE' ORDER BY series_id ASC"
         ).fetchall()
-        if len(active_rows) > 1:
-            raise StateError(
-                f"Database invariant violated: found {len(active_rows)} ACTIVE series simultaneously."
-            )
 
-        active_series = _row_to_active_series(conn, active_rows[0]) if active_rows else None
+        active_series_list = [_row_to_active_series(conn, r) for r in active_rows]
+        active_series = active_series_list[-1] if active_series_list else None
 
         next_global_row = conn.execute(
             "SELECT COALESCE(MAX(global_episode_number), 0) + 1 AS next_global "
@@ -1301,7 +1339,10 @@ def cmd_context(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
 
         if active_series is not None:
             next_in_series = int(active_series["completed_episodes"]) + 1
-            if next_in_series > int(active_series["total_planned_episodes"]):
+            if (
+                active_series["total_planned_episodes"] is not None
+                and next_in_series > int(active_series["total_planned_episodes"])
+            ):
                 raise StateError(
                     f"Active series {active_series['series_id']} has completed_episodes "
                     f"({active_series['completed_episodes']}) >= total_planned_episodes "
@@ -1329,6 +1370,27 @@ def cmd_context(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
         ).fetchall()
         previous_bespoke_assets = [r["bespoke_asset_path"] for r in bespoke_rows]
 
+        topic_rows = conn.execute(
+            """
+            SELECT episode_id, series_id, global_episode_number, youtube_title, summary,
+                   content_format, scheduled_publish_at
+            FROM episodes
+            WHERE status != 'FAILED'
+            ORDER BY episode_id DESC
+            """
+        ).fetchall()
+        previously_covered_topics = [
+            {
+                "episode_id": r["episode_id"],
+                "series_id": r["series_id"],
+                "global_episode_number": r["global_episode_number"],
+                "youtube_title": r["youtube_title"],
+                "summary": r["summary"],
+                "content_format": r["content_format"],
+            }
+            for r in topic_rows
+        ]
+
         private_review_count_row = conn.execute(
             "SELECT COUNT(*) AS cnt FROM episodes WHERE status = 'PRIVATE_REVIEW'"
         ).fetchone()
@@ -1352,8 +1414,8 @@ def cmd_context(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
             "allow_public_or_scheduled": cfg["publishing"]["allow_public_or_scheduled"],
             "calibration_episodes_required": cfg["publishing"].get("calibration_episodes_required", 3),
             "completed_private_review_episodes": private_review_count,
-            "min_episodes": cfg["series"]["min_episodes"],
-            "max_episodes": cfg["series"]["max_episodes"],
+            "min_episodes": cfg.get("series", {}).get("min_episodes"),
+            "max_episodes": cfg.get("series", {}).get("max_episodes"),
             "bgm_by_pillar": cfg["assets"]["bgm_by_pillar"],
             "mood_palettes": cfg["assets"]["mood_palettes"],
             "particle_themes": cfg["assets"]["particle_themes"],
@@ -1407,6 +1469,8 @@ def cmd_context(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
             "canvas_rule": "Strict clean canvas: zero burned-in subtitles by default (YouTube generates closed captions automatically)."
         },
         "active_series": active_series,
+        "active_series_list": active_series_list,
+        "previously_covered_topics": previously_covered_topics,
         "next_episode_number_in_series": next_in_series,
         "next_global_episode_number": next_global,
         "completed_series_history": completed_history,
@@ -1439,16 +1503,7 @@ def cmd_create_series(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
     conn = connect_db(db_path)
     try:
         with immediate_transaction(conn) as cur:
-            active = cur.execute(
-                "SELECT series_id, series_title, completed_episodes, total_planned_episodes "
-                "FROM series WHERE status = 'ACTIVE'"
-            ).fetchone()
-            if active is not None:
-                raise StateError(
-                    f"Cannot create new series while series #{active['series_id']} "
-                    f"('{active['series_title']}', {active['completed_episodes']}/"
-                    f"{active['total_planned_episodes']}) is still ACTIVE."
-                )
+            # Open-ended recurring universe: multiple active series universes can exist concurrently
 
             dup = cur.execute(
                 "SELECT series_id FROM series WHERE LOWER(series_title) = LOWER(?)",
@@ -1570,13 +1625,18 @@ def cmd_record_published(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
                     )
 
                 script_json_str = json.dumps(ep_plan.model_dump(), ensure_ascii=False)
+                research_json_str = (
+                    json.dumps(ep_plan.story_research.model_dump(exclude_none=True), ensure_ascii=False)
+                    if ep_plan.story_research
+                    else None
+                )
                 cur.execute(
                     """
                     INSERT INTO episodes (
                         series_id, episode_number_in_series, global_episode_number,
                         content_format, youtube_title, summary, bespoke_asset_path, script_json,
-                        youtube_video_id, scheduled_publish_at, status
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        research_sources_json, youtube_video_id, scheduled_publish_at, status
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         None,
@@ -1587,6 +1647,7 @@ def cmd_record_published(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
                         ep_plan.summary,
                         ep_plan.bespoke_asset_path,
                         script_json_str,
+                        research_json_str,
                         pub_res.video_id,
                         pub_res.scheduled_publish_at,
                         pub_res.upload_status,
@@ -1611,17 +1672,16 @@ def cmd_record_published(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
                 }
 
             # Serial or Episodic Series path: requires active series
+            if ep_plan.series_id is None:
+                raise StateError("episode_plan.series_id is required for episodic series.")
+
             active = cur.execute(
-                "SELECT * FROM series WHERE status = 'ACTIVE'"
+                "SELECT * FROM series WHERE series_id = ? AND status = 'ACTIVE'",
+                (ep_plan.series_id,),
             ).fetchone()
             if active is None:
-                raise StateError("No ACTIVE series exists; cannot record episode.")
+                raise StateError(f"No ACTIVE series exists with series_id={ep_plan.series_id}; cannot record episode.")
 
-            if ep_plan.series_id is None or int(active["series_id"]) != ep_plan.series_id:
-                raise StateError(
-                    f"episode_plan.series_id ({ep_plan.series_id}) does not match "
-                    f"ACTIVE series_id ({active['series_id']})."
-                )
             if active["series_title"] != ep_plan.series_title:
                 raise StateError(
                     f"episode_plan.series_title ('{ep_plan.series_title}') does not match "
@@ -1632,11 +1692,12 @@ def cmd_record_published(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
                     f"episode_plan.pillar ('{ep_plan.pillar}') does not match "
                     f"ACTIVE series pillar ('{active['pillar']}')."
                 )
-            if ep_plan.total_planned_episodes is None or int(active["total_planned_episodes"]) != ep_plan.total_planned_episodes:
-                raise StateError(
-                    f"episode_plan.total_planned_episodes ({ep_plan.total_planned_episodes}) "
-                    f"does not match ACTIVE series ({active['total_planned_episodes']})."
-                )
+            if ep_plan.total_planned_episodes is not None and active["total_planned_episodes"] is not None:
+                if int(active["total_planned_episodes"]) != ep_plan.total_planned_episodes:
+                    raise StateError(
+                        f"episode_plan.total_planned_episodes ({ep_plan.total_planned_episodes}) "
+                        f"does not match ACTIVE series ({active['total_planned_episodes']})."
+                    )
             if active["tts_voice"] != ep_plan.tts_voice:
                 raise StateError(
                     f"episode_plan.tts_voice ('{ep_plan.tts_voice}') does not match "
@@ -1709,13 +1770,18 @@ def cmd_record_published(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
             )
 
             script_json_str = json.dumps(ep_plan.model_dump(), ensure_ascii=False)
+            research_json_str = (
+                json.dumps(ep_plan.story_research.model_dump(exclude_none=True), ensure_ascii=False)
+                if ep_plan.story_research
+                else None
+            )
             cur.execute(
                 """
                 INSERT INTO episodes (
                     series_id, episode_number_in_series, global_episode_number,
                     content_format, youtube_title, summary, bespoke_asset_path, script_json,
-                    youtube_video_id, scheduled_publish_at, status
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    research_sources_json, youtube_video_id, scheduled_publish_at, status
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     ep_plan.series_id,
@@ -1726,6 +1792,7 @@ def cmd_record_published(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
                     ep_plan.summary,
                     ep_plan.bespoke_asset_path,
                     script_json_str,
+                    research_json_str,
                     pub_res.video_id,
                     pub_res.scheduled_publish_at,
                     pub_res.upload_status,
@@ -1738,7 +1805,7 @@ def cmd_record_published(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
 
             if pub_res.upload_status in ("PUBLISHED", "PRIVATE_REVIEW"):
                 new_completed += 1
-                if new_completed == int(active["total_planned_episodes"]):
+                if active["total_planned_episodes"] is not None and new_completed == int(active["total_planned_episodes"]):
                     new_series_status = "COMPLETED"
                 cur.execute(
                     """

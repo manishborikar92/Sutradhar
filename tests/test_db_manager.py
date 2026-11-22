@@ -751,16 +751,17 @@ class TestDbManagerCompliance(unittest.TestCase):
                     """
                 )
 
-            # Single ACTIVE series partial unique index enforcement
-            with self.assertRaises(sqlite3.IntegrityError):
-                conn.execute(
-                    """
-                    INSERT INTO series (
-                        series_title, pillar, tts_voice, bgm_track,
-                        total_planned_episodes, completed_episodes, series_bible_json, status
-                    ) VALUES ('Rogue Active', 'Hidden History', 'am_fenrir', 'epic_history.mp3', 3, 0, '{}', 'ACTIVE')
-                    """
-                )
+            # Multi-series support: multiple ACTIVE series are now allowed
+            conn.execute(
+                """
+                INSERT INTO series (
+                    series_title, pillar, tts_voice, bgm_track,
+                    total_planned_episodes, completed_episodes, series_bible_json, status
+                ) VALUES ('Second Active', 'Hidden History', 'am_fenrir', 'epic_history.mp3', 3, 0, '{}', 'ACTIVE')
+                """
+            )
+            active_count = conn.execute("SELECT COUNT(*) FROM series WHERE status = 'ACTIVE'").fetchone()[0]
+            self.assertEqual(active_count, 2)
 
             # Insert valid episode for series 1, then test ON DELETE RESTRICT & unique non-failed slot
             conn.execute(
@@ -793,11 +794,11 @@ class TestDbManagerCompliance(unittest.TestCase):
     def test_11_full_series_lifecycle_completion_and_pillar_rotation(self) -> None:
         self.init_and_create_default_series()
 
-        # Cannot create another series while Series #1 is ACTIVE
+        # Cannot create duplicate series with identical title
         self.write_build_json(
             "new_series_plan.json",
             make_valid_series_plan(
-                title="Competing Series",
+                title="Secrets of the Event Horizon",
                 pillar="Hidden History",
                 bgm_track="epic_history.mp3",
                 prefix="s2",
@@ -805,7 +806,7 @@ class TestDbManagerCompliance(unittest.TestCase):
         )
         res = self.run_cli("--create-series")
         self.assertEqual(res.returncode, 1)
-        self.assertIn("still ACTIVE", res.stderr)
+        self.assertIn("already exists", res.stderr)
 
         # Complete all 3 episodes under PRIVATE_REVIEW
         for part in (1, 2, 3):
@@ -1005,17 +1006,17 @@ class TestDbManagerCompliance(unittest.TestCase):
             mod.EpisodePlan.model_validate(base_plan, context={"config": cfg})
         self.assertIn("scenes count must be between 5 and 15 (got 16)", str(ctx16.exception))
 
-        # Serial format pacing enforcement (5..8 scenes)
-        serial_plan = make_valid_episode_plan(bespoke_stem="test_asset")
-        serial_plan["content_format"] = "serial"
-        serial_plan["scenes"] = make_n_scenes(8)
-        p_serial = mod.EpisodePlan.model_validate(serial_plan, context={"config": cfg})
-        self.assertEqual(len(p_serial.scenes), 8)
+        # Episodic series format pacing enforcement (5..15 scenes)
+        ep_plan = make_valid_episode_plan(bespoke_stem="test_asset")
+        ep_plan["content_format"] = "episodic_series"
+        ep_plan["scenes"] = make_n_scenes(8)
+        p_ep = mod.EpisodePlan.model_validate(ep_plan, context={"config": cfg})
+        self.assertEqual(len(p_ep.scenes), 8)
 
-        serial_plan["scenes"] = make_n_scenes(9)
-        with self.assertRaises(ValueError) as ctx_serial:
-            mod.EpisodePlan.model_validate(serial_plan, context={"config": cfg})
-        self.assertIn("scenes count must be between 5 and 8 (got 9)", str(ctx_serial.exception))
+        ep_plan["scenes"] = make_n_scenes(16)
+        with self.assertRaises(ValueError) as ctx_over:
+            mod.EpisodePlan.model_validate(ep_plan, context={"config": cfg})
+        self.assertIn("scenes count must be between 5 and 15", str(ctx_over.exception))
 
     def test_15_standalone_publishing_db_recording(self) -> None:
         """Verify cmd_record_published records standalone episodes without requiring active series."""
@@ -1356,6 +1357,268 @@ class TestDbManagerCompliance(unittest.TestCase):
         self.assertEqual(out["content_format"], "standalone")
         self.assertEqual(out["youtube_video_id"], "shani_katha_ep1_vid")
         self.assertEqual(out["episode_status"], "PUBLISHED")
+
+    def test_21_open_ended_multi_series_concurrent_rotation(self) -> None:
+        """Verify Phase 6: multiple open-ended series can be active concurrently and rotated seamlessly."""
+        mod = load_db_manager_module()
+        self.assertEqual(self.run_cli("--init").returncode, 0)
+        cfg = yaml.safe_load((self.root / "config.yaml").read_text(encoding="utf-8"))
+
+        # Create Series 1: Shani Katha (open-ended recurring universe)
+        s1_plan = {
+            "content_format": "episodic_series",
+            "series_title": "Shani Katha",
+            "pillar": "Ancient Epics & Lore",
+            "tts_voice": "am_fenrir:0.65+bm_george:0.35",
+            "bgm_track": "dramatic_mythology.mp3",
+            "total_planned_episodes": None,  # Open-ended
+            "series_bible_json": {
+                "arc_summary": "Stories of cosmic karma and karmic justice through Lord Shani.",
+                "content_format": "episodic_series",
+                "episodes": [
+                    {
+                        "episode_number": 1,
+                        "working_title": "Ravana and the Staircase of Planets",
+                        "hook": "Why did the demon king position the planets downward?",
+                        "narrative_direction": "Explore Ravana's ego vs Shani's cosmic role.",
+                        "planned_bespoke_asset": "assets/svg/diagrams/s1_ep1.svg",
+                        "satisfying_takeaway": "No tyrant can escape the cosmic law of karma.",
+                    }
+                ],
+            },
+        }
+        self.write_build_json("new_series_plan.json", s1_plan)
+        res1 = self.run_cli("--create-series")
+        self.assertEqual(res1.returncode, 0, res1.stderr)
+        out1 = json.loads(res1.stdout)
+        self.assertEqual(out1["series_id"], 1)
+        self.assertEqual(out1["series_status"], "ACTIVE")
+
+        # Create Series 2: Ancient Indian Engineering (concurrent active series!)
+        s2_plan = {
+            "content_format": "episodic_series",
+            "series_title": "Ancient Indian Engineering",
+            "pillar": "Hidden History",
+            "tts_voice": "am_fenrir:0.65+bm_george:0.35",
+            "bgm_track": "epic_history.mp3",
+            "total_planned_episodes": None,  # Open-ended
+            "series_bible_json": {
+                "arc_summary": "Forgotten architectural and metallurgical marvels of ancient India.",
+                "content_format": "episodic_series",
+                "episodes": [
+                    {
+                        "episode_number": 1,
+                        "working_title": "The Rustless Iron Pillar of Delhi",
+                        "hook": "How has ancient wrought iron resisted corrosion for 1600 years?",
+                        "narrative_direction": "Examine high phosphorus metallurgy and misawite coating.",
+                        "planned_bespoke_asset": "assets/svg/diagrams/s2_ep1.svg",
+                        "satisfying_takeaway": "Ancient metallurgy mastered protective film chemistry centuries before modern science.",
+                    }
+                ],
+            },
+        }
+        self.write_build_json("new_series_plan.json", s2_plan)
+        res2 = self.run_cli("--create-series")
+        self.assertEqual(res2.returncode, 0, res2.stderr)
+        out2 = json.loads(res2.stdout)
+        self.assertEqual(out2["series_id"], 2)
+        self.assertEqual(out2["series_status"], "ACTIVE")
+
+        # Verify context lists both series as ACTIVE
+        ctx_res = self.run_cli("--context")
+        self.assertEqual(ctx_res.returncode, 0)
+        ctx = json.loads(ctx_res.stdout)
+        active_ids = [s["series_id"] for s in ctx["active_series_list"]]
+        self.assertEqual(active_ids, [1, 2])
+
+        # Record Episode 1 in Series 1
+        (self.root / "assets/svg/diagrams/s1_ep1.svg").write_text("<svg/>", encoding="utf-8")
+        ep1_s1 = make_valid_episode_plan(
+            series_id=1, ep_in_series=1, global_ep=1, bespoke_stem="s1_ep1",
+            title="When Ravana Made Shani His Staircase | Shani Katha"
+        )
+        ep1_s1["content_format"] = "episodic_series"
+        ep1_s1["total_planned_episodes"] = None
+        ep1_s1["series_title"] = "Shani Katha"
+        ep1_s1["pillar"] = "Ancient Epics & Lore"
+        ep1_s1["bgm_track"] = "dramatic_mythology.mp3"
+        self.write_build_json("episode_plan.json", ep1_s1)
+        self.write_build_json("publish_result.json", {"video_id": "vid_s1_e1", "playlist_id": "PL_SHANI", "upload_status": "PUBLISHED"})
+        rec_res1 = self.run_cli("--record-published")
+        self.assertEqual(rec_res1.returncode, 0, rec_res1.stderr)
+
+        # Record Episode 1 in Series 2 (Rotation to second series!)
+        (self.root / "assets/svg/diagrams/s2_ep1.svg").write_text("<svg/>", encoding="utf-8")
+        ep1_s2 = make_valid_episode_plan(
+            series_id=2, ep_in_series=1, global_ep=2, bespoke_stem="s2_ep1",
+            title="The Rustless Iron Pillar of Delhi | Ancient Indian Engineering"
+        )
+        ep1_s2["content_format"] = "episodic_series"
+        ep1_s2["total_planned_episodes"] = None
+        ep1_s2["series_title"] = "Ancient Indian Engineering"
+        ep1_s2["pillar"] = "Hidden History"
+        ep1_s2["bgm_track"] = "epic_history.mp3"
+        self.write_build_json("episode_plan.json", ep1_s2)
+        self.write_build_json("publish_result.json", {"video_id": "vid_s2_e1", "playlist_id": "PL_ENG", "upload_status": "PUBLISHED"})
+        rec_res2 = self.run_cli("--record-published")
+        self.assertEqual(rec_res2.returncode, 0, rec_res2.stderr)
+
+        # Record Episode 2 in Series 1 (Rotation BACK to first series!)
+        (self.root / "assets/svg/diagrams/s1_ep2.svg").write_text("<svg/>", encoding="utf-8")
+        ep2_s1 = make_valid_episode_plan(
+            series_id=1, ep_in_series=2, global_ep=3, bespoke_stem="s1_ep2",
+            title="Shani's Gaze Upon Mount Kailash | Shani Katha"
+        )
+        ep2_s1["content_format"] = "episodic_series"
+        ep2_s1["total_planned_episodes"] = None
+        ep2_s1["series_title"] = "Shani Katha"
+        ep2_s1["pillar"] = "Ancient Epics & Lore"
+        ep2_s1["bgm_track"] = "dramatic_mythology.mp3"
+        self.write_build_json("episode_plan.json", ep2_s1)
+        self.write_build_json("publish_result.json", {"video_id": "vid_s1_e2", "playlist_id": "PL_SHANI", "upload_status": "PUBLISHED"})
+        rec_res3 = self.run_cli("--record-published")
+        self.assertEqual(rec_res3.returncode, 0, rec_res3.stderr)
+
+        # Verify Series 1 and Series 2 both remain ACTIVE with accurate counts
+        conn = mod.connect_db(self.root / "episodes.db")
+        try:
+            s1_row = conn.execute("SELECT completed_episodes, status FROM series WHERE series_id = 1").fetchone()
+            s2_row = conn.execute("SELECT completed_episodes, status FROM series WHERE series_id = 2").fetchone()
+            self.assertEqual(s1_row["completed_episodes"], 2)
+            self.assertEqual(s1_row["status"], "ACTIVE")
+            self.assertEqual(s2_row["completed_episodes"], 1)
+            self.assertEqual(s2_row["status"], "ACTIVE")
+        finally:
+            conn.close()
+
+    def test_22_story_research_provenance_validation(self) -> None:
+        """Verify StoryResearch model and database serialization of source provenance."""
+        mod = load_db_manager_module()
+        self.assertEqual(self.run_cli("--init").returncode, 0)
+        cfg = yaml.safe_load((self.root / "config.yaml").read_text(encoding="utf-8"))
+
+        research_data = {
+            "source_tradition": "Skanda Purana, Kashi Khanda, Chapter 32",
+            "canonical_story_summary": "Ravana subjugates the Navagrahas, placing them face-down as footstools. Narada tricks Ravana into letting Shani turn face-up, whereupon Shani's drishti dooms Lanka.",
+            "key_verified_facts": [
+                "Ravana imprisoned all nine Grahas during Meghanada's birth",
+                "Shani's gaze was inverted to nullify malefic influence",
+                "Narada provoked Ravana's pride to reverse Shani's position",
+            ],
+            "cross_checked_variants": "Valmiki Ramayana Yuddha Kanda mentions Ravana's mastery over planets; Skanda Purana details the specific interaction with Shani.",
+            "source_references": [
+                "Skanda Purana (Motilal Banarsidass English Translation, Vol. 4)",
+                "Kashi Khanda Purvabhaga 32.1-45",
+            ],
+        }
+
+        # 1. Valid StoryResearch
+        res_obj = mod.StoryResearch.model_validate(research_data)
+        self.assertEqual(res_obj.source_tradition, "Skanda Purana, Kashi Khanda, Chapter 32")
+        self.assertEqual(len(res_obj.key_verified_facts), 3)
+
+        # 2. Missing mandatory fields rejected
+        bad_research = dict(research_data)
+        bad_research.pop("source_tradition")
+        with self.assertRaises(mod.ValidationError):
+            mod.StoryResearch.model_validate(bad_research)
+
+        # 3. Attach to EpisodePlan and record into DB
+        bespoke_stem = "research_test_diagram"
+        (self.root / f"assets/svg/diagrams/{bespoke_stem}.svg").write_text("<svg/>", encoding="utf-8")
+        plan = make_valid_episode_plan(bespoke_stem=bespoke_stem)
+        plan["content_format"] = "standalone"
+        plan["series_id"] = None
+        plan["series_title"] = None
+        plan["episode_number_in_series"] = None
+        plan["total_planned_episodes"] = None
+        plan["global_episode_number"] = 1
+        plan["bespoke_asset_path"] = f"assets/svg/diagrams/{bespoke_stem}.svg"
+        plan["youtube_title"] = "When Shani's Gaze Sealed Lanka's Doom #Mythology"
+        plan["story_research"] = research_data
+
+        self.write_build_json("episode_plan.json", plan)
+        self.write_build_json("publish_result.json", {"video_id": "vid_res_1", "playlist_id": None, "upload_status": "PUBLISHED"})
+        res = self.run_cli("--record-published")
+        self.assertEqual(res.returncode, 0, res.stderr)
+
+        # 4. Read back from SQLite
+        conn = mod.connect_db(self.root / "episodes.db")
+        try:
+            row = conn.execute("SELECT research_sources_json FROM episodes WHERE episode_id = 1").fetchone()
+            self.assertIsNotNone(row["research_sources_json"])
+            saved_research = json.loads(row["research_sources_json"])
+            self.assertEqual(saved_research["source_tradition"], "Skanda Purana, Kashi Khanda, Chapter 32")
+            self.assertEqual(len(saved_research["key_verified_facts"]), 3)
+        finally:
+            conn.close()
+
+    def test_23_universal_anti_cliffhanger_rejection_across_formats(self) -> None:
+        """Verify that BOTH standalone and episodic_series formats strictly reject cliffhanger endings."""
+        mod = load_db_manager_module()
+        cfg = yaml.safe_load((self.root / "config.yaml").read_text(encoding="utf-8"))
+
+        for fmt in ("standalone", "episodic_series"):
+            plan = make_valid_episode_plan(bespoke_stem="cliff_test")
+            plan["content_format"] = fmt
+            if fmt == "standalone":
+                plan["series_id"] = None
+                plan["series_title"] = None
+                plan["episode_number_in_series"] = None
+                plan["total_planned_episodes"] = None
+            else:
+                plan["series_id"] = 1
+                plan["series_title"] = "Test Series"
+                plan["episode_number_in_series"] = 1
+                plan["total_planned_episodes"] = 3
+
+            # Cliffhanger in last scene text
+            plan["scenes"][-1]["narration_text"] = "Will the cosmic order hold? Find out in part 2 next time."
+            with self.assertRaises(ValueError) as ctx:
+                mod.EpisodePlan.model_validate(plan, context={"config": cfg})
+            self.assertIn("story completeness violation", str(ctx.exception).lower())
+            self.assertIn("part 2", str(ctx.exception).lower())
+
+    def test_24_satisfying_takeaway_and_topic_history_in_context(self) -> None:
+        """Verify SeriesBibleEpisode supports satisfying_takeaway and cmd_context returns topic history."""
+        mod = load_db_manager_module()
+        self.assertEqual(self.run_cli("--init").returncode, 0)
+
+        # 1. SeriesBibleEpisode with satisfying_takeaway syncs automatically
+        ep_bible = mod.SeriesBibleEpisode.model_validate({
+            "episode_number": 1,
+            "working_title": "The Cosmic Scale",
+            "hook": "Can a feather outweigh the burden of royal hubris?",
+            "narrative_direction": "Explore philosophical balance in ancient lore.",
+            "planned_bespoke_asset": "assets/svg/diagrams/scale_diagram.svg",
+            "satisfying_takeaway": "Justice restores harmony, proving righteousness outweighs worldly dominion.",
+        })
+        self.assertEqual(ep_bible.cliffhanger_or_payoff, ep_bible.satisfying_takeaway)
+
+        # 2. Add an episode and verify cmd_context includes previously_covered_topics
+        (self.root / "assets/svg/diagrams/scale_diagram.svg").write_text("<svg/>", encoding="utf-8")
+        plan = make_valid_episode_plan(bespoke_stem="scale_diagram")
+        plan["content_format"] = "standalone"
+        plan["series_id"] = None
+        plan["series_title"] = None
+        plan["episode_number_in_series"] = None
+        plan["total_planned_episodes"] = None
+        plan["global_episode_number"] = 1
+        plan["bespoke_asset_path"] = "assets/svg/diagrams/scale_diagram.svg"
+        plan["youtube_title"] = "The Feather and the Iron Throne | Cosmic Lore"
+        plan["summary"] = "A sage tests the weight of an emperor's soul against the feather of truth."
+
+        self.write_build_json("episode_plan.json", plan)
+        self.write_build_json("publish_result.json", {"video_id": "vid_scale_1", "playlist_id": None, "upload_status": "PUBLISHED"})
+        res = self.run_cli("--record-published")
+        self.assertEqual(res.returncode, 0)
+
+        ctx_res = self.run_cli("--context")
+        self.assertEqual(ctx_res.returncode, 0)
+        ctx = json.loads(ctx_res.stdout)
+        self.assertIn("previously_covered_topics", ctx)
+        self.assertEqual(len(ctx["previously_covered_topics"]), 1)
+        self.assertEqual(ctx["previously_covered_topics"][0]["youtube_title"], "The Feather and the Iron Throne | Cosmic Lore")
 
 
 if __name__ == "__main__":

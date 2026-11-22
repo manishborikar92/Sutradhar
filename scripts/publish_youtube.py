@@ -71,6 +71,37 @@ def compute_scheduled_publish_time(pub_cfg: dict[str, Any]) -> str:
     return target_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def format_description_with_citations(base_desc: str, research: Optional[dict[str, Any]]) -> str:
+    """Format and append authentic research source citations to the YouTube description."""
+    if not research or not isinstance(research, dict):
+        return base_desc
+
+    source_tradition = research.get("source_tradition")
+    facts = research.get("key_verified_facts") or []
+    variants = research.get("cross_checked_variants")
+    references = research.get("source_references") or []
+
+    if not source_tradition and not references and not facts:
+        return base_desc
+
+    lines = [base_desc.rstrip(), "", "--- Traditional Sources & References ---"]
+    if source_tradition:
+        lines.append(f"• Scripture / Source: {source_tradition}")
+    if variants:
+        lines.append(f"• Variants / Tradition: {variants}")
+    if facts:
+        lines.append("• Key Verified Facts:")
+        for fact in facts:
+            lines.append(f"  - {fact}")
+    if references:
+        lines.append("• Authoritative References:")
+        for ref in references:
+            lines.append(f"  - {ref}")
+
+    formatted = "\n".join(lines).strip()
+    return formatted[:5000]
+
+
 def run_publish_pipeline(root: Path) -> dict[str, Any]:
     cfg = load_config(root)
     pub_cfg = cfg.get("publishing", {})
@@ -128,10 +159,12 @@ def run_publish_pipeline(root: Path) -> dict[str, Any]:
     is_offline_dry_run = offline_force or not has_valid_creds
 
     title = plan_data.get("youtube_title", "Sutradhar Episode #Shorts")
-    description = plan_data.get("youtube_description", "Autonomous YouTube Shorts produced by Sutradhar.")
+    raw_description = plan_data.get("youtube_description", "Autonomous YouTube Shorts produced by Sutradhar.")
+    description = format_description_with_citations(raw_description, plan_data.get("story_research"))
     series_title = plan_data.get("series_title", "Sutradhar Series")
     category_id = str(pub_cfg.get("category_id", "27"))
     video_lang = plan_data.get("language") or cfg.get("channel", {}).get("primary_language", "en")
+    fmt = plan_data.get("content_format", "episodic_series")
 
     verification_audit: dict[str, Any] = {
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -153,7 +186,7 @@ def run_publish_pipeline(root: Path) -> dict[str, Any]:
         ep_num = plan_data.get("global_episode_number", 1)
         series_id = plan_data.get("series_id", 1)
         simulated_video_id = f"dryrun_{ep_num:03d}_{int(time.time())}"
-        simulated_playlist_id = f"PL_dryrun_{series_id:03d}"
+        simulated_playlist_id = None if fmt == "standalone" else f"PL_dryrun_{series_id:03d}"
 
         result_dict = {
             "video_id": simulated_video_id,
@@ -180,7 +213,10 @@ def run_publish_pipeline(root: Path) -> dict[str, Any]:
                 "publishAt": {"expected": scheduled_publish_at, "actual": scheduled_publish_at, "match": True},
                 "selfDeclaredMadeForKids": {"expected": False, "actual": False, "match": True},
                 "containsSyntheticMedia": {"expected": True, "actual": True, "match": True},
-                "playlist_membership": {"playlist_id": simulated_playlist_id, "is_member": True},
+                "playlist_membership": {
+                    "playlist_id": simulated_playlist_id,
+                    "is_member": simulated_playlist_id is not None,
+                },
             },
             "verification_verdict": "PASSED (OFFLINE SIMULATION)",
         })
@@ -268,58 +304,59 @@ def run_publish_pipeline(root: Path) -> dict[str, Any]:
             playlist_id = plan_data.get("youtube_playlist_id")
             playlist_privacy = "public" if upload_mode == "public" else "private"
             try:
-                if not playlist_id:
-                    pl_request = youtube.playlists().list(part="snippet,status", mine=True, maxResults=50)
-                    pl_response = pl_request.execute()
-                    for item in pl_response.get("items", []):
-                        if item.get("snippet", {}).get("title") == series_title:
-                            playlist_id = item.get("id")
-                            # If existing playlist was private and mode is public, update it
-                            if upload_mode == "public" and item.get("status", {}).get("privacyStatus") != "public":
-                                try:
-                                    youtube.playlists().update(
-                                        part="id,snippet,status",
-                                        body={
-                                            "id": playlist_id,
-                                            "snippet": {
-                                                "title": series_title,
-                                                "description": f"Sutradhar Series: {series_title}",
+                if fmt != "standalone" or playlist_id:
+                    if not playlist_id:
+                        pl_request = youtube.playlists().list(part="snippet,status", mine=True, maxResults=50)
+                        pl_response = pl_request.execute()
+                        for item in pl_response.get("items", []):
+                            if item.get("snippet", {}).get("title") == series_title:
+                                playlist_id = item.get("id")
+                                # If existing playlist was private and mode is public, update it
+                                if upload_mode == "public" and item.get("status", {}).get("privacyStatus") != "public":
+                                    try:
+                                        youtube.playlists().update(
+                                            part="id,snippet,status",
+                                            body={
+                                                "id": playlist_id,
+                                                "snippet": {
+                                                    "title": series_title,
+                                                    "description": f"Sutradhar Series: {series_title}",
+                                                },
+                                                "status": {"privacyStatus": "public"},
                                             },
-                                            "status": {"privacyStatus": "public"},
-                                        },
-                                    ).execute()
-                                    print(f"[INFO] Updated existing series playlist {playlist_id} to public.", file=sys.stderr)
-                                except Exception as pl_up_err:
-                                    print(f"[WARN] Could not update playlist privacyStatus: {pl_up_err}", file=sys.stderr)
-                            break
+                                        ).execute()
+                                        print(f"[INFO] Updated existing series playlist {playlist_id} to public.", file=sys.stderr)
+                                    except Exception as pl_up_err:
+                                        print(f"[WARN] Could not update playlist privacyStatus: {pl_up_err}", file=sys.stderr)
+                                break
 
-                if not playlist_id:
-                    create_pl = youtube.playlists().insert(
-                        part="snippet,status",
-                        body={
-                            "snippet": {
-                                "title": series_title,
-                                "description": f"Sutradhar Series: {series_title}",
-                            },
-                            "status": {"privacyStatus": playlist_privacy},
-                        },
-                    )
-                    pl_res = create_pl.execute()
-                    playlist_id = pl_res.get("id")
-
-                if playlist_id and video_id:
-                    youtube.playlistItems().insert(
-                        part="snippet",
-                        body={
-                            "snippet": {
-                                "playlistId": playlist_id,
-                                "resourceId": {
-                                    "kind": "youtube#video",
-                                    "videoId": video_id,
+                    if not playlist_id:
+                        create_pl = youtube.playlists().insert(
+                            part="snippet,status",
+                            body={
+                                "snippet": {
+                                    "title": series_title,
+                                    "description": f"Sutradhar Series: {series_title}",
                                 },
-                            }
-                        },
-                    ).execute()
+                                "status": {"privacyStatus": playlist_privacy},
+                            },
+                        )
+                        pl_res = create_pl.execute()
+                        playlist_id = pl_res.get("id")
+
+                    if playlist_id and video_id:
+                        youtube.playlistItems().insert(
+                            part="snippet",
+                            body={
+                                "snippet": {
+                                    "playlistId": playlist_id,
+                                    "resourceId": {
+                                        "kind": "youtube#video",
+                                        "videoId": video_id,
+                                    },
+                                }
+                            },
+                        ).execute()
             except Exception as pl_exc:
                 print(f"[WARN] Playlist assignment non-fatal error: {pl_exc}", file=sys.stderr)
 
@@ -416,6 +453,12 @@ def run_publish_pipeline(root: Path) -> dict[str, Any]:
                         "is_member": "unknown",
                         "error": str(pl_read_exc),
                     }
+            elif fmt == "standalone":
+                verification_audit["checks"]["playlist_membership"] = {
+                    "playlist_id": None,
+                    "is_member": True,
+                    "note": "Standalone video: no playlist required",
+                }
 
             # Overall verdict
             all_checks_passed = all(

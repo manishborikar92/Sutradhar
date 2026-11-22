@@ -70,8 +70,6 @@ languages:
         compressor: acompressor=threshold=-16dB:ratio=2.8:attack=10:release=150
         echo: aecho=0.8:0.88:20:0.06
 series:
-  min_episodes: 3
-  max_episodes: 6
   completed_history_window: 20
   require_bespoke_asset_per_episode: true
 content_format: episodic_series
@@ -81,15 +79,6 @@ target_duration_range:
   preferred_min_seconds: 40
   preferred_max_seconds: 120
 format_pacing:
-  serial:
-    target_duration_min_sec: 40
-    target_duration_max_sec: 60
-    hard_duration_min_sec: 30
-    hard_duration_max_sec: 180
-    min_scenes: 5
-    max_scenes: 8
-    min_words_per_scene: 8
-    max_words_per_scene: 25
   episodic_series:
     target_duration_min_sec: 40
     target_duration_max_sec: 120

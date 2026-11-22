@@ -370,6 +370,88 @@ class TestPublishYouTube(unittest.TestCase):
             self.assertEqual(db_res["series_status"], "ACTIVE")
             self.assertEqual(db_res["completed_episodes"], 1)
 
+    def test_07_description_citations_formatting(self) -> None:
+        """Verify format_description_with_citations appends structured provenance to YouTube description."""
+        base_desc = "The eternal confrontation between Ravana and Shani Dev. #Shorts #Mythology"
+        research = {
+            "source_tradition": "Skanda Purana, Kashi Khanda 32",
+            "canonical_story_summary": "Ravana subjugates Shani, who subsequently casts his malefic drishti.",
+            "key_verified_facts": [
+                "Shani's gaze cannot be nullified once cast",
+                "Ravana placed planets face down as footstools",
+            ],
+            "cross_checked_variants": "Valmiki Ramayana Yuddha Kanda mentions victory over planets.",
+            "source_references": [
+                "Skanda Purana Vol. 4",
+                "Kashi Khanda 32.1-45",
+            ],
+        }
+
+        formatted = publish_youtube.format_description_with_citations(base_desc, research)
+        self.assertIn(base_desc, formatted)
+        self.assertIn("--- Traditional Sources & References ---", formatted)
+        self.assertIn("• Scripture / Source: Skanda Purana, Kashi Khanda 32", formatted)
+        self.assertIn("• Variants / Tradition: Valmiki Ramayana Yuddha Kanda", formatted)
+        self.assertIn("• Key Verified Facts:", formatted)
+        self.assertIn("  - Shani's gaze cannot be nullified once cast", formatted)
+        self.assertIn("• Authoritative References:", formatted)
+        self.assertIn("  - Skanda Purana Vol. 4", formatted)
+
+        # None or empty research leaves description intact
+        self.assertEqual(publish_youtube.format_description_with_citations(base_desc, None), base_desc)
+        self.assertEqual(publish_youtube.format_description_with_citations(base_desc, {}), base_desc)
+
+    def test_08_recurring_series_playlist_creation_and_reuse(self) -> None:
+        """Verify publishing to a recurring series finds existing playlist or creates it, while standalone skips playlist."""
+        mock_youtube = MagicMock()
+
+        # Simulate existing playlist found for "Shani Katha"
+        mock_youtube.playlists().list().execute.return_value = {
+            "items": [
+                {"id": "PL_EXISTING_SHANI", "snippet": {"title": "Shani Katha"}, "status": {"privacyStatus": "public"}}
+            ]
+        }
+        mock_youtube.videos().insert().execute.return_value = {"id": "mock_vid_shani"}
+        mock_youtube.playlistItems().insert().execute.return_value = {"id": "mock_item_id"}
+        mock_youtube.videos().list().execute.return_value = {
+            "items": [{"id": "mock_vid_shani", "snippet": {"title": "Test Title", "categoryId": "27"}, "status": {"privacyStatus": "public"}}]
+        }
+        mock_youtube.playlistItems().list().execute.return_value = {
+            "items": [{"snippet": {"resourceId": {"videoId": "mock_vid_shani"}}}]
+        }
+
+        plan_shani = dict(self.sample_plan)
+        plan_shani["content_format"] = "episodic_series"
+        plan_shani["series_title"] = "Shani Katha"
+        plan_shani["youtube_playlist_id"] = None  # Will discover existing playlist
+        (self.build_dir / "episode_plan.json").write_text(json.dumps(plan_shani), encoding="utf-8")
+
+        with patch.dict(
+            os.environ,
+            {
+                "SUTRADHAR_OFFLINE_STUB": "0",
+                "YOUTUBE_CLIENT_ID": "mock_client_id",
+                "YOUTUBE_CLIENT_SECRET": "mock_secret",
+                "YOUTUBE_REFRESH_TOKEN": "mock_refresh",
+            },
+        ):
+            with patch("google.oauth2.credentials.Credentials"), \
+                 patch("googleapiclient.discovery.build", return_value=mock_youtube), \
+                 patch("googleapiclient.http.MediaFileUpload"):
+
+                res = publish_youtube.run_publish_pipeline(self.tmp_dir)
+                self.assertEqual(res["playlist_id"], "PL_EXISTING_SHANI")
+
+                # Standalone test: does not add to playlist
+                plan_standalone = dict(self.sample_plan)
+                plan_standalone["content_format"] = "standalone"
+                plan_standalone["series_title"] = None
+                plan_standalone["youtube_playlist_id"] = None
+                (self.build_dir / "episode_plan.json").write_text(json.dumps(plan_standalone), encoding="utf-8")
+
+                res_standalone = publish_youtube.run_publish_pipeline(self.tmp_dir)
+                self.assertIsNone(res_standalone["playlist_id"])
+
 
 if __name__ == "__main__":
     unittest.main()
