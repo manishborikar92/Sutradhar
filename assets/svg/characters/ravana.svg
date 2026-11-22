@@ -535,6 +535,18 @@
             <path d="M 4 2 Q 20 -11 38 -15" stroke="#111" stroke-width="5" fill="none" stroke-linecap="round"/>
           </g>
 
+          <!-- EYEBROWS: FEAR (Furrowed Troubled Inward Arch) -->
+          <g id="brows_fear" opacity="0">
+            <path d="M -38 -16 Q -22 -6 -4 -16" stroke="#111" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+            <path d="M 4 -16 Q 22 -6 38 -16" stroke="#111" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+          </g>
+
+          <!-- EYEBROWS: JOY (Triumphant Arched Crown) -->
+          <g id="brows_joy" opacity="0">
+            <path d="M -38 -10 Q -22 -23 -4 -10" stroke="#111" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+            <path d="M 4 -10 Q 22 -23 38 -10" stroke="#111" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+          </g>
+
           <!-- EYES: NORMAL (Default) -->
           <g id="eyes_normal">
             <path d="M -36 5 Q -20 -9 -4 5 Q -20 19 -36 5 Z" fill="#ffffff" stroke="#111" stroke-width="2.5"/>
@@ -553,6 +565,22 @@
             <path d="M 3 5 Q 20 -11 37 5 Q 20 21 3 5 Z" fill="#ffc9c9" stroke="#c92a2a" stroke-width="3"/>
             <circle cx="20" cy="5" r="7" fill="#e03131"/>
             <circle cx="20" cy="5" r="3.5" fill="#ffe066"/>
+          </g>
+
+          <!-- EYES: FEAR (Wide Shock / Disbelief) -->
+          <g id="eyes_fear" opacity="0">
+            <ellipse cx="-20" cy="6" rx="16" ry="12" fill="#ffffff" stroke="#111" stroke-width="2.5"/>
+            <circle cx="-20" cy="6" r="3.5" fill="#c92a2a"/>
+            <circle cx="-20" cy="6" r="1.8" fill="#111"/>
+            <ellipse cx="20" cy="6" rx="16" ry="12" fill="#ffffff" stroke="#111" stroke-width="2.5"/>
+            <circle cx="20" cy="6" r="3.5" fill="#c92a2a"/>
+            <circle cx="20" cy="6" r="1.8" fill="#111"/>
+          </g>
+
+          <!-- EYES: JOY (Smug Smirking / Triumphant) -->
+          <g id="eyes_joy" opacity="0">
+            <path d="M -34 6 Q -20 -4 -6 6" stroke="#111" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+            <path d="M 6 6 Q 20 -4 34 6" stroke="#111" stroke-width="3.5" stroke-linecap="round" fill="none"/>
           </g>
 
           <!-- NOSE -->
@@ -587,6 +615,18 @@
             <path d="M -15 67 L -10 61 L -5 66 L 0 61 L 5 66 L 10 61 L 15 67 Z" fill="#ffffff" stroke="#2b0202" stroke-width="1"/>
             <!-- Deep throat crimson glow -->
             <ellipse cx="0" cy="60" rx="12" ry="5" fill="#c92a2a"/>
+          </g>
+
+          <!-- 4. MOUTH FEAR (Shocked trembling gasp under crushed pressure) -->
+          <g id="mouth_fear" opacity="0">
+            <ellipse cx="0" cy="58" rx="14" ry="11" fill="#1a0000" stroke="#800000" stroke-width="3"/>
+            <path d="M -10 52 Q 0 55 10 52" stroke="#ffffff" stroke-width="2" fill="none"/>
+          </g>
+
+          <!-- 5. MOUTH JOY (Arrogant booming smile) -->
+          <g id="mouth_joy" opacity="0">
+            <path d="M -20 50 Q 0 66 20 50 Q 0 72 -20 50 Z" fill="#2b0202" stroke="#800000" stroke-width="3"/>
+            <path d="M -16 52 Q 0 56 16 52" stroke="#ffffff" stroke-width="2.5" fill="none"/>
           </g>
 
           <!-- HEAVY GOLD KUNDAL EARRINGS -->

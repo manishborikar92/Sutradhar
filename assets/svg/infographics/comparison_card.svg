@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="600" height="400" id="infographic_comparison_card">
+  <defs>
+    <!-- Card Frame Gradients -->
+    <linearGradient id="card_bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#180d05"/>
+      <stop offset="50%" stop-color="#2d1708"/>
+      <stop offset="100%" stop-color="#120803"/>
+    </linearGradient>
+    <linearGradient id="card_gold_border" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="40%" stop-color="#f59e0b"/>
+      <stop offset="80%" stop-color="#b45309"/>
+      <stop offset="100%" stop-color="#78350f"/>
+    </linearGradient>
+
+    <!-- Green Approved Badge -->
+    <linearGradient id="badge_green" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4ade80"/>
+      <stop offset="50%" stop-color="#16a34a"/>
+      <stop offset="100%" stop-color="#14532d"/>
+    </linearGradient>
+
+    <!-- Red Forbidden Badge -->
+    <linearGradient id="badge_red" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f87171"/>
+      <stop offset="50%" stop-color="#dc2626"/>
+      <stop offset="100%" stop-color="#7f1d1d"/>
+    </linearGradient>
+
+    <filter id="card_shadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="10" stdDeviation="15" flood-color="#000000" flood-opacity="0.75"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#card_shadow)">
+    <!-- Master Ornate Plaque -->
+    <rect x="25" y="25" width="550" height="350" rx="20" fill="url(#card_bg)" stroke="url(#card_gold_border)" stroke-width="4"/>
+
+    <!-- Inner Filigree Inset Border -->
+    <rect x="35" y="35" width="530" height="330" rx="14" fill="none" stroke="#d97706" stroke-width="1.8" stroke-dasharray="10 8" opacity="0.75"/>
+
+    <!-- Central Golden Dividing Pillar -->
+    <line x1="300" y1="40" x2="300" y2="360" stroke="url(#card_gold_border)" stroke-width="3"/>
+    <circle cx="300" cy="200" r="14" fill="url(#card_gold_border)" stroke="#180d05" stroke-width="2"/>
+    <circle cx="300" cy="200" r="5" fill="#ffffff"/>
+
+    <!-- LEFT PANEL: APPROVED / DHARMA / CHEST (Positive) -->
+    <g id="panel_left" transform="translate(160, 200)">
+      <!-- Soft Ambient Aura -->
+      <circle cx="0" cy="0" r="70" fill="#15803d" opacity="0.25"/>
+      <!-- Green Checkmark Badge -->
+      <circle cx="0" cy="0" r="50" fill="url(#badge_green)" stroke="#fef08a" stroke-width="3"/>
+      <!-- Crisp White Checkmark (✓) -->
+      <path d="M -22 2 L -8 18 L 24 -14" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Radiating Gold Nodes -->
+      <circle cx="0" cy="-62" r="4" fill="#fef08a"/>
+      <circle cx="0" cy="62" r="4" fill="#fef08a"/>
+      <circle cx="-62" cy="0" r="4" fill="#fef08a"/>
+    </g>
+
+    <!-- RIGHT PANEL: FORBIDDEN / ADHARMA / BACK (Negative) -->
+    <g id="panel_right" transform="translate(440, 200)">
+      <!-- Soft Ambient Aura -->
+      <circle cx="0" cy="0" r="70" fill="#b91c1c" opacity="0.25"/>
+      <!-- Red Crossmark Badge -->
+      <circle cx="0" cy="0" r="50" fill="url(#badge_red)" stroke="#fef08a" stroke-width="3"/>
+      <!-- Crisp White Crossmark (✗) -->
+      <path d="M -18 -18 L 18 18 M 18 -18 L -18 18" stroke="#ffffff" stroke-width="7" stroke-linecap="round"/>
+      <!-- Radiating Gold Nodes -->
+      <circle cx="0" cy="-62" r="4" fill="#fef08a"/>
+      <circle cx="0" cy="62" r="4" fill="#fef08a"/>
+      <circle cx="62" cy="0" r="4" fill="#fef08a"/>
+    </g>
+  </g>
+</svg>

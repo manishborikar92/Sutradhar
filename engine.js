@@ -40,11 +40,40 @@ function initTimeline() {
   const vfxCracks = document.querySelector("#vfx_fracture_cracks_container");
   const vfxRipple = document.querySelector("#vfx_sound_ripple_container");
 
+  // Infographic Layer Elements
+  const infoBubble = document.querySelector("#infographic_thought_bubble_container");
+  const infoCompare = document.querySelector("#infographic_comparison_card_container");
+  const infoInfinity = document.querySelector("#infographic_symbol_infinity_container");
+  const infoScales = document.querySelector("#infographic_symbol_scales_container");
+
+  // Outro Marquee Element
+  const outroMarquee = document.querySelector("#outro_marquee_container");
+
   // Puppet elements map
   const allPuppets = Array.from(document.querySelectorAll(".puppet-wrapper"));
   const primaryPuppet = document.querySelector("#puppet_wrapper") || allPuppets[0];
 
-  // Helper to apply standardized puppet pose presets
+  function getPuppet(nameOrIndex) {
+    if (typeof nameOrIndex === "string" && nameOrIndex) {
+      for (let i = 0; i < allPuppets.length; i++) {
+        if (allPuppets[i].getAttribute("data-character") === nameOrIndex) {
+          return allPuppets[i];
+        }
+      }
+    } else if (typeof nameOrIndex === "number" && nameOrIndex >= 0 && nameOrIndex < allPuppets.length) {
+      return allPuppets[nameOrIndex];
+    }
+    return null;
+  }
+
+  const infoElements = {
+    thought_bubble: infoBubble,
+    comparison_card: infoCompare,
+    symbol_infinity: infoInfinity,
+    symbol_scales: infoScales
+  };
+
+  // Standardized Kathputli Pose Presets
   function applyPose(puppetEl, pose, t_start, dur) {
     if (!puppetEl) return;
     const isFast = dur < 0.4;
@@ -184,7 +213,137 @@ function initTimeline() {
     masterTl.to(puppetEl, poseVars, t_start);
   }
 
-  // Initial set for all puppets (hidden)
+  // Switchable Facial Expression System (Calm, Wrath/Rage, Fear, Joy)
+  function applyExpression(puppetEl, emotion, t_start, dur) {
+    if (!puppetEl) return;
+    const em = (emotion || "calm").toLowerCase().trim();
+    const d = dur || 0.25;
+
+    const bn = puppetEl.querySelector("#brows_neutral");
+    const ba = puppetEl.querySelector("#brows_angry");
+    const bf = puppetEl.querySelector("#brows_fear");
+    const bj = puppetEl.querySelector("#brows_joy");
+
+    const en = puppetEl.querySelector("#eyes_normal");
+    const ew = puppetEl.querySelector("#eyes_wrath");
+    const ef = puppetEl.querySelector("#eyes_fear");
+    const ej = puppetEl.querySelector("#eyes_joy");
+
+    const mc = puppetEl.querySelector("#mouth_calm");
+    const mt = puppetEl.querySelector("#mouth_talk");
+    const ms = puppetEl.querySelector("#mouth_shout");
+    const mf = puppetEl.querySelector("#mouth_fear");
+    const mj = puppetEl.querySelector("#mouth_joy");
+
+    const wrathSunburst = puppetEl.querySelector("#wrath_sunburst");
+
+    if (em === "wrath" || em === "rage") {
+      if (bn) masterTl.to(bn, { opacity: 0, duration: d }, t_start);
+      if (ba) masterTl.to(ba, { opacity: 1, duration: d }, t_start);
+      if (bf) masterTl.to(bf, { opacity: 0, duration: d }, t_start);
+      if (bj) masterTl.to(bj, { opacity: 0, duration: d }, t_start);
+
+      if (en) masterTl.to(en, { opacity: 0, duration: d }, t_start);
+      if (ew) masterTl.to(ew, { opacity: 1, duration: d }, t_start);
+      if (ef) masterTl.to(ef, { opacity: 0, duration: d }, t_start);
+      if (ej) masterTl.to(ej, { opacity: 0, duration: d }, t_start);
+
+      if (mc) masterTl.to(mc, { opacity: 0, duration: d }, t_start);
+      if (ms) masterTl.to(ms, { opacity: 1, duration: d }, t_start);
+      if (mf) masterTl.to(mf, { opacity: 0, duration: d }, t_start);
+      if (mj) masterTl.to(mj, { opacity: 0, duration: d }, t_start);
+      if (mt) masterTl.to(mt, { opacity: 0, duration: d }, t_start);
+
+      if (wrathSunburst) {
+        masterTl.fromTo(wrathSunburst, { opacity: 0, scale: 0.85 }, { opacity: 0.65, scale: 1.05, duration: 0.45, ease: "back.out(2)" }, t_start);
+      }
+    } else if (em === "fear" || em === "shock") {
+      if (bn) masterTl.to(bn, { opacity: 0, duration: d }, t_start);
+      if (ba) masterTl.to(ba, { opacity: 0, duration: d }, t_start);
+      if (bf) masterTl.to(bf, { opacity: 1, duration: d }, t_start);
+      if (bj) masterTl.to(bj, { opacity: 0, duration: d }, t_start);
+
+      if (en) masterTl.to(en, { opacity: 0, duration: d }, t_start);
+      if (ew) masterTl.to(ew, { opacity: 0, duration: d }, t_start);
+      if (ef) masterTl.to(ef, { opacity: 1, duration: d }, t_start);
+      if (ej) masterTl.to(ej, { opacity: 0, duration: d }, t_start);
+
+      if (mc) masterTl.to(mc, { opacity: 0, duration: d }, t_start);
+      if (ms) masterTl.to(ms, { opacity: 0, duration: d }, t_start);
+      if (mf) masterTl.to(mf, { opacity: 1, duration: d }, t_start);
+      if (mj) masterTl.to(mj, { opacity: 0, duration: d }, t_start);
+      if (mt) masterTl.to(mt, { opacity: 0, duration: d }, t_start);
+
+      if (wrathSunburst) {
+        masterTl.to(wrathSunburst, { opacity: 0, duration: d }, t_start);
+      }
+    } else if (em === "joy" || em === "smirk") {
+      if (bn) masterTl.to(bn, { opacity: 0, duration: d }, t_start);
+      if (ba) masterTl.to(ba, { opacity: 0, duration: d }, t_start);
+      if (bf) masterTl.to(bf, { opacity: 0, duration: d }, t_start);
+      if (bj) masterTl.to(bj, { opacity: 1, duration: d }, t_start);
+
+      if (en) masterTl.to(en, { opacity: 0, duration: d }, t_start);
+      if (ew) masterTl.to(ew, { opacity: 0, duration: d }, t_start);
+      if (ef) masterTl.to(ef, { opacity: 0, duration: d }, t_start);
+      if (ej) masterTl.to(ej, { opacity: 1, duration: d }, t_start);
+
+      if (mc) masterTl.to(mc, { opacity: 0, duration: d }, t_start);
+      if (ms) masterTl.to(ms, { opacity: 0, duration: d }, t_start);
+      if (mf) masterTl.to(mf, { opacity: 0, duration: d }, t_start);
+      if (mj) masterTl.to(mj, { opacity: 1, duration: d }, t_start);
+      if (mt) masterTl.to(mt, { opacity: 0, duration: d }, t_start);
+
+      if (wrathSunburst) {
+        masterTl.to(wrathSunburst, { opacity: 0, duration: d }, t_start);
+      }
+    } else {
+      // Default: calm / meditating
+      if (bn) masterTl.to(bn, { opacity: 1, duration: d }, t_start);
+      if (ba) masterTl.to(ba, { opacity: 0, duration: d }, t_start);
+      if (bf) masterTl.to(bf, { opacity: 0, duration: d }, t_start);
+      if (bj) masterTl.to(bj, { opacity: 0, duration: d }, t_start);
+
+      if (en) masterTl.to(en, { opacity: 1, duration: d }, t_start);
+      if (ew) masterTl.to(ew, { opacity: 0, duration: d }, t_start);
+      if (ef) masterTl.to(ef, { opacity: 0, duration: d }, t_start);
+      if (ej) masterTl.to(ej, { opacity: 0, duration: d }, t_start);
+
+      if (mc) masterTl.to(mc, { opacity: 1, duration: d }, t_start);
+      if (ms) masterTl.to(ms, { opacity: 0, duration: d }, t_start);
+      if (mf) masterTl.to(mf, { opacity: 0, duration: d }, t_start);
+      if (mj) masterTl.to(mj, { opacity: 0, duration: d }, t_start);
+      if (mt) masterTl.to(mt, { opacity: 0, duration: d }, t_start);
+
+      if (wrathSunburst) {
+        masterTl.to(wrathSunburst, { opacity: 0, duration: d }, t_start);
+      }
+    }
+  }
+
+  // Lip-Sync Animation
+  function applyLipSync(puppetEl, t_start, dur, baseEmotion) {
+    if (!puppetEl) return;
+    const mc = puppetEl.querySelector("#mouth_calm");
+    const mt = puppetEl.querySelector("#mouth_talk");
+    const ms = puppetEl.querySelector("#mouth_shout");
+    if (!mc || !mt || !ms) return;
+
+    const step = Math.max(0.35, dur / 6.0);
+    masterTl.set(mc, { opacity: 0 }, t_start + 0.15);
+    masterTl.set(mt, { opacity: 1 }, t_start + 0.15);
+    masterTl.set(mt, { opacity: 0 }, t_start + 0.15 + step);
+    masterTl.set(ms, { opacity: 1 }, t_start + 0.15 + step);
+    masterTl.set(ms, { opacity: 0 }, t_start + 0.15 + step * 2);
+    masterTl.set(mt, { opacity: 1 }, t_start + 0.15 + step * 2);
+    masterTl.set(mt, { opacity: 0 }, t_start + 0.15 + step * 3);
+    masterTl.set(ms, { opacity: 1 }, t_start + 0.15 + step * 3);
+    masterTl.set(ms, { opacity: 0 }, t_start + dur - 0.25);
+    masterTl.set(mt, { opacity: 0 }, t_start + dur - 0.25);
+    applyExpression(puppetEl, baseEmotion, t_start + dur - 0.20, 0.20);
+  }
+
+  // Initial set for all puppets (hidden, calm expression)
   allPuppets.forEach(p => {
     gsap.set(p, {
       display: "none",
@@ -208,18 +367,33 @@ function initTimeline() {
     });
     const bn = p.querySelector("#brows_neutral");
     const ba = p.querySelector("#brows_angry");
+    const bf = p.querySelector("#brows_fear");
+    const bj = p.querySelector("#brows_joy");
     const en = p.querySelector("#eyes_normal");
     const ew = p.querySelector("#eyes_wrath");
+    const ef = p.querySelector("#eyes_fear");
+    const ej = p.querySelector("#eyes_joy");
     const mc = p.querySelector("#mouth_calm");
     const mt = p.querySelector("#mouth_talk");
     const ms = p.querySelector("#mouth_shout");
+    const mf = p.querySelector("#mouth_fear");
+    const mj = p.querySelector("#mouth_joy");
+
     if (bn) gsap.set(bn, { opacity: 1 });
     if (ba) gsap.set(ba, { opacity: 0 });
+    if (bf) gsap.set(bf, { opacity: 0 });
+    if (bj) gsap.set(bj, { opacity: 0 });
+
     if (en) gsap.set(en, { opacity: 1 });
     if (ew) gsap.set(ew, { opacity: 0 });
+    if (ef) gsap.set(ef, { opacity: 0 });
+    if (ej) gsap.set(ej, { opacity: 0 });
+
     if (mc) gsap.set(mc, { opacity: 1 });
     if (mt) gsap.set(mt, { opacity: 0 });
     if (ms) gsap.set(ms, { opacity: 0 });
+    if (mf) gsap.set(mf, { opacity: 0 });
+    if (mj) gsap.set(mj, { opacity: 0 });
   });
 
   // Continuous floating embers across long-form or short-form timeline
@@ -342,19 +516,22 @@ function initTimeline() {
       masterTl.to(stage, { x: 15, duration: 0.04, yoyo: true, repeat: 14, ease: "none" }, t_start + 0.15);
     }
 
-    // Specific Shot Type Choreography
+    // Puppet Resolution for Scene
+    const p1 = getPuppet(scene.primary_character) || primaryPuppet;
+    const p2 = getPuppet(scene.secondary_character) || (allPuppets.length > 1 && allPuppets[0] === p1 ? allPuppets[1] : allPuppets[0]);
+    const p3 = getPuppet(scene.tertiary_character) || (allPuppets.length > 2 ? allPuppets[2] : null);
+    const hasMultiple = !!(scene.secondary_character || shotType.includes("confrontation") || (scene.characters && scene.characters.length > 1));
+
+    // Specific Shot Type & Puppet Choreography
     if (shotType === "curtain_establishing" || shotType === "wide_establishing") {
-      // Opening velvet curtains
       if (curtains.left && curtains.right && !curtainsOpened) {
         masterTl.to(curtains.left, { xPercent: -102, duration: 1.8, ease: "power2.inOut" }, t_start + 0.4);
         masterTl.to(curtains.right, { xPercent: 102, duration: 1.8, ease: "power2.inOut" }, t_start + 0.4);
         curtainsOpened = true;
       }
-      // Puppets hidden
       allPuppets.forEach(p => masterTl.set(p, { display: "none", opacity: 0 }, t_start));
     }
     else if (shotType === "landscape_cutaway") {
-      // Environment focus
       allPuppets.forEach(p => masterTl.set(p, { display: "none", opacity: 0 }, t_start));
     }
     else if (shotType === "bespoke_diagram_reveal") {
@@ -365,86 +542,96 @@ function initTimeline() {
         masterTl.fromTo(diagEl, { opacity: 0, scale: 0.90 }, { opacity: 1, scale: 1.05, duration: 1.2, ease: "power2.out" }, t_start + 0.2);
       }
     }
-    else if (shotType === "character_closeup_dialogue" || shotType === "close_up_wrath") {
-      if (primaryPuppet) {
-        masterTl.set(primaryPuppet, { display: "block", opacity: 1 }, t_start);
-        masterTl.to(primaryPuppet, { scale: 2.15, x: 0, y: 520, duration: 0.35, ease: "power3.out" }, t_start);
+    else if (hasMultiple && p1 && p2 && p1 !== p2) {
+      // MULTI-CHARACTER STAGING (2 or 3 puppets)
+      allPuppets.forEach(p => {
+        if (p !== p1 && p !== p2 && p !== p3) masterTl.set(p, { display: "none", opacity: 0 }, t_start);
+      });
 
-        // Flash pulse
-        if (wrathFlash && emotion === "wrath") {
+      if (p3) {
+        // Triad council layout (Left, Center, Right)
+        masterTl.set([p1, p2, p3], { display: "block", opacity: 1 }, t_start);
+        masterTl.to(p2, { scale: 1.05, scaleX: 1.05, x: -260, y: 140, duration: 0.4, ease: "power2.out" }, t_start);
+        masterTl.to(p1, { scale: 1.15, scaleX: 1.15, x: 0, y: 120, duration: 0.4, ease: "power2.out" }, t_start);
+        masterTl.to(p3, { scale: 1.05, scaleX: -1.05, x: 260, y: 140, duration: 0.4, ease: "power2.out" }, t_start);
+
+        applyPose(p1, posePreset, t_start, 0.4);
+        applyExpression(p1, emotion, t_start, 0.3);
+        applyPose(p2, "blessing_calm", t_start, 0.4);
+        applyExpression(p2, "calm", t_start, 0.3);
+        applyPose(p3, "idle_royal", t_start, 0.4);
+        applyExpression(p3, "calm", t_start, 0.3);
+      } else {
+        // Dual character confrontation / dialogue exchange
+        masterTl.set([p1, p2], { display: "block", opacity: 1 }, t_start);
+
+        if (scene.speaker_role === "character_dialogue") {
+          // Focus shift & scale swap: speaker is dominant
+          masterTl.to(p1, { scale: 1.22, scaleX: 1.22, x: -190, y: 110, duration: 0.35, ease: "power2.out" }, t_start);
+          masterTl.to(p2, { scale: 1.02, scaleX: -1.02, x: 190, y: 140, duration: 0.35, ease: "power2.out" }, t_start);
+
+          applyPose(p1, posePreset || "action_raised", t_start, 0.35);
+          applyExpression(p1, emotion, t_start, 0.3);
+          applyLipSync(p1, t_start, dur, emotion);
+
+          applyPose(p2, "blessing_calm", t_start, 0.35);
+          applyExpression(p2, (emotion === "wrath" || emotion === "rage" ? "fear" : "calm"), t_start, 0.3);
+        } else if (shotType === "two_character_confrontation" || shotType.includes("confrontation")) {
+          // Dramatic face-off
+          masterTl.to(p1, { scale: 1.12, scaleX: 1.12, x: -190, y: 130, duration: 0.4, ease: "power2.out" }, t_start);
+          masterTl.to(p2, { scale: 1.12, scaleX: -1.12, x: 190, y: 130, duration: 0.4, ease: "power2.out" }, t_start);
+
+          applyPose(p1, "action_raised", t_start, 0.4);
+          applyExpression(p1, emotion === "calm" ? "wrath" : emotion, t_start, 0.3);
+
+          applyPose(p2, (emotion === "wrath" || emotion === "rage" ? "humbled_braced" : "blessing_calm"), t_start, 0.4);
+          applyExpression(p2, (emotion === "wrath" || emotion === "rage" ? "fear" : "calm"), t_start, 0.3);
+        } else {
+          // Standard multi-character medium
+          masterTl.to(p1, { scale: 1.10, scaleX: 1.10, x: -180, y: 130, duration: 0.4, ease: "power2.out" }, t_start);
+          masterTl.to(p2, { scale: 1.10, scaleX: -1.10, x: 180, y: 130, duration: 0.4, ease: "power2.out" }, t_start);
+
+          applyPose(p1, posePreset, t_start, 0.4);
+          applyExpression(p1, emotion, t_start, 0.3);
+          applyPose(p2, "idle_royal", t_start, 0.4);
+          applyExpression(p2, "calm", t_start, 0.3);
+        }
+      }
+    }
+    else if (shotType === "character_closeup_dialogue" || shotType === "close_up_wrath") {
+      allPuppets.forEach(p => {
+        if (p !== p1) masterTl.set(p, { display: "none", opacity: 0 }, t_start);
+      });
+      if (p1) {
+        masterTl.set(p1, { display: "block", opacity: 1 }, t_start);
+        masterTl.to(p1, { scale: 2.15, scaleX: 2.15, x: 0, y: 520, duration: 0.35, ease: "power3.out" }, t_start);
+
+        if (wrathFlash && (emotion === "wrath" || emotion === "rage")) {
           masterTl.fromTo(wrathFlash, { opacity: 0 }, { opacity: 0.45, duration: 0.08, ease: "power1.in" }, t_start);
           masterTl.to(wrathFlash, { opacity: 0, duration: 0.20, ease: "power1.out" }, t_start + 0.08);
         }
 
-        // Apply dialogue pose
-        applyPose(primaryPuppet, posePreset, t_start, 0.35);
-
-        // Face expressions
-        const bn = primaryPuppet.querySelector("#brows_neutral");
-        const ba = primaryPuppet.querySelector("#brows_angry");
-        const en = primaryPuppet.querySelector("#eyes_normal");
-        const ew = primaryPuppet.querySelector("#eyes_wrath");
-        const mc = primaryPuppet.querySelector("#mouth_calm");
-        const mt = primaryPuppet.querySelector("#mouth_talk");
-        const ms = primaryPuppet.querySelector("#mouth_shout");
-        const wrathSunburst = primaryPuppet.querySelector("#wrath_sunburst");
-
-        if (emotion === "wrath") {
-          if (bn && ba) {
-            masterTl.to(bn, { opacity: 0, duration: 0.15 }, t_start + 0.1);
-            masterTl.to(ba, { opacity: 1, duration: 0.15 }, t_start + 0.1);
-          }
-          if (en && ew) {
-            masterTl.to(en, { opacity: 0, duration: 0.15 }, t_start + 0.1);
-            masterTl.to(ew, { opacity: 1, duration: 0.15 }, t_start + 0.1);
-          }
-          if (wrathSunburst) {
-            masterTl.fromTo(wrathSunburst, { opacity: 0, scale: 0.85 }, { opacity: 0.65, scale: 1.05, duration: 0.45, ease: "back.out(2)" }, t_start + 0.05);
-            masterTl.to(wrathSunburst, { rotation: 45, duration: dur, ease: "none" }, t_start + 0.05);
-          }
-        }
-
-        // Lip-sync toggling
-        if (mc && mt && ms) {
-          const step = Math.max(0.4, dur / 6.0);
-          masterTl.set(mc, { opacity: 0 }, t_start + 0.15);
-          masterTl.set(mt, { opacity: 1 }, t_start + 0.15);
-          masterTl.set(mt, { opacity: 0 }, t_start + 0.15 + step);
-          masterTl.set(ms, { opacity: 1 }, t_start + 0.15 + step);
-          masterTl.set(ms, { opacity: 0 }, t_start + 0.15 + step * 2);
-          masterTl.set(mt, { opacity: 1 }, t_start + 0.15 + step * 2);
-          masterTl.set(mt, { opacity: 0 }, t_start + 0.15 + step * 3);
-          masterTl.set(ms, { opacity: 1 }, t_start + 0.15 + step * 3);
-          masterTl.set(ms, { opacity: 0 }, t_end - 0.25);
-          masterTl.set(mc, { opacity: 1 }, t_end - 0.25);
-        }
-      }
-    }
-    else if (shotType === "two_character_confrontation") {
-      const p1 = primaryPuppet;
-      const p2 = allPuppets.length > 1 ? allPuppets[1] : null;
-      if (p1) {
-        masterTl.set(p1, { display: "block", opacity: 1, scale: 1.10, x: -180, y: 130 }, t_start);
-        applyPose(p1, "action_raised", t_start, 0.4);
-      }
-      if (p2) {
-        masterTl.set(p2, { display: "block", opacity: 1, scale: 1.10, x: 180, y: 130, scaleX: -1.10 }, t_start);
-        applyPose(p2, "blessing_calm", t_start, 0.4);
+        applyPose(p1, posePreset, t_start, 0.35);
+        applyExpression(p1, emotion, t_start, 0.25);
+        applyLipSync(p1, t_start, dur, emotion);
       }
     }
     else if (shotType === "dramatic_climax" || shotType === "cosmic_strike" || shotType === "crushed_submission") {
-      if (primaryPuppet) {
-        masterTl.set(primaryPuppet, { display: "block", opacity: 1, scale: 1.18, x: 0, y: 180 }, t_start);
-        applyPose(primaryPuppet, posePreset, t_start, 0.3);
+      allPuppets.forEach(p => {
+        if (p !== p1) masterTl.set(p, { display: "none", opacity: 0 }, t_start);
+      });
+      if (p1) {
+        masterTl.set(p1, { display: "block", opacity: 1 }, t_start);
+        masterTl.to(p1, { scale: 1.18, scaleX: 1.18, x: 0, y: 180, duration: 0.3, ease: "power2.out" }, t_start);
+        applyPose(p1, posePreset, t_start, 0.3);
+        applyExpression(p1, emotion, t_start, 0.25);
       }
 
-      // Climax strike flash
       if (wrathFlash) {
         masterTl.fromTo(wrathFlash, { opacity: 0 }, { opacity: 0.80, duration: 0.08, ease: "power1.in" }, t_start + 0.1);
         masterTl.to(wrathFlash, { opacity: 0, duration: 0.30, ease: "power2.out" }, t_start + 0.18);
       }
 
-      // Mount Kailash / Strike SVG elements if present
       const divineLaser = shotEl.querySelector("#divine_laser_beam");
       const boulders = shotEl.querySelector("#falling_boulders");
       if (divineLaser) {
@@ -455,7 +642,6 @@ function initTimeline() {
         masterTl.to(boulders, { opacity: 1, duration: 0.1 }, t_start + 0.25);
       }
 
-      // Foreground mountain underside pressing down if present
       const fgMountain = shotEl.querySelector(".foreground-wrapper") || document.querySelector("#foreground_mountain_container");
       if (fgMountain) {
         masterTl.fromTo(fgMountain, { y: -10 }, { y: 65, duration: dur, ease: "sine.inOut" }, t_start);
@@ -463,12 +649,16 @@ function initTimeline() {
     }
     else {
       // Standard: character_medium / character_advance
-      if (primaryPuppet) {
-        masterTl.set(primaryPuppet, { display: "block", opacity: 1, scale: 1.15, x: 0, y: 120 }, t_start);
-        applyPose(primaryPuppet, posePreset, t_start, 0.8);
+      allPuppets.forEach(p => {
+        if (p !== p1) masterTl.set(p, { display: "none", opacity: 0 }, t_start);
+      });
+      if (p1) {
+        masterTl.set(p1, { display: "block", opacity: 1 }, t_start);
+        masterTl.to(p1, { scale: 1.15, scaleX: 1.15, x: 0, y: 120, duration: 0.8, ease: "power2.out" }, t_start);
+        applyPose(p1, posePreset, t_start, 0.8);
+        applyExpression(p1, emotion, t_start, 0.3);
 
-        // Puppet subtle stride kinematics
-        masterTl.to(primaryPuppet, {
+        masterTl.to(p1, {
           "--rot-thigh-l": "8deg",
           "--rot-calf-l": "-12deg",
           "--rot-thigh-left": "8deg",
@@ -479,7 +669,7 @@ function initTimeline() {
           ease: "sine.inOut"
         }, t_start);
 
-        masterTl.to(primaryPuppet, {
+        masterTl.to(p1, {
           "--rot-thigh-r": "-8deg",
           "--rot-calf-r": "12deg",
           "--rot-thigh-right": "-8deg",
@@ -489,6 +679,56 @@ function initTimeline() {
           repeat: Math.ceil(dur / 0.85),
           ease: "sine.inOut"
         }, t_start);
+      }
+    }
+
+    // Mid-shot Expression Switching (scene.expression_change)
+    if (scene.expression_change) {
+      const expChange = scene.expression_change;
+      const t_chg = expChange.at_sec !== undefined ? Number(expChange.at_sec) : (t_start + dur * (Number(expChange.at_ratio) || 0.5));
+      const toEmotion = expChange.to_emotion || "fear";
+      const targetChar = expChange.character ? getPuppet(expChange.character) : (p2 || p1);
+      if (targetChar) {
+        applyExpression(targetChar, toEmotion, t_chg, 0.25);
+        if (expChange.to_pose) {
+          applyPose(targetChar, expChange.to_pose, t_chg, 0.3);
+        }
+      }
+    }
+
+    // Dynamic Infographics Animation (thought_bubble, comparison_card, symbol_infinity, symbol_scales)
+    if (scene.infographic_type) {
+      const infoType = (scene.infographic_type || "").toLowerCase().trim();
+      const infoEl = infoElements[infoType];
+      if (infoEl) {
+        const t_in = t_start + Math.min(0.25, dur * 0.1);
+        const t_out = Math.max(t_in + 0.5, t_end - 0.35);
+        masterTl.set(infoEl, { display: "block" }, t_in);
+        masterTl.fromTo(infoEl,
+          { opacity: 0, scale: 0.65, y: 35 },
+          { opacity: 1, scale: 1.0, y: 0, duration: 0.45, ease: "back.out(1.8)" },
+          t_in
+        );
+        if (infoType === "symbol_scales") {
+          const crossbeam = infoEl.querySelector("#scale_crossbeam");
+          if (crossbeam) {
+            masterTl.fromTo(crossbeam,
+              { rotation: -6 },
+              { rotation: 6, duration: 1.0, yoyo: true, repeat: Math.max(1, Math.floor(dur / 1.2)), ease: "sine.inOut", transformOrigin: "200px 105px" },
+              t_in + 0.2
+            );
+          }
+        } else if (infoType === "symbol_infinity") {
+          masterTl.to(infoEl, {
+            scale: 1.08,
+            duration: 0.7,
+            yoyo: true,
+            repeat: Math.max(1, Math.floor(dur / 0.8)),
+            ease: "sine.inOut"
+          }, t_in + 0.3);
+        }
+        masterTl.to(infoEl, { opacity: 0, scale: 0.85, duration: 0.30, ease: "power2.in" }, t_out);
+        masterTl.set(infoEl, { display: "none" }, t_out + 0.30);
       }
     }
 
@@ -598,6 +838,53 @@ function initTimeline() {
       }
     });
   });
+
+  // =========================================================================
+  // THEATRICAL OUTRO & CURTAIN CALL (Manifest-Aware or Default End Sequence)
+  // =========================================================================
+  if (manifest.outro !== false && total_dur >= 6.0) {
+    const t_outro = Math.max(0, total_dur - 3.5);
+
+    if (outroMarquee) {
+      masterTl.set(outroMarquee, { display: "block" }, t_outro);
+      masterTl.fromTo(outroMarquee,
+        { opacity: 0, scale: 0.6, y: 60 },
+        { opacity: 1, scale: 1.0, y: 0, duration: 0.75, ease: "back.out(2)" },
+        t_outro + 0.2
+      );
+    }
+
+    // Cast Lineup (up to 4 puppets across stage in blessing pose)
+    const castPuppets = allPuppets.slice(0, 4);
+    const castCount = castPuppets.length;
+    const xOffsets = castCount === 1 ? [0] :
+                     castCount === 2 ? [-180, 180] :
+                     castCount === 3 ? [-250, 0, 250] :
+                     [-300, -100, 100, 300];
+
+    castPuppets.forEach((p, cIdx) => {
+      const xTarget = xOffsets[cIdx] || 0;
+      const facing = xTarget > 0 ? -1 : 1;
+      masterTl.set(p, { display: "block" }, t_outro);
+      masterTl.to(p, {
+        opacity: 1,
+        scale: 0.95,
+        scaleX: 0.95 * facing,
+        x: xTarget,
+        y: 280,
+        duration: 0.8,
+        ease: "power2.out"
+      }, t_outro);
+      applyPose(p, "blessing_calm", t_outro, 0.6);
+      applyExpression(p, "joy", t_outro, 0.4);
+    });
+
+    // Curtains close shut
+    if (curtains.left && curtains.right) {
+      masterTl.to(curtains.left, { xPercent: 0, duration: 1.5, ease: "power2.inOut" }, total_dur - 1.8);
+      masterTl.to(curtains.right, { xPercent: 0, duration: 1.5, ease: "power2.inOut" }, total_dur - 1.8);
+    }
+  }
 
   // Smooth final fade to black
   masterTl.to(stage, {

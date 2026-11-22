@@ -130,7 +130,19 @@ Create `build/episode_plan.json` matching the active `primary_language` (`en` or
      - Synchronize VFX elements with climax, shock, or divine revelation beats. Every episode plan MUST feature at least **2 distinct VFX elements** across its scenes.
    - Feature at least **one unique, unused bespoke SVG asset** (`bespoke_asset_path`, not present in `previous_bespoke_assets`).
 
-6. **Clean Metadata for YouTube (Never Rendered On-Screen):**
+6. **Character Expressions, Multi-Puppet Staging & Infographics (Phase 4):**
+   - **4 Standardized Facial Expressions:** Rigs feature switchable layers for `calm` (serenity), `wrath`/`rage` (fiery brows, glowing red eyes, shout mouth), `fear` (raised curved brows, wide pupils, trembling o-mouth), and `joy` (smiling lifted brows, arched eyes, gentle smile). Set scene `emotion` and dynamic mid-shot `expression_change: {"at_ratio": 0.5, "to_emotion": "fear", "to_pose": "humbled_braced"}`.
+   - **Multi-Puppet Choreography Primitives:**
+     - *Duel / Face-Off (`two_character_confrontation`)*: Two puppets face each other (`p1` at `x: -190`, `p2` at `x: 190, scaleX: -1.12`).
+     - *Dialogue Turn-Taking & Focus Swap*: Active speaker scales up (`1.22`), moves forward (`y: 110`), and lip-syncs, while listener scales down (`1.02`) in attentive idle.
+     - *Triad Council*: Three puppets positioned across stage (left `x: -260`, center `x: 0`, right `x: 260`).
+     - *Confrontation & Defeat*: Victor assumes `action_raised` with `wrath`, defeated puppet assumes `humbled_braced` with `fear`.
+   - **Infographic Visual Metaphors (`infographic_type`):**
+     - Select from: `thought_bubble` (golden cloud with inner contemplation core), `comparison_card` (approved `✓` vs forbidden `✗` dual plaque), `symbol_infinity` (glowing cosmic lemniscate), `symbol_scales` (karmic balance with tilting ruby/emerald crossbeam).
+   - **Theatrical Outro Curtain Call:**
+     - Automated at episode conclusion (`total_dur - 3.5s`): Theatrical marquee ("कथा अनन्ता · SUTRADHAR"), full cast lineup in `blessing_calm` and `joy`, followed by closing velvet curtains (`xPercent: 0`) and final fade to black.
+
+7. **Clean Metadata for YouTube (Never Rendered On-Screen):**
    - Write an engaging `youtube_title` (`<= 100` chars, no `<` or `>`, includes `#Shorts` or relevant hashtags), rich `youtube_description`, and concise `summary`.
 
 ### Step 4: Verify & Author Modular Hierarchical SVG Assets (`assets/svg/`)

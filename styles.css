@@ -94,6 +94,12 @@ body {
   opacity: 0;
 }
 
+.puppet-wrapper svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 /* Bespoke Diagram Wrapper */
 .diagram-wrapper {
   position: absolute;
@@ -299,6 +305,90 @@ body {
   display: none;
   opacity: 0;
   transform-origin: 540px 540px;
+}
+
+/* ========================================================================= */
+/* INFOGRAPHIC ELEMENTS LAYER (Narrative Context & Visual Metaphors)         */
+/* ========================================================================= */
+#infographic_layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1080px;
+  height: 1920px;
+  pointer-events: none;
+  z-index: 90;
+  overflow: hidden;
+}
+
+.infographic-element {
+  position: absolute;
+  pointer-events: none;
+  display: none;
+  opacity: 0;
+  transform-origin: 50% 50%;
+}
+
+.infographic-element svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+#infographic_thought_bubble_container {
+  top: 300px;
+  left: 290px;
+  width: 500px;
+  height: 400px;
+  transform-origin: 100px 350px;
+}
+
+#infographic_comparison_card_container {
+  top: 500px;
+  left: 240px;
+  width: 600px;
+  height: 400px;
+  transform-origin: 300px 200px;
+}
+
+#infographic_symbol_infinity_container {
+  top: 420px;
+  left: 290px;
+  width: 500px;
+  height: 350px;
+  transform-origin: 250px 175px;
+}
+
+#infographic_symbol_scales_container {
+  top: 420px;
+  left: 340px;
+  width: 400px;
+  height: 400px;
+  transform-origin: 200px 200px;
+}
+
+/* ========================================================================= */
+/* THEATRICAL OUTRO MARQUEE (Curtain Call Sequence)                          */
+/* ========================================================================= */
+#outro_marquee_container {
+  position: absolute;
+  top: 640px;
+  left: 140px;
+  width: 800px;
+  height: 240px;
+  z-index: 92;
+  pointer-events: none;
+  display: none;
+  opacity: 0;
+  transform-origin: 400px 120px;
+}
+
+#outro_marquee_container svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
 }
 
 /* ========================================================================= */

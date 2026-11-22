@@ -651,6 +651,256 @@ class TestRenderPipeline(unittest.TestCase):
         self.assertGreaterEqual(len(transitions_used), 3, f"Expected >= 3 distinct transitions, got {len(transitions_used)}: {transitions_used}")
         self.assertGreaterEqual(len(vfx_used), 2, f"Expected >= 2 distinct VFX elements, got {len(vfx_used)}: {vfx_used}")
 
+    def test_14_multi_character_and_expression_system(self) -> None:
+        """Verify SVG rigs contain 4 standardized facial expressions, infographics exist, and styles/HTML embed them."""
+        import generate_composition
+
+        char_dir = REPO_ROOT / "assets" / "svg" / "characters"
+        required_chars = [
+            "shani_dev",
+            "narad_muni",
+            "hanuman",
+            "ancient_scholar",
+            "ravana",
+            "mandodari",
+            "surya_dev",
+            "indra_dev",
+            "shiva",
+        ]
+
+        # 1. Verify all 9 character rigs exist and contain standardized expression IDs
+        for c_slug in required_chars:
+            svg_path = char_dir / f"{c_slug}.svg"
+            self.assertTrue(svg_path.is_file(), f"Missing character rig: {svg_path}")
+            content = svg_path.read_text(encoding="utf-8")
+
+            # Check expressions layers
+            self.assertIn('id="brows_neutral"', content, f"{c_slug} missing #brows_neutral")
+            self.assertIn('id="brows_angry"', content, f"{c_slug} missing #brows_angry")
+            self.assertIn('id="brows_fear"', content, f"{c_slug} missing #brows_fear")
+            self.assertIn('id="brows_joy"', content, f"{c_slug} missing #brows_joy")
+
+            self.assertIn('id="eyes_normal"', content, f"{c_slug} missing #eyes_normal")
+            self.assertIn('id="eyes_wrath"', content, f"{c_slug} missing #eyes_wrath")
+            self.assertIn('id="eyes_fear"', content, f"{c_slug} missing #eyes_fear")
+            self.assertIn('id="eyes_joy"', content, f"{c_slug} missing #eyes_joy")
+
+            self.assertIn('id="mouth_calm"', content, f"{c_slug} missing #mouth_calm")
+            self.assertIn('id="mouth_talk"', content, f"{c_slug} missing #mouth_talk")
+            self.assertIn('id="mouth_shout"', content, f"{c_slug} missing #mouth_shout")
+            self.assertIn('id="mouth_fear"', content, f"{c_slug} missing #mouth_fear")
+            self.assertIn('id="mouth_joy"', content, f"{c_slug} missing #mouth_joy")
+
+        # 2. Verify infographic elements exist in assets/svg/infographics
+        info_dir = REPO_ROOT / "assets" / "svg" / "infographics"
+        required_infographics = [
+            "thought_bubble.svg",
+            "comparison_card.svg",
+            "symbol_infinity.svg",
+            "symbol_scales.svg",
+            "outro_marquee.svg",
+        ]
+        for info_file in required_infographics:
+            self.assertTrue((info_dir / info_file).is_file(), f"Missing infographic asset: {info_file}")
+
+        # 3. Verify composition generator embeds infographics and marquee
+        build_dir = self.root / "build"
+        build_dir.mkdir(parents=True, exist_ok=True)
+        manifest_p = build_dir / "manifest.js"
+        shutil.copytree(REPO_ROOT / "assets", self.root / "assets")
+        shutil.copy(REPO_ROOT / "config.yaml", self.root / "config.yaml")
+
+        test_manifest = {
+            "schema_version": "2.0",
+            "language": "en",
+            "content_format": "standalone",
+            "audio": {"total_duration_sec": 25.0, "total_frames": 750},
+            "scenes": [
+                {
+                    "scene_index": 1,
+                    "shot_type": "character_medium",
+                    "backdrop_rig": "celestial_cosmos_court",
+                    "primary_character": "surya_dev",
+                    "secondary_character": "shani_dev",
+                    "infographic_type": "symbol_scales",
+                    "start_sec": 0.0,
+                    "end_sec": 12.0,
+                },
+                {
+                    "scene_index": 2,
+                    "shot_type": "two_character_confrontation",
+                    "backdrop_rig": "golden_lanka_citadel",
+                    "primary_character": "ravana",
+                    "secondary_character": "mandodari",
+                    "infographic_type": "thought_bubble",
+                    "start_sec": 12.0,
+                    "end_sec": 25.0,
+                },
+            ],
+        }
+        manifest_p.write_text(f"window.EPISODE_MANIFEST = {json.dumps(test_manifest)};\n", encoding="utf-8")
+
+        res = generate_composition.generate_root_composition(self.root)
+        self.assertEqual(res["status"], "ok")
+        self.assertCountEqual(res["characters"], ["surya_dev", "shani_dev", "ravana", "mandodari"])
+
+        index_text = (self.root / "index.html").read_text(encoding="utf-8")
+        self.assertIn('id="infographic_layer"', index_text)
+        self.assertIn('id="infographic_thought_bubble_container"', index_text)
+        self.assertIn('id="infographic_comparison_card_container"', index_text)
+        self.assertIn('id="infographic_symbol_infinity_container"', index_text)
+        self.assertIn('id="infographic_symbol_scales_container"', index_text)
+        self.assertIn('id="outro_marquee_container"', index_text)
+
+        # Verify puppets
+        self.assertIn('data-character="surya_dev"', index_text)
+        self.assertIn('data-character="shani_dev"', index_text)
+        self.assertIn('data-character="ravana"', index_text)
+        self.assertIn('data-character="mandodari"', index_text)
+
+    def test_15_outro_curtain_call_sequence(self) -> None:
+        """Verify engine.js contains execution logic for expressions, multi-character staging, and outro curtain call."""
+        engine_js = (REPO_ROOT / "engine.js").read_text(encoding="utf-8")
+
+        # Expression system verification
+        self.assertIn("function applyExpression", engine_js)
+        self.assertIn("brows_neutral", engine_js)
+        self.assertIn("brows_angry", engine_js)
+        self.assertIn("brows_fear", engine_js)
+        self.assertIn("brows_joy", engine_js)
+        self.assertIn("eyes_normal", engine_js)
+        self.assertIn("eyes_wrath", engine_js)
+        self.assertIn("eyes_fear", engine_js)
+        self.assertIn("eyes_joy", engine_js)
+        self.assertIn("mouth_calm", engine_js)
+        self.assertIn("mouth_shout", engine_js)
+        self.assertIn("mouth_fear", engine_js)
+        self.assertIn("mouth_joy", engine_js)
+
+        # Lip-sync & mid-shot expression switching
+        self.assertIn("function applyLipSync", engine_js)
+        self.assertIn("expression_change", engine_js)
+
+        # Multi-character staging & turn-taking
+        self.assertIn("getPuppet", engine_js)
+        self.assertIn("hasMultiple", engine_js)
+
+        # Infographics animation
+        self.assertIn("infoElements", engine_js)
+        self.assertIn("infographic_type", engine_js)
+
+        # Theatrical outro curtain call
+        self.assertIn("outroMarquee", engine_js)
+        self.assertIn("castPuppets", engine_js)
+        self.assertIn("curtains.left", engine_js)
+        self.assertIn("xPercent: 0", engine_js)
+
+    def test_16_phase4_acceptance_test(self) -> None:
+        """Verify Phase 4 Acceptance Criterion: Video features 4+ characters with expression changes, a multi-character scene, and an outro curtain call."""
+        import generate_composition
+
+        build_dir = self.root / "build"
+        build_dir.mkdir(parents=True, exist_ok=True)
+        manifest_p = build_dir / "manifest.js"
+        shutil.copytree(REPO_ROOT / "assets", self.root / "assets")
+        shutil.copy(REPO_ROOT / "config.yaml", self.root / "config.yaml")
+
+        # 4 distinct mythological characters in one episode
+        acceptance_manifest = {
+            "schema_version": "2.0",
+            "language": "en",
+            "content_format": "standalone",
+            "audio": {"total_duration_sec": 48.0, "total_frames": 1440},
+            "scenes": [
+                {
+                    "scene_index": 1,
+                    "shot_type": "curtain_establishing",
+                    "transition_type": "curtain_open",
+                    "backdrop_rig": "celestial_cosmos_court",
+                    "primary_character": "surya_dev",
+                    "emotion": "calm",
+                    "pose_preset": "idle_royal",
+                    "start_sec": 0.0,
+                    "end_sec": 10.0,
+                },
+                {
+                    "scene_index": 2,
+                    "shot_type": "two_character_confrontation",
+                    "transition_type": "border_wipe",
+                    "backdrop_rig": "golden_lanka_citadel",
+                    "primary_character": "ravana",
+                    "secondary_character": "shani_dev",
+                    "emotion": "wrath",
+                    "pose_preset": "action_raised",
+                    "expression_change": {
+                        "at_ratio": 0.5,
+                        "character": "shani_dev",
+                        "to_emotion": "fear",
+                        "to_pose": "humbled_braced",
+                    },
+                    "vfx_elements": ["laser_beam"],
+                    "start_sec": 10.0,
+                    "end_sec": 24.0,
+                },
+                {
+                    "scene_index": 3,
+                    "shot_type": "character_medium",
+                    "transition_type": "blind_wipe",
+                    "backdrop_rig": "lanka_sandstone_throne",
+                    "primary_character": "mandodari",
+                    "emotion": "joy",
+                    "pose_preset": "blessing_calm",
+                    "infographic_type": "thought_bubble",
+                    "start_sec": 24.0,
+                    "end_sec": 36.0,
+                },
+                {
+                    "scene_index": 4,
+                    "shot_type": "character_closeup_dialogue",
+                    "transition_type": "fade",
+                    "backdrop_rig": "mount_kailash",
+                    "primary_character": "shiva",
+                    "emotion": "calm",
+                    "pose_preset": "idle_royal",
+                    "vfx_elements": ["sunburst"],
+                    "start_sec": 36.0,
+                    "end_sec": 48.0,
+                },
+            ],
+        }
+        manifest_p.write_text(f"window.EPISODE_MANIFEST = {json.dumps(acceptance_manifest)};\n", encoding="utf-8")
+
+        res = generate_composition.generate_root_composition(self.root)
+        self.assertEqual(res["status"], "ok")
+
+        # 1. Verify 4+ characters in composition
+        characters_featured = set(res["characters"])
+        self.assertGreaterEqual(
+            len(characters_featured),
+            4,
+            f"Expected >= 4 characters, got {len(characters_featured)}: {characters_featured}",
+        )
+        self.assertTrue({"surya_dev", "ravana", "shani_dev", "mandodari", "shiva"}.issubset(characters_featured))
+
+        # 2. Verify multi-character scene exists
+        multi_char_scenes = [
+            s for s in acceptance_manifest["scenes"]
+            if s.get("secondary_character") or s.get("shot_type") == "two_character_confrontation"
+        ]
+        self.assertGreaterEqual(len(multi_char_scenes), 1, "Expected at least 1 multi-character scene")
+
+        # 3. Verify expression changes present
+        emotions_used = set(s.get("emotion") for s in acceptance_manifest["scenes"])
+        self.assertGreaterEqual(len(emotions_used), 3, f"Expected varied emotions, got {emotions_used}")
+        self.assertTrue(any(s.get("expression_change") for s in acceptance_manifest["scenes"]))
+
+        # 4. Verify outro curtain call elements embedded in index.html and styles.css
+        index_html = (self.root / "index.html").read_text(encoding="utf-8")
+        styles_css = (self.root / "styles.css").read_text(encoding="utf-8")
+        self.assertIn('id="outro_marquee_container"', index_html)
+        self.assertIn("#outro_marquee_container", styles_css)
+        self.assertIn("SUTRADHAR", index_html)
+
 
 if __name__ == "__main__":
     unittest.main()

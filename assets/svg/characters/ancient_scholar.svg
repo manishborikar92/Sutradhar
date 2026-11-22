@@ -233,6 +233,16 @@
             <ellipse cx="18" cy="-6" rx="14" ry="8" fill="#fff5cc" stroke="#8a0000" stroke-width="2.5"/>
             <circle cx="18" cy="-6" r="5" fill="#a82000"/>
           </g>
+          <g id="eyes_fear" opacity="0">
+            <ellipse cx="-18" cy="-5" rx="15" ry="10" fill="#ffffff" stroke="#4a2608" stroke-width="2.5"/>
+            <circle cx="-18" cy="-4" r="3" fill="#42250d"/>
+            <ellipse cx="18" cy="-5" rx="15" ry="10" fill="#ffffff" stroke="#4a2608" stroke-width="2.5"/>
+            <circle cx="18" cy="-4" r="3" fill="#42250d"/>
+          </g>
+          <g id="eyes_joy" opacity="0">
+            <path d="M -28 -4 Q -18 -12 -8 -4" stroke="#4a2608" stroke-width="3" stroke-linecap="round" fill="none"/>
+            <path d="M 8 -4 Q 18 -12 28 -4" stroke="#4a2608" stroke-width="3" stroke-linecap="round" fill="none"/>
+          </g>
 
           <!-- Brows -->
           <g id="brows_neutral">
@@ -242,6 +252,14 @@
           <g id="brows_angry" opacity="0">
             <path d="M -30 -14 L -6 -24" stroke="#6e0000" stroke-width="4" stroke-linecap="round"/>
             <path d="M 30 -14 L 6 -24" stroke="#6e0000" stroke-width="4" stroke-linecap="round"/>
+          </g>
+          <g id="brows_fear" opacity="0">
+            <path d="M -30 -26 Q -18 -18 -6 -26" stroke="#2e1704" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+            <path d="M 30 -26 Q 18 -18 6 -26" stroke="#2e1704" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+          </g>
+          <g id="brows_joy" opacity="0">
+            <path d="M -30 -22 Q -18 -30 -6 -20" stroke="#2e1704" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+            <path d="M 30 -22 Q 18 -30 6 -20" stroke="#2e1704" stroke-width="3.5" stroke-linecap="round" fill="none"/>
           </g>
 
           <!-- Nose -->
@@ -265,6 +283,14 @@
           <g id="mouth_shout" opacity="0">
             <path d="M -12 23 Q 0 19 12 23 Q 9 35 0 35 Q -9 35 -12 23 Z" fill="#4d1000" stroke="#4a2608" stroke-width="2"/>
             <path d="M -8 25 Q 0 27 8 25" stroke="#ffffff" stroke-width="2" fill="none"/>
+          </g>
+          <g id="mouth_fear" opacity="0">
+            <ellipse cx="0" cy="28" rx="8" ry="6" fill="#331000" stroke="#4a2608" stroke-width="2"/>
+            <path d="M -5 26 Q 0 28 5 26" stroke="#ffffff" stroke-width="1.5" fill="none"/>
+          </g>
+          <g id="mouth_joy" opacity="0">
+            <path d="M -14 24 Q 0 34 14 24 Q 0 38 -14 24 Z" fill="#4d1000" stroke="#4a2608" stroke-width="2"/>
+            <path d="M -10 26 Q 0 29 10 26" stroke="#ffffff" stroke-width="1.5" fill="none"/>
           </g>
 
           <!-- Tilak: White Sandalwood Crescent & Dot -->

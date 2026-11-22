@@ -239,6 +239,16 @@
             <ellipse cx="18" cy="-6" rx="14" ry="8" fill="#fff5cc" stroke="#8a0000" stroke-width="2.5"/>
             <circle cx="18" cy="-6" r="5" fill="#a82000"/>
           </g>
+          <g id="eyes_fear" opacity="0">
+            <ellipse cx="-18" cy="-5" rx="15" ry="10" fill="#ffffff" stroke="#4a2505" stroke-width="2.5"/>
+            <circle cx="-18" cy="-4" r="3.2" fill="#592e0e"/>
+            <ellipse cx="18" cy="-5" rx="15" ry="10" fill="#ffffff" stroke="#4a2505" stroke-width="2.5"/>
+            <circle cx="18" cy="-4" r="3.2" fill="#592e0e"/>
+          </g>
+          <g id="eyes_joy" opacity="0">
+            <path d="M -28 -4 Q -18 -12 -8 -4" stroke="#4a2505" stroke-width="3" stroke-linecap="round" fill="none"/>
+            <path d="M 8 -4 Q 18 -12 28 -4" stroke="#4a2505" stroke-width="3" stroke-linecap="round" fill="none"/>
+          </g>
 
           <!-- Brows (Cheerful Arch) -->
           <g id="brows_neutral">
@@ -248,6 +258,14 @@
           <g id="brows_angry" opacity="0">
             <path d="M -30 -14 L -6 -24" stroke="#8a0000" stroke-width="4" stroke-linecap="round"/>
             <path d="M 30 -14 L 6 -24" stroke="#8a0000" stroke-width="4" stroke-linecap="round"/>
+          </g>
+          <g id="brows_fear" opacity="0">
+            <path d="M -30 -26 Q -18 -18 -6 -26" stroke="#4a2505" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+            <path d="M 30 -26 Q 18 -18 6 -26" stroke="#4a2505" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+          </g>
+          <g id="brows_joy" opacity="0">
+            <path d="M -30 -22 Q -18 -32 -6 -22" stroke="#331400" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+            <path d="M 30 -22 Q 18 -32 6 -22" stroke="#331400" stroke-width="3.5" stroke-linecap="round" fill="none"/>
           </g>
 
           <!-- Nose -->
@@ -264,6 +282,14 @@
           <g id="mouth_shout" opacity="0">
             <path d="M -14 26 Q 0 22 14 26 Q 10 40 0 40 Q -10 40 -14 26 Z" fill="#5c1000" stroke="#4a2505" stroke-width="2.5"/>
             <path d="M -9 28 Q 0 30 9 28" stroke="#ffffff" stroke-width="2" fill="none"/>
+          </g>
+          <g id="mouth_fear" opacity="0">
+            <ellipse cx="0" cy="32" rx="8" ry="7" fill="#3d1400" stroke="#4a2505" stroke-width="2"/>
+            <path d="M -6 30 Q 0 33 6 30" stroke="#ffffff" stroke-width="1.5" fill="none"/>
+          </g>
+          <g id="mouth_joy" opacity="0">
+            <path d="M -16 26 Q 0 40 16 26 Q 0 44 -16 26 Z" fill="#5c1000" stroke="#4a2505" stroke-width="2.5"/>
+            <path d="M -12 28 Q 0 31 12 28" stroke="#ffffff" stroke-width="2" fill="none"/>
           </g>
 
           <!-- Sandalwood Urdhva-Pundra Tilak -->

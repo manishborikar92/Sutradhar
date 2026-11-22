@@ -25,7 +25,17 @@ from generate_composition import generate_root_composition, FALLBACK_MANIFEST  #
 
 BUILD_DIR = ROOT_DIR / "build"
 QA_DIR = BUILD_DIR / "phase4_qa"
-CHARACTERS = ["shani_dev", "narad_muni", "hanuman", "ancient_scholar"]
+CHARACTERS = [
+    "shani_dev",
+    "narad_muni",
+    "hanuman",
+    "ancient_scholar",
+    "ravana",
+    "mandodari",
+    "surya_dev",
+    "indra_dev",
+    "shiva",
+]
 
 
 def make_char_manifest(char_name: str) -> dict[str, Any]:
@@ -80,29 +90,29 @@ def make_char_manifest(char_name: str) -> dict[str, Any]:
                 "backdrop_rig": "celestial_cosmos_court",
                 "primary_character": char_name,
                 "speaker_role": "narrator",
-                "narration_text": f"{char_name} raises their weapon and celestial prop with focused intent.",
+                "narration_text": f"{char_name} raises their weapon and celestial prop with focused wrathful intent.",
                 "start_sec": 1.0,
                 "end_sec": 2.0,
                 "duration_sec": 1.0,
                 "midpoint_sec": 1.5,
                 "action_gesture": "raise_weapon",
                 "pose_preset": "action_raised",
-                "emotion": "calm",
+                "emotion": "wrath",
                 "camera_motion": "push_in",
             },
             {
                 "scene_index": 3,
-                "shot_type": "character_closeup_dialogue",
+                "shot_type": "character_medium",
                 "backdrop_rig": "celestial_cosmos_court",
                 "primary_character": char_name,
-                "speaker_role": "character_dialogue",
-                "narration_text": f"Hear the cosmic decree that governs the destiny of mortals!",
+                "speaker_role": "narrator",
+                "narration_text": f"{char_name} recoils in fearful awe before the overwhelming cosmic mandate.",
                 "start_sec": 2.0,
                 "end_sec": 3.0,
                 "duration_sec": 1.0,
                 "midpoint_sec": 2.5,
-                "pose_preset": "wrath_dialogue",
-                "emotion": "wrath",
+                "pose_preset": "humbled_braced",
+                "emotion": "fear",
                 "camera_motion": "close_up",
             },
             {
@@ -111,14 +121,14 @@ def make_char_manifest(char_name: str) -> dict[str, Any]:
                 "backdrop_rig": "celestial_cosmos_court",
                 "primary_character": char_name,
                 "speaker_role": "narrator",
-                "narration_text": f"{char_name} bestows peaceful wisdom and calm protection upon the realms.",
+                "narration_text": f"{char_name} bestows peaceful wisdom and joyful protection upon all realms.",
                 "start_sec": 3.0,
                 "end_sec": 4.0,
                 "duration_sec": 1.0,
                 "midpoint_sec": 3.5,
                 "action_gesture": "bless_hand",
                 "pose_preset": "blessing_calm",
-                "emotion": "calm",
+                "emotion": "joy",
                 "camera_motion": "pull_back",
             },
         ],
@@ -134,10 +144,10 @@ def render_all_pose_sheets() -> list[Path]:
 
     rendered_sheets: list[Path] = []
     labels = [
-        "Pose 1: Idle (Royal)",
-        "Pose 2: Action Raised (x: 90..990)",
-        "Pose 3: Close-up Dialogue (Open Mouth)",
-        "Pose 4: Alternate / Calm (Blessing)",
+        "Pose 1: Idle Royal [Calm]",
+        "Pose 2: Action Raised [Wrath]",
+        "Pose 3: Humbled Braced [Fear]",
+        "Pose 4: Blessing Calm [Joy]",
     ]
 
     try:

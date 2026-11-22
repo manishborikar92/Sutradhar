@@ -506,9 +506,12 @@ class ScenePlan(BaseModel):
     active_diagram_stage: Optional[int] = Field(default=None, ge=1, le=4)
     primary_character: Optional[str] = None
     secondary_character: Optional[str] = None
+    tertiary_character: Optional[str] = None
     callout_headline: Optional[str] = None
     callout_subtext: Optional[str] = None
-    emotion: Literal["calm", "wrath", "shock", "smirk", "meditating"] = "calm"
+    emotion: Literal[
+        "calm", "wrath", "rage", "fear", "joy", "shock", "smirk", "meditating"
+    ] = "calm"
     action_gesture: Literal[
         "idle_breathe", "raise_weapon", "point_accuse", "bless_hand", "tremble"
     ] = "idle_breathe"
@@ -530,11 +533,15 @@ class ScenePlan(BaseModel):
     characters: Optional[list[str]] = None
     pose_preset: Optional[str] = None
     expression_preset: Optional[str] = None
+    infographic_type: Optional[str] = None
+    infographic_text: Optional[str] = None
+    expression_change: Optional[dict[str, Any]] = None
 
     @field_validator(
         "diagram_rig",
         "primary_character",
         "secondary_character",
+        "tertiary_character",
         "callout_headline",
         "callout_subtext",
         "transition_sfx",
@@ -546,11 +553,23 @@ class ScenePlan(BaseModel):
         "fx_theme",
         "pose_preset",
         "expression_preset",
+        "infographic_type",
+        "infographic_text",
         mode="before",
     )
     @classmethod
     def clean_optional_strings(cls, v: Any) -> Any:
         return _blank_to_none(v)
+
+    @field_validator("infographic_type")
+    @classmethod
+    def check_infographic_type(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        cleaned = v.strip().lower()
+        if not SNAKE_CASE_RE.match(cleaned):
+            raise ValueError(f"infographic_type '{v}' must be lowercase snake_case")
+        return cleaned
 
     @field_validator("vfx_elements")
     @classmethod
@@ -572,7 +591,7 @@ class ScenePlan(BaseModel):
     def check_backdrop_rig(cls, v: str) -> str:
         return _validate_rig_slug(v, "backdrop_rig")
 
-    @field_validator("diagram_rig", "primary_character", "secondary_character")
+    @field_validator("diagram_rig", "primary_character", "secondary_character", "tertiary_character")
     @classmethod
     def check_optional_rig(cls, v: Optional[str], info: ValidationInfo) -> Optional[str]:
         if v is None:
@@ -636,6 +655,13 @@ class ScenePlan(BaseModel):
             if self.secondary_character and self.secondary_character == self.primary_character:
                 raise ValueError(
                     f"Scene {self.scene_index}: secondary_character cannot duplicate primary_character"
+                )
+            if self.tertiary_character and (
+                self.tertiary_character == self.primary_character
+                or self.tertiary_character == self.secondary_character
+            ):
+                raise ValueError(
+                    f"Scene {self.scene_index}: tertiary_character cannot duplicate primary or secondary character"
                 )
             if self.active_diagram_stage is not None:
                 raise ValueError(
@@ -899,10 +925,13 @@ class EpisodePlan(BaseModel):
                 expected_field = "backdrop_rig"
             else:
                 featured = any(
-                    s.primary_character == bespoke_stem or s.secondary_character == bespoke_stem
+                    s.primary_character == bespoke_stem
+                    or s.secondary_character == bespoke_stem
+                    or s.tertiary_character == bespoke_stem
+                    or (s.characters and bespoke_stem in s.characters)
                     for s in self.scenes
                 )
-                expected_field = "primary_character/secondary_character"
+                expected_field = "primary_character/secondary_character/tertiary_character"
 
             if not featured:
                 raise ValueError(
@@ -1359,6 +1388,17 @@ def cmd_context(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
                 "available_transitions": ["fade", "curtain_open", "blind_wipe", "border_wipe", "shatter_transition", "radial_wipe", "cut"],
                 "guidance": "Every episode must feature at least 3 distinct transitions across scenes (e.g. curtain_open -> border_wipe -> shatter_transition) and at least 2 narrative-synchronized VFX elements (e.g. laser_beam + sunburst)."
             },
+            "character_expressions_and_choreography": {
+                "standard_emotions": ["calm", "wrath", "rage", "fear", "joy"],
+                "choreography_modes": [
+                    "dialogue_duel (two puppets facing each other with turn-taking talking gestures)",
+                    "scale_swap (speaker scale 1.25, listener scale 1.05)",
+                    "triad_council (three characters across stage: left, center, right)",
+                    "humbled_confrontation (one puppet braced/kneeling in fear while the other towers)"
+                ],
+                "infographics": ["thought_bubble", "comparison_card", "symbol_infinity", "symbol_scales"],
+                "outro_curtain_call": "Automated theatrical outro marquee and cast lineup at episode conclusion before curtains close."
+            },
             "canvas_rule": "Strict clean canvas: zero burned-in subtitles by default (YouTube generates closed captions automatically)."
         },
         "active_series": active_series,
@@ -1372,6 +1412,7 @@ def cmd_context(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
             "backdrops": _list_svg_stems(assets_dir / "svg" / "backdrops"),
             "diagrams": _list_svg_stems(assets_dir / "svg" / "diagrams"),
             "vfx": _list_svg_stems(assets_dir / "svg" / "vfx"),
+            "infographics": _list_svg_stems(assets_dir / "svg" / "infographics"),
             "bgm": _list_audio_files(assets_dir / "bgm"),
             "sfx": _list_audio_files(assets_dir / "sfx"),
         },

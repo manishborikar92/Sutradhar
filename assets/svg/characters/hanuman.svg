@@ -248,6 +248,16 @@
             <ellipse cx="20" cy="-10" rx="15" ry="9" fill="#ffecb3" stroke="#8a0000" stroke-width="2.5"/>
             <circle cx="20" cy="-10" r="6" fill="#c92a2a"/>
           </g>
+          <g id="eyes_fear" opacity="0">
+            <ellipse cx="-20" cy="-9" rx="16" ry="11" fill="#ffffff" stroke="#4a1500" stroke-width="2.5"/>
+            <circle cx="-20" cy="-8" r="3.5" fill="#6e2200"/>
+            <ellipse cx="20" cy="-9" rx="16" ry="11" fill="#ffffff" stroke="#4a1500" stroke-width="2.5"/>
+            <circle cx="20" cy="-8" r="3.5" fill="#6e2200"/>
+          </g>
+          <g id="eyes_joy" opacity="0">
+            <path d="M -32 -8 Q -20 -18 -8 -8" stroke="#4a1500" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+            <path d="M 8 -8 Q 20 -18 32 -8" stroke="#4a1500" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+          </g>
 
           <!-- Brows -->
           <g id="brows_neutral">
@@ -257,6 +267,14 @@
           <g id="brows_angry" opacity="0">
             <path d="M -34 -18 L -8 -28" stroke="#800000" stroke-width="5" stroke-linecap="round"/>
             <path d="M 34 -18 L 8 -28" stroke="#800000" stroke-width="5" stroke-linecap="round"/>
+          </g>
+          <g id="brows_fear" opacity="0">
+            <path d="M -34 -30 Q -20 -22 -8 -30" stroke="#4a1500" stroke-width="4" stroke-linecap="round" fill="none"/>
+            <path d="M 34 -30 Q 20 -22 8 -30" stroke="#4a1500" stroke-width="4" stroke-linecap="round" fill="none"/>
+          </g>
+          <g id="brows_joy" opacity="0">
+            <path d="M -34 -25 Q -20 -36 -8 -25" stroke="#331000" stroke-width="4" stroke-linecap="round" fill="none"/>
+            <path d="M 34 -25 Q 20 -36 8 -25" stroke="#331000" stroke-width="4" stroke-linecap="round" fill="none"/>
           </g>
 
           <!-- Nose -->
@@ -273,6 +291,14 @@
           <g id="mouth_shout" opacity="0">
             <path d="M -16 30 Q 0 26 16 30 Q 12 45 0 45 Q -12 45 -16 30 Z" fill="#5c1000" stroke="#4a1500" stroke-width="2.5"/>
             <path d="M -10 32 Q 0 34 10 32" stroke="#ffffff" stroke-width="2.5" fill="none"/>
+          </g>
+          <g id="mouth_fear" opacity="0">
+            <ellipse cx="0" cy="36" rx="9" ry="8" fill="#3d1400" stroke="#4a1500" stroke-width="2.5"/>
+            <path d="M -7 34 Q 0 37 7 34" stroke="#ffffff" stroke-width="1.8" fill="none"/>
+          </g>
+          <g id="mouth_joy" opacity="0">
+            <path d="M -18 32 Q 0 48 18 32 Q 0 52 -18 32 Z" fill="#5c1000" stroke="#4a1500" stroke-width="2.5"/>
+            <path d="M -14 34 Q 0 38 14 34" stroke="#ffffff" stroke-width="2" fill="none"/>
           </g>
 
           <!-- Vermilion Tilak -->

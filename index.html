@@ -481,6 +481,319 @@
       </div>
     </div>
 
+    <!-- INFOGRAPHIC ELEMENTS LAYER -->
+    <div id="infographic_layer" data-layout-ignore="true">
+      <div id="infographic_thought_bubble_container" class="infographic-element" data-layout-ignore="true">
+        <svg data-layout-ignore="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400" width="500" height="400" id="infographic_thought_bubble">
+  <defs>
+    <!-- Warm Parchment & Gold Borders -->
+    <radialGradient id="bubble_parchment" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#fffbeb"/>
+      <stop offset="70%" stop-color="#fef3c7"/>
+      <stop offset="100%" stop-color="#fde68a"/>
+    </radialGradient>
+    <linearGradient id="bubble_gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+    <filter id="bubble_shadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#bubble_shadow)">
+    <!-- Trailing Indicator Dots pointing down-left toward character head -->
+    <circle cx="100" cy="350" r="14" fill="url(#bubble_parchment)" stroke="url(#bubble_gold)" stroke-width="3"/>
+    <circle cx="130" cy="310" r="22" fill="url(#bubble_parchment)" stroke="url(#bubble_gold)" stroke-width="3.5"/>
+    <circle cx="170" cy="265" r="30" fill="url(#bubble_parchment)" stroke="url(#bubble_gold)" stroke-width="4"/>
+
+    <!-- Master Cloud Bubble Outline -->
+    <!-- Composed of overlapping scalloped arcs -->
+    <path d="
+      M 160 140
+      A 75 75 0 0 1 270 70
+      A 85 85 0 0 1 390 90
+      A 70 70 0 0 1 450 180
+      A 75 75 0 0 1 430 270
+      A 80 80 0 0 1 330 310
+      A 80 80 0 0 1 200 290
+      A 75 75 0 0 1 140 210
+      A 65 65 0 0 1 160 140
+      Z
+    " fill="url(#bubble_parchment)" stroke="url(#bubble_gold)" stroke-width="5" stroke-linejoin="round"/>
+
+    <!-- Inner Filigree Border -->
+    <path d="
+      M 172 148
+      A 65 65 0 0 1 268 88
+      A 75 75 0 0 1 378 106
+      A 60 60 0 0 1 432 182
+      A 65 65 0 0 1 414 258
+      A 70 70 0 0 1 326 294
+      A 70 70 0 0 1 210 276
+      A 65 65 0 0 1 154 208
+      A 55 55 0 0 1 172 148
+      Z
+    " fill="none" stroke="#d97706" stroke-width="1.8" stroke-dasharray="8 6"/>
+
+    <!-- Center Icon Space: Divine Revelation / Cosmic Insight -->
+    <g id="bubble_content" transform="translate(295, 190)">
+      <!-- Golden Radiant Star / Sunburst Core -->
+      <circle cx="0" cy="0" r="42" fill="#fef08a" stroke="#b45309" stroke-width="2"/>
+      <!-- Radiating Sparks -->
+      <path d="M 0 -34 L 0 34 M -34 0 L 34 0 M -24 -24 L 24 24 M -24 24 L 24 -24" stroke="#d97706" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="0" cy="0" r="14" fill="#991b1b" stroke="#fef08a" stroke-width="2"/>
+    </g>
+  </g>
+</svg>
+
+      </div>
+      <div id="infographic_comparison_card_container" class="infographic-element" data-layout-ignore="true">
+        <svg data-layout-ignore="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="600" height="400" id="infographic_comparison_card">
+  <defs>
+    <!-- Card Frame Gradients -->
+    <linearGradient id="card_bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#180d05"/>
+      <stop offset="50%" stop-color="#2d1708"/>
+      <stop offset="100%" stop-color="#120803"/>
+    </linearGradient>
+    <linearGradient id="card_gold_border" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="40%" stop-color="#f59e0b"/>
+      <stop offset="80%" stop-color="#b45309"/>
+      <stop offset="100%" stop-color="#78350f"/>
+    </linearGradient>
+
+    <!-- Green Approved Badge -->
+    <linearGradient id="badge_green" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4ade80"/>
+      <stop offset="50%" stop-color="#16a34a"/>
+      <stop offset="100%" stop-color="#14532d"/>
+    </linearGradient>
+
+    <!-- Red Forbidden Badge -->
+    <linearGradient id="badge_red" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f87171"/>
+      <stop offset="50%" stop-color="#dc2626"/>
+      <stop offset="100%" stop-color="#7f1d1d"/>
+    </linearGradient>
+
+    <filter id="card_shadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="10" stdDeviation="15" flood-color="#000000" flood-opacity="0.75"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#card_shadow)">
+    <!-- Master Ornate Plaque -->
+    <rect x="25" y="25" width="550" height="350" rx="20" fill="url(#card_bg)" stroke="url(#card_gold_border)" stroke-width="4"/>
+
+    <!-- Inner Filigree Inset Border -->
+    <rect x="35" y="35" width="530" height="330" rx="14" fill="none" stroke="#d97706" stroke-width="1.8" stroke-dasharray="10 8" opacity="0.75"/>
+
+    <!-- Central Golden Dividing Pillar -->
+    <line x1="300" y1="40" x2="300" y2="360" stroke="url(#card_gold_border)" stroke-width="3"/>
+    <circle cx="300" cy="200" r="14" fill="url(#card_gold_border)" stroke="#180d05" stroke-width="2"/>
+    <circle cx="300" cy="200" r="5" fill="#ffffff"/>
+
+    <!-- LEFT PANEL: APPROVED / DHARMA / CHEST (Positive) -->
+    <g id="panel_left" transform="translate(160, 200)">
+      <!-- Soft Ambient Aura -->
+      <circle cx="0" cy="0" r="70" fill="#15803d" opacity="0.25"/>
+      <!-- Green Checkmark Badge -->
+      <circle cx="0" cy="0" r="50" fill="url(#badge_green)" stroke="#fef08a" stroke-width="3"/>
+      <!-- Crisp White Checkmark (✓) -->
+      <path d="M -22 2 L -8 18 L 24 -14" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Radiating Gold Nodes -->
+      <circle cx="0" cy="-62" r="4" fill="#fef08a"/>
+      <circle cx="0" cy="62" r="4" fill="#fef08a"/>
+      <circle cx="-62" cy="0" r="4" fill="#fef08a"/>
+    </g>
+
+    <!-- RIGHT PANEL: FORBIDDEN / ADHARMA / BACK (Negative) -->
+    <g id="panel_right" transform="translate(440, 200)">
+      <!-- Soft Ambient Aura -->
+      <circle cx="0" cy="0" r="70" fill="#b91c1c" opacity="0.25"/>
+      <!-- Red Crossmark Badge -->
+      <circle cx="0" cy="0" r="50" fill="url(#badge_red)" stroke="#fef08a" stroke-width="3"/>
+      <!-- Crisp White Crossmark (✗) -->
+      <path d="M -18 -18 L 18 18 M 18 -18 L -18 18" stroke="#ffffff" stroke-width="7" stroke-linecap="round"/>
+      <!-- Radiating Gold Nodes -->
+      <circle cx="0" cy="-62" r="4" fill="#fef08a"/>
+      <circle cx="0" cy="62" r="4" fill="#fef08a"/>
+      <circle cx="62" cy="0" r="4" fill="#fef08a"/>
+    </g>
+  </g>
+</svg>
+
+      </div>
+      <div id="infographic_symbol_infinity_container" class="infographic-element" data-layout-ignore="true">
+        <svg data-layout-ignore="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 350" width="500" height="350" id="infographic_symbol_infinity">
+  <defs>
+    <!-- Radiant Gold & Amber Gradients -->
+    <linearGradient id="inf_gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="25%" stop-color="#fef08a"/>
+      <stop offset="60%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+    <radialGradient id="inf_glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fef08a" stop-opacity="0.8"/>
+      <stop offset="45%" stop-color="#f59e0b" stop-opacity="0.4"/>
+      <stop offset="85%" stop-color="#b45309" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="inf_shadow" x="-15%" y="-15%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity="0.8"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#inf_shadow)">
+    <!-- Central Cosmic Glow -->
+    <ellipse cx="250" cy="175" rx="220" ry="130" fill="url(#inf_glow)"/>
+
+    <!-- Radiant Background Rays -->
+    <g stroke="#fef08a" stroke-width="2" stroke-linecap="round" opacity="0.6">
+      <line x1="250" y1="40" x2="250" y2="70"/>
+      <line x1="250" y1="310" x2="250" y2="280"/>
+      <line x1="50" y1="175" x2="80" y2="175"/>
+      <line x1="450" y1="175" x2="420" y2="175"/>
+      <line x1="110" y1="75" x2="135" y2="95"/>
+      <line x1="390" y1="275" x2="365" y2="255"/>
+      <line x1="390" y1="75" x2="365" y2="95"/>
+      <line x1="110" y1="275" x2="135" y2="255"/>
+    </g>
+
+    <!-- Master Golden Infinity Figure (∞ Lemniscate) -->
+    <!-- Outer Thick Stroke with Core High-Gloss Highlight -->
+    <path d="
+      M 250 175
+      C 290 115 385 115 385 175
+      C 385 235 290 235 250 175
+      C 210 115 115 115 115 175
+      C 115 235 210 235 250 175
+      Z
+    " fill="none" stroke="url(#inf_gold)" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Inner Core Incandescent Center Line -->
+    <path d="
+      M 250 175
+      C 290 115 385 115 385 175
+      C 385 235 290 235 250 175
+      C 210 115 115 115 115 175
+      C 115 235 210 235 250 175
+      Z
+    " fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+
+    <!-- Central Nexus Jewel -->
+    <circle cx="250" cy="175" r="10" fill="#dc2626" stroke="#fef08a" stroke-width="2"/>
+    <circle cx="250" cy="175" r="4" fill="#ffffff"/>
+  </g>
+</svg>
+
+      </div>
+      <div id="infographic_symbol_scales_container" class="infographic-element" data-layout-ignore="true">
+        <svg data-layout-ignore="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400" id="infographic_symbol_scales">
+  <defs>
+    <!-- Karmic Gold Gradients -->
+    <linearGradient id="scale_gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="30%" stop-color="#fef08a"/>
+      <stop offset="65%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#78350f"/>
+    </linearGradient>
+    <filter id="scale_shadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity="0.7"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#scale_shadow)">
+    <!-- Central Pedestal / Base -->
+    <polygon points="170,360 230,360 215,310 185,310" fill="url(#scale_gold)" stroke="#451a03" stroke-width="2"/>
+    <ellipse cx="200" cy="360" rx="65" ry="16" fill="url(#scale_gold)" stroke="#451a03" stroke-width="2.5"/>
+
+    <!-- Central Vertical Pillar -->
+    <rect x="194" y="90" width="12" height="230" rx="3" fill="url(#scale_gold)" stroke="#451a03" stroke-width="2"/>
+
+    <!-- Top Finial & Pivot Jewel -->
+    <polygon points="200,45 212,85 188,85" fill="url(#scale_gold)" stroke="#451a03" stroke-width="2"/>
+    <circle cx="200" cy="95" r="14" fill="#dc2626" stroke="url(#scale_gold)" stroke-width="3"/>
+    <circle cx="200" cy="95" r="5" fill="#fef08a"/>
+
+    <!-- Horizontal Balance Beam -->
+    <rect x="55" y="90" width="290" height="10" rx="4" fill="url(#scale_gold)" stroke="#451a03" stroke-width="2"/>
+
+    <!-- LEFT SCALE PAN (Punya / Merit) -->
+    <g id="scale_pan_left">
+      <!-- Cords -->
+      <line x1="75" y1="98" x2="45" y2="230" stroke="url(#scale_gold)" stroke-width="1.8"/>
+      <line x1="75" y1="98" x2="105" y2="230" stroke="url(#scale_gold)" stroke-width="1.8"/>
+      <!-- Pan Bowl -->
+      <path d="M 35 230 Q 75 270 115 230 Z" fill="url(#scale_gold)" stroke="#451a03" stroke-width="2.5"/>
+      <!-- Glowing Ruby Jewel in Pan -->
+      <circle cx="75" cy="225" r="10" fill="#16a34a" stroke="#fef08a" stroke-width="1.5"/>
+    </g>
+
+    <!-- RIGHT SCALE PAN (Paap / Karma Reckoning) -->
+    <g id="scale_pan_right">
+      <!-- Cords -->
+      <line x1="325" y1="98" x2="295" y2="230" stroke="url(#scale_gold)" stroke-width="1.8"/>
+      <line x1="325" y1="98" x2="355" y2="230" stroke="url(#scale_gold)" stroke-width="1.8"/>
+      <!-- Pan Bowl -->
+      <path d="M 285 230 Q 325 270 365 230 Z" fill="url(#scale_gold)" stroke="#451a03" stroke-width="2.5"/>
+      <!-- Glowing Jewel in Pan -->
+      <circle cx="325" cy="225" r="10" fill="#dc2626" stroke="#fef08a" stroke-width="1.5"/>
+    </g>
+  </g>
+</svg>
+
+      </div>
+    </div>
+
+    <!-- THEATRICAL OUTRO MARQUEE -->
+    <div id="outro_marquee_container" data-layout-ignore="true">
+      <svg data-layout-ignore="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 240" width="800" height="240" id="outro_marquee">
+  <defs>
+    <!-- Theatrical Gold Gradients -->
+    <linearGradient id="mq_gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="25%" stop-color="#fef08a"/>
+      <stop offset="60%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+    <linearGradient id="mq_bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#180d05"/>
+      <stop offset="50%" stop-color="#2d1708"/>
+      <stop offset="100%" stop-color="#120803"/>
+    </linearGradient>
+    <filter id="mq_shadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="8" stdDeviation="14" flood-color="#000000" flood-opacity="0.8"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#mq_shadow)">
+    <!-- Ornate Marquee Cartouche -->
+    <path d="M 60 40 L 740 40 Q 770 40 770 70 L 770 170 Q 770 200 740 200 L 60 200 Q 30 200 30 170 L 30 70 Q 30 40 60 40 Z" fill="url(#mq_bg)" stroke="url(#mq_gold)" stroke-width="4"/>
+
+    <!-- Inset Filigree Border -->
+    <rect x="42" y="52" width="716" height="136" rx="14" fill="none" stroke="#d97706" stroke-width="1.8" stroke-dasharray="10 6"/>
+
+    <!-- Corner Gold Rosettes -->
+    <circle cx="55" cy="65" r="8" fill="url(#mq_gold)"/>
+    <circle cx="745" cy="65" r="8" fill="url(#mq_gold)"/>
+    <circle cx="55" cy="175" r="8" fill="url(#mq_gold)"/>
+    <circle cx="745" cy="175" r="8" fill="url(#mq_gold)"/>
+
+    <!-- Sacred Devanagari Title: कथा अनन्ता (Katha Ananta) -->
+    <text x="400" y="112" font-family="Georgia, serif" font-size="44" font-weight="bold" fill="url(#mq_gold)" text-anchor="middle" letter-spacing="4">कथा अनन्ता</text>
+
+    <!-- Subtitle: SUTRADHAR · MYTHOLOGICAL EPICS -->
+    <text x="400" y="156" font-family="Georgia, serif" font-size="20" font-weight="bold" fill="#fef08a" text-anchor="middle" letter-spacing="6">SUTRADHAR · KATHPUTLI CHRONICLES</text>
+  </g>
+</svg>
+
+    </div>
+
     <!-- DYNAMIC MANIFEST SHOT CONTAINERS -->
     <!-- SHOT 1: (curtain_establishing) -->
     <div id="shot_1_container" class="shot-container active-shot" data-shot-type="curtain_establishing" data-layout-allow-overflow="true" data-layout-ignore="true">
@@ -1919,6 +2232,18 @@
             <path d="M 4 2 Q 20 -11 38 -15" stroke="#111" stroke-width="5" fill="none" stroke-linecap="round"/>
           </g>
 
+          <!-- EYEBROWS: FEAR (Furrowed Troubled Inward Arch) -->
+          <g id="brows_fear" opacity="0">
+            <path d="M -38 -16 Q -22 -6 -4 -16" stroke="#111" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+            <path d="M 4 -16 Q 22 -6 38 -16" stroke="#111" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+          </g>
+
+          <!-- EYEBROWS: JOY (Triumphant Arched Crown) -->
+          <g id="brows_joy" opacity="0">
+            <path d="M -38 -10 Q -22 -23 -4 -10" stroke="#111" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+            <path d="M 4 -10 Q 22 -23 38 -10" stroke="#111" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+          </g>
+
           <!-- EYES: NORMAL (Default) -->
           <g id="eyes_normal">
             <path d="M -36 5 Q -20 -9 -4 5 Q -20 19 -36 5 Z" fill="#ffffff" stroke="#111" stroke-width="2.5"/>
@@ -1937,6 +2262,22 @@
             <path d="M 3 5 Q 20 -11 37 5 Q 20 21 3 5 Z" fill="#ffc9c9" stroke="#c92a2a" stroke-width="3"/>
             <circle cx="20" cy="5" r="7" fill="#e03131"/>
             <circle cx="20" cy="5" r="3.5" fill="#ffe066"/>
+          </g>
+
+          <!-- EYES: FEAR (Wide Shock / Disbelief) -->
+          <g id="eyes_fear" opacity="0">
+            <ellipse cx="-20" cy="6" rx="16" ry="12" fill="#ffffff" stroke="#111" stroke-width="2.5"/>
+            <circle cx="-20" cy="6" r="3.5" fill="#c92a2a"/>
+            <circle cx="-20" cy="6" r="1.8" fill="#111"/>
+            <ellipse cx="20" cy="6" rx="16" ry="12" fill="#ffffff" stroke="#111" stroke-width="2.5"/>
+            <circle cx="20" cy="6" r="3.5" fill="#c92a2a"/>
+            <circle cx="20" cy="6" r="1.8" fill="#111"/>
+          </g>
+
+          <!-- EYES: JOY (Smug Smirking / Triumphant) -->
+          <g id="eyes_joy" opacity="0">
+            <path d="M -34 6 Q -20 -4 -6 6" stroke="#111" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+            <path d="M 6 6 Q 20 -4 34 6" stroke="#111" stroke-width="3.5" stroke-linecap="round" fill="none"/>
           </g>
 
           <!-- NOSE -->
@@ -1971,6 +2312,18 @@
             <path d="M -15 67 L -10 61 L -5 66 L 0 61 L 5 66 L 10 61 L 15 67 Z" fill="#ffffff" stroke="#2b0202" stroke-width="1"/>
             <!-- Deep throat crimson glow -->
             <ellipse cx="0" cy="60" rx="12" ry="5" fill="#c92a2a"/>
+          </g>
+
+          <!-- 4. MOUTH FEAR (Shocked trembling gasp under crushed pressure) -->
+          <g id="mouth_fear" opacity="0">
+            <ellipse cx="0" cy="58" rx="14" ry="11" fill="#1a0000" stroke="#800000" stroke-width="3"/>
+            <path d="M -10 52 Q 0 55 10 52" stroke="#ffffff" stroke-width="2" fill="none"/>
+          </g>
+
+          <!-- 5. MOUTH JOY (Arrogant booming smile) -->
+          <g id="mouth_joy" opacity="0">
+            <path d="M -20 50 Q 0 66 20 50 Q 0 72 -20 50 Z" fill="#2b0202" stroke="#800000" stroke-width="3"/>
+            <path d="M -16 52 Q 0 56 16 52" stroke="#ffffff" stroke-width="2.5" fill="none"/>
           </g>
 
           <!-- HEAVY GOLD KUNDAL EARRINGS -->
