@@ -31,7 +31,7 @@ Execute ONE complete episode production run end-to-end strictly following the ru
 4. **Automated Public Publishing & Credential Security:**
    - Every episode is uploaded as **Public by default** (`upload_mode == "public"`, `privacy_status == "public"`, `allow_public_or_scheduled == true`) or scheduled when configured in `config.yaml`.
    - Custom thumbnail generation and upload are fully enabled; verify that `build/thumbnail.jpg` is automatically applied.
-   - NEVER read, print, echo, or log any credentials, secrets, or tokens from `.env.youtube`. Keep OAuth tokens 100% confidential.
+   - NEVER read, print, echo, or log any credentials, secrets, or tokens from `.env.local`. Keep OAuth tokens and API keys 100% confidential.
 5. **Git & Database Protection:**
    - Do NOT run `git add`, `git commit`, `git push`, `git reset`, `git checkout`, or `git switch`.
    - NEVER delete, recreate, or manually edit `episodes.db`. All DB state changes happen strictly via `scripts/db_manager.py`.

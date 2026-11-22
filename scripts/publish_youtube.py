@@ -35,9 +35,9 @@ class PublishPipelineError(RuntimeError):
     """Raised when YouTube publication or safety guardrails fail."""
 
 
-def load_env_youtube(root: Path) -> dict[str, str]:
-    """Parse .env.youtube if present without mutating parent process environment."""
-    env_file = root / ".env.youtube"
+def load_env_file(root: Path) -> dict[str, str]:
+    """Parse .env.local if present without mutating parent process environment."""
+    env_file = root / ".env.local"
     creds: dict[str, str] = {}
     if not env_file.is_file():
         return creds
@@ -148,8 +148,8 @@ def run_publish_pipeline(root: Path) -> dict[str, Any]:
     except json.JSONDecodeError as exc:
         raise PublishPipelineError(f"Invalid JSON in '{episode_plan_path}': {exc}") from exc
 
-    # Parse .env.youtube
-    env_creds = load_env_youtube(root)
+    # Parse .env.local
+    env_creds = load_env_file(root)
     client_id = os.environ.get("YOUTUBE_CLIENT_ID") or env_creds.get("YOUTUBE_CLIENT_ID")
     client_secret = os.environ.get("YOUTUBE_CLIENT_SECRET") or env_creds.get("YOUTUBE_CLIENT_SECRET")
     refresh_token = os.environ.get("YOUTUBE_REFRESH_TOKEN") or env_creds.get("YOUTUBE_REFRESH_TOKEN")
@@ -178,7 +178,7 @@ def run_publish_pipeline(root: Path) -> dict[str, Any]:
 
     if is_offline_dry_run:
         # Resilient Offline / Dry-Run Simulation Mode
-        reason = "SUTRADHAR_OFFLINE_STUB active" if offline_force else "No OAuth refresh token in .env.youtube"
+        reason = "SUTRADHAR_OFFLINE_STUB active" if offline_force else "No OAuth refresh token in .env.local"
         print(f"[INFO] Running in OFFLINE / DRY-RUN mode ({reason}).", file=sys.stderr)
         print(f"[INFO] Upload Mode: {upload_mode} | Privacy: {target_privacy} | Category: {category_id} | Language: {video_lang}", file=sys.stderr)
         print(f"[INFO] Synthetic Media Disclosure (AI): True | Title: {title}", file=sys.stderr)

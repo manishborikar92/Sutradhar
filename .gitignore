@@ -16,7 +16,6 @@ episodes.db-wal
 # Secrets (isolated from HyperFrames .env)
 .env
 .env.local
-.env.youtube
 client_secret*.json
 token.json
 

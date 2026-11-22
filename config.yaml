@@ -191,7 +191,7 @@ assets:
   - crimson_embers
   - mystic_mist
 publishing:
-  env_file: .env.youtube
+  env_file: .env.local
   upload_mode: public
   allow_public_or_scheduled: true
   calibration_episodes_required: 0

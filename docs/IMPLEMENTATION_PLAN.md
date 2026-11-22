@@ -127,7 +127,7 @@ Sutradhar/
 ├── episodes.db                         # SQLite series & episode ledger (immutable baseline)
 ├── package.json                        # Node.js dependencies (hyperframes, gsap)
 ├── requirements.txt                    # Python dependencies
-└── .gitignore                          # Git exclusions (build/, models/, .env.youtube, episodes.db)
+└── .gitignore                          # Git exclusions (build/, models/, .env.local, episodes.db)
 ```
 
 ---

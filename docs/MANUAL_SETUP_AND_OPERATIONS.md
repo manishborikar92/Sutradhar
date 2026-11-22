@@ -14,7 +14,7 @@ This document is the authoritative operations manual for the **Sutradhar** auton
 | **Step 2** | OAuth Consent Screen Configuration | **COMPLETED** | External test user authorized |
 | **Step 3** | OAuth 2.0 Desktop Credentials | **COMPLETED** | Client ID & secret configured |
 | **Step 4** | Refresh Token Generation Script | **COMPLETED** | Long-lived refresh token issued |
-| **Step 5** | Secure Storage in `.env.youtube` | **COMPLETED** | Excluded from Git (`.gitignore`); 621 bytes |
+| **Step 5** | Secure Storage in `.env.local` | **COMPLETED** | Excluded from Git (`.gitignore`); 621 bytes |
 | **Step 6** | YouTube Studio Auto-Dubbing Settings | **COMPLETED** | Studio auto-dubbing enabled |
 | **Step 7 (Phase 3D)** | Operational Workflow & Automation Guide | **COMPLETED** | Manual Daily Execution on Pro established as primary; `/automation` documented as optional upgrade |
 
@@ -166,7 +166,7 @@ flowchart TD
 **Why Manual Daily Execution is Primary:**
 - **Model Tier:** Sutradhar's theatrical Kathputli hierarchical SVG directing, narrative pacing, and visual error detection require **Antigravity's highest-capability / Pro reasoning model**. Antigravity `/automation` defaults to Flash, which is insufficient for multi-shot puppet anatomy and visual QA reasoning.
 - **Multimodal Visual Oversight:** Directing in chat gives the creator instant visual inspection of `build/qa_grid.jpg`, `build/final_qa_grid.jpg`, and `build/thumbnail.jpg`, ensuring zero detached limbs or styling drift before any upload occurs.
-- **Local Sandbox Reliability:** Antigravity App `/automation` runs as a local sidecar and by default enforces strict unattended auto-denial for network calls and `.env` file reading. Manual execution eliminates sandbox permission timeouts and guarantees smooth YouTube API connectivity.
+- **Local Sandbox Reliability:** Antigravity App `/automation` runs as a local sidecar and by default enforces strict unattended auto-denial for network calls and `.env.local` file reading. Manual execution eliminates sandbox permission timeouts and guarantees smooth YouTube API connectivity.
 - **Host Availability:** The creator initiates production when the workstation is active, avoiding machine-sleep failures.
 
 **Daily 3-Step Execution Procedure:**
@@ -187,10 +187,10 @@ Antigravity App `/automation` is supported as an optional future upgrade for sch
 - **Surface Limitation:** `/automation` runs strictly within the **Antigravity Desktop App** (via local background sidecar processes). It cannot run as a cloud cron or in browser-only / standalone CLI environments.
 - **Machine-Awake Requirement:** The host Windows PC must remain powered on, awake, and unlocked at the scheduled time (`CRON_TZ=Asia/Kolkata`). If the machine is sleeping or off, scheduled events fail or stall.
 - **Model Configuration:** You must explicitly switch the automation model configuration from default `Flash` to **`Pro`**.
-- **Interactive Permissions Record:** Because the Windows Terminal Sandbox restricts `.env` file reads and outbound network access by default, an interactive first run is **mandatory** to record and persist `agent_permissions` for:
+- **Interactive Permissions Record:** Because the Windows Terminal Sandbox restricts `.env.local` file reads and outbound network access by default, an interactive first run is **mandatory** to record and persist `agent_permissions` for:
   - All 7 whitelisted `.\.venv\Scripts\python.exe` commands.
   - Outbound HTTPS network access to `www.googleapis.com` and `oauth2.googleapis.com`.
-  - Read access to `.env.youtube`.
+  - Read access to `.env.local`.
 - **Strict Private Review Lock:** The channel must remain strictly locked to `upload_mode: "private_review"` (`allow_public_or_scheduled: false`) in `config.yaml` until at least 3 calibration episodes pass mobile review in YouTube Studio.
 
 To schedule `/automation` in the Antigravity App chat:
@@ -255,7 +255,7 @@ When all 3 calibration episodes pass the checks above:
 1. Open `config.yaml` and locate the `publishing` block:
    ```yaml
    publishing:
-     env_file: .env.youtube
+     env_file: .env.local
      upload_mode: scheduled               # Switch from private_review to scheduled
      allow_public_or_scheduled: true      # Switch from false to true
      calibration_episodes_required: 3
