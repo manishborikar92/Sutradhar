@@ -82,6 +82,193 @@ def probe_media(file_path: Path) -> dict[str, Any]:
         raise RenderPipelineError(f"Invalid ffprobe JSON for '{file_path}': {exc}") from exc
 
 
+VFX_SFX_MAP: dict[str, str] = {
+    "laser_beam": "laser_strike.wav",
+    "sunburst": "cosmic_chime.wav",
+    "screen_shatter": "crystal_shatter.wav",
+    "fracture_cracks": "magma_crack.wav",
+    "sound_ripple": "conch_blast.wav",
+}
+
+TRANSITION_SFX_MAP: dict[str, str] = {
+    "curtain_open": "curtain_whoosh.wav",
+    "curtain_close": "curtain_whoosh.wav",
+    "shatter_transition": "crystal_shatter.wav",
+    "border_wipe": "whoosh_soft.wav",
+    "blind_wipe": "whoosh_soft.wav",
+    "push_left": "whoosh_soft.wav",
+    "push_right": "whoosh_soft.wav",
+    "zoom_burst": "whoosh_soft.wav",
+    "theatrical_pan": "whoosh_soft.wav",
+    "fade_dip_gold": "whoosh_soft.wav",
+}
+
+BGM_BY_MOOD_DEFAULTS: dict[str, str] = {
+    "dramatic": "dramatic_mythology.mp3",
+    "epic": "epic_history.mp3",
+    "mystic": "cosmic_mystery.mp3",
+    "cosmic": "cosmic_mystery.mp3",
+    "wrath": "wrath_confrontation.mp3",
+    "sorrow": "sorrow_tragedy.mp3",
+    "serene": "serene_blessing.mp3",
+}
+
+
+def collect_sfx_schedule(root: Path, manifest: dict[str, Any]) -> list[tuple[Path, float]]:
+    """
+    Collect timestamp-based SFX cues across transitions, VFX events,
+    mid-scene dramatic moments, and outro sequences.
+    Returns sorted list of (sfx_file_path, timestamp_sec).
+    """
+    sfx_dir = root / "assets" / "sfx"
+    raw_cues: list[tuple[str, float]] = []
+    scenes = manifest.get("scenes", [])
+    total_duration = float(manifest.get("audio", {}).get("total_duration_sec", 0.0))
+
+    # 1. Transitions and scene-level cues
+    for idx, scene in enumerate(scenes):
+        st = float(scene.get("start_sec", 0.0))
+        dur = float(scene.get("end_sec", st)) - st
+        explicit_sfx = scene.get("sfx_cue") or scene.get("transition_sfx")
+        trans = str(scene.get("transition") or scene.get("transition_type") or "").lower()
+
+        if explicit_sfx:
+            raw_cues.append((explicit_sfx, st))
+        elif trans in TRANSITION_SFX_MAP:
+            raw_cues.append((TRANSITION_SFX_MAP[trans], st))
+        elif idx == 0:
+            raw_cues.append(("curtain_whoosh.wav", max(0.0, st + 0.3)))
+
+        # 2. VFX cues
+        vfx_list = scene.get("vfx_elements") or ([scene.get("vfx")] if scene.get("vfx") else [])
+        for vfx_item in vfx_list:
+            if not vfx_item:
+                continue
+            vfx_name = str(vfx_item).lower().strip()
+            if vfx_name in VFX_SFX_MAP:
+                vfx_offset = float(scene.get("vfx_offset", min(0.3, dur * 0.2)))
+                raw_cues.append((VFX_SFX_MAP[vfx_name], st + vfx_offset))
+
+        # 3. Explicit timestamped SFX events in scene
+        for sfx_evt in scene.get("sfx_events", []):
+            evt_file = sfx_evt.get("sfx")
+            if evt_file:
+                if "timestamp" in sfx_evt:
+                    evt_time = float(sfx_evt["timestamp"])
+                else:
+                    evt_time = st + float(sfx_evt.get("offset", 0.0))
+                raw_cues.append((evt_file, evt_time))
+
+        # 4. Dramatic expression / rage thunder cues
+        expr_changes = scene.get("expression_changes", [])
+        if isinstance(expr_changes, dict):
+            expr_changes = [expr_changes]
+        for ec in expr_changes:
+            to_em = str(ec.get("to_emotion") or ec.get("emotion") or "").lower()
+            if to_em in ("rage", "wrath"):
+                offset = float(ec.get("offset", dur * float(ec.get("at_ratio", 0.5))))
+                raw_cues.append(("thunder_rumble.wav", st + offset))
+
+    # 5. Outro marquee and curtain close sequence
+    if total_duration >= 6.0 and manifest.get("outro") is not False:
+        t_marquee = max(0.0, total_duration - 3.4)
+        raw_cues.append(("conch_blast.wav", t_marquee))
+        t_close = max(0.0, total_duration - 1.6)
+        raw_cues.append(("curtain_whoosh.wav", t_close))
+
+    # Validate against existing files on disk, sort by timestamp, de-duplicate rapid identical triggers
+    validated: list[tuple[Path, float]] = []
+    raw_cues.sort(key=lambda x: x[1])
+    last_trigger: dict[str, float] = {}
+    for sfx_name, t_sec in raw_cues:
+        sfx_path = sfx_dir / sfx_name
+        if not sfx_path.is_file():
+            continue
+        if sfx_name in last_trigger and abs(t_sec - last_trigger[sfx_name]) < 0.25:
+            continue
+        last_trigger[sfx_name] = t_sec
+        validated.append((sfx_path, round(t_sec, 3)))
+
+    return validated
+
+
+def parse_bgm_schedule(
+    root: Path,
+    manifest: dict[str, Any],
+    cfg: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """
+    Parse BGM cues across video duration. Supports:
+    1. manifest["bgm_cues"]: list of {"track": ..., "start_sec": ...} or {"mood": ..., "start_sec": ...}
+    2. Per-scene bgm_track or bgm_mood switches.
+    3. Single manifest["bgm_track"] or default pillar track.
+    Returns list of dicts: [{"track": str, "path": Path, "start_sec": float, "is_fallback": bool}]
+    """
+    bgm_dir = root / "assets" / "bgm"
+    mood_map = dict(BGM_BY_MOOD_DEFAULTS)
+    if "assets" in cfg and "bgm_by_mood" in cfg["assets"]:
+        mood_map.update(cfg["assets"]["bgm_by_mood"])
+
+    cues_spec = manifest.get("bgm_cues")
+    resolved_cues: list[tuple[str, float]] = []
+
+    if cues_spec and isinstance(cues_spec, list):
+        for item in cues_spec:
+            t_start = float(item.get("start_sec", 0.0))
+            track = item.get("track")
+            mood = item.get("mood")
+            if not track and mood:
+                track = mood_map.get(str(mood).lower(), "dramatic_mythology.mp3")
+            if track:
+                resolved_cues.append((track, t_start))
+    else:
+        # Check scene-level track or mood transitions
+        scenes = manifest.get("scenes", [])
+        current_track: Optional[str] = None
+        for scene in scenes:
+            st = float(scene.get("start_sec", 0.0))
+            track = scene.get("bgm_track")
+            mood = scene.get("bgm_mood")
+            if not track and mood:
+                track = mood_map.get(str(mood).lower())
+            if track and track != current_track:
+                resolved_cues.append((track, st))
+                current_track = track
+
+    if not resolved_cues:
+        default_track = manifest.get("bgm_track")
+        if not default_track:
+            pillar = manifest.get("pillar")
+            if pillar and "assets" in cfg and "bgm_by_pillar" in cfg["assets"]:
+                default_track = cfg["assets"]["bgm_by_pillar"].get(pillar)
+        if not default_track:
+            default_track = "dramatic_mythology.mp3"
+        resolved_cues.append((default_track, 0.0))
+
+    resolved_cues.sort(key=lambda c: c[1])
+    if resolved_cues[0][1] > 0.0:
+        first_track = resolved_cues[0][0]
+        resolved_cues.insert(0, (first_track, 0.0))
+
+    schedule: list[dict[str, Any]] = []
+    for idx, (trk_name, st) in enumerate(resolved_cues):
+        trk_path = bgm_dir / trk_name
+        is_missing = not trk_path.is_file()
+        if is_missing:
+            print(
+                f"[WARN] BGM track '{trk_name}' missing at '{trk_path}'. Generating procedural acoustic drone fallback.",
+                file=sys.stderr,
+            )
+        schedule.append({
+            "track": trk_name,
+            "path": trk_path,
+            "start_sec": st,
+            "is_fallback": is_missing,
+        })
+
+    return schedule
+
+
 def build_audio_mix(
     root: Path,
     manifest: dict[str, Any],
@@ -94,26 +281,13 @@ def build_audio_mix(
     if not narration_path.is_file():
         raise RenderPipelineError(f"Narration audio file missing: {narration_path}")
 
-    bgm_filename = manifest.get("bgm_track", "dramatic_mythology.mp3")
-    bgm_path = root / "assets" / "bgm" / bgm_filename
-    use_procedural_bgm = False
-    if not bgm_path.is_file():
-        print(
-            f"[WARN] BGM track '{bgm_filename}' missing at '{bgm_path}'. Generating procedural acoustic drone fallback.",
-            file=sys.stderr,
-        )
-        use_procedural_bgm = True
-
     total_duration = float(manifest["audio"]["total_duration_sec"])
 
-    # Collect transition SFX from scenes
-    sfx_inputs: list[tuple[Path, float]] = []
-    for scene in manifest.get("scenes", []):
-        sfx_name = scene.get("sfx_cue") or scene.get("transition_sfx")
-        if sfx_name:
-            sfx_file = root / "assets" / "sfx" / sfx_name
-            if sfx_file.is_file():
-                sfx_inputs.append((sfx_file, float(scene["start_sec"])))
+    # Collect timestamp-based SFX schedule
+    sfx_inputs = collect_sfx_schedule(root, manifest)
+
+    # Collect multi-track BGM schedule
+    bgm_schedule = parse_bgm_schedule(root, manifest, cfg)
 
     # Master gain settings from config
     mastering_cfg = cfg.get("audio_mastering", {})
@@ -128,8 +302,6 @@ def build_audio_mix(
     # Build FFmpeg command inputs
     # Input 0: raw video
     # Input 1: narration
-    # Input 2: BGM (or procedural lavfi synth fallback)
-    # Inputs 3..N: SFX
     cmd = [
         "ffmpeg",
         "-y",
@@ -139,21 +311,24 @@ def build_audio_mix(
         str(narration_path),
     ]
 
-    if use_procedural_bgm:
-        cmd.extend([
-            "-f",
-            "lavfi",
-            "-i",
-            "aevalsrc=exprs='0.03*sin(2*PI*110*t)+0.02*sin(2*PI*165*t)':s=24000:c=stereo",
-        ])
-    else:
-        cmd.extend([
-            "-stream_loop",
-            "-1",
-            "-i",
-            str(bgm_path),
-        ])
+    # BGM inputs starting at index 2
+    for cue in bgm_schedule:
+        if cue["is_fallback"]:
+            cmd.extend([
+                "-f",
+                "lavfi",
+                "-i",
+                "aevalsrc=exprs='0.03*sin(2*PI*110*t)+0.02*sin(2*PI*165*t)':s=24000:c=stereo",
+            ])
+        else:
+            cmd.extend([
+                "-stream_loop",
+                "-1",
+                "-i",
+                str(cue["path"]),
+            ])
 
+    # SFX inputs following BGM
     for sfx_file, _ in sfx_inputs:
         cmd.extend(["-i", str(sfx_file)])
 
@@ -161,16 +336,46 @@ def build_audio_mix(
     filters = []
 
     # 0. Broadcast Vocal Mastering Chain on Narration [1:a] -> [narration_mastered] & [narration_sidechain]
-    # 80Hz high-pass, warmth (+2dB @ 175Hz), harshness tame (-2dB @ 5kHz), gentle air (+1.5dB @ 10kHz), smooth 2.5:1 compression
     filters.append(
         "[1:a]aresample=24000:async=1,highpass=f=80,equalizer=f=175:t=q:w=1.0:g=2.0,equalizer=f=5000:t=q:w=1.5:g=-2.0,equalizer=f=10000:t=q:w=1.0:g=1.5,acompressor=threshold=-18dB:ratio=2.5:attack=15:release=120,asplit=2[narration_mastered][narration_sidechain]"
     )
 
-    # 1. BGM resample to 24kHz, trim to total_duration, 1.2s smooth fade-out, base volume
-    fade_start = max(0.0, total_duration - 1.2)
-    filters.append(
-        f"[2:a]aresample=24000:async=1,atrim=0:{total_duration:.4f},asetpts=PTS-STARTPTS,afade=t=out:st={fade_start:.4f}:d=1.2,volume={bgm_base_gain}dB[bgm_base]"
-    )
+    # 1. BGM Track Processing and Crossfading
+    if len(bgm_schedule) == 1:
+        fade_start = max(0.0, total_duration - 1.2)
+        filters.append(
+            f"[2:a]aresample=24000:async=1,atrim=0:{total_duration:.4f},asetpts=PTS-STARTPTS,afade=t=out:st={fade_start:.4f}:d=1.2,volume={bgm_base_gain}dB[bgm_base]"
+        )
+    else:
+        xfade_dur = 1.5
+        bgm_start_idx = 2
+        for k, cue in enumerate(bgm_schedule):
+            inp_idx = bgm_start_idx + k
+            st = cue["start_sec"]
+            next_st = bgm_schedule[k + 1]["start_sec"] if k + 1 < len(bgm_schedule) else total_duration
+            if k < len(bgm_schedule) - 1:
+                seg_dur = max(0.5, (next_st - st) + xfade_dur)
+            else:
+                seg_dur = max(0.5, total_duration - st)
+
+            delay_ms = int(round(st * 1000.0))
+            fade_in_str = f",afade=t=in:st=0:d={xfade_dur:.2f}" if k > 0 else ""
+            if k < len(bgm_schedule) - 1:
+                fade_out_st = max(0.0, next_st - st)
+                fade_out_str = f",afade=t=out:st={fade_out_st:.4f}:d={xfade_dur:.2f}"
+            else:
+                fade_out_st = max(0.0, seg_dur - 1.2)
+                fade_out_str = f",afade=t=out:st={fade_out_st:.4f}:d=1.2"
+
+            delay_str = f",adelay={delay_ms}|{delay_ms}" if delay_ms > 0 else ""
+            filters.append(
+                f"[{inp_idx}:a]aresample=24000:async=1,atrim=0:{seg_dur:.4f},asetpts=PTS-STARTPTS{fade_in_str}{fade_out_str}{delay_str}[bgm_seg_{k}]"
+            )
+
+        bgm_seg_labels = "".join(f"[bgm_seg_{k}]" for k in range(len(bgm_schedule)))
+        filters.append(
+            f"{bgm_seg_labels}amix=inputs={len(bgm_schedule)}:duration=longest:dropout_transition=2,volume={bgm_base_gain}dB[bgm_base]"
+        )
 
     # 2. Sidechain ducking of BGM under Narration
     filters.append(
@@ -179,8 +384,9 @@ def build_audio_mix(
 
     # 3. SFX placement with resample and delay
     mix_sources = ["[narration_mastered]", "[bgm_ducked]"]
+    sfx_start_idx = 2 + len(bgm_schedule)
     for idx, (_, delay_sec) in enumerate(sfx_inputs):
-        inp_idx = 3 + idx
+        inp_idx = sfx_start_idx + idx
         delay_ms = int(round(delay_sec * 1000.0))
         out_lbl = f"[sfx_{idx}]"
         filters.append(f"[{inp_idx}:a]aresample=24000:async=1,volume={sfx_gain}dB,adelay={delay_ms}|{delay_ms}[sfx_{idx}]")

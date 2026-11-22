@@ -142,7 +142,22 @@ Create `build/episode_plan.json` matching the active `primary_language` (`en` or
    - **Theatrical Outro Curtain Call:**
      - Automated at episode conclusion (`total_dur - 3.5s`): Theatrical marquee ("कथा अनन्ता · SUTRADHAR"), full cast lineup in `blessing_calm` and `joy`, followed by closing velvet curtains (`xPercent: 0`) and final fade to black.
 
-7. **Clean Metadata for YouTube (Never Rendered On-Screen):**
+7. **Audio Enhancement, SFX Mapping & Multi-Mood BGM (Phase 5):**
+   - **13 Event-Mapped SFX Library:**
+     - Transitions: `curtain_whoosh.wav` (curtains), `whoosh_soft.wav` (wipes/pushes), `crystal_shatter.wav` (shatter transition).
+     - VFX Events: `laser_strike.wav` (laser beam), `cosmic_chime.wav` (sunburst), `crystal_shatter.wav` (screen shatter), `magma_crack.wav` (fracture cracks), `conch_blast.wav` (sound ripple / sacred proclamation).
+     - Mid-Scene / Expressions: `thunder_rumble.wav` (rage/wrath emotional shift), `sword_clash.wav` (combat), `footstep_heavy.wav` (heavy arrival), `energy_hum.wav` (divine aura).
+     - Outro: `conch_blast.wav` (marquee fanfare), `curtain_whoosh.wav` (curtain close).
+   - **6 Mood-Tailored BGM Tracks:**
+     - `dramatic` (`dramatic_mythology.mp3`), `epic` (`epic_history.mp3`), `mystic`/`cosmic` (`cosmic_mystery.mp3`), `wrath` (`wrath_confrontation.mp3`), `sorrow` (`sorrow_tragedy.mp3`), `serene` (`serene_blessing.mp3`).
+     - Support dynamic BGM mood transitions across story phases via `manifest.bgm_cues` or scene-level `bgm_mood` with 1.5s smooth crossfades and voice sidechain ducking.
+   - **Contextual Text Rendering (Zero Burned-in Subtitles Policy):**
+     - Scene 1 Title Plaque (`#contextual_title_container`): Animated introduction of series and episode title after curtains open.
+     - Character Lower-Third Badge (`#contextual_character_label_container`): Subtle gold pill badge introducing character name and title.
+     - Channel Outro CTA (`#contextual_cta_container`): "सूत्रधार · SUTRADHAR - Subscribe for the Next Chapter" before final curtain.
+     - **Strict Clean Canvas Rule**: ZERO burned-in subtitles, dialogue captions, or transcript words. Closed captions are handled natively by YouTube.
+
+8. **Clean Metadata for YouTube (Never Rendered On-Screen):**
    - Write an engaging `youtube_title` (`<= 100` chars, no `<` or `>`, includes `#Shorts` or relevant hashtags), rich `youtube_description`, and concise `summary`.
 
 ### Step 4: Verify & Author Modular Hierarchical SVG Assets (`assets/svg/`)

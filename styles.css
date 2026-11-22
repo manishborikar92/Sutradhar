@@ -499,3 +499,135 @@ body {
 #heads_fan_mount, #prabhavali_mount, #wrath_mount {
   transform: translate(400px, calc(345px + var(--trans-torso-y, 0px))) rotate(var(--rot-torso, 0deg)) !important;
 }
+
+/* ========================================================================= */
+/* CONTEXTUAL TEXT LAYER (Strictly No Subtitles - Production Typography)    */
+/* ========================================================================= */
+#contextual_text_layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1080px;
+  height: 1920px;
+  pointer-events: none;
+  z-index: 120;
+}
+
+#contextual_title_container {
+  position: absolute;
+  top: 310px;
+  left: 90px;
+  width: 900px;
+  display: none;
+  opacity: 0;
+  text-align: center;
+  font-family: Georgia, serif;
+}
+
+.contextual-plaque {
+  background: radial-gradient(ellipse at center, rgba(30, 15, 8, 0.92) 0%, rgba(12, 6, 4, 0.95) 100%);
+  border: 3px solid #d97706;
+  border-radius: 12px;
+  padding: 18px 28px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.85), inset 0 0 15px rgba(217, 119, 6, 0.35);
+}
+
+.contextual-tag {
+  color: #f59e0b;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.9);
+}
+
+.contextual-heading {
+  color: #fef08a;
+  font-size: 38px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  line-height: 1.25;
+  text-shadow: 0 4px 12px rgba(0,0,0,0.95), 0 0 20px rgba(245, 158, 11, 0.4);
+}
+
+#contextual_character_label_container {
+  position: absolute;
+  bottom: 540px;
+  left: 70px;
+  display: none;
+  opacity: 0;
+  font-family: Georgia, serif;
+}
+
+.character-label-badge {
+  background: linear-gradient(90deg, rgba(20, 10, 5, 0.95) 0%, rgba(45, 20, 8, 0.90) 80%, transparent 100%);
+  border-left: 6px solid #f59e0b;
+  border-top: 1px solid rgba(245, 158, 11, 0.4);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.4);
+  padding: 12px 32px 12px 20px;
+  border-radius: 0 10px 10px 0;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.85);
+}
+
+.char-name {
+  color: #fef08a;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.9);
+}
+
+.char-title {
+  color: #d97706;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  margin-top: 2px;
+  font-style: italic;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.9);
+}
+
+#contextual_cta_container {
+  position: absolute;
+  bottom: 560px;
+  left: 140px;
+  width: 800px;
+  display: none;
+  opacity: 0;
+  text-align: center;
+  font-family: Georgia, serif;
+}
+
+.cta-card-box {
+  background: radial-gradient(circle, rgba(35, 15, 6, 0.95) 0%, rgba(10, 4, 3, 0.98) 100%);
+  border: 3px solid #b45309;
+  border-radius: 16px;
+  padding: 24px 36px;
+  box-shadow: 0 12px 50px rgba(0, 0, 0, 0.9), 0 0 30px rgba(180, 83, 9, 0.45);
+}
+
+.cta-channel-logo {
+  font-size: 46px;
+  font-weight: 900;
+  color: #fef08a;
+  letter-spacing: 4px;
+  text-shadow: 0 0 25px rgba(245, 158, 11, 0.7);
+}
+
+.cta-channel-sub {
+  font-size: 22px;
+  color: #f59e0b;
+  letter-spacing: 6px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.cta-message {
+  font-size: 20px;
+  color: #d1d5db;
+  letter-spacing: 2px;
+  margin-top: 10px;
+  font-style: italic;
+}

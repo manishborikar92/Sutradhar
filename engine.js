@@ -49,6 +49,24 @@ function initTimeline() {
   // Outro Marquee Element
   const outroMarquee = document.querySelector("#outro_marquee_container");
 
+  // Contextual Text Elements (Strictly No Subtitles - Production Typography)
+  const contextualTitle = document.getElementById("contextual_title_container");
+  const contextualSeriesTag = document.getElementById("contextual_series_tag");
+  const contextualMainTitle = document.getElementById("contextual_main_title");
+  const contextualCharLabel = document.getElementById("contextual_character_label_container");
+  const contextualCharName = document.getElementById("contextual_char_name");
+  const contextualCharTitle = document.getElementById("contextual_char_title");
+  const contextualCta = document.getElementById("contextual_cta_container");
+
+  const characterTitleMap = {
+    "shani_dev": { name: "SHANI DEV", title: "Lord of Karma & Justice" },
+    "ravana": { name: "LANKAPATI RAVANA", title: "Conqueror of the Three Worlds" },
+    "surya_dev": { name: "SURYA DEV", title: "The Solar Deity" },
+    "mandodari": { name: "QUEEN MANDODARI", title: "Empress of Lanka" },
+    "shiva": { name: "DEVADHIDEV MAHADEV", title: "The Supreme Destroyer" }
+  };
+  const introducedChars = new Set();
+
   // Puppet elements map
   const allPuppets = Array.from(document.querySelectorAll(".puppet-wrapper"));
   const primaryPuppet = document.querySelector("#puppet_wrapper") || allPuppets[0];
@@ -434,6 +452,29 @@ function initTimeline() {
         masterTl.to(curtains.right, { xPercent: 102, duration: 1.8, ease: "power2.inOut" }, t_start + 0.4);
         curtainsOpened = true;
       }
+
+      // Contextual Title Plaque (Scene 1)
+      if (contextualTitle && (manifest.title || manifest.series_title || manifest.topic)) {
+        if (contextualSeriesTag) {
+          contextualSeriesTag.textContent = manifest.series_title || "SUTRADHAR";
+        }
+        if (contextualMainTitle) {
+          contextualMainTitle.textContent = manifest.title || manifest.topic || "The Untold Legend";
+        }
+        const t_plaque_in = t_start + 0.8;
+        const t_plaque_out = Math.min(t_start + 4.0, t_end - 0.4);
+        masterTl.set(contextualTitle, { display: "block" }, t_plaque_in);
+        masterTl.fromTo(contextualTitle,
+          { opacity: 0, scale: 0.85, y: -25 },
+          { opacity: 1, scale: 1.0, y: 0, duration: 0.75, ease: "back.out(1.6)" },
+          t_plaque_in
+        );
+        masterTl.to(contextualTitle,
+          { opacity: 0, y: -20, duration: 0.45, ease: "power2.in" },
+          t_plaque_out
+        );
+        masterTl.set(contextualTitle, { display: "none" }, t_plaque_out + 0.45);
+      }
     } else {
       const prevShotEl = document.getElementById("shot_" + idx + "_container");
 
@@ -696,6 +737,35 @@ function initTimeline() {
       }
     }
 
+    // Contextual Character Introduction Label
+    const charSlug = (scene.primary_character || scene.character || "").toLowerCase().trim();
+    if (charSlug && !introducedChars.has(charSlug) && contextualCharLabel && contextualCharName) {
+      introducedChars.add(charSlug);
+      const meta = characterTitleMap[charSlug] || {
+        name: charSlug.replace(/_/g, " ").toUpperCase(),
+        title: "Legendary Figure"
+      };
+      const t_label_in = t_start + 0.6;
+      const t_label_out = Math.min(t_label_in + 2.8, t_end - 0.4);
+
+      masterTl.call(() => {
+        contextualCharName.textContent = meta.name;
+        if (contextualCharTitle) contextualCharTitle.textContent = meta.title;
+      }, null, t_label_in);
+
+      masterTl.set(contextualCharLabel, { display: "block" }, t_label_in);
+      masterTl.fromTo(contextualCharLabel,
+        { opacity: 0, x: -45 },
+        { opacity: 1, x: 0, duration: 0.55, ease: "power2.out" },
+        t_label_in
+      );
+      masterTl.to(contextualCharLabel,
+        { opacity: 0, x: -25, duration: 0.40, ease: "power2.in" },
+        t_label_out
+      );
+      masterTl.set(contextualCharLabel, { display: "none" }, t_label_out + 0.40);
+    }
+
     // Dynamic Infographics Animation (thought_bubble, comparison_card, symbol_infinity, symbol_scales)
     if (scene.infographic_type) {
       const infoType = (scene.infographic_type || "").toLowerCase().trim();
@@ -852,6 +922,17 @@ function initTimeline() {
         { opacity: 1, scale: 1.0, y: 0, duration: 0.75, ease: "back.out(2)" },
         t_outro + 0.2
       );
+    }
+
+    if (contextualCta) {
+      masterTl.set(contextualCta, { display: "block" }, t_outro + 0.3);
+      masterTl.fromTo(contextualCta,
+        { opacity: 0, scale: 0.85, y: 30 },
+        { opacity: 1, scale: 1.0, y: 0, duration: 0.70, ease: "back.out(1.5)" },
+        t_outro + 0.3
+      );
+      masterTl.to(contextualCta, { opacity: 0, duration: 0.40, ease: "power2.in" }, total_dur - 1.8);
+      masterTl.set(contextualCta, { display: "none" }, total_dur - 1.4);
     }
 
     // Cast Lineup (up to 4 puppets across stage in blessing pose)

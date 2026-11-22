@@ -153,6 +153,21 @@ audio_mastering:
     release_ms: 250
   kinocut_min_score: 80
 assets:
+  bgm_tracks:
+  - dramatic_mythology.mp3
+  - epic_history.mp3
+  - cosmic_mystery.mp3
+  - wrath_confrontation.mp3
+  - sorrow_tragedy.mp3
+  - serene_blessing.mp3
+  bgm_by_mood:
+    dramatic: dramatic_mythology.mp3
+    epic: epic_history.mp3
+    mystic: cosmic_mystery.mp3
+    cosmic: cosmic_mystery.mp3
+    wrath: wrath_confrontation.mp3
+    sorrow: sorrow_tragedy.mp3
+    serene: serene_blessing.mp3
   bgm_by_pillar:
     Ancient Epics & Lore: dramatic_mythology.mp3
     Hidden History: epic_history.mp3
@@ -161,6 +176,16 @@ assets:
   - whoosh_soft.wav
   - sub_hit.wav
   - tension_swell.wav
+  - laser_strike.wav
+  - crystal_shatter.wav
+  - thunder_rumble.wav
+  - conch_blast.wav
+  - sword_clash.wav
+  - magma_crack.wav
+  - cosmic_chime.wav
+  - curtain_whoosh.wav
+  - footstep_heavy.wav
+  - energy_hum.wav
   mood_palettes:
   - theatrical_folk_art
   - golden_imperial

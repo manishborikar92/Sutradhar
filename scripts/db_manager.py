@@ -318,11 +318,16 @@ def _validate_audio_filename(value: str, field_name: str) -> str:
 
 def _validate_configured_bgm(value: str, cfg: Optional[dict[str, Any]]) -> str:
     cleaned = _validate_audio_filename(value, "bgm_track")
-    if cfg:
-        allowed_bgms = sorted(set(cfg["assets"]["bgm_by_pillar"].values()))
-        if cleaned not in allowed_bgms:
+    if cfg and "assets" in cfg:
+        allowed_bgms = set(cfg["assets"].get("bgm_tracks", []))
+        if "bgm_by_pillar" in cfg["assets"]:
+            allowed_bgms.update(cfg["assets"]["bgm_by_pillar"].values())
+        if "bgm_by_mood" in cfg["assets"]:
+            allowed_bgms.update(cfg["assets"]["bgm_by_mood"].values())
+        allowed_bgms_list = sorted(allowed_bgms)
+        if allowed_bgms_list and cleaned not in allowed_bgms:
             raise ValueError(
-                f"bgm_track '{cleaned}' is not in configured BGM tracks: {allowed_bgms}"
+                f"bgm_track '{cleaned}' is not in configured BGM tracks: {allowed_bgms_list}"
             )
     return cleaned
 

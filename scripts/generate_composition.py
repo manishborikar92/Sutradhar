@@ -650,6 +650,138 @@ body {
 #heads_fan_mount, #prabhavali_mount, #wrath_mount {
   transform: translate(400px, calc(345px + var(--trans-torso-y, 0px))) rotate(var(--rot-torso, 0deg)) !important;
 }
+
+/* ========================================================================= */
+/* CONTEXTUAL TEXT LAYER (Strictly No Subtitles - Production Typography)    */
+/* ========================================================================= */
+#contextual_text_layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1080px;
+  height: 1920px;
+  pointer-events: none;
+  z-index: 120;
+}
+
+#contextual_title_container {
+  position: absolute;
+  top: 310px;
+  left: 90px;
+  width: 900px;
+  display: none;
+  opacity: 0;
+  text-align: center;
+  font-family: Georgia, serif;
+}
+
+.contextual-plaque {
+  background: radial-gradient(ellipse at center, rgba(30, 15, 8, 0.92) 0%, rgba(12, 6, 4, 0.95) 100%);
+  border: 3px solid #d97706;
+  border-radius: 12px;
+  padding: 18px 28px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.85), inset 0 0 15px rgba(217, 119, 6, 0.35);
+}
+
+.contextual-tag {
+  color: #f59e0b;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.9);
+}
+
+.contextual-heading {
+  color: #fef08a;
+  font-size: 38px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  line-height: 1.25;
+  text-shadow: 0 4px 12px rgba(0,0,0,0.95), 0 0 20px rgba(245, 158, 11, 0.4);
+}
+
+#contextual_character_label_container {
+  position: absolute;
+  bottom: 540px;
+  left: 70px;
+  display: none;
+  opacity: 0;
+  font-family: Georgia, serif;
+}
+
+.character-label-badge {
+  background: linear-gradient(90deg, rgba(20, 10, 5, 0.95) 0%, rgba(45, 20, 8, 0.90) 80%, transparent 100%);
+  border-left: 6px solid #f59e0b;
+  border-top: 1px solid rgba(245, 158, 11, 0.4);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.4);
+  padding: 12px 32px 12px 20px;
+  border-radius: 0 10px 10px 0;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.85);
+}
+
+.char-name {
+  color: #fef08a;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.9);
+}
+
+.char-title {
+  color: #d97706;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  margin-top: 2px;
+  font-style: italic;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.9);
+}
+
+#contextual_cta_container {
+  position: absolute;
+  bottom: 560px;
+  left: 140px;
+  width: 800px;
+  display: none;
+  opacity: 0;
+  text-align: center;
+  font-family: Georgia, serif;
+}
+
+.cta-card-box {
+  background: radial-gradient(circle, rgba(35, 15, 6, 0.95) 0%, rgba(10, 4, 3, 0.98) 100%);
+  border: 3px solid #b45309;
+  border-radius: 16px;
+  padding: 24px 36px;
+  box-shadow: 0 12px 50px rgba(0, 0, 0, 0.9), 0 0 30px rgba(180, 83, 9, 0.45);
+}
+
+.cta-channel-logo {
+  font-size: 46px;
+  font-weight: 900;
+  color: #fef08a;
+  letter-spacing: 4px;
+  text-shadow: 0 0 25px rgba(245, 158, 11, 0.7);
+}
+
+.cta-channel-sub {
+  font-size: 22px;
+  color: #f59e0b;
+  letter-spacing: 6px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.cta-message {
+  font-size: 20px;
+  color: #d1d5db;
+  letter-spacing: 2px;
+  margin-top: 10px;
+  font-style: italic;
+}
 """
 
 
@@ -737,6 +869,29 @@ def generate_index_html(
 {infographics_str}
     </div>
 
+    <!-- CONTEXTUAL TEXT LAYER (Strictly No Subtitles - Production Typography) -->
+    <div id="contextual_text_layer" data-layout-ignore="true">
+      <div id="contextual_title_container" data-layout-ignore="true">
+        <div class="contextual-plaque" data-layout-ignore="true">
+          <div id="contextual_series_tag" class="contextual-tag" data-layout-ignore="true"></div>
+          <div id="contextual_main_title" class="contextual-heading" data-layout-ignore="true"></div>
+        </div>
+      </div>
+      <div id="contextual_character_label_container" data-layout-ignore="true">
+        <div class="character-label-badge" data-layout-ignore="true">
+          <div id="contextual_char_name" class="char-name" data-layout-ignore="true"></div>
+          <div id="contextual_char_title" class="char-title" data-layout-ignore="true"></div>
+        </div>
+      </div>
+      <div id="contextual_cta_container" data-layout-ignore="true">
+        <div class="cta-card-box" data-layout-ignore="true">
+          <div class="cta-channel-logo" data-layout-ignore="true">सूत्रधार</div>
+          <div class="cta-channel-sub" data-layout-ignore="true">SUTRADHAR</div>
+          <div class="cta-message" data-layout-ignore="true">Subscribe for the Next Chapter</div>
+        </div>
+      </div>
+    </div>
+
     <!-- THEATRICAL OUTRO MARQUEE -->
 {outro_marquee_str}
 
@@ -803,6 +958,24 @@ function initTimeline() {
 
   // Outro Marquee Element
   const outroMarquee = document.querySelector("#outro_marquee_container");
+
+  // Contextual Text Elements (Strictly No Subtitles - Production Typography)
+  const contextualTitle = document.getElementById("contextual_title_container");
+  const contextualSeriesTag = document.getElementById("contextual_series_tag");
+  const contextualMainTitle = document.getElementById("contextual_main_title");
+  const contextualCharLabel = document.getElementById("contextual_character_label_container");
+  const contextualCharName = document.getElementById("contextual_char_name");
+  const contextualCharTitle = document.getElementById("contextual_char_title");
+  const contextualCta = document.getElementById("contextual_cta_container");
+
+  const characterTitleMap = {
+    "shani_dev": { name: "SHANI DEV", title: "Lord of Karma & Justice" },
+    "ravana": { name: "LANKAPATI RAVANA", title: "Conqueror of the Three Worlds" },
+    "surya_dev": { name: "SURYA DEV", title: "The Solar Deity" },
+    "mandodari": { name: "QUEEN MANDODARI", title: "Empress of Lanka" },
+    "shiva": { name: "DEVADHIDEV MAHADEV", title: "The Supreme Destroyer" }
+  };
+  const introducedChars = new Set();
 
   // Puppet elements map
   const allPuppets = Array.from(document.querySelectorAll(".puppet-wrapper"));
@@ -1189,6 +1362,29 @@ function initTimeline() {
         masterTl.to(curtains.right, { xPercent: 102, duration: 1.8, ease: "power2.inOut" }, t_start + 0.4);
         curtainsOpened = true;
       }
+
+      // Contextual Title Plaque (Scene 1)
+      if (contextualTitle && (manifest.title || manifest.series_title || manifest.topic)) {
+        if (contextualSeriesTag) {
+          contextualSeriesTag.textContent = manifest.series_title || "SUTRADHAR";
+        }
+        if (contextualMainTitle) {
+          contextualMainTitle.textContent = manifest.title || manifest.topic || "The Untold Legend";
+        }
+        const t_plaque_in = t_start + 0.8;
+        const t_plaque_out = Math.min(t_start + 4.0, t_end - 0.4);
+        masterTl.set(contextualTitle, { display: "block" }, t_plaque_in);
+        masterTl.fromTo(contextualTitle,
+          { opacity: 0, scale: 0.85, y: -25 },
+          { opacity: 1, scale: 1.0, y: 0, duration: 0.75, ease: "back.out(1.6)" },
+          t_plaque_in
+        );
+        masterTl.to(contextualTitle,
+          { opacity: 0, y: -20, duration: 0.45, ease: "power2.in" },
+          t_plaque_out
+        );
+        masterTl.set(contextualTitle, { display: "none" }, t_plaque_out + 0.45);
+      }
     } else {
       const prevShotEl = document.getElementById("shot_" + idx + "_container");
 
@@ -1451,6 +1647,35 @@ function initTimeline() {
       }
     }
 
+    // Contextual Character Introduction Label
+    const charSlug = (scene.primary_character || scene.character || "").toLowerCase().trim();
+    if (charSlug && !introducedChars.has(charSlug) && contextualCharLabel && contextualCharName) {
+      introducedChars.add(charSlug);
+      const meta = characterTitleMap[charSlug] || {
+        name: charSlug.replace(/_/g, " ").toUpperCase(),
+        title: "Legendary Figure"
+      };
+      const t_label_in = t_start + 0.6;
+      const t_label_out = Math.min(t_label_in + 2.8, t_end - 0.4);
+
+      masterTl.call(() => {
+        contextualCharName.textContent = meta.name;
+        if (contextualCharTitle) contextualCharTitle.textContent = meta.title;
+      }, null, t_label_in);
+
+      masterTl.set(contextualCharLabel, { display: "block" }, t_label_in);
+      masterTl.fromTo(contextualCharLabel,
+        { opacity: 0, x: -45 },
+        { opacity: 1, x: 0, duration: 0.55, ease: "power2.out" },
+        t_label_in
+      );
+      masterTl.to(contextualCharLabel,
+        { opacity: 0, x: -25, duration: 0.40, ease: "power2.in" },
+        t_label_out
+      );
+      masterTl.set(contextualCharLabel, { display: "none" }, t_label_out + 0.40);
+    }
+
     // Dynamic Infographics Animation (thought_bubble, comparison_card, symbol_infinity, symbol_scales)
     if (scene.infographic_type) {
       const infoType = (scene.infographic_type || "").toLowerCase().trim();
@@ -1607,6 +1832,17 @@ function initTimeline() {
         { opacity: 1, scale: 1.0, y: 0, duration: 0.75, ease: "back.out(2)" },
         t_outro + 0.2
       );
+    }
+
+    if (contextualCta) {
+      masterTl.set(contextualCta, { display: "block" }, t_outro + 0.3);
+      masterTl.fromTo(contextualCta,
+        { opacity: 0, scale: 0.85, y: 30 },
+        { opacity: 1, scale: 1.0, y: 0, duration: 0.70, ease: "back.out(1.5)" },
+        t_outro + 0.3
+      );
+      masterTl.to(contextualCta, { opacity: 0, duration: 0.40, ease: "power2.in" }, total_dur - 1.8);
+      masterTl.set(contextualCta, { display: "none" }, total_dur - 1.4);
     }
 
     // Cast Lineup (up to 4 puppets across stage in blessing pose)

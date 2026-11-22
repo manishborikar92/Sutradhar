@@ -901,6 +901,274 @@ class TestRenderPipeline(unittest.TestCase):
         self.assertIn("#outro_marquee_container", styles_css)
         self.assertIn("SUTRADHAR", index_html)
 
+    def test_17_expanded_sfx_and_bgm_libraries(self) -> None:
+        """Verify expanded SFX (10+ tracks) and BGM (5+ emotional moods) exist and are configured."""
+        import yaml
+
+        cfg_p = REPO_ROOT / "config.yaml"
+        with open(cfg_p, "r", encoding="utf-8") as f:
+            cfg = yaml.safe_load(f)
+
+        sfx_dir = REPO_ROOT / "assets" / "sfx"
+        bgm_dir = REPO_ROOT / "assets" / "bgm"
+
+        sfx_tracks = cfg["assets"]["sfx_tracks"]
+        bgm_tracks = cfg["assets"]["bgm_tracks"]
+        bgm_by_mood = cfg["assets"]["bgm_by_mood"]
+
+        # 1. SFX Library: >= 10 event-mapped effects
+        self.assertGreaterEqual(len(sfx_tracks), 10, f"Expected >= 10 SFX tracks, got {len(sfx_tracks)}")
+        for sfx_name in sfx_tracks:
+            sfx_file = sfx_dir / sfx_name
+            self.assertTrue(sfx_file.is_file(), f"Configured SFX file missing: {sfx_file}")
+
+        # 2. BGM Library: >= 5 emotional moods
+        self.assertGreaterEqual(len(bgm_tracks), 5, f"Expected >= 5 BGM tracks, got {len(bgm_tracks)}")
+        for bgm_name in bgm_tracks:
+            bgm_file = bgm_dir / bgm_name
+            self.assertTrue(bgm_file.is_file(), f"Configured BGM file missing: {bgm_file}")
+
+        # 3. Mood coverage: dramatic, epic, mystic/cosmic, wrath, sorrow, serene
+        expected_moods = {"dramatic", "epic", "mystic", "wrath", "sorrow", "serene"}
+        self.assertTrue(expected_moods.issubset(set(bgm_by_mood.keys())), f"Missing moods: {expected_moods - set(bgm_by_mood.keys())}")
+
+    def test_18_timestamped_sfx_and_bgm_crossfading(self) -> None:
+        """Verify timestamp-based SFX scheduling and multi-track BGM parsing."""
+        manifest = {
+            "schema_version": "2.0",
+            "audio": {"total_duration_sec": 70.0},
+            "bgm_cues": [
+                {"mood": "dramatic", "start_sec": 0.0},
+                {"mood": "wrath", "start_sec": 25.0},
+                {"mood": "serene", "start_sec": 50.0},
+            ],
+            "scenes": [
+                {
+                    "scene_index": 1,
+                    "start_sec": 0.0,
+                    "end_sec": 15.0,
+                    "transition_type": "curtain_open",
+                },
+                {
+                    "scene_index": 2,
+                    "start_sec": 15.0,
+                    "end_sec": 35.0,
+                    "transition_type": "shatter_transition",
+                    "vfx_elements": ["laser_beam"],
+                    "expression_changes": [{"to_emotion": "rage", "offset": 2.0}],
+                },
+                {
+                    "scene_index": 3,
+                    "start_sec": 35.0,
+                    "end_sec": 55.0,
+                    "transition_type": "border_wipe",
+                    "vfx_elements": ["sound_ripple"],
+                    "sfx_events": [{"sfx": "sword_clash.wav", "offset": 1.5}],
+                },
+                {
+                    "scene_index": 4,
+                    "start_sec": 55.0,
+                    "end_sec": 70.0,
+                    "transition_type": "fade",
+                },
+            ],
+            "outro": True,
+        }
+
+        # SFX Schedule validation
+        sfx_schedule = render_and_qa.collect_sfx_schedule(REPO_ROOT, manifest)
+        self.assertGreaterEqual(len(sfx_schedule), 5, f"Expected >= 5 scheduled SFX, got {len(sfx_schedule)}")
+        scheduled_files = [path.name for path, _ in sfx_schedule]
+
+        # Verify key SFX are mapped correctly
+        self.assertIn("curtain_whoosh.wav", scheduled_files)
+        self.assertIn("crystal_shatter.wav", scheduled_files)
+        self.assertIn("laser_strike.wav", scheduled_files)
+        self.assertIn("thunder_rumble.wav", scheduled_files)
+        self.assertIn("conch_blast.wav", scheduled_files)
+        self.assertIn("sword_clash.wav", scheduled_files)
+
+        # BGM Schedule validation
+        bgm_schedule = render_and_qa.parse_bgm_schedule(REPO_ROOT, manifest, {})
+        self.assertEqual(len(bgm_schedule), 3)
+        self.assertEqual(bgm_schedule[0]["track"], "dramatic_mythology.mp3")
+        self.assertEqual(bgm_schedule[1]["track"], "wrath_confrontation.mp3")
+        self.assertEqual(bgm_schedule[2]["track"], "serene_blessing.mp3")
+
+    def test_19_contextual_text_rendering(self) -> None:
+        """Verify contextual text rendering (titles, labels, outro CTA) and strict absence of burned-in subtitles."""
+        import generate_composition
+
+        build_dir = self.root / "build"
+        build_dir.mkdir(parents=True, exist_ok=True)
+        manifest_p = build_dir / "manifest.js"
+        shutil.copytree(REPO_ROOT / "assets", self.root / "assets")
+        shutil.copy(REPO_ROOT / "config.yaml", self.root / "config.yaml")
+
+        manifest = {
+            "schema_version": "2.0",
+            "title": "The Judgment of Shani",
+            "series_title": "Chronicles of Karma",
+            "audio": {"total_duration_sec": 45.0, "total_frames": 1350},
+            "scenes": [
+                {
+                    "scene_index": 1,
+                    "start_sec": 0.0,
+                    "end_sec": 15.0,
+                    "primary_character": "shani_dev",
+                    "transition_type": "curtain_open",
+                },
+                {
+                    "scene_index": 2,
+                    "start_sec": 15.0,
+                    "end_sec": 30.0,
+                    "primary_character": "ravana",
+                    "transition_type": "border_wipe",
+                },
+                {
+                    "scene_index": 3,
+                    "start_sec": 30.0,
+                    "end_sec": 45.0,
+                    "primary_character": "shiva",
+                    "transition_type": "fade",
+                },
+            ],
+            "outro": True,
+        }
+        manifest_p.write_text(f"window.EPISODE_MANIFEST = {json.dumps(manifest)};\n", encoding="utf-8")
+
+        res = generate_composition.generate_root_composition(self.root)
+        self.assertEqual(res["status"], "ok")
+
+        index_html = (self.root / "index.html").read_text(encoding="utf-8")
+        styles_css = (self.root / "styles.css").read_text(encoding="utf-8")
+        engine_js = (self.root / "engine.js").read_text(encoding="utf-8")
+
+        # 1. Structural containers in HTML
+        self.assertIn('id="contextual_text_layer"', index_html)
+        self.assertIn('id="contextual_title_container"', index_html)
+        self.assertIn('id="contextual_character_label_container"', index_html)
+        self.assertIn('id="contextual_cta_container"', index_html)
+
+        # 2. Styles in styles.css
+        self.assertIn("#contextual_text_layer", styles_css)
+        self.assertIn("#contextual_title_container", styles_css)
+        self.assertIn("#contextual_character_label_container", styles_css)
+        self.assertIn("#contextual_cta_container", styles_css)
+
+        # 3. Animation logic in engine.js
+        self.assertIn("contextualTitle", engine_js)
+        self.assertIn("contextualCharLabel", engine_js)
+        self.assertIn("contextualCta", engine_js)
+
+        # 4. Strict Clean Canvas Rule: ZERO burned-in subtitles or dialogue captions
+        self.assertNotIn("id=\"subtitle_container\"", index_html)
+        self.assertNotIn("class=\"subtitles\"", index_html)
+        self.assertNotIn("class=\"caption-word\"", index_html)
+
+    def test_20_phase5_acceptance_test(self) -> None:
+        """Verify Phase 5 Acceptance Criterion: Full audio pipeline with timestamped SFX, multi-track BGM, and contextual text."""
+        import generate_composition
+        import yaml
+
+        with open(REPO_ROOT / "config.yaml", "r", encoding="utf-8") as f:
+            cfg = yaml.safe_load(f)
+
+        build_dir = self.root / "build"
+        build_dir.mkdir(parents=True, exist_ok=True)
+        manifest_p = build_dir / "manifest.js"
+        shutil.copytree(REPO_ROOT / "assets", self.root / "assets")
+        shutil.copy(REPO_ROOT / "config.yaml", self.root / "config.yaml")
+
+        # 2-minute episode manifest with multi-mood BGM, varied SFX, multi-character, VFX
+        phase5_manifest = {
+            "schema_version": "2.0",
+            "language": "en",
+            "content_format": "standalone",
+            "title": "Cosmic Clash of the Immortals",
+            "series_title": "Sutradhar Epics",
+            "audio": {
+                "narration_full_path": "build/full_narration.wav",
+                "total_duration_sec": 120.0,
+                "total_frames": 3600,
+            },
+            "bgm_cues": [
+                {"mood": "dramatic", "start_sec": 0.0},
+                {"mood": "wrath", "start_sec": 40.0},
+                {"mood": "epic", "start_sec": 80.0},
+                {"mood": "serene", "start_sec": 105.0},
+            ],
+            "scenes": [
+                {
+                    "scene_index": 1,
+                    "shot_type": "curtain_establishing",
+                    "transition_type": "curtain_open",
+                    "primary_character": "surya_dev",
+                    "emotion": "calm",
+                    "start_sec": 0.0,
+                    "end_sec": 20.0,
+                },
+                {
+                    "scene_index": 2,
+                    "shot_type": "two_character_confrontation",
+                    "transition_type": "border_wipe",
+                    "primary_character": "ravana",
+                    "secondary_character": "shani_dev",
+                    "emotion": "wrath",
+                    "expression_changes": [{"to_emotion": "rage", "offset": 3.0}],
+                    "vfx_elements": ["laser_beam"],
+                    "start_sec": 20.0,
+                    "end_sec": 50.0,
+                },
+                {
+                    "scene_index": 3,
+                    "shot_type": "dramatic_climax",
+                    "transition_type": "shatter_transition",
+                    "primary_character": "shani_dev",
+                    "emotion": "wrath",
+                    "vfx_elements": ["screen_shatter", "fracture_cracks"],
+                    "sfx_events": [{"sfx": "sword_clash.wav", "offset": 2.0}],
+                    "start_sec": 50.0,
+                    "end_sec": 85.0,
+                },
+                {
+                    "scene_index": 4,
+                    "shot_type": "character_medium",
+                    "transition_type": "blind_wipe",
+                    "primary_character": "shiva",
+                    "emotion": "calm",
+                    "vfx_elements": ["sunburst", "sound_ripple"],
+                    "start_sec": 85.0,
+                    "end_sec": 120.0,
+                },
+            ],
+            "outro": True,
+        }
+        manifest_p.write_text(f"window.EPISODE_MANIFEST = {json.dumps(phase5_manifest)};\n", encoding="utf-8")
+
+        # Verify composition generation
+        res = generate_composition.generate_root_composition(self.root)
+        self.assertEqual(res["status"], "ok")
+
+        # Verify SFX scheduling
+        sfx_schedule = render_and_qa.collect_sfx_schedule(self.root, phase5_manifest)
+        self.assertGreaterEqual(len(sfx_schedule), 6)
+        sfx_names = [p.name for p, _ in sfx_schedule]
+        self.assertIn("curtain_whoosh.wav", sfx_names)
+        self.assertIn("crystal_shatter.wav", sfx_names)
+        self.assertIn("laser_strike.wav", sfx_names)
+        self.assertIn("magma_crack.wav", sfx_names)
+        self.assertIn("thunder_rumble.wav", sfx_names)
+        self.assertIn("conch_blast.wav", sfx_names)
+
+        # Verify BGM scheduling (4 mood cues)
+        bgm_schedule = render_and_qa.parse_bgm_schedule(self.root, phase5_manifest, cfg)
+        self.assertEqual(len(bgm_schedule), 4)
+        self.assertEqual(bgm_schedule[0]["track"], "dramatic_mythology.mp3")
+        self.assertEqual(bgm_schedule[1]["track"], "wrath_confrontation.mp3")
+        self.assertEqual(bgm_schedule[2]["track"], "epic_history.mp3")
+        self.assertEqual(bgm_schedule[3]["track"], "serene_blessing.mp3")
+
 
 if __name__ == "__main__":
     unittest.main()
