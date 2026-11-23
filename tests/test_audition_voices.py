@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Automated unit tests for scripts/audition_voices.py (Calibration Utility).
+"""Automated unit tests for scripts/audition_voices.py (ElevenLabs v4 Audition Utility).
 
-Verifies voice filtering, candidate blend logic, report JSON schema,
-and guarantees that config.yaml and episodes.db remain untouched.
+Verifies vocal tag slugification, RMS dBFS calculations, character acting templates,
+report JSON schema, 44.1 kHz audio generation, and guarantees that config.yaml
+and episodes.db remain untouched.
 """
 
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import shutil
@@ -18,6 +18,8 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import numpy as np
+import soundfile as sf
+import yaml
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT_DIR = REPO_ROOT / "scripts"
@@ -25,18 +27,28 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 import audition_voices  # noqa: E402
+from elevenlabs_engine import FakeElevenLabs  # noqa: E402
 
 
 class TestAuditionVoices(unittest.TestCase):
     def setUp(self) -> None:
         self.temp_dir = tempfile.mkdtemp(prefix="sutradhar_audition_test_")
+        self.root = Path(self.temp_dir)
         self.addCleanup(lambda: shutil.rmtree(self.temp_dir, ignore_errors=True))
 
-    def test_01_slugify_voice(self) -> None:
-        self.assertEqual(audition_voices._slugify_voice("am_fenrir"), "am_fenrir")
+    def test_01_slugify_voice_and_tags(self) -> None:
+        self.assertEqual(audition_voices._slugify_voice("Viraj"), "Viraj")
         self.assertEqual(
-            audition_voices._slugify_voice("am_fenrir:0.65+bm_george:0.35"),
-            "am_fenrir_0p65__bm_george_0p35",
+            audition_voices._slugify_voice("Viraj:1.0"),
+            "Viraj_1p0",
+        )
+        self.assertEqual(
+            audition_voices._slugify_tag("[slowly, solemn, deep]"),
+            "slowly_solemn_deep",
+        )
+        self.assertEqual(
+            audition_voices._slugify_tag("[arrogant, booming, furious, shouts]"),
+            "arrogant_booming_furious_shouts",
         )
 
     def test_02_rms_dbfs_calculation(self) -> None:
@@ -49,28 +61,24 @@ class TestAuditionVoices(unittest.TestCase):
         rms = audition_voices._rms_dbfs(sine)
         self.assertAlmostEqual(rms, -3.01, places=1)
 
-    def test_03_audition_candidate_selection_and_blend_filtering(self) -> None:
-        mock_kokoro = MagicMock()
-        mock_kokoro.get_voices.return_value = ["am_fenrir", "bm_george", "af_heart", "zf_other"]
+    def test_03_character_acting_templates_coverage(self) -> None:
+        """Verify character acting lines cover all 7 core personas from the development plan."""
+        expected_roles = {
+            "narrator",
+            "antagonist",
+            "grief",
+            "divine",
+            "devotional",
+            "climax",
+            "outro",
+        }
+        self.assertTrue(expected_roles.issubset(set(audition_voices.CHARACTER_ACTING_LINES.keys())))
 
-        all_voices = sorted(mock_kokoro.get_voices())
-        english_voices = [v for v in all_voices if v.startswith(("am_", "bm_", "af_", "bf_"))]
-        self.assertIn("am_fenrir", english_voices)
-        self.assertIn("bm_george", english_voices)
-        self.assertIn("af_heart", english_voices)
-        self.assertNotIn("zf_other", english_voices)
-
-        available_set = set(all_voices)
-        blends_tested = []
-        for blend in audition_voices.CANDIDATE_BLENDS:
-            parts = [p.split(":", 1)[0] for p in blend.split("+")]
-            if all(p in available_set for p in parts):
-                blends_tested.append(blend)
-
-        # "bm_george:0.60+am_fenrir:0.40" has both voices present
-        self.assertIn("bm_george:0.60+am_fenrir:0.40", blends_tested)
-        # "am_michael:0.60+bm_george:0.40" has am_michael missing
-        self.assertNotIn("am_michael:0.60+bm_george:0.40", blends_tested)
+        for role, item in audition_voices.CHARACTER_ACTING_LINES.items():
+            self.assertTrue(item["tag"].startswith("["))
+            self.assertTrue(item["tag"].endswith("]"))
+            self.assertTrue(len(item["text"]) > 10)
+            self.assertTrue(len(item["persona"]) > 0)
 
     def test_04_immutability_of_config_and_episodes_db(self) -> None:
         """Verify that audition_voices execution never mutates config.yaml or episodes.db."""
@@ -80,7 +88,7 @@ class TestAuditionVoices(unittest.TestCase):
         cfg_mtime_before = real_config.stat().st_mtime
         db_mtime_before = real_db.stat().st_mtime if real_db.exists() else None
 
-        # Verify audition passage is well-formed
+        # Verify historical audition passage is well-formed
         self.assertIn("Sutradhar", audition_voices.AUDITION_PASSAGE)
         self.assertIn("Nalanda", audition_voices.AUDITION_PASSAGE)
         self.assertIn("Pataliputra", audition_voices.AUDITION_PASSAGE)
@@ -90,6 +98,39 @@ class TestAuditionVoices(unittest.TestCase):
         if real_db.exists():
             self.assertEqual(db_mtime_before, real_db.stat().st_mtime)
 
+    def test_05_offline_audition_execution_with_fake_elevenlabs(self) -> None:
+        """Verify run_audition executes completely offline with FakeElevenLabs."""
+        # Setup mock environment
+        cfg = yaml.safe_load((REPO_ROOT / "config.yaml").read_text(encoding="utf-8"))
+        fake_tts = FakeElevenLabs(sec_per_scene=5.0, sample_rate=44100)
+
+        mock_whisper = MagicMock()
+        mock_whisper.transcribe.return_value = ([], {"language": "hi"})
+
+        report = audition_voices.run_audition(
+            root=self.root,
+            cfg=cfg,
+            tts_factory=lambda c, r: fake_tts,
+            whisper_factory=lambda c: mock_whisper,
+            tag_filter=["narrator", "antagonist"],
+        )
+
+        self.assertEqual(report["status"], "ok")
+        self.assertEqual(report["voice"], "Viraj")
+        self.assertEqual(report["sample_rate"], 44100)
+        self.assertEqual(report["tags_evaluated"], 2)
+        self.assertEqual(len(report["results"]), 2)
+
+        # Verify files on disk
+        audition_dir = self.root / "build/audition"
+        self.assertTrue((audition_dir / "audition_report.json").is_file())
+        for r in report["results"]:
+            wav_file = self.root / r["wav_file"]
+            self.assertTrue(wav_file.is_file())
+            info = sf.info(str(wav_file))
+            self.assertEqual(info.samplerate, 44100)
+            self.assertEqual(info.channels, 1)
+
 
 if __name__ == "__main__":
-    unittest.main()
+    unittest.main(verbosity=2)

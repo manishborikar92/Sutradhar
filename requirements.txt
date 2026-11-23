@@ -1,10 +1,9 @@
 # Sutradhar Python Dependencies
-# Requires Python >=3.10, <3.14 (Python 3.12 recommended; kokoro-onnx==0.6.1 does not support Python 3.14 yet)
+# Requires Python >=3.10 (Python 3.12 recommended)
 
-# Local Offline Neural TTS & Word Alignment
-kokoro-onnx==0.6.1
+# Speech Synthesis (ElevenLabs v4) & Word Alignment (faster-whisper)
+requests>=2.31.0,<3.0.0
 faster-whisper==1.2.1
-onnxruntime>=1.20.0,<2.0.0
 numpy>=1.26.4,<2.3.0
 soundfile>=0.12.1,<1.0.0
 huggingface-hub>=0.25.0,<1.0.0

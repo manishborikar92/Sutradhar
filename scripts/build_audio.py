@@ -135,95 +135,6 @@ def probe_duration_sec(audio_path: Path) -> float:
     return round(duration, 4)
 
 
-def _compute_sha256(path: Path) -> str:
-    h = hashlib.sha256()
-    with path.open("rb") as fh:
-        while chunk := fh.read(1024 * 1024):
-            h.update(chunk)
-    return h.hexdigest()
-
-
-def _quarantine_corrupt_file(file_path: Path, reason: str) -> Path:
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    quarantine_dir = file_path.parent / "_quarantine" / timestamp
-    quarantine_dir.mkdir(parents=True, exist_ok=True)
-    target = quarantine_dir / file_path.name
-    shutil.move(str(file_path), str(target))
-    print(
-        f"[WARN] Quarantined invalid file '{file_path.name}' -> '{target}' (Reason: {reason})",
-        file=sys.stderr,
-    )
-    return target
-
-
-def _validate_file_structural(file_path: Path) -> None:
-    """Validate file structure based on file extension."""
-    if file_path.suffix.lower() == ".bin":
-        if not zipfile.is_zipfile(file_path):
-            raise AudioBuildError(
-                f"ZIP validation failed: File '{file_path.name}' is not a valid ZIP archive."
-            )
-        with zipfile.ZipFile(file_path, "r") as zf:
-            bad = zf.testzip()
-            if bad:
-                raise AudioBuildError(
-                    f"ZIP validation failed: Corrupt entry in ZIP archive '{file_path.name}': {bad}"
-                )
-    elif file_path.suffix.lower() == ".onnx":
-        header = file_path.read_bytes()[:16]
-        if not (header and header[0] in (0x08, 0x12)):
-            raise AudioBuildError(
-                f"File '{file_path.name}' failed Protobuf parsing (invalid ONNX header magic)."
-            )
-
-
-# Backwards compatibility stub for legacy model checks
-def ensure_kokoro_models(root: Path, cfg: dict[str, Any]) -> tuple[Path, Path]:
-    tts_cfg = cfg.get("tts", {})
-    model_dir = (root / tts_cfg.get("model_dir", "models/kokoro")).resolve()
-    model_name = tts_cfg.get("model_file", "kokoro-v1.0.onnx")
-    voices_name = tts_cfg.get("voices_file", "voices-v1.0.bin")
-    allow_download = os.environ.get("SUTRADHAR_ALLOW_MODEL_DOWNLOAD", "1").strip() != "0"
-    m_path = model_dir / model_name
-    v_path = model_dir / voices_name
-    for fpath in (m_path, v_path):
-        if not fpath.is_file():
-            if not allow_download:
-                raise AudioBuildError(f"Kokoro model file not found at {fpath}")
-        else:
-            try:
-                _validate_file_structural(fpath)
-            except Exception as exc:
-                raise AudioBuildError(f"Invalid model file '{fpath.name}': {exc}") from exc
-    return m_path, v_path
-
-
-def resolve_kokoro_voice(kokoro: Any, voice_spec: Any) -> Any:
-    if hasattr(kokoro, "resolve_voice"):
-        return kokoro.resolve_voice(voice_spec)
-    if hasattr(kokoro, "get_voices"):
-        available = set(kokoro.get_voices())
-        if "+" in str(voice_spec):
-            parts = str(voice_spec).split("+")
-            components = []
-            for p in parts:
-                v_id, w = p.split(":", 1)
-                components.append((v_id.strip(), float(w.strip())))
-            for v_id, _ in components:
-                if v_id not in available:
-                    raise AudioBuildError(f"Voice {v_id} not in available voices")
-            blended = None
-            for v_id, w in components:
-                vec = np.asarray(kokoro.get_voice_style(v_id), dtype=np.float32) * w
-                blended = vec if blended is None else blended + vec
-            return blended
-        elif str(voice_spec) in available:
-            return str(voice_spec)
-        elif str(voice_spec).startswith("am_") and str(voice_spec) not in available:
-            raise AudioBuildError(f"Voice {voice_spec} not in available voices")
-    return str(voice_spec)
-
-
 # ---------------------------------------------------------------------------
 # Pronunciation Overrides
 # ---------------------------------------------------------------------------
@@ -792,15 +703,6 @@ def default_elevenlabs_factory(cfg: dict[str, Any], root: Path) -> Any:
     return ElevenLabsEngine(config=cfg, project_root=root)
 
 
-def default_kokoro_factory(model_path: Path, voices_path: Path) -> Any:
-    """Legacy Kokoro factory stub for backwards compatibility."""
-    try:
-        from kokoro_onnx import Kokoro
-    except ImportError as exc:
-        raise AudioBuildError(f"kokoro-onnx is not installed: {exc}") from exc
-    return Kokoro(str(model_path), str(voices_path))
-
-
 def default_whisper_factory(cfg: dict[str, Any]) -> Any:
     try:
         from faster_whisper import WhisperModel
@@ -850,11 +752,10 @@ def build_episode_audio(
     active_lang = getattr(ep_plan, "language", cfg["channel"].get("primary_language", "hi"))
     text_reps, _ = load_pronunciations(root, cfg, lang=active_lang)
 
-    # Initialize TTS Engine (accepts tts_factory, elevenlabs_factory, or legacy kokoro_factory)
+    # Initialize TTS Engine (accepts tts_factory or elevenlabs_factory)
     raw_factory = (
         tts_factory
         or kwargs.get("elevenlabs_factory")
-        or kwargs.get("kokoro_factory")
         or default_elevenlabs_factory
     )
     if callable(raw_factory):

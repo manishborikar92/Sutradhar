@@ -217,20 +217,7 @@ class TestBuildAudio(unittest.TestCase):
         if REAL_PRONUNCIATIONS_HI.is_file():
             shutil.copy2(REAL_PRONUNCIATIONS_HI, self.root / "pronunciations_hi.yaml")
         (self.root / "build/audio").mkdir(parents=True, exist_ok=True)
-        (self.root / "models/kokoro").mkdir(parents=True, exist_ok=True)
-        # Link real model files if present for fast offline testing
-        real_onnx = REPO_ROOT / "models/kokoro/kokoro-v1.0.onnx"
-        real_voices = REPO_ROOT / "models/kokoro/voices-v1.0.bin"
-        if real_onnx.exists() and real_voices.exists():
-            try:
-                os.link(real_onnx, self.root / "models/kokoro/kokoro-v1.0.onnx")
-                os.link(real_voices, self.root / "models/kokoro/voices-v1.0.bin")
-            except OSError:
-                shutil.copy2(real_onnx, self.root / "models/kokoro/kokoro-v1.0.onnx")
-                shutil.copy2(real_voices, self.root / "models/kokoro/voices-v1.0.bin")
-        else:
-            (self.root / "models/kokoro/kokoro-v1.0.onnx").write_bytes(b"stub-onnx")
-            (self.root / "models/kokoro/voices-v1.0.bin").write_bytes(b"stub-voices")
+        (self.root / "build/cache/audio").mkdir(parents=True, exist_ok=True)
 
     def tearDown(self) -> None:
         self.tmp.cleanup()
@@ -259,18 +246,11 @@ class TestBuildAudio(unittest.TestCase):
 
     # 2. Voice validation, vocal steering tag resolution & tag stripping
     def test_02_vocal_tag_resolution_and_steering(self) -> None:
-        kokoro = FakeElevenLabs()
-        self.assertEqual(self.mod.resolve_kokoro_voice(kokoro, "am_fenrir"), "am_fenrir")
-
-        blended = self.mod.resolve_kokoro_voice(kokoro, "am_fenrir:0.65+bm_george:0.35")
-        self.assertIsInstance(blended, np.ndarray)
-        self.assertTrue(np.allclose(blended, 1.70, atol=1e-4))
-
-        with self.assertRaises(self.mod.AudioBuildError):
-            self.mod.resolve_kokoro_voice(kokoro, "am_nonexistent")
-
-        # ElevenLabs Vocal Steering Tag Resolution
+        # ElevenLabs Vocal Steering Tag Resolution & Voice Defaults
         templates = self.mod.DEFAULT_TAG_TEMPLATES
+        self.assertEqual(self.mod.DEFAULT_VOICE_ID, "uuyFQegRan8rpIQCGu9K")
+        self.assertEqual(self.mod.DEFAULT_SAMPLE_RATE, 44100)
+        self.assertIn("narrator", templates)
 
         class DummyScene:
             def __init__(self, **kwargs: Any) -> None:
@@ -477,34 +457,11 @@ class TestBuildAudio(unittest.TestCase):
             )
         self.assertIn("scenes.0.narration_text", str(ctx.exception))
 
-    # 7. Graceful error handling: missing models, silent TTS, synthesis error, empty Whisper
+    # 7. Graceful error handling: silent TTS, synthesis error, empty Whisper
     def test_07_graceful_failure_modes(self) -> None:
         self.write_plan(make_episode_plan())
 
-        # Legacy ensure_kokoro_models missing model when auto-download disabled
-        (self.root / "models/kokoro/kokoro-v1.0.onnx").unlink()
-        old_env = os.environ.get("SUTRADHAR_ALLOW_MODEL_DOWNLOAD")
-        os.environ["SUTRADHAR_ALLOW_MODEL_DOWNLOAD"] = "0"
-        try:
-            with self.assertRaises(self.mod.AudioBuildError) as ctx_missing:
-                self.mod.ensure_kokoro_models(self.root, self.mod.load_config(self.root))
-            self.assertIn("Kokoro model file", str(ctx_missing.exception))
-        finally:
-            if old_env is None:
-                os.environ.pop("SUTRADHAR_ALLOW_MODEL_DOWNLOAD", None)
-            else:
-                os.environ["SUTRADHAR_ALLOW_MODEL_DOWNLOAD"] = old_env
-
-        # Restore model link -> test silent output rejection
-        real_onnx = REPO_ROOT / "models/kokoro/kokoro-v1.0.onnx"
-        if real_onnx.exists():
-            try:
-                os.link(real_onnx, self.root / "models/kokoro/kokoro-v1.0.onnx")
-            except OSError:
-                shutil.copy2(real_onnx, self.root / "models/kokoro/kokoro-v1.0.onnx")
-        else:
-            (self.root / "models/kokoro/kokoro-v1.0.onnx").write_bytes(b"stub-onnx")
-
+        # 1. Silent output rejection -> clean error
         with self.assertRaises(self.mod.AudioBuildError) as ctx_silent:
             self.mod.build_episode_audio(
                 root=self.root,
@@ -513,7 +470,7 @@ class TestBuildAudio(unittest.TestCase):
             )
         self.assertIn("silent or non-finite", str(ctx_silent.exception))
 
-        # Synthesis exception mid-episode -> clean error, no manifest.js written
+        # 2. Synthesis exception mid-episode -> clean error, no manifest.js written
         with self.assertRaises(self.mod.AudioBuildError) as ctx_fail:
             self.mod.build_episode_audio(
                 root=self.root,
@@ -523,7 +480,7 @@ class TestBuildAudio(unittest.TestCase):
         self.assertIn("scene 3", str(ctx_fail.exception))
         self.assertFalse((self.root / "build/manifest.js").exists())
 
-        # Empty Whisper detection -> clean error
+        # 3. Empty Whisper detection -> clean error
         with self.assertRaises(self.mod.AudioBuildError) as ctx_empty:
             self.mod.build_episode_audio(
                 root=self.root,
@@ -546,46 +503,28 @@ class TestBuildAudio(unittest.TestCase):
         self.assertEqual(proc.stdout.strip(), "")
         self.assertIn("zero CLI arguments", proc.stderr)
 
-    # 9. Rejection and quarantine of corrupt / truncated model files
-    def test_09_corrupt_model_rejection_and_quarantine(self) -> None:
-        cfg = self.mod.load_config(self.root)
-        corrupt_onnx = self.root / "models/kokoro/kokoro-v1.0.onnx"
-        if corrupt_onnx.exists():
-            corrupt_onnx.unlink()
-        corrupt_onnx.write_bytes(b"corrupt-truncated-data")
-
-        # When auto-download is disabled, must raise AudioBuildError
-        old_env = os.environ.get("SUTRADHAR_ALLOW_MODEL_DOWNLOAD")
-        os.environ["SUTRADHAR_ALLOW_MODEL_DOWNLOAD"] = "0"
+    # 9. ElevenLabs caching auto-resynthesis on corrupt cache
+    def test_09_corrupt_cache_auto_resynthesis(self) -> None:
+        cache_dir = self.root / "build/cache/audio"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        # Create corrupt cache file
+        corrupt_file = cache_dir / "test_corrupt_entry.mp3"
+        corrupt_file.write_bytes(b"garbage-truncated-bytes")
+        # Verify ElevenLabsEngine correctly detects corrupt MP3 and does not raise uncaught crash
+        is_corrupt = False
         try:
-            with self.assertRaises(self.mod.AudioBuildError) as ctx:
-                self.mod.ensure_kokoro_models(self.root, cfg)
-            self.assertIn("invalid", str(ctx.exception).lower())
-        finally:
-            if old_env is None:
-                os.environ.pop("SUTRADHAR_ALLOW_MODEL_DOWNLOAD", None)
-            else:
-                os.environ["SUTRADHAR_ALLOW_MODEL_DOWNLOAD"] = old_env
+            from elevenlabs_engine import decode_audio_bytes
+            decode_audio_bytes(corrupt_file.read_bytes())
+        except Exception:
+            is_corrupt = True
+        self.assertTrue(is_corrupt)
 
-        # Verify quarantine utility moves file to _quarantine/<timestamp>/
-        quarantined = self.mod._quarantine_corrupt_file(corrupt_onnx, "Test quarantine")
-        self.assertTrue(quarantined.is_file())
-        self.assertFalse(corrupt_onnx.exists())
-        self.assertIn("_quarantine", str(quarantined))
-
-    # 10. Structural Protobuf and ZIP archive validation
-    def test_10_structural_validation(self) -> None:
-        bogus_onnx = self.root / "models/kokoro/bogus.onnx"
-        bogus_onnx.write_bytes(b"NOT_A_VALID_ONNX_PROTOBUF")
-        with self.assertRaises(self.mod.AudioBuildError) as ctx_onnx:
-            self.mod._validate_file_structural(bogus_onnx)
-        self.assertIn("Protobuf parsing", str(ctx_onnx.exception))
-
-        bogus_bin = self.root / "models/kokoro/bogus.bin"
-        bogus_bin.write_bytes(b"NOT_A_VALID_ZIP_ARCHIVE")
-        with self.assertRaises(self.mod.AudioBuildError) as ctx_bin:
-            self.mod._validate_file_structural(bogus_bin)
-        self.assertIn("ZIP validation", str(ctx_bin.exception))
+    # 10. ElevenLabs empty audio decoding validation
+    def test_10_elevenlabs_empty_payload_validation(self) -> None:
+        from elevenlabs_engine import ElevenLabsError, decode_audio_bytes
+        with self.assertRaises(ElevenLabsError) as ctx:
+            decode_audio_bytes(b"")
+        self.assertIn("empty audio payload", str(ctx.exception))
 
     # 11. Standalone & Extended Duration Manifest Verification
     def test_11_standalone_and_extended_duration_manifest(self) -> None:

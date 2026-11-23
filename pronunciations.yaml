@@ -1,4 +1,4 @@
-# Sutradhar Phonetic Override Map for Kokoro-82M (English)
+# Sutradhar Phonetic Override Map (English Fallback)
 # Format: "Canonical Spelling in Text": "Phonetic hint for TTS synthesis"
 # Smooth unhyphenated respellings for natural, flowing Indian Sanskrit & historical terms.
 # Applied whole-word, case-insensitively to narration_text only.

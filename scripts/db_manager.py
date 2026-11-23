@@ -262,7 +262,7 @@ def load_json_file(path: Path, label: str) -> Any:
 # Shared Field Validators
 # ---------------------------------------------------------------------------
 
-def _validate_kokoro_voice(value: str) -> str:
+def _validate_tts_voice(value: str) -> str:
     voice = value.strip()
     if not voice:
         raise ValueError("tts_voice must not be empty")
@@ -281,7 +281,7 @@ def _validate_kokoro_voice(value: str) -> str:
                 )
             vid, raw_weight = part.split(":", 1)
             if not VOICE_ID_RE.match(vid):
-                raise ValueError(f"Invalid Kokoro voice ID '{vid}' in blend '{voice}'")
+                raise ValueError(f"Invalid voice ID '{vid}' in blend '{voice}'")
             if vid in seen_voices:
                 raise ValueError(f"Duplicate voice ID '{vid}' in blend '{voice}'")
             seen_voices.add(vid)
@@ -300,10 +300,12 @@ def _validate_kokoro_voice(value: str) -> str:
 
     if not VOICE_ID_RE.match(voice):
         raise ValueError(
-            f"Invalid Kokoro voice ID '{voice}' (expected format like 'am_fenrir' "
-            "or blend 'am_fenrir:0.65+bm_george:0.35')"
+            f"Invalid voice ID '{voice}' (expected Viraj, ElevenLabs voice ID, or valid voice spec)"
         )
     return voice
+
+
+_validate_kokoro_voice = _validate_tts_voice
 
 
 def _validate_audio_filename(value: str, field_name: str) -> str:
@@ -470,7 +472,7 @@ class NewSeriesPlan(BaseModel):
     @field_validator("tts_voice")
     @classmethod
     def check_tts_voice(cls, v: str) -> str:
-        return _validate_kokoro_voice(v)
+        return _validate_tts_voice(v)
 
     @field_validator("bgm_track")
     @classmethod
@@ -887,7 +889,7 @@ class EpisodePlan(BaseModel):
     @field_validator("tts_voice")
     @classmethod
     def check_tts_voice(cls, v: str) -> str:
-        return _validate_kokoro_voice(v)
+        return _validate_tts_voice(v)
 
     @field_validator("bgm_track")
     @classmethod
@@ -1176,7 +1178,7 @@ PublishResult.model_rebuild()
 
 
 def emit_pacing_warnings(plan: EpisodePlan, cfg: dict[str, Any]) -> None:
-    """Log non-fatal Kokoro prosody word-count warnings to stderr."""
+    """Log non-fatal narration prosody word-count warnings to stderr."""
     fmt = getattr(plan, "content_format", None) or cfg.get("content_format", "episodic_series")
     format_pacing = cfg.get("format_pacing", {}).get(fmt, {})
     default_pacing = cfg.get("episode_pacing", {})
@@ -1187,7 +1189,7 @@ def emit_pacing_warnings(plan: EpisodePlan, cfg: dict[str, Any]) -> None:
         if wc < min_words or wc > max_words:
             print(
                 f"[WARN] Scene {scene.scene_index} has {wc} words "
-                f"(target Kokoro sweet spot: {min_words}-{max_words}).",
+                f"(target narration sweet spot: {min_words}-{max_words}).",
                 file=sys.stderr,
             )
 
