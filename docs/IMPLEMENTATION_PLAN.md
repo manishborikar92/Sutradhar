@@ -312,7 +312,7 @@ flowchart LR
 - **Database Immutability:**
   - Root `episodes.db` confirmed bit-for-bit untouched (SHA-256: `729ACCE0CD4F31CC69CECA61470D331ABCBCE5E62B51728AB372CD28F83F8011`).
 - **Manual Hand-off to Creator:**
-  - Production workflow is fully documented and ready for creator-driven daily execution via [docs/MASTER_AUTOMATION_PROMPT.md](file:///c:/Users/manis/Projects/Sutradhar/docs/MASTER_AUTOMATION_PROMPT.md).
+  - Production workflow is fully documented and ready for creator-driven daily execution via [MASTER_AUTOMATION_PROMPT.md](./MASTER_AUTOMATION_PROMPT.md).
 
 #### Phase 5 — Production Calibration & Scheduled Publishing Unlock: NEXT / FINAL
 - **Step 1 (Pre-Launch Calibration):** Execute 3 consecutive daily calibration episodes across the 3 editorial pillars in strict `private_review` mode (`allow_public_or_scheduled: false`).

@@ -171,7 +171,7 @@ flowchart TD
 
 **Daily 3-Step Execution Procedure:**
 1. **Open Antigravity IDE:** Ensure the workspace is set to `C:\Users\manis\Projects\Sutradhar` and model selection is set to **Antigravity's Pro reasoning model**.
-2. **Trigger Master Prompt:** Copy and send the contents of [docs/MASTER_AUTOMATION_PROMPT.md](file:///c:/Users/manis/Projects/Sutradhar/docs/MASTER_AUTOMATION_PROMPT.md) in the chat.
+2. **Trigger Master Prompt:** Copy and send the contents of [MASTER_AUTOMATION_PROMPT.md](./MASTER_AUTOMATION_PROMPT.md) in the chat.
 3. **Review End-of-Run Report:**
    - Confirm all 7 steps executed with exit code `0`.
    - Inspect the generated `build/final_qa_grid.jpg` and `build/thumbnail.jpg` images displayed by the agent.
@@ -264,7 +264,7 @@ When all 3 calibration episodes pass the checks above:
      auto_create_series_playlist: true
    ```
 2. Save `config.yaml`.
-3. From that point on, daily executions of [docs/MASTER_AUTOMATION_PROMPT.md](file:///c:/Users/manis/Projects/Sutradhar/docs/MASTER_AUTOMATION_PROMPT.md) will automatically upload episodes with `status.privacyStatus: "private"` and `status.publishAt: "<date>T13:00:00Z"`, enabling seamless scheduled daily release!
+3. From that point on, daily executions of [MASTER_AUTOMATION_PROMPT.md](./MASTER_AUTOMATION_PROMPT.md) will automatically upload episodes with `status.privacyStatus: "private"` and `status.publishAt: "<date>T13:00:00Z"`, enabling seamless scheduled daily release!
 
 ---
 
