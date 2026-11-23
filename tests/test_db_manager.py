@@ -64,7 +64,7 @@ def make_valid_series_plan(
     return {
         "series_title": title,
         "pillar": pillar,
-        "tts_voice": "am_fenrir:0.65+bm_george:0.35",
+        "tts_voice": "Viraj",
         "bgm_track": bgm_track,
         "total_planned_episodes": count,
         "series_bible_json": make_valid_bible(count=count, prefix=prefix),
@@ -167,7 +167,7 @@ def make_valid_episode_plan(
         "episode_number_in_series": ep_in_series,
         "total_planned_episodes": total_eps,
         "global_episode_number": global_ep,
-        "tts_voice": "am_fenrir:0.65+bm_george:0.35",
+        "tts_voice": "Viraj",
         "bgm_track": "cosmic_mystery.mp3",
         "bespoke_asset_path": f"assets/svg/diagrams/{bespoke_stem}.svg",
         "youtube_title": title,
@@ -559,7 +559,7 @@ class TestDbManagerCompliance(unittest.TestCase):
     def test_07_field_and_visual_mode_validators(self) -> None:
         self.assertEqual(self.run_cli("--init").returncode, 0)
 
-        # Invalid Kokoro blend weights (sum = 0.50)
+        # Invalid voice specification rejected
         bad_voice = make_valid_series_plan()
         bad_voice["tts_voice"] = "am_fenrir:0.25+bm_george:0.25"
         self.write_build_json("new_series_plan.json", bad_voice)
@@ -1212,7 +1212,7 @@ class TestDbManagerCompliance(unittest.TestCase):
             "content_format": "episodic_series",
             "series_title": "Chronicles of Cosmic Justice",
             "pillar": "Ancient Epics & Lore",
-            "tts_voice": "am_fenrir:0.65+bm_george:0.35",
+            "tts_voice": "Viraj",
             "bgm_track": "dramatic_mythology.mp3",
             "total_planned_episodes": 3,
             "series_bible_json": episodic_bible,
@@ -1308,7 +1308,7 @@ class TestDbManagerCompliance(unittest.TestCase):
             "total_planned_episodes": None,
             "global_episode_number": 1,
             "pillar": "Ancient Epics & Lore",
-            "tts_voice": "am_fenrir:0.65+bm_george:0.35",
+            "tts_voice": "Viraj",
             "bgm_track": "dramatic_mythology.mp3",
             "bespoke_asset_path": f"assets/svg/diagrams/{bespoke_stem}.svg",
             "youtube_title": "Why Ravana Made Shani His Staircase #Mythology",
@@ -1369,7 +1369,7 @@ class TestDbManagerCompliance(unittest.TestCase):
             "content_format": "episodic_series",
             "series_title": "Shani Katha",
             "pillar": "Ancient Epics & Lore",
-            "tts_voice": "am_fenrir:0.65+bm_george:0.35",
+            "tts_voice": "Viraj",
             "bgm_track": "dramatic_mythology.mp3",
             "total_planned_episodes": None,  # Open-ended
             "series_bible_json": {
@@ -1399,7 +1399,7 @@ class TestDbManagerCompliance(unittest.TestCase):
             "content_format": "episodic_series",
             "series_title": "Ancient Indian Engineering",
             "pillar": "Hidden History",
-            "tts_voice": "am_fenrir:0.65+bm_george:0.35",
+            "tts_voice": "Viraj",
             "bgm_track": "epic_history.mp3",
             "total_planned_episodes": None,  # Open-ended
             "series_bible_json": {

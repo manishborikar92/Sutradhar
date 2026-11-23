@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS series (
     series_id INTEGER PRIMARY KEY AUTOINCREMENT,
     series_title TEXT NOT NULL,
     pillar TEXT NOT NULL,
-    tts_voice TEXT NOT NULL,
+    tts_voice TEXT NOT NULL DEFAULT 'uuyFQegRan8rpIQCGu9K',
     bgm_track TEXT NOT NULL,
     total_planned_episodes INTEGER DEFAULT NULL,
     completed_episodes INTEGER NOT NULL DEFAULT 0,
@@ -87,6 +87,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_non_failed_episode_slot
 
 CREATE INDEX IF NOT EXISTS idx_episodes_series_id
     ON episodes (series_id, episode_number_in_series);
+
+CREATE INDEX IF NOT EXISTS idx_episodes_global_number
+    ON episodes (global_episode_number);
 """
 
 
@@ -268,44 +271,11 @@ def _validate_tts_voice(value: str) -> str:
         raise ValueError("tts_voice must not be empty")
     if voice in ("Viraj", "uuyFQegRan8rpIQCGu9K") or re.match(r"^[A-Za-z0-9_-]{20,24}$", voice):
         return voice
-    if "+" in voice:
-        parts = voice.split("+")
-        if len(parts) < 2:
-            raise ValueError(f"Invalid voice blend syntax: '{voice}'")
-        total_weight = 0.0
-        seen_voices: set[str] = set()
-        for part in parts:
-            if ":" not in part:
-                raise ValueError(
-                    f"Voice blend component '{part}' must use 'voice_id:weight' format"
-                )
-            vid, raw_weight = part.split(":", 1)
-            if not VOICE_ID_RE.match(vid):
-                raise ValueError(f"Invalid voice ID '{vid}' in blend '{voice}'")
-            if vid in seen_voices:
-                raise ValueError(f"Duplicate voice ID '{vid}' in blend '{voice}'")
-            seen_voices.add(vid)
-            try:
-                weight = float(raw_weight)
-            except ValueError as exc:
-                raise ValueError(f"Invalid blend weight '{raw_weight}' in '{voice}'") from exc
-            if weight <= 0:
-                raise ValueError(f"Blend weight must be > 0 in '{voice}'")
-            total_weight += weight
-        if not (0.95 <= total_weight <= 1.05):
-            raise ValueError(
-                f"Voice blend weights must sum to ~1.0 (got {total_weight:.3f}) in '{voice}'"
-            )
+    if re.match(r"^[a-z0-9_]+$", voice):
         return voice
-
-    if not VOICE_ID_RE.match(voice):
-        raise ValueError(
-            f"Invalid voice ID '{voice}' (expected Viraj, ElevenLabs voice ID, or valid voice spec)"
-        )
-    return voice
-
-
-_validate_kokoro_voice = _validate_tts_voice
+    raise ValueError(
+        f"Invalid voice ID '{voice}' (expected Viraj, ElevenLabs voice ID, or valid voice spec)"
+    )
 
 
 def _validate_audio_filename(value: str, field_name: str) -> str:
@@ -1238,11 +1208,188 @@ def immediate_transaction(conn: sqlite3.Connection) -> Iterator[sqlite3.Cursor]:
         cur.execute("COMMIT;")
 
 
+def migrate_database_schema(conn: sqlite3.Connection) -> bool:
+    """Migrate legacy database tables to the unified schema if needed.
+
+    Ensures series_id and episode_number_in_series are nullable for standalone
+    episodes, research_sources_json exists, and open-ended/archived series are supported.
+    """
+    tables = [
+        r[0]
+        for r in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'"
+        ).fetchall()
+    ]
+    if "episodes" not in tables and "series" not in tables:
+        return False
+
+    needs_migration = False
+
+    if "episodes" in tables:
+        col_info = {
+            r[1]: {"notnull": r[3], "pk": r[5]}
+            for r in conn.execute("PRAGMA table_info(episodes)").fetchall()
+        }
+        if col_info.get("series_id", {}).get("notnull") == 1:
+            needs_migration = True
+        if "research_sources_json" not in col_info:
+            needs_migration = True
+
+    if "series" in tables and not needs_migration:
+        series_sql_row = conn.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='series'"
+        ).fetchone()
+        if series_sql_row and series_sql_row[0]:
+            series_sql = series_sql_row[0]
+            if "ARCHIVED" not in series_sql or "BETWEEN 3 AND 6" in series_sql:
+                needs_migration = True
+
+    if not needs_migration:
+        return False
+
+    # Execute non-destructive table rebuild
+    conn.execute("PRAGMA foreign_keys = OFF;")
+    conn.execute("BEGIN IMMEDIATE TRANSACTION;")
+    try:
+        conn.execute(
+            """
+            CREATE TABLE _new_series (
+                series_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                series_title TEXT NOT NULL,
+                pillar TEXT NOT NULL,
+                tts_voice TEXT NOT NULL DEFAULT 'uuyFQegRan8rpIQCGu9K',
+                bgm_track TEXT NOT NULL,
+                total_planned_episodes INTEGER DEFAULT NULL,
+                completed_episodes INTEGER NOT NULL DEFAULT 0,
+                series_bible_json TEXT NOT NULL,
+                youtube_playlist_id TEXT,
+                status TEXT NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'COMPLETED', 'ARCHIVED')),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE _new_episodes (
+                episode_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                series_id INTEGER,
+                episode_number_in_series INTEGER CHECK (episode_number_in_series IS NULL OR episode_number_in_series >= 1),
+                global_episode_number INTEGER NOT NULL UNIQUE CHECK (global_episode_number >= 1),
+                content_format TEXT NOT NULL DEFAULT 'episodic_series' CHECK (content_format IN ('standalone', 'episodic_series', 'serial')),
+                youtube_title TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                bespoke_asset_path TEXT NOT NULL,
+                script_json TEXT NOT NULL,
+                research_sources_json TEXT,
+                youtube_video_id TEXT UNIQUE,
+                scheduled_publish_at TEXT,
+                status TEXT NOT NULL CHECK (status IN ('PUBLISHED', 'PRIVATE_REVIEW', 'FAILED')),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (series_id) REFERENCES series(series_id) ON DELETE RESTRICT
+            );
+            """
+        )
+
+        if "series" in tables:
+            series_cols = [
+                r[1] for r in conn.execute("PRAGMA table_info(series)").fetchall()
+            ]
+            common_s_cols = [
+                c
+                for c in [
+                    "series_id",
+                    "series_title",
+                    "pillar",
+                    "tts_voice",
+                    "bgm_track",
+                    "total_planned_episodes",
+                    "completed_episodes",
+                    "series_bible_json",
+                    "youtube_playlist_id",
+                    "status",
+                    "created_at",
+                ]
+                if c in series_cols
+            ]
+            s_col_str = ", ".join(common_s_cols)
+            conn.execute(
+                f"INSERT INTO _new_series ({s_col_str}) SELECT {s_col_str} FROM series;"
+            )
+
+        if "episodes" in tables:
+            episodes_cols = [
+                r[1] for r in conn.execute("PRAGMA table_info(episodes)").fetchall()
+            ]
+            common_e_cols = [
+                c
+                for c in [
+                    "episode_id",
+                    "series_id",
+                    "episode_number_in_series",
+                    "global_episode_number",
+                    "content_format",
+                    "youtube_title",
+                    "summary",
+                    "bespoke_asset_path",
+                    "script_json",
+                    "research_sources_json",
+                    "youtube_video_id",
+                    "scheduled_publish_at",
+                    "status",
+                    "created_at",
+                ]
+                if c in episodes_cols
+            ]
+            e_col_str = ", ".join(common_e_cols)
+            conn.execute(
+                f"INSERT INTO _new_episodes ({e_col_str}) SELECT {e_col_str} FROM episodes;"
+            )
+
+        conn.execute("DROP TABLE IF EXISTS episodes;")
+        conn.execute("DROP TABLE IF EXISTS series;")
+        conn.execute("ALTER TABLE _new_series RENAME TO series;")
+        conn.execute("ALTER TABLE _new_episodes RENAME TO episodes;")
+
+        conn.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_non_failed_episode_slot
+                ON episodes (series_id, episode_number_in_series)
+                WHERE status != 'FAILED' AND series_id IS NOT NULL;
+            """
+        )
+        conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_episodes_series_id
+                ON episodes (series_id, episode_number_in_series);
+            """
+        )
+        conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_episodes_global_number
+                ON episodes (global_episode_number);
+            """
+        )
+
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.execute("PRAGMA foreign_keys = ON;")
+
+    return True
+
+
 def ensure_db_initialized(db_path: Path) -> None:
     if not db_path.is_file():
         raise StateError(
             f"Database file not found at {db_path}. Run 'python scripts/db_manager.py --init' first."
         )
+    conn = connect_db(db_path)
+    try:
+        migrate_database_schema(conn)
+    finally:
+        conn.close()
 
 
 def _list_svg_stems(directory: Path) -> list[str]:
@@ -1304,6 +1451,7 @@ def cmd_init(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
 
     conn = connect_db(db_path)
     try:
+        migrate_database_schema(conn)
         with immediate_transaction(conn) as cur:
             for statement in SCHEMA_SQL.strip().split(";"):
                 stmt = statement.strip()

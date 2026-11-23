@@ -29,12 +29,3 @@ text_replacements:
   "नियति": "नियति"
   "धर्म": "धर्म"
 
-ipa_replacements:
-  - pattern: "sʋˈʌjən"
-    replacement: "sʋˈʌjəm"
-  - pattern: "ləŋkˈaːptˌɪ"
-    replacement: "lˈʌŋkaː pˈʌtɪ"
-  - pattern: "mˌahaːdˈeʋ"
-    replacement: "mˌahaːdˈeːʋ"
-  - pattern: "ʊkʰˈaːr\\.\\s*pʰẽːkˈũnɡaː"
-    replacement: "ʊkʰˈaːɽ pʰˈẽːkʊ̃ŋɡaː"

@@ -79,20 +79,18 @@ class FakeElevenLabs:
     ) -> tuple[np.ndarray, int]:
         return self.synthesize(text, voice_settings=voice_settings)
 
-    # Legacy compatibility methods
+    # Voice methods
     def get_voices(self) -> list[str]:
-        return ["am_fenrir", "bm_george", "am_michael"]
+        return ["Viraj", "uuyFQegRan8rpIQCGu9K"]
 
     def get_voice_style(self, voice_id: str) -> np.ndarray:
-        return np.ones((1, 256), dtype=np.float32) * (1.0 if voice_id == "am_fenrir" else 3.0)
+        return np.ones((1, 256), dtype=np.float32) * (1.0 if voice_id == "Viraj" else 3.0)
 
     def create(
         self, text: str, voice: Any = None, speed: float = 1.0, lang: str = "hi"
     ) -> tuple[np.ndarray, int]:
         return self.synthesize(text)
 
-
-FakeKokoro = FakeElevenLabs  # Full backward compatibility alias
 
 
 class FakeWord:
@@ -135,13 +133,13 @@ class FakeWhisper:
 
 
 def make_episode_plan(
-    voice: str = "am_fenrir:0.65+bm_george:0.35",
+    voice: str = "Viraj",
     scene_count: int = 7,
 ) -> dict[str, Any]:
     scenes: list[dict[str, Any]] = []
     for idx in range(1, scene_count + 1):
         narration = (
-            f"Scene {idx}: Sutradhar reveals how Ravana faced Mount Kailash while "
+            f"Scene {idx}: सूत्रधार reveals how अहंकार faced Mount Kailash while "
             "ancient astronomers at Nalanda measured cosmic cycles."
         )
         if idx == 1:
@@ -213,7 +211,8 @@ class TestBuildAudio(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name)
         shutil.copy2(REAL_CONFIG, self.root / "config.yaml")
-        shutil.copy2(REAL_PRONUNCIATIONS, self.root / "pronunciations.yaml")
+        if REAL_PRONUNCIATIONS.is_file():
+            shutil.copy2(REAL_PRONUNCIATIONS, self.root / "pronunciations.yaml")
         if REAL_PRONUNCIATIONS_HI.is_file():
             shutil.copy2(REAL_PRONUNCIATIONS_HI, self.root / "pronunciations_hi.yaml")
         (self.root / "build/audio").mkdir(parents=True, exist_ok=True)
@@ -385,8 +384,7 @@ class TestBuildAudio(unittest.TestCase):
         self.assertTrue(40.0 <= result["total_duration_sec"] <= 60.0)
 
         # Verify pronunciation was applied to TTS input while narration remained canonical
-        self.assertIn("Sootradaar", fake_eleven.calls[0]["text"])
-        self.assertIn("Raavana", fake_eleven.calls[0]["text"])
+        self.assertIn("अहङ्कार", fake_eleven.calls[0]["text"])
         self.assertIn("[slowly, solemn, deep]", fake_eleven.calls[0]["text"])
 
         # Verify files on disk
@@ -405,8 +403,8 @@ class TestBuildAudio(unittest.TestCase):
         self.assertEqual(len(manifest["scenes"]), 7)
         self.assertEqual(manifest["audio"]["sample_rate"], 44100)
         self.assertEqual(manifest["audio"]["narration_full_path"], "build/audio/narration_full.wav")
-        self.assertIn("Sutradhar", manifest["scenes"][0]["narration_text"])
-        self.assertIn("Sootradaar", manifest["scenes"][0]["tts_text_applied"])
+        self.assertIn("अहंकार", manifest["scenes"][0]["narration_text"])
+        self.assertIn("अहङ्कार", manifest["scenes"][0]["tts_text_applied"])
         self.assertIn("[slowly, solemn, deep]", manifest["scenes"][0]["tts_text_applied"])
         self.assertNotIn("[", manifest["scenes"][0]["narration_text"])
         self.assertEqual(

@@ -150,21 +150,11 @@ def load_pronunciations(
 ) -> tuple[dict[str, str], list[tuple[str, str]]]:
     """Load language-specific pronunciation text overrides from pronunciations_hi.yaml."""
     lang_prof = cfg.get("languages", {}).get(lang, {})
-    pron_file = lang_prof.get("pronunciations_file")
-    if not pron_file:
-        pron_file = (
-            f"pronunciations_{lang}.yaml"
-            if (root / f"pronunciations_{lang}.yaml").is_file()
-            else "pronunciations.yaml"
-        )
+    pron_file = lang_prof.get("pronunciations_file", "pronunciations_hi.yaml")
 
     pron_path = (root / pron_file).resolve()
     if not pron_path.is_file():
-        fallback = (root / "pronunciations.yaml").resolve()
-        if fallback.is_file():
-            pron_path = fallback
-        else:
-            return {}, []
+        return {}, []
 
     try:
         with pron_path.open("r", encoding="utf-8") as fh:
@@ -181,13 +171,7 @@ def load_pronunciations(
     elif "replacements" in raw and isinstance(raw["replacements"], dict):
         text_reps.update({str(k).strip(): str(v).strip() for k, v in raw["replacements"].items()})
 
-    ipa_rules: list[tuple[str, str]] = []
-    if "ipa_replacements" in raw and isinstance(raw["ipa_replacements"], list):
-        for item in raw["ipa_replacements"]:
-            if isinstance(item, dict) and "pattern" in item and "replacement" in item:
-                ipa_rules.append((item["pattern"], item["replacement"]))
-
-    return text_reps, ipa_rules
+    return text_reps, []
 
 
 def apply_pronunciations(text: str, replacements: dict[str, str]) -> str:

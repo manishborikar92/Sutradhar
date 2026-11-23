@@ -42,7 +42,7 @@ CHARACTERS = [
 def make_char_manifest(char_name: str) -> dict[str, Any]:
     return {
         "schema_version": "2.0",
-        "language": "en",
+        "language": "hi",
         "series_id": 99,
         "series_title": f"Pose QA: {char_name}",
         "pillar": "Ancient Epics & Lore",
@@ -50,7 +50,8 @@ def make_char_manifest(char_name: str) -> dict[str, Any]:
         "total_planned_episodes": 3,
         "global_episode_number": 99,
         "youtube_title": f"Pose QA: {char_name}",
-        "tts_voice": "bm_fable:0.55+am_fenrir:0.45",
+        "tts_engine": "elevenlabs",
+        "tts_voice": "uuyFQegRan8rpIQCGu9K",
         "bgm_track": "dramatic_mythology.mp3",
         "video": {
             "width": 1080,
@@ -66,7 +67,7 @@ def make_char_manifest(char_name: str) -> dict[str, Any]:
         "audio": {
             "total_duration_sec": 4.00,
             "total_frames": 120,
-            "sample_rate": 24000,
+            "sample_rate": 44100,
             "narration_full_path": "build/audio/narration_full.wav",
         },
         "scenes": [

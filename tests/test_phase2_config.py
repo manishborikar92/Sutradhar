@@ -109,19 +109,17 @@ class TestPhase2ConfigStandardization(unittest.TestCase):
 
     def test_06_db_manager_voice_validator_allows_viraj_and_elevenlabs_id(self) -> None:
         """Verify db_manager allows Viraj and ElevenLabs voice IDs."""
-        self.assertEqual(db_manager._validate_kokoro_voice("Viraj"), "Viraj")
+        self.assertEqual(db_manager._validate_tts_voice("Viraj"), "Viraj")
         self.assertEqual(
-            db_manager._validate_kokoro_voice("uuyFQegRan8rpIQCGu9K"),
+            db_manager._validate_tts_voice("uuyFQegRan8rpIQCGu9K"),
             "uuyFQegRan8rpIQCGu9K",
-        )
-        # Verify Kokoro blends are still supported for legacy continuity
-        self.assertEqual(
-            db_manager._validate_kokoro_voice("am_fenrir:0.65+bm_george:0.35"),
-            "am_fenrir:0.65+bm_george:0.35",
         )
         # Empty string rejected
         with self.assertRaises(ValueError):
-            db_manager._validate_kokoro_voice("")
+            db_manager._validate_tts_voice("")
+        # Invalid blend syntax rejected
+        with self.assertRaises(ValueError):
+            db_manager._validate_tts_voice("am_fenrir:0.65+bm_george:0.35")
 
 
 class TestPronunciationsHi(unittest.TestCase):

@@ -53,16 +53,7 @@ AUDITION_PASSAGE_HI = (
     "सूतजी के मुख से सुनिए... वह गूढ़ रहस्य जो अनादि काल से छिपा है।"
 )
 
-# Canonical English passage preserved for historical benchmark continuity
-AUDITION_PASSAGE = (
-    "What if the most sacred peak on Earth... is not a natural mountain at all? "
-    "Ancient Sanskrit scrolls describe Mount Kailash as four faces aligned precisely to true cardinal directions. "
-    "In the Ramayana, Ravana shook the very roots of the peak—testing forces modern geologists still cannot explain. "
-    "At Nalanda and Pataliputra, astronomers calculated celestial cycles centuries before the West. "
-    "Welcome to Sutradhar... where ancient mystery meets cosmic reality."
-)
-
-# Character acting evaluation lines from Empirical Acoustic Validation (Section 3.2 of development plan)
+# Character acting evaluation lines from Empirical Acoustic Validation
 CHARACTER_ACTING_LINES = {
     "narrator": {
         "tag": "[slowly, solemn, deep]",
@@ -100,11 +91,6 @@ CHARACTER_ACTING_LINES = {
         "persona": "Philosophical Outro",
     },
 }
-
-# Legacy constants retained for backward compatibility
-FOCUSED_VOICES = ["Viraj", "uuyFQegRan8rpIQCGu9K"]
-CANDIDATE_BLENDS = ["Viraj:1.0"]
-SPEEDS = [0.90, 0.94]
 
 
 def _slugify_voice(voice_spec: str) -> str:

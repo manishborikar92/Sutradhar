@@ -88,10 +88,10 @@ class TestAuditionVoices(unittest.TestCase):
         cfg_mtime_before = real_config.stat().st_mtime
         db_mtime_before = real_db.stat().st_mtime if real_db.exists() else None
 
-        # Verify historical audition passage is well-formed
-        self.assertIn("Sutradhar", audition_voices.AUDITION_PASSAGE)
-        self.assertIn("Nalanda", audition_voices.AUDITION_PASSAGE)
-        self.assertIn("Pataliputra", audition_voices.AUDITION_PASSAGE)
+        # Verify Hindi audition passage is well-formed
+        self.assertIn("कैलाश", audition_voices.AUDITION_PASSAGE_HI)
+        self.assertIn("रावण", audition_voices.AUDITION_PASSAGE_HI)
+        self.assertIn("सूतजी", audition_voices.AUDITION_PASSAGE_HI)
 
         cfg_mtime_after = real_config.stat().st_mtime
         self.assertEqual(cfg_mtime_before, cfg_mtime_after)

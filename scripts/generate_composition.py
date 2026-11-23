@@ -35,15 +35,16 @@ class CompositionError(RuntimeError):
 
 FALLBACK_MANIFEST = {
     "schema_version": "2.0",
-    "language": "en",
+    "language": "hi",
     "series_id": 1,
-    "series_title": "Echoes of Kailash",
+    "series_title": "कैलाश रहस्य",
     "pillar": "Ancient Epics & Lore",
     "episode_number_in_series": 1,
     "total_planned_episodes": 3,
     "global_episode_number": 1,
-    "youtube_title": "The Secret Geometry Beneath Mount Kailash (Part 1/3) #Shorts",
-    "tts_voice": "bm_fable:0.55+am_fenrir:0.45",
+    "youtube_title": "कैलाश पर्वत का अनसुलझा रहस्य #Shorts",
+    "tts_engine": "elevenlabs",
+    "tts_voice": "uuyFQegRan8rpIQCGu9K",
     "bgm_track": "dramatic_mythology.mp3",
     "video": {
         "width": 1080,
@@ -59,7 +60,7 @@ FALLBACK_MANIFEST = {
     "audio": {
         "total_duration_sec": 41.50,
         "total_frames": 1245,
-        "sample_rate": 24000,
+        "sample_rate": 44100,
         "narration_full_path": "build/audio/narration_full.wav",
     },
     "scenes": [
