@@ -186,8 +186,8 @@ class TestPublishYouTube(unittest.TestCase):
                         "title": self.sample_plan["youtube_title"][:100],
                         "description": self.sample_plan["youtube_description"][:5000],
                         "categoryId": "27",
-                        "defaultLanguage": "en",
-                        "defaultAudioLanguage": "en",
+                        "defaultLanguage": self.cfg["channel"]["primary_language"],
+                        "defaultAudioLanguage": self.cfg["channel"]["primary_language"],
                         "thumbnails": {"default": {"url": "https://i.ytimg.com/vi/mock/default.jpg"}},
                     },
                     "status": {

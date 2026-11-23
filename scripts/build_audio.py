@@ -268,10 +268,10 @@ def _download_file_atomic(
 
 
 def ensure_kokoro_models(root: Path, cfg: dict[str, Any]) -> tuple[Path, Path]:
-    tts_cfg = cfg["tts"]
-    model_dir = (root / tts_cfg["model_dir"]).resolve()
-    model_name = tts_cfg["model_file"]
-    voices_name = tts_cfg["voices_file"]
+    tts_cfg = cfg.get("tts", {})
+    model_dir = (root / tts_cfg.get("model_dir", "models/kokoro")).resolve()
+    model_name = tts_cfg.get("model_file", "kokoro-v1.0.onnx")
+    voices_name = tts_cfg.get("voices_file", "voices-v1.0.bin")
     model_path = model_dir / model_name
     voices_path = model_dir / voices_name
 

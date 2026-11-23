@@ -137,15 +137,15 @@ def validate_config(cfg: Any, config_path: Path) -> dict[str, Any]:
     # Validate languages profile when configured
     if "languages" in cfg:
         langs = cfg["languages"]
-        if not isinstance(langs, dict) or "en" not in langs or "hi" not in langs:
-            raise StateError("config.yaml languages must define profiles for both 'en' and 'hi'.")
-        for lcode in ("en", "hi"):
-            lprof = langs[lcode]
+        if not isinstance(langs, dict) or primary_lang not in langs:
+            raise StateError(f"config.yaml languages must define a profile for primary_language '{primary_lang}'.")
+        for lcode, lprof in langs.items():
             if not isinstance(lprof, dict):
                 raise StateError(f"config.yaml languages.{lcode} profile must be a mapping.")
-            for req_key in ("narrator_voice", "character_dialogue_voice", "narrator_speed", "character_dialogue_speed", "pronunciations_file"):
-                if req_key not in lprof:
-                    raise StateError(f"config.yaml languages.{lcode} missing required key: '{req_key}'.")
+            if "narrator_voice" not in lprof and "narrator_voice_id" not in lprof:
+                raise StateError(f"config.yaml languages.{lcode} missing required voice key: 'narrator_voice'.")
+            if "pronunciations_file" not in lprof:
+                raise StateError(f"config.yaml languages.{lcode} missing required key: 'pronunciations_file'.")
     pillars = channel.get("pillars")
     if not isinstance(pillars, list) or not pillars or not all(isinstance(p, str) and p.strip() for p in pillars):
         raise StateError("config.yaml channel.pillars must be a non-empty list of strings.")
@@ -169,13 +169,15 @@ def validate_config(cfg: Any, config_path: Path) -> dict[str, Any]:
         raise StateError("config.yaml tts.engine must be a string.")
     if "default_voice" not in tts and "languages" in cfg:
         active_lprof = cfg["languages"].get(primary_lang, {})
-        narr_v = active_lprof.get("narrator_voice")
+        narr_v = active_lprof.get("narrator_voice") or active_lprof.get("narrator_voice_id")
         if isinstance(narr_v, dict):
             tts["default_voice"] = "+".join(f"{k}:{v}" for k, v in narr_v.items())
         elif isinstance(narr_v, str):
             tts["default_voice"] = narr_v
+    if "default_voice" not in tts and "voice_id" in tts:
+        tts["default_voice"] = tts["voice_id"]
     if not isinstance(tts.get("default_voice"), str):
-        raise StateError("config.yaml tts.default_voice must be a string or resolvable from languages profile.")
+        raise StateError("config.yaml tts.default_voice or tts.voice_id must be a string or resolvable from languages profile.")
 
     assets = cfg["assets"]
     bgm_map = assets.get("bgm_by_pillar")
@@ -264,6 +266,8 @@ def _validate_kokoro_voice(value: str) -> str:
     voice = value.strip()
     if not voice:
         raise ValueError("tts_voice must not be empty")
+    if voice in ("Viraj", "uuyFQegRan8rpIQCGu9K") or re.match(r"^[A-Za-z0-9_-]{20,24}$", voice):
+        return voice
     if "+" in voice:
         parts = voice.split("+")
         if len(parts) < 2:
