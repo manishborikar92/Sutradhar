@@ -112,28 +112,30 @@ Create `build/episode_plan.json` in **Hindi (`hi`)**, specifying:
    - **Strict Zero-Cliffhanger Rule:** Forward-continuation cliffhangers (*"to be continued"*, *"part 2"*, *"अगले भाग में देखें"*, *"जारी रहेगा"*) are strictly forbidden, and are automatically rejected by the validator.
    - **Satisfying Resolution:** Central conflict must be fully resolved with decisive consequence, followed by a philosophical or moral takeaway (`satisfying_takeaway`).
 
-3. **ElevenLabs v4 Inline Audio Tags Mandate (CRITICAL):**
-   - All `narration_text` MUST be authored with **Eleven v4 inline audio tags** wrapped in square brackets `[...]` to direct delivery, cadence, pacing, and dramatic emotion.
+3. **Single Master Storyteller & ElevenLabs v4 Inline Audio Tags Mandate (CRITICAL):**
+   - **The Single Voice Standard:** **Viraj (`uuyFQegRan8rpIQCGu9K`)** is the **sole voice** for the entire channel—narrating, speaking for gods, demons, sages, and mortal characters like a master Indian *Katha-vachak* or Rajasthani *Kathputli* puppeteer.
+   - All `narration_text` MUST be authored with **Eleven v4 inline audio tags** wrapped in square brackets `[...]` to direct Viraj's vocal pitch, pace, volume, and dramatic emotion for each specific character and scene.
    - **Tag Placement:** Place the tag **immediately before** the targeted clause or sentence.
-   - **Tag Selection Rules:**
-     - **Narrator Opening / Hook (Viraj):** Always begin with `[slowly, solemn, deep]` to enforce an ancient, meditative storytelling cadence (~125 wpm) and prevent rapid reading. Use `[pause]` or `...` between opening clauses.
-     - **Climax / Revelation Beats:** Use `[building, intense]` and `[long pause]` right before the turning point or cosmic strike.
-     - **Antagonist Dialogue (e.g. Ravana):** Use `[arrogant, booming, furious]` and reaction tags like `[laughs]` to convey hubris and power.
-     - **Sorrow / Tragedy Dialogue (e.g. Mandodari, Sita):** Use `[softly, sorrowful, trembling]` and `[sighs]` to capture tears and grief.
-     - **Sage / Divine Wisdom:** Use `[calm, gentle, devotional]` for serene spiritual dialogues.
-     - **Philosophical Outro:** Conclude with `[gentle, calm, peaceful]` for timeless moral resolution.
+   - **Character Acting Tag Selection Rules:**
+     - **Narrator Opening / Hook (Viraj as Sutradhar):** Always begin with `[slowly, solemn, deep]` to enforce an ancient, meditative storytelling cadence (~125 wpm) and prevent rapid reading. Use `[pause]` or `...` between opening clauses.
+     - **Cosmic Climax / Divine Revelation (Viraj as Mahadev / Cosmic Power):** Use `[building, intense]` and `[long pause]` right before the turning point or cosmic strike. For divine calm, use `[calm, serene, deep, slowly]`.
+     - **Antagonist Dialogue (Viraj as Ravana / Asuras):** Use `[arrogant, booming, furious]` and reaction tags like `[laughs]`, `[shouts]` to drop Viraj's pitch into an aggressive, thunderous chest roar.
+     - **Sorrow / Tragedy Dialogue (Viraj as Mandodari / Sita):** Use `[softly, sorrowful, trembling]` and `[sighs]` to soften Viraj's voice into a delicate, hushed, emotional whisper.
+     - **Sage / Divine Wisdom (Viraj as Narada / Rishi):** Use `[calm, gentle, devotional]` for serene spiritual dialogues.
+     - **Philosophical Outro (Viraj as Sutradhar):** Conclude with `[gentle, calm, peaceful]` for timeless moral resolution.
    - **Tagging Examples in Hindi:**
-     - *Hook:* `[slowly, solemn, deep] सत्य केवल काल के गाल पर लिखा एक शब्द नहीं... [pause] यह सृष्टि का मूल आधार है।`
-     - *Climax:* `[building, intense] जब महादेव ने अपना तीसरा नेत्र खोला— [long pause] तो सम्पूर्ण ब्रह्मांड थर्रा उठा!`
+     - *Hook (Sutradhar):* `[slowly, solemn, deep] सत्य केवल काल के गाल पर लिखा एक शब्द नहीं... [pause] यह सृष्टि का मूल आधार है।`
+     - *Climax (Narrator):* `[building, intense] जब महादेव ने अपना तीसरा नेत्र खोला— [long pause] तो सम्पूर्ण ब्रह्मांड थर्रा उठा!`
      - *Dialogue (Ravana):* `[arrogant, booming, furious] कौन है जो दशानन के मार्ग में खड़ा हो सके? [laughs] तीनों लोकों का स्वामी केवल मैं हूँ!`
      - *Dialogue (Mandodari):* `[softly, sorrowful, trembling] हे स्वामी... धर्म का मार्ग मत त्यागिए... [sighs] यह हठ लंका का सर्वनाश कर देगा।`
-     - *Outro:* `[gentle, calm, peaceful] कर्म ही नियति है, और धर्म ही शाश्वत सत्य। [pause] कथा अनन्ता... सूत्रधार।`
+     - *Dialogue (Mahadev):* `[calm, serene, deep, slowly] जो उत्पन्न हुआ है, उसका अंत निश्चित है। शांत हो जाओ, रावण।`
+     - *Outro (Sutradhar):* `[gentle, calm, peaceful] कर्म ही नियति है, और धर्म ही शाश्वत सत्य। [pause] कथा अनन्ता... सूत्रधार।`
    - **Subtitle Cleanliness:** Eleven v4 interprets bracketed tags as vocal instructions and does **not** speak them aloud. Local Whisper will automatically extract clean spoken Devanagari words for closed captions with zero tag contamination.
 
 4. **Storytelling Craft & Oral Voice:**
    - Open Scene 1 (0–4s) with an immediate curiosity hook, paradox, or dramatic confrontation—zero channel intros or greetings.
    - Write crisp, natural oral storytelling in `narration_text` ONLY (never include `caption_text`).
-   - Use `speaker_role: "narrator"` for narration (voiced by **Viraj**) and `"character_dialogue"` for character lines (voiced by assigned voices in `config/voices.yaml`).
+   - Use `speaker_role: "narrator"` for narrative exposition and `"character_dialogue"` for character lines. In all cases, **Viraj** performs the lines, transforming his voice dynamically using the inline audio tags described above.
    - Check `pronunciations_hi.yaml`; if rare Puranic names appear, append clean verified phonetic entries.
 
 5. **Visual Directing, Transitions & Dynamic VFX (YPP Compliance):**
@@ -186,7 +188,7 @@ Create `build/episode_plan.json` in **Hindi (`hi`)**, specifying:
 
 ### Step 5: Synthesize Audio & Run Pre-Render Visual QA Gate (Max 2 Repair Loops)
 1. Run `.\.venv\Scripts\python.exe scripts/build_audio.py`.
-   - Calls `ElevenLabsEngine` (`eleven_v4`), resolving voices from `config/voices.yaml` (Viraj for Sutradhar/Mahadev, assigned voices for characters).
+   - Calls `ElevenLabsEngine` (`eleven_v4`), synthesizing all narrative and dialogue scenes through **Viraj (`uuyFQegRan8rpIQCGu9K`)** using the Single Master Storyteller paradigm directed by Eleven v4 inline audio tags.
    - Confirms exit code `0`, total duration within `[30.0s, 180.0s]` (matching target range), trailing silence `< -65 dBFS` (`>= 0.75s`), and `build/manifest.js` written.
    - Local Whisper extracts word timestamps from `episode_audio.wav` into `audio_manifest.json` for precise video synchronization.
    - If duration falls outside target bounds, adjust `narration_text` in `build/episode_plan.json` and re-run `build_audio.py`.
