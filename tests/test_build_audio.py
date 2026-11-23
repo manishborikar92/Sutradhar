@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+import soundfile as sf
 import yaml
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -22,6 +23,7 @@ BUILD_AUDIO_SCRIPT = REPO_ROOT / "scripts" / "build_audio.py"
 DB_MANAGER_SCRIPT = REPO_ROOT / "scripts" / "db_manager.py"
 REAL_CONFIG = REPO_ROOT / "config.yaml"
 REAL_PRONUNCIATIONS = REPO_ROOT / "pronunciations.yaml"
+REAL_PRONUNCIATIONS_HI = REPO_ROOT / "pronunciations_hi.yaml"
 
 
 def load_module(path: Path, name: str) -> Any:
@@ -32,40 +34,65 @@ def load_module(path: Path, name: str) -> Any:
     return mod
 
 
-class FakeKokoro:
-    """Deterministic offline Kokoro stub generating real 24kHz audio waveforms."""
+class FakeElevenLabs:
+    """Deterministic, zero-network test double for ElevenLabs synthesis at 44.1 kHz.
 
-    def __init__(self, sec_per_scene: float = 5.4, fail_on_call: int = -1, silent: bool = False) -> None:
-        self.sec_per_scene = sec_per_scene
-        self.fail_on_call = fail_on_call
-        self.silent = silent
+    Adheres strictly to the test double contract specified in Section 8.1 of the development plan.
+    """
+
+    def __init__(
+        self,
+        sec_per_scene: float = 6.0,
+        sample_rate: int = 44100,
+        fail_on_call: int = -1,
+        silent: bool = False,
+    ) -> None:
+        self.sec_per_scene = float(sec_per_scene)
+        self.sample_rate = int(sample_rate)
+        self.fail_on_call = int(fail_on_call)
+        self.silent = bool(silent)
         self.calls: list[dict[str, Any]] = []
-        self._voices = {
-            "am_fenrir": np.ones((1, 256), dtype=np.float32) * 1.0,
-            "bm_george": np.ones((1, 256), dtype=np.float32) * 3.0,
-            "am_michael": np.ones((1, 256), dtype=np.float32) * 2.0,
-        }
 
-    def get_voices(self) -> list[str]:
-        return list(self._voices.keys())
-
-    def get_voice_style(self, voice_id: str) -> np.ndarray:
-        return self._voices[voice_id]
-
-    def create(
-        self, text: str, voice: Any, speed: float = 1.0, lang: str = "en-us"
+    def synthesize(
+        self,
+        text: str,
+        voice_settings: Optional[dict[str, Any]] = None,
     ) -> tuple[np.ndarray, int]:
         call_idx = len(self.calls) + 1
-        self.calls.append({"text": text, "voice": voice, "speed": speed, "lang": lang})
+        self.calls.append({"text": text, "voice_settings": voice_settings})
         if call_idx == self.fail_on_call:
-            raise RuntimeError("Simulated ONNX synthesis error")
-        sr = 24000
-        n_samples = int(round(self.sec_per_scene * sr))
+            raise RuntimeError("Simulated ElevenLabs API synthesis error")
+        total_samples = int(round(self.sec_per_scene * self.sample_rate))
         if self.silent:
-            return np.zeros(n_samples, dtype=np.float32), sr
-        t = np.linspace(0.0, self.sec_per_scene, n_samples, endpoint=False, dtype=np.float32)
-        wave = (0.25 * np.sin(2.0 * np.pi * 220.0 * t)).astype(np.float32)
-        return wave, sr
+            return np.zeros(total_samples, dtype=np.float32), self.sample_rate
+        t = np.linspace(0.0, self.sec_per_scene, total_samples, endpoint=False, dtype=np.float32)
+        samples = (0.3 * np.sin(2.0 * np.pi * 220.0 * t)).astype(np.float32)
+        return samples, self.sample_rate
+
+    def synthesize_scene(
+        self,
+        text: str,
+        voice_id: Optional[str] = None,
+        model_id: Optional[str] = None,
+        voice_settings: Optional[dict[str, Any]] = None,
+        **kwargs: Any,
+    ) -> tuple[np.ndarray, int]:
+        return self.synthesize(text, voice_settings=voice_settings)
+
+    # Legacy compatibility methods
+    def get_voices(self) -> list[str]:
+        return ["am_fenrir", "bm_george", "am_michael"]
+
+    def get_voice_style(self, voice_id: str) -> np.ndarray:
+        return np.ones((1, 256), dtype=np.float32) * (1.0 if voice_id == "am_fenrir" else 3.0)
+
+    def create(
+        self, text: str, voice: Any = None, speed: float = 1.0, lang: str = "hi"
+    ) -> tuple[np.ndarray, int]:
+        return self.synthesize(text)
+
+
+FakeKokoro = FakeElevenLabs  # Full backward compatibility alias
 
 
 class FakeWord:
@@ -187,6 +214,8 @@ class TestBuildAudio(unittest.TestCase):
         self.root = Path(self.tmp.name)
         shutil.copy2(REAL_CONFIG, self.root / "config.yaml")
         shutil.copy2(REAL_PRONUNCIATIONS, self.root / "pronunciations.yaml")
+        if REAL_PRONUNCIATIONS_HI.is_file():
+            shutil.copy2(REAL_PRONUNCIATIONS_HI, self.root / "pronunciations_hi.yaml")
         (self.root / "build/audio").mkdir(parents=True, exist_ok=True)
         (self.root / "models/kokoro").mkdir(parents=True, exist_ok=True)
         # Link real model files if present for fast offline testing
@@ -228,18 +257,111 @@ class TestBuildAudio(unittest.TestCase):
         self.assertIn("Mo-hen-jo daa-ro", out)
         self.assertIn("Puranasaurus", out)  # Whole-word boundary preserved
 
-    # 2. Voice validation & weighted vector blending
-    def test_02_kokoro_voice_resolution_and_blend_math(self) -> None:
-        kokoro = FakeKokoro()
+    # 2. Voice validation, vocal steering tag resolution & tag stripping
+    def test_02_vocal_tag_resolution_and_steering(self) -> None:
+        kokoro = FakeElevenLabs()
         self.assertEqual(self.mod.resolve_kokoro_voice(kokoro, "am_fenrir"), "am_fenrir")
 
         blended = self.mod.resolve_kokoro_voice(kokoro, "am_fenrir:0.65+bm_george:0.35")
         self.assertIsInstance(blended, np.ndarray)
-        # Expected: 0.65 * 1.0 + 0.35 * 3.0 = 1.70
         self.assertTrue(np.allclose(blended, 1.70, atol=1e-4))
 
         with self.assertRaises(self.mod.AudioBuildError):
             self.mod.resolve_kokoro_voice(kokoro, "am_nonexistent")
+
+        # ElevenLabs Vocal Steering Tag Resolution
+        templates = self.mod.DEFAULT_TAG_TEMPLATES
+
+        class DummyScene:
+            def __init__(self, **kwargs: Any) -> None:
+                for k, v in kwargs.items():
+                    setattr(self, k, v)
+
+        # Narrator default
+        tag_narr = self.mod.resolve_scene_tag(
+            DummyScene(narration_text="Intro", speaker_role="narrator"), 0, 7, templates, False
+        )
+        self.assertEqual(tag_narr, "[slowly, solemn, deep]")
+
+        # Climax
+        tag_climax = self.mod.resolve_scene_tag(
+            DummyScene(narration_text="Peak", speaker_role="narrator"), 3, 7, templates, True
+        )
+        self.assertEqual(tag_climax, "[building energy, intense]")
+
+        # Outro
+        tag_outro = self.mod.resolve_scene_tag(
+            DummyScene(narration_text="Conclusion", speaker_role="narrator", shot_type="outro"),
+            6,
+            7,
+            templates,
+            False,
+        )
+        self.assertEqual(tag_outro, "[gentle, calm, peaceful]")
+
+        # Antagonist (Ravana, wrath)
+        tag_antag = self.mod.resolve_scene_tag(
+            DummyScene(
+                narration_text="Lanka",
+                speaker_role="character_dialogue",
+                primary_character="Ravana",
+                emotion="wrath",
+            ),
+            1,
+            7,
+            templates,
+            False,
+        )
+        self.assertEqual(tag_antag, "[arrogant, booming, furious, shouts]")
+
+        # Grief (Mandodari, sorrow)
+        tag_grief = self.mod.resolve_scene_tag(
+            DummyScene(
+                narration_text="Cry",
+                speaker_role="character_dialogue",
+                emotion="grief",
+            ),
+            2,
+            7,
+            templates,
+            False,
+        )
+        self.assertEqual(tag_grief, "[softly, sorrowful, trembling, sighs]")
+
+        # Divine (Mahadev, serene)
+        tag_divine = self.mod.resolve_scene_tag(
+            DummyScene(
+                narration_text="Kailash",
+                speaker_role="character_dialogue",
+                primary_character="Mahadev",
+                emotion="calm",
+            ),
+            4,
+            7,
+            templates,
+            False,
+        )
+        self.assertEqual(tag_divine, "[calm, serene, deep, slowly]")
+
+        # Devotional (Narada)
+        tag_dev = self.mod.resolve_scene_tag(
+            DummyScene(
+                narration_text="Narayana",
+                speaker_role="character_dialogue",
+                primary_character="Narad",
+                emotion="devotional",
+            ),
+            5,
+            7,
+            templates,
+            False,
+        )
+        self.assertEqual(tag_dev, "[calm, gentle, devotional]")
+
+        # Tag stripping verification
+        raw_text = "[arrogant, booming] रावण का अट्टहास गूंज उठा।"
+        clean = self.mod.strip_audio_tags(raw_text)
+        self.assertEqual(clean, "रावण का अट्टहास गूंज उठा।")
 
     # 3. Deterministic alignment handles dropped words & preserves monotonicity
     def test_03_alignment_gap_fill_and_monotonicity(self) -> None:
@@ -268,22 +390,24 @@ class TestBuildAudio(unittest.TestCase):
     # 4. Full end-to-end build produces WAVs, ffprobe durations & valid manifest.js
     def test_04_end_to_end_audio_build_and_manifest_contract(self) -> None:
         self.write_plan(make_episode_plan(scene_count=7))
-        fake_kokoro = FakeKokoro(sec_per_scene=6.0)  # 7 * ~6.12s = ~43s (inside 40-60s target)
+        fake_eleven = FakeElevenLabs(sec_per_scene=6.0, sample_rate=44100)  # 7 * ~6.12s = ~43s (inside 40-60s target)
         fake_whisper = FakeWhisper(drop_word_idx=2)
 
         result = self.mod.build_episode_audio(
             root=self.root,
-            kokoro_factory=lambda m, v: fake_kokoro,
+            tts_factory=lambda c, r: fake_eleven,
             whisper_factory=lambda c: fake_whisper,
         )
         self.assertEqual(result["status"], "ok")
         self.assertEqual(result["scene_count"], 7)
+        self.assertEqual(result["sample_rate"], 44100)
         self.assertIsNone(result["duration_warning"])
         self.assertTrue(40.0 <= result["total_duration_sec"] <= 60.0)
 
         # Verify pronunciation was applied to TTS input while narration remained canonical
-        self.assertIn("Sootradaar", fake_kokoro.calls[0]["text"])
-        self.assertIn("Raavana", fake_kokoro.calls[0]["text"])
+        self.assertIn("Sootradaar", fake_eleven.calls[0]["text"])
+        self.assertIn("Raavana", fake_eleven.calls[0]["text"])
+        self.assertIn("[slowly, solemn, deep]", fake_eleven.calls[0]["text"])
 
         # Verify files on disk
         for idx in range(1, 8):
@@ -291,15 +415,20 @@ class TestBuildAudio(unittest.TestCase):
         self.assertTrue((self.root / "build/audio/narration_full.wav").is_file())
         manifest_file = self.root / "build/manifest.js"
         self.assertTrue(manifest_file.is_file())
+        audio_manifest_file = self.root / "build/audio/audio_manifest.json"
+        self.assertTrue(audio_manifest_file.is_file())
 
         raw_js = manifest_file.read_text(encoding="utf-8")
         prefix = "window.EPISODE_MANIFEST = "
         json_body = raw_js.split(prefix, 1)[1].strip().rstrip(";")
         manifest = json.loads(json_body)
         self.assertEqual(len(manifest["scenes"]), 7)
+        self.assertEqual(manifest["audio"]["sample_rate"], 44100)
         self.assertEqual(manifest["audio"]["narration_full_path"], "build/audio/narration_full.wav")
         self.assertIn("Sutradhar", manifest["scenes"][0]["narration_text"])
         self.assertIn("Sootradaar", manifest["scenes"][0]["tts_text_applied"])
+        self.assertIn("[slowly, solemn, deep]", manifest["scenes"][0]["tts_text_applied"])
+        self.assertNotIn("[", manifest["scenes"][0]["narration_text"])
         self.assertEqual(
             [w["word"] for w in manifest["scenes"][0]["words"]],
             manifest["scenes"][0]["narration_text"].split(),
@@ -313,7 +442,7 @@ class TestBuildAudio(unittest.TestCase):
         with self.assertRaises(self.mod.AudioBuildError) as ctx_short:
             self.mod.build_episode_audio(
                 root=self.root,
-                kokoro_factory=lambda m, v: FakeKokoro(sec_per_scene=2.5),
+                tts_factory=lambda c, r: FakeElevenLabs(sec_per_scene=2.5),
                 whisper_factory=lambda c: FakeWhisper(),
             )
         self.assertIn("violates hard bounds", str(ctx_short.exception))
@@ -322,7 +451,7 @@ class TestBuildAudio(unittest.TestCase):
         with self.assertRaises(self.mod.AudioBuildError) as ctx_long:
             self.mod.build_episode_audio(
                 root=self.root,
-                kokoro_factory=lambda m, v: FakeKokoro(sec_per_scene=27.5),
+                tts_factory=lambda c, r: FakeElevenLabs(sec_per_scene=27.5),
                 whisper_factory=lambda c: FakeWhisper(),
             )
         self.assertIn("violates hard bounds", str(ctx_long.exception))
@@ -330,7 +459,7 @@ class TestBuildAudio(unittest.TestCase):
         # Between hard & target (~34s, where hard_min=30s and target_min=40s) -> succeeds with duration_warning
         res_warn = self.mod.build_episode_audio(
             root=self.root,
-            kokoro_factory=lambda m, v: FakeKokoro(sec_per_scene=4.6),
+            tts_factory=lambda c, r: FakeElevenLabs(sec_per_scene=4.6),
             whisper_factory=lambda c: FakeWhisper(),
         )
         self.assertIsNotNone(res_warn["duration_warning"])
@@ -343,7 +472,7 @@ class TestBuildAudio(unittest.TestCase):
         with self.assertRaises(self.mod.AudioBuildError) as ctx:
             self.mod.build_episode_audio(
                 root=self.root,
-                kokoro_factory=lambda m, v: FakeKokoro(),
+                tts_factory=lambda c, r: FakeElevenLabs(),
                 whisper_factory=lambda c: FakeWhisper(),
             )
         self.assertIn("scenes.0.narration_text", str(ctx.exception))
@@ -352,17 +481,13 @@ class TestBuildAudio(unittest.TestCase):
     def test_07_graceful_failure_modes(self) -> None:
         self.write_plan(make_episode_plan())
 
-        # Missing model when auto-download disabled
+        # Legacy ensure_kokoro_models missing model when auto-download disabled
         (self.root / "models/kokoro/kokoro-v1.0.onnx").unlink()
         old_env = os.environ.get("SUTRADHAR_ALLOW_MODEL_DOWNLOAD")
         os.environ["SUTRADHAR_ALLOW_MODEL_DOWNLOAD"] = "0"
         try:
             with self.assertRaises(self.mod.AudioBuildError) as ctx_missing:
-                self.mod.build_episode_audio(
-                    root=self.root,
-                    kokoro_factory=lambda m, v: FakeKokoro(),
-                    whisper_factory=lambda c: FakeWhisper(),
-                )
+                self.mod.ensure_kokoro_models(self.root, self.mod.load_config(self.root))
             self.assertIn("Kokoro model file", str(ctx_missing.exception))
         finally:
             if old_env is None:
@@ -379,10 +504,11 @@ class TestBuildAudio(unittest.TestCase):
                 shutil.copy2(real_onnx, self.root / "models/kokoro/kokoro-v1.0.onnx")
         else:
             (self.root / "models/kokoro/kokoro-v1.0.onnx").write_bytes(b"stub-onnx")
+
         with self.assertRaises(self.mod.AudioBuildError) as ctx_silent:
             self.mod.build_episode_audio(
                 root=self.root,
-                kokoro_factory=lambda m, v: FakeKokoro(silent=True),
+                tts_factory=lambda c, r: FakeElevenLabs(silent=True),
                 whisper_factory=lambda c: FakeWhisper(),
             )
         self.assertIn("silent or non-finite", str(ctx_silent.exception))
@@ -391,7 +517,7 @@ class TestBuildAudio(unittest.TestCase):
         with self.assertRaises(self.mod.AudioBuildError) as ctx_fail:
             self.mod.build_episode_audio(
                 root=self.root,
-                kokoro_factory=lambda m, v: FakeKokoro(fail_on_call=3),
+                tts_factory=lambda c, r: FakeElevenLabs(fail_on_call=3),
                 whisper_factory=lambda c: FakeWhisper(),
             )
         self.assertIn("scene 3", str(ctx_fail.exception))
@@ -401,7 +527,7 @@ class TestBuildAudio(unittest.TestCase):
         with self.assertRaises(self.mod.AudioBuildError) as ctx_empty:
             self.mod.build_episode_audio(
                 root=self.root,
-                kokoro_factory=lambda m, v: FakeKokoro(),
+                tts_factory=lambda c, r: FakeElevenLabs(),
                 whisper_factory=lambda c: FakeWhisper(empty=True),
             )
         self.assertIn("zero spoken words", str(ctx_empty.exception))
@@ -504,10 +630,10 @@ class TestBuildAudio(unittest.TestCase):
         }
         self.write_plan(plan)
 
-        # 3. Build audio with FakeKokoro yielding ~14s per scene = ~140s total
+        # 3. Build audio with FakeElevenLabs yielding ~14s per scene = ~140s total
         res = self.mod.build_episode_audio(
             root=self.root,
-            kokoro_factory=lambda m, v: FakeKokoro(sec_per_scene=14.0),
+            tts_factory=lambda c, r: FakeElevenLabs(sec_per_scene=14.0),
             whisper_factory=lambda c: FakeWhisper(),
         )
         self.assertEqual(res["status"], "ok")
@@ -594,7 +720,7 @@ class TestBuildAudio(unittest.TestCase):
 
         res = self.mod.build_episode_audio(
             root=self.root,
-            kokoro_factory=lambda m, v: FakeKokoro(sec_per_scene=8.0),
+            tts_factory=lambda c, r: FakeElevenLabs(sec_per_scene=8.0),
             whisper_factory=lambda c: FakeWhisper(),
         )
         self.assertEqual(res["status"], "ok")
@@ -666,10 +792,10 @@ class TestBuildAudio(unittest.TestCase):
 
         self.write_plan(plan)
 
-        # Build audio with FakeKokoro at 14.5s/scene = ~116s narration + ~3s padding = ~119s
+        # Build audio with FakeElevenLabs at 14.5s/scene = ~116s narration + ~3s padding = ~119s
         res = self.mod.build_episode_audio(
             root=self.root,
-            kokoro_factory=lambda m, v: FakeKokoro(sec_per_scene=14.5),
+            tts_factory=lambda c, r: FakeElevenLabs(sec_per_scene=14.5),
             whisper_factory=lambda c: FakeWhisper(),
         )
         self.assertEqual(res["status"], "ok")
@@ -687,6 +813,108 @@ class TestBuildAudio(unittest.TestCase):
         self.assertEqual(manifest["narrative_structure"], "eight_phase_complete_arc")
         self.assertEqual(len(manifest["scenes"]), 8)
         self.assertAlmostEqual(manifest["scenes"][5]["applied_pause_sec"], 0.40, places=2)
+
+    # 14. Native 44.1 kHz scene and master audio validation
+    def test_14_native_44100_hz_scene_and_master_generation(self) -> None:
+        self.write_plan(make_episode_plan(scene_count=5))
+        fake_eleven = FakeElevenLabs(sec_per_scene=9.0, sample_rate=44100)
+        result = self.mod.build_episode_audio(
+            root=self.root,
+            tts_factory=lambda c, r: fake_eleven,
+            whisper_factory=lambda c: FakeWhisper(),
+        )
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["sample_rate"], 44100)
+
+        # Check scene WAVs
+        for idx in range(1, 6):
+            wav_path = self.root / f"build/audio/scene_{idx}.wav"
+            info = sf.info(str(wav_path))
+            self.assertEqual(info.samplerate, 44100)
+            self.assertEqual(info.channels, 1)
+            self.assertEqual(info.subtype, "PCM_16")
+
+        # Check master narration_full.wav
+        master_path = self.root / "build/audio/narration_full.wav"
+        master_info = sf.info(str(master_path))
+        self.assertEqual(master_info.samplerate, 44100)
+        self.assertEqual(master_info.channels, 1)
+
+    # 15. Strict zero tag leakage into captions, word alignments, and manifests
+    def test_15_strict_zero_tag_leakage_in_subtitles_and_audio_manifest(self) -> None:
+        plan = make_episode_plan(scene_count=5)
+        plan["scenes"][0]["narration_text"] = "रावण ने महादेव को ललकारा।"
+        plan["scenes"][0]["speaker_role"] = "character_dialogue"
+        plan["scenes"][0]["primary_character"] = "ravana"
+        plan["scenes"][0]["emotion"] = "wrath"
+
+        plan["scenes"][1]["narration_text"] = "[calm, serene, deep] शिव शांत रहे।"
+        plan["scenes"][1]["speaker_role"] = "character_dialogue"
+        plan["scenes"][1]["primary_character"] = "mahadev"
+        plan["scenes"][1]["emotion"] = "calm"
+
+        self.write_plan(plan)
+        fake_eleven = FakeElevenLabs(sec_per_scene=9.0)
+        res = self.mod.build_episode_audio(
+            root=self.root,
+            tts_factory=lambda c, r: fake_eleven,
+            whisper_factory=lambda c: FakeWhisper(),
+        )
+        self.assertEqual(res["status"], "ok")
+
+        # Verify manifest.js
+        manifest_js = (self.root / "build/manifest.js").read_text(encoding="utf-8")
+        json_body = manifest_js.split("window.EPISODE_MANIFEST = ", 1)[1].strip().rstrip(";")
+        manifest = json.loads(json_body)
+
+        for scene in manifest["scenes"]:
+            # narration_text must have no brackets
+            self.assertNotIn("[", scene["narration_text"])
+            self.assertNotIn("]", scene["narration_text"])
+            # words list must have no brackets
+            for word_obj in scene["words"]:
+                self.assertNotIn("[", word_obj["word"])
+                self.assertNotIn("]", word_obj["word"])
+            # tts_text_applied must preserve vocal tags
+            self.assertIn("[", scene["tts_text_applied"])
+            self.assertIn("]", scene["tts_text_applied"])
+
+        # Verify audio_manifest.json
+        audio_manifest = json.loads(
+            (self.root / "build/audio/audio_manifest.json").read_text(encoding="utf-8")
+        )
+        for scene in audio_manifest["scenes"]:
+            self.assertNotIn("[", scene["narration_text"])
+            self.assertNotIn("]", scene["narration_text"])
+
+    # 16. Hindi Devanagari pronunciations integration
+    def test_16_hindi_devanagari_pronunciations_integration(self) -> None:
+        # Create a custom Devanagari pronunciation dictionary
+        hi_dict = {
+            "text_replacements": {
+                "यज्ञ": "यग्य",
+                "ऋषि": "रिषि",
+                "सूत": "सूत",
+            }
+        }
+        (self.root / "pronunciations_hi.yaml").write_text(
+            yaml.safe_dump(hi_dict, allow_unicode=True), encoding="utf-8"
+        )
+        plan = make_episode_plan(scene_count=5)
+        plan["language"] = "hi"
+        plan["scenes"][0]["narration_text"] = "ऋषि ने महायज्ञ आरम्भ किया।"
+        self.write_plan(plan)
+
+        fake_eleven = FakeElevenLabs(sec_per_scene=9.0)
+        res = self.mod.build_episode_audio(
+            root=self.root,
+            tts_factory=lambda c, r: fake_eleven,
+            whisper_factory=lambda c: FakeWhisper(),
+        )
+        self.assertEqual(res["status"], "ok")
+        # Check call to ElevenLabs had pronunciation applied
+        sent_to_tts = fake_eleven.calls[0]["text"]
+        self.assertIn("रिषि", sent_to_tts)
 
 
 if __name__ == "__main__":
