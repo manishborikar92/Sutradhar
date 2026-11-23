@@ -109,6 +109,10 @@ def require_executable(name: str) -> str:
 
 
 def probe_duration_sec(audio_path: Path) -> float:
+    try:
+        return float(sf.info(str(audio_path)).duration)
+    except Exception:
+        pass
     ffprobe = require_executable("ffprobe")
     cmd = [
         ffprobe,
@@ -602,6 +606,21 @@ def transcribe_scene_words(
         return []
     # Stripping tags guarantees zero tag leakage into Whisper's initial_prompt
     clean_prompt = strip_audio_tags(narration_text)
+
+    # Content-addressable transcription caching for sub-2-second zero-waste rebuilds
+    cache_dir = wav_path.parent.parent / "cache" / "audio"
+    cache_file: Optional[Path] = None
+    if wav_path.is_file():
+        try:
+            content_hash = hashlib.md5(
+                wav_path.read_bytes() + clean_prompt.encode("utf-8") + language.encode("utf-8")
+            ).hexdigest()
+            cache_file = cache_dir / f"{content_hash}.words.json"
+            if cache_file.is_file() and cache_file.stat().st_size > 0:
+                return json.loads(cache_file.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+
     try:
         segments, _ = whisper_model.transcribe(
             str(wav_path),
@@ -623,6 +642,12 @@ def transcribe_scene_words(
                         "end": float(getattr(w, "end", 0.0)),
                     }
                 )
+        if cache_file is not None and words:
+            try:
+                cache_dir.mkdir(parents=True, exist_ok=True)
+                write_text_atomic(cache_file, json.dumps(words, ensure_ascii=False))
+            except Exception:
+                pass
         return words
     except Exception as exc:
         print(f"[WARN] faster-whisper transcription skipped: {exc}", file=sys.stderr)
@@ -703,17 +728,30 @@ def default_elevenlabs_factory(cfg: dict[str, Any], root: Path) -> Any:
     return ElevenLabsEngine(config=cfg, project_root=root)
 
 
+class _LazyWhisperProxy:
+    """Lazy loader for faster-whisper to allow sub-2-second rebuilds on cache hits."""
+
+    def __init__(self, cfg: dict[str, Any]) -> None:
+        self.cfg = cfg
+        self._instance: Any = None
+
+    def transcribe(self, *args: Any, **kwargs: Any) -> Any:
+        if self._instance is None:
+            try:
+                from faster_whisper import WhisperModel
+            except ImportError as exc:
+                raise AudioBuildError(f"faster-whisper is not installed: {exc}") from exc
+            align_cfg = self.cfg.get("alignment", {})
+            self._instance = WhisperModel(
+                align_cfg.get("model_size", "base"),
+                device=align_cfg.get("device", "cpu"),
+                compute_type=align_cfg.get("compute_type", "int8"),
+            )
+        return self._instance.transcribe(*args, **kwargs)
+
+
 def default_whisper_factory(cfg: dict[str, Any]) -> Any:
-    try:
-        from faster_whisper import WhisperModel
-    except ImportError as exc:
-        raise AudioBuildError(f"faster-whisper is not installed: {exc}") from exc
-    align_cfg = cfg.get("alignment", {})
-    return WhisperModel(
-        align_cfg.get("model_size", "base"),
-        device=align_cfg.get("device", "cpu"),
-        compute_type=align_cfg.get("compute_type", "int8"),
-    )
+    return _LazyWhisperProxy(cfg)
 
 
 def _posix_rel(path: Path, root: Path) -> str:
@@ -1015,19 +1053,34 @@ def build_episode_audio(
             f"[{hard_min:.0f}s, {hard_max:.0f}s] for format '{active_format}'. Adjust script word count in build/episode_plan.json."
         )
 
-    # Master full narration with two-pass EBU R128 loudness normalization
+    # Master full narration with two-pass EBU R128 loudness normalization (content-cached)
     norm_wav = audio_dir / "narration_norm.wav"
+    cache_dir = audio_dir.parent / "cache" / "audio"
     try:
-        two_pass_loudnorm(
-            full_wav,
-            norm_wav,
-            target_lufs=-14.0,
-            target_tp=-1.5,
-            sample_rate=expected_sr,
-        )
-        if norm_wav.is_file() and norm_wav.stat().st_size > 0:
-            os.replace(norm_wav, full_wav)
+        raw_bytes = full_wav.read_bytes()
+        loudnorm_key = hashlib.md5(
+            raw_bytes + f"loudnorm_-14.0_-1.5_{expected_sr}".encode("utf-8")
+        ).hexdigest()
+        cached_master = cache_dir / f"{loudnorm_key}.wav"
+        if cached_master.is_file() and cached_master.stat().st_size > 0:
+            shutil.copyfile(cached_master, full_wav)
             full_duration = probe_duration_sec(full_wav)
+        else:
+            two_pass_loudnorm(
+                full_wav,
+                norm_wav,
+                target_lufs=-14.0,
+                target_tp=-1.5,
+                sample_rate=expected_sr,
+            )
+            if norm_wav.is_file() and norm_wav.stat().st_size > 0:
+                try:
+                    cache_dir.mkdir(parents=True, exist_ok=True)
+                    shutil.copyfile(norm_wav, cached_master)
+                except Exception:
+                    pass
+                os.replace(norm_wav, full_wav)
+                full_duration = probe_duration_sec(full_wav)
     except Exception as exc:
         print(f"[WARN] Loudnorm normalization bypassed: {exc}", file=sys.stderr)
         if norm_wav.exists():
