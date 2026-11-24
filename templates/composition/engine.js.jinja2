@@ -43,8 +43,10 @@
       cameraMotion: "{{ shot.camera_motion | default('push_in') }}",
       primaryCharacter: "{{ shot.primary_character | default('') }}",
       primaryPose: {{ shot.primary_pose_json | safe if shot.primary_pose_json else '{}' }},
+      primaryStagingStyle: "{{ shot.primary_staging_style | default('') }}",
       secondaryCharacter: "{{ shot.secondary_character | default('') }}",
-      secondaryPose: {{ shot.secondary_pose_json | safe if shot.secondary_pose_json else '{}' }}
+      secondaryPose: {{ shot.secondary_pose_json | safe if shot.secondary_pose_json else '{}' }},
+      secondaryStagingStyle: "{{ shot.secondary_staging_style | default('') }}"
     }{% if not loop.last %},{% endif %}
     {% endfor %}
   ];
@@ -57,6 +59,16 @@
     masterTl.call(() => {
       document.querySelectorAll(".shot-layer").forEach(el => el.classList.remove("active-shot"));
       if (shotEl) shotEl.classList.add("active-shot");
+
+      // Dynamic staging transforms
+      if (shot.primaryCharacter && shot.primaryStagingStyle) {
+        const p1El = document.querySelector('.puppet-char[data-character="' + shot.primaryCharacter + '"]');
+        if (p1El) p1El.style.cssText = shot.primaryStagingStyle;
+      }
+      if (shot.secondaryCharacter && shot.secondaryStagingStyle) {
+        const p2El = document.querySelector('.puppet-char[data-character="' + shot.secondaryCharacter + '"]');
+        if (p2El) p2El.style.cssText = shot.secondaryStagingStyle;
+      }
     }, null, shot.startSec);
 
     // Camera Motion (Subtle cinematic push-in or pan)
@@ -110,7 +122,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // 5. Word-by-Word Kinetic Subtitles
+  // 5. Word-by-Word Kinetic Subtitles (Phase 2 Subtitle Engine)
   // ---------------------------------------------------------------------------
   const subtitleTextEl = document.getElementById("subtitle_text");
   const wordCues = [
@@ -125,6 +137,9 @@
     {% endfor %}
   ];
 
+  {% if subtitles_code %}
+  {{ subtitles_code | safe }}
+  {% else %}
   if (subtitleTextEl && wordCues.length > 0) {
     // Group cues by lines
     const lines = {};
@@ -166,6 +181,7 @@
       }, null, lineEnd + 0.15);
     });
   }
+  {% endif %}
 
   // ---------------------------------------------------------------------------
   // 6. Audio Sync Hook

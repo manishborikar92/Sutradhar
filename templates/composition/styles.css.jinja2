@@ -185,27 +185,35 @@ body {
 }
 
 .subtitle-line {
-  font-size: 42px;
+  font-family: 'Playfair Display', 'EB Garamond', Georgia, serif;
+  font-size: 44px;
   font-weight: 700;
   line-height: 1.35;
   color: #fef3c7;
-  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.9), 0 2px 4px rgba(0, 0, 0, 0.8);
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.95), 0 2px 4px rgba(0, 0, 0, 0.85);
   max-width: 920px;
 }
 
 .sub-word {
   display: inline-block;
   margin: 0 6px;
+  transform-origin: 50% 80%;
 }
 
 .sub-word.active {
   color: #ffffff;
   transform: scale(1.08);
-  text-shadow: 0 0 16px rgba(251, 191, 36, 0.8), 0 4px 12px rgba(0, 0, 0, 0.9);
+  text-shadow: 0 0 16px rgba(251, 191, 36, 0.85), 0 4px 12px rgba(0, 0, 0, 0.9);
 }
 
-.sub-word.keyword {
+.sub-word.keyword, .sub-word.keyword-teal {
   color: #38bdf8;
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.65), 0 2px 8px rgba(0, 0, 0, 0.9);
+}
+
+.sub-word.keyword-gold {
+  color: #fbbf24;
+  text-shadow: 0 0 14px rgba(251, 191, 36, 0.75), 0 2px 8px rgba(0, 0, 0, 0.9);
 }
 
 /* 5. Theatrical Velvet Curtains */

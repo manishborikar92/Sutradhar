@@ -193,3 +193,31 @@ ALL_MOUTH_STATES: Final[tuple[str, ...]] = (
     MOUTH_FEAR,
     MOUTH_JOY,
 )
+
+# ---------------------------------------------------------------------------
+# Phase 2: Cinematography & Temporal Pacing Constants
+# ---------------------------------------------------------------------------
+ASL_TARGET_MIN_SEC: Final[float] = 2.2
+ASL_TARGET_MAX_SEC: Final[float] = 3.0
+ASL_HARD_MIN_SEC: Final[float] = 1.8
+ASL_HARD_MAX_SEC: Final[float] = 3.2
+
+BEAT_DURATION_MIN_SEC: Final[float] = 1.8
+BEAT_DURATION_MAX_SEC: Final[float] = 3.5
+BEAT_STATIC_MAX_SEC: Final[float] = 3.8  # Maximum static hold without cut or punch-in
+BEAT_FLOOR_MIN_SEC: Final[float] = 1.2   # Absolute floor for tail beats
+HOOK_BEAT_MAX_SEC: Final[float] = 2.0    # 2.0s opening hook limit
+
+# Two-Character Staging Limits (Geometry & Negative Space)
+TWO_SHOT_PUPPET_WIDTH_MIN: Final[int] = 340
+TWO_SHOT_PUPPET_WIDTH_MAX: Final[int] = 380
+TWO_SHOT_GAP_MIN_PX: Final[int] = 160
+TWO_SHOT_GAP_MAX_PX: Final[int] = 200
+
+# Subtitle Kinetic Typography
+SUBTITLE_ACTIVE_SCALE: Final[float] = 1.08
+SUBTITLE_COLOR_NORMAL: Final[str] = "#fef3c7"   # Warm cream
+SUBTITLE_COLOR_ACTIVE: Final[str] = "#ffffff"   # Bright white
+SUBTITLE_COLOR_GOLD: Final[str] = "#fbbf24"     # Theatrical gold
+SUBTITLE_COLOR_KEYWORD: Final[str] = "#38bdf8"  # Divine teal
+SUBTITLE_SPEECH_GAP_FADE_SEC: Final[float] = 0.150  # 150ms speech gap threshold

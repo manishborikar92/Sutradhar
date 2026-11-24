@@ -34,5 +34,5 @@ if __name__ == "__main__":
     res = generate_root_composition(REPO_ROOT)
     print(
         f"[INFO] Composition generated at {res['composition_dir']} "
-        f"({res['scenes_count']} shots, {len(res['characters'])} puppets)"
+        f"({res.get('shots_count', res.get('scenes_count'))} shots, {len(res['characters'])} puppets)"
     )

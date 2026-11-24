@@ -521,11 +521,11 @@ class ScenePlan(BaseModel):
 - [x] Fix dead pacing speed bug in `scripts/build_audio.py` by injecting `voice_settings["speed"] = speed`.
 
 ### Phase 2: Beat Decomposition, Dynamic Cinematography & Subtitles (Priority: P0 — Critical)
-- [ ] Implement `scripts/engine/beat_planner.py`: Deconstruct narrative scenes into $1.8\text{s} - 3.5\text{s}$ micro-beats (target ASL: $2.2\text{s} - 3.0\text{s}$).
-- [ ] Implement `scripts/engine/cinematography.py`: Implement shot library (EWS, FS, MS, MCU, CU, ECU) and 9:16 Golden Zone framing solver.
-- [ ] Implement two-character staging: Enforce $340\text{px} - 380\text{px}$ character bounding widths with $160\text{px} - 200\text{px}$ central conversational space.
-- [ ] Implement automated eyeline vector solver and Over-The-Shoulder (OTS) reverse shot staging.
-- [ ] Implement `scripts/engine/subtitle_engine.py`: Word-by-word kinetic subtitle highlighting at bottom center.
+- [x] Implement `scripts/engine/beat_planner.py`: Deconstruct narrative scenes into $1.8\text{s} - 3.5\text{s}$ micro-beats (target ASL: $2.2\text{s} - 3.0\text{s}$).
+- [x] Implement `scripts/engine/cinematography.py`: Implement shot library (EWS, FS, MS, MCU, CU, ECU) and 9:16 Golden Zone framing solver.
+- [x] Implement two-character staging: Enforce $340\text{px} - 380\text{px}$ character bounding widths with $160\text{px} - 200\text{px}$ central conversational space.
+- [x] Implement automated eyeline vector solver and Over-The-Shoulder (OTS) reverse shot staging.
+- [x] Implement `scripts/engine/subtitle_engine.py`: Word-by-word kinetic subtitle highlighting at bottom center.
 
 ### Phase 3: Broadcast 48kHz Stereo Audio Pipeline & Storytelling Props (Priority: P0 — Critical)
 - [ ] Refactor `scripts/render_and_qa.py`: Eliminate 24kHz downsampling; enforce $48\text{kHz}$ 24-bit stereo master audio pipeline.

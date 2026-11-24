@@ -179,12 +179,12 @@ class TestContinuousLifeEngine(unittest.TestCase):
 
         # Autonomous blinking
         self.assertIn("Autonomous Blinking", code)
-        self.assertIn("gsap.utils.random(2.8, 4.2)", code)
+        self.assertIn("seededRandom(2.8, 4.2)", code)
         self.assertIn("0.07", code)  # Closed duration
 
         # Micro-saccades
         self.assertIn("Eye Micro-Saccades", code)
-        self.assertIn("gsap.utils.random(-2.5, 2.5)", code)
+        self.assertIn("seededRandom(-2.5, 2.5)", code)
 
         # Weight shift
         self.assertIn("Idle Weight Shift", code)

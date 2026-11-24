@@ -20,6 +20,22 @@ from typing import Any, Optional
 
 from jinja2 import Environment, FileSystemLoader
 
+from .beat_planner import (
+    BeatPlan,
+    compute_asl,
+    decompose_episode_into_beats,
+    validate_beat_pacing,
+)
+from .cinematography import (
+    SHOT_LIBRARY,
+    EyelineSolution,
+    OTSStagingLayout,
+    StagingLayout,
+    get_shot_scale,
+    solve_eyeline_vector,
+    solve_ots_staging,
+    solve_two_character_staging,
+)
 from .config import (
     CANVAS_HEIGHT,
     CANVAS_WIDTH,
@@ -27,6 +43,7 @@ from .config import (
     PUPPET_BASE_HEIGHT,
     PUPPET_BASE_WIDTH,
     PUPPET_TRANSFORM_ORIGIN,
+    STAGE_FLOOR_BASELINE_Y,
     TWO_SHOT_P1_X,
     TWO_SHOT_P2_X,
     TWO_SHOT_SCALE,
@@ -37,6 +54,13 @@ from .puppet_rig import (
     get_pose,
     get_puppet_wrapper_css,
     validate_pose,
+)
+from .subtitle_engine import (
+    SubtitleLine,
+    WordCue,
+    generate_gsap_subtitles,
+    group_words_into_lines,
+    process_word_cues,
 )
 
 logger = logging.getLogger("sutradhar.composer")
@@ -263,14 +287,16 @@ def compose_episode(
             tl = build_lipsync_timeline(char_words, emotion=emotion)
             lipsync_snippets.append(generate_gsap_lipsync(tl, wrapper_id))
 
-    # 4. Process Shots & Backdrops
-    shots_data: list[dict[str, Any]] = []
-    word_cues_data: list[dict[str, Any]] = []
+    # 4. Deconstruct Scenes into Micro-Beats (Phase 2 Cinematography & Pacing)
+    all_beats = decompose_episode_into_beats(scenes)
+    asl = compute_asl(all_beats)
+    logger.info("Decomposed %d scenes into %d micro-beats (ASL = %.2fs)", len(scenes), len(all_beats), asl)
 
-    for sc_idx, sc in enumerate(scenes):
-        shot_id = str(sc.get("scene_index", sc_idx + 1))
-        shot_type = sc.get("shot_type", "medium_shot")
-        bg_name = sc.get("backdrop_rig") or "golden_lanka_citadel"
+    shots_data: list[dict[str, Any]] = []
+
+    for idx, beat in enumerate(all_beats):
+        shot_id = str(beat.scene_index) if beat.beat_index == 1 else f"{beat.scene_index}_{beat.beat_index}"
+        bg_name = beat.backdrop_rig or "golden_lanka_citadel"
         bg_file = backdrops_dir / f"{bg_name}.svg"
 
         if not bg_file.is_file():
@@ -279,59 +305,124 @@ def compose_episode(
         else:
             bg_svg = bg_file.read_text(encoding="utf-8")
 
-        # Poses
-        pose_name = sc.get("pose_preset") or "idle_royal"
-        primary_pose = get_pose(pose_name)
-        # Validate pose strictly
-        valid_p1_pose = validate_pose(primary_pose, clamp=True)
+        shot_scale_def = get_shot_scale(beat.shot_type)
 
-        p2_pose_name = sc.get("secondary_pose_preset") or "humbled_braced"
-        valid_p2_pose = validate_pose(get_pose(p2_pose_name), clamp=True)
+        # Base poses
+        p1_pose = get_pose(beat.primary_character_pose)
+        valid_p1_pose = validate_pose(p1_pose, clamp=True)
+        valid_p2_pose = validate_pose(get_pose(beat.secondary_character_pose or "humbled_braced"), clamp=True) if beat.secondary_character else {}
+
+        # Staging & Eyelines
+        p1_staging_style = ""
+        p2_staging_style = ""
+        p1_facing = beat.primary_facing
+        p2_facing = beat.secondary_facing
+
+        if beat.primary_character and beat.secondary_character:
+            if "over_the_shoulder" in beat.shot_type:
+                ots_layout = solve_ots_staging(
+                    beat.shot_type,
+                    beat.primary_character,
+                    beat.secondary_character,
+                    anchor_y=shot_scale_def.anchor_y,
+                )
+                if ots_layout.foreground_character == beat.primary_character:
+                    p1_staging_style = ots_layout.fg_style
+                    p2_staging_style = ots_layout.target_style
+                    p2_facing = ots_layout.target_facing
+                else:
+                    p1_staging_style = ots_layout.target_style
+                    p2_staging_style = ots_layout.fg_style
+                    p1_facing = ots_layout.target_facing
+            else:
+                two_staging = solve_two_character_staging(
+                    p1_scale=shot_scale_def.scale,
+                    p2_scale=shot_scale_def.scale,
+                    target_gap_px=180,
+                    anchor_y=shot_scale_def.anchor_y,
+                )
+                p1_staging_style = two_staging.p1_inline_style
+                p2_staging_style = two_staging.p2_inline_style
+
+                # Eyeline vector calculation
+                eyeline = solve_eyeline_vector(
+                    two_staging.p1_center_x,
+                    shot_scale_def.anchor_y,
+                    shot_scale_def.scale,
+                    two_staging.p2_center_x,
+                    shot_scale_def.anchor_y,
+                    shot_scale_def.scale,
+                    p1_facing=p1_facing,
+                    p2_facing=p2_facing,
+                )
+                valid_p1_pose["--rot-head"] = f"{eyeline.p1_head_pitch_deg}deg"
+                valid_p2_pose["--rot-head"] = f"{eyeline.p2_head_pitch_deg}deg"
 
         shots_data.append(
             {
                 "shot_id": shot_id,
-                "shot_type": shot_type,
-                "start_sec": round(float(sc.get("start_sec", 0.0)), 3),
-                "end_sec": round(float(sc.get("end_sec", 0.0)), 3),
-                "duration_sec": round(float(sc.get("duration_sec", 0.0)), 3),
-                "camera_motion": sc.get("camera_motion", "push_in"),
+                "beat_id": beat.beat_id,
+                "scene_index": beat.scene_index,
+                "beat_index": beat.beat_index,
+                "shot_type": beat.shot_type,
+                "scale": shot_scale_def.scale,
+                "start_sec": round(beat.start_sec, 3),
+                "end_sec": round(beat.end_sec, 3),
+                "duration_sec": round(beat.duration_sec, 3),
+                "camera_motion": beat.camera_motion,
                 "backdrop_svg": bg_svg,
                 "foreground_svg": None,
-                "primary_character": sc.get("primary_character"),
+                "primary_character": beat.primary_character,
                 "primary_pose_json": json.dumps(valid_p1_pose),
-                "secondary_character": sc.get("secondary_character"),
+                "primary_staging_style": p1_staging_style,
+                "primary_facing": p1_facing,
+                "secondary_character": beat.secondary_character,
                 "secondary_pose_json": json.dumps(valid_p2_pose),
+                "secondary_staging_style": p2_staging_style,
+                "secondary_facing": p2_facing,
+                "is_hook": beat.is_hook,
             }
         )
 
-        # Word Subtitle Cues
+    # 5. Process Word-by-Word Kinetic Subtitles (Phase 2 Subtitle Engine)
+    all_raw_words: list[dict[str, Any]] = []
+    for sc_idx, sc in enumerate(scenes):
         for w in sc.get("words", []):
-            word_cues_data.append(
-                {
-                    "word": w.get("word", ""),
-                    "start_sec": round(float(w.get("start_sec", 0.0)), 3),
-                    "end_sec": round(float(w.get("end_sec", 0.0)), 3),
-                    "is_keyword": bool(w.get("is_keyword", False)),
-                    "line_index": sc_idx,
-                }
-            )
+            word_dict = dict(w)
+            word_dict["line_index"] = sc_idx
+            all_raw_words.append(word_dict)
 
-    # 5. Render Templates
+    word_cues = process_word_cues(all_raw_words)
+    subtitle_lines = group_words_into_lines(word_cues)
+    subtitles_code = generate_gsap_subtitles(subtitle_lines, container_id="subtitle_text", master_timeline_var="masterTl")
+    word_cues_data = [w.to_dict() for w in word_cues]
+
+    # 6. Render Templates
     tpl_index = env.get_template("index.html.jinja2")
     tpl_styles = env.get_template("styles.css.jinja2")
     tpl_engine = env.get_template("engine.js.jinja2")
+
+    audio_src = default_root / "build" / "audio" / "narration_full.wav"
+    audio_filename = "narration_full.wav"
+    if audio_src.is_file():
+        try:
+            shutil.copy2(audio_src, out_dir / audio_filename)
+        except (shutil.SameFileError, OSError):
+            pass
 
     render_ctx = {
         "language": manifest.get("language", "hi"),
         "youtube_title": manifest.get("youtube_title", "Sutradhar Episode"),
         "total_duration_sec": total_duration_sec,
-        "audio_path": "../../build/audio/narration_full.wav",
+        "audio_path": audio_filename,
         "shots": shots_data,
         "puppets": puppets_data,
         "props": [],
         "vfx_elements": [],
         "word_cues": word_cues_data,
+        "subtitles_code": subtitles_code,
+        "asl": asl,
+        "beats_count": len(all_beats),
         "life_engine_code": "\n".join(life_engine_snippets),
         "lipsync_code": "\n".join(lipsync_snippets),
     }
@@ -356,7 +447,10 @@ def compose_episode(
         "index_path": str(index_out),
         "styles_path": str(styles_out),
         "engine_path": str(engine_out),
-        "scenes_count": len(shots_data),
+        "scenes_count": len(scenes),
+        "shots_count": len(shots_data),
+        "beats_count": len(all_beats),
+        "asl": asl,
         "characters": unique_chars,
         "duration_sec": total_duration_sec,
         "total_duration_sec": total_duration_sec,

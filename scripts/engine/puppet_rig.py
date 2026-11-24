@@ -337,6 +337,8 @@ class ContinuousLifeEngine:
         """Generates modular GSAP 3 JavaScript animation snippet for a puppet wrapper."""
         half_breath = round(self.breathing_cycle_sec / 2.0, 3)
         weight_half = round(self.weight_shift_sec / 2.0, 3)
+        breath_repeats = max(1, int(math.ceil(duration_sec / max(0.1, self.breathing_cycle_sec))) * 2 + 2)
+        weight_repeats = max(1, int(math.ceil(duration_sec / max(0.1, self.weight_shift_sec))) * 2 + 2)
         
         return f"""
   // ContinuousLifeEngine for #{wrapper_id}
@@ -356,7 +358,7 @@ class ContinuousLifeEngine:
         scaleY: {self.breathing_scale_y},
         duration: {half_breath},
         yoyo: true,
-        repeat: -1,
+        repeat: {breath_repeats},
         ease: "sine.inOut",
         transformOrigin: "400px 700px"
       }});
@@ -366,15 +368,22 @@ class ContinuousLifeEngine:
         y: -{self.shoulder_float_px},
         duration: {half_breath},
         yoyo: true,
-        repeat: -1,
+        repeat: {breath_repeats},
         ease: "sine.inOut"
       }});
     }}
 
+    // Deterministic pseudo-random generator for frame-exact reproducibility across render workers
+    let prngSeed = 1337;
+    const seededRandom = (min, max) => {{
+      prngSeed = (prngSeed * 9301 + 49297) % 233280;
+      return min + (prngSeed / 233280.0) * (max - min);
+    }};
+
     // 2. Autonomous Blinking (every 2.8s - 4.2s, closed for 70ms)
     if (eyesNormal) {{
       const scheduleBlink = () => {{
-        const delay = gsap.utils.random({self.blink_interval_min}, {self.blink_interval_max});
+        const delay = seededRandom({self.blink_interval_min}, {self.blink_interval_max});
         gsap.delayedCall(delay, () => {{
           gsap.set(eyesNormal, {{ opacity: 0 }});
           gsap.delayedCall({self.blink_closed_sec}, () => {{
@@ -390,8 +399,8 @@ class ContinuousLifeEngine:
     if (pupils.length > 0) {{
       const scheduleSaccade = () => {{
         gsap.delayedCall({self.saccade_interval_sec}, () => {{
-          const dx = gsap.utils.random(-{self.saccade_offset_px}, {self.saccade_offset_px});
-          const dy = gsap.utils.random(-1.0, 1.0);
+          const dx = seededRandom(-{self.saccade_offset_px}, {self.saccade_offset_px});
+          const dy = seededRandom(-1.0, 1.0);
           gsap.to(pupils, {{ x: dx, y: dy, duration: 0.08, ease: "power1.out" }});
           scheduleSaccade();
         }});
@@ -405,7 +414,7 @@ class ContinuousLifeEngine:
         rotation: "+={self.weight_shift_angle_deg}",
         duration: {weight_half},
         yoyo: true,
-        repeat: -1,
+        repeat: {weight_repeats},
         ease: "sine.inOut"
       }});
     }}
@@ -417,7 +426,7 @@ class ContinuousLifeEngine:
         duration: {weight_half},
         delay: {self.follow_through_lag_ms / 1000.0},
         yoyo: true,
-        repeat: -1,
+        repeat: {weight_repeats},
         ease: "sine.inOut"
       }});
     }}

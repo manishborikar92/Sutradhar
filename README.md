@@ -78,8 +78,11 @@ Sutradhar/
 ├── scripts/                         # Production pipeline CLI tools
 │   ├── engine/                      # Modular Video Engine Core (v4.0)
 │   │   ├── config.py                # Framing, 9:16 Golden Zone & joint limits
+│   │   ├── beat_planner.py          # Micro-beat decomposer (1.8-3.5s) & ASL calculator
+│   │   ├── cinematography.py        # Shot scale hierarchy (EWS-ECU), two-shot staging & eyelines
 │   │   ├── puppet_rig.py            # Standardized 480x960 puppet rig & ContinuousLifeEngine
 │   │   ├── lipsync_engine.py        # Devanagari Akshara phonetic viseme parser
+│   │   ├── subtitle_engine.py       # Word-by-word kinetic Hindi subtitles with active scaling & keywords
 │   │   └── composer.py              # Modular Jinja2 composition assembler
 │   ├── audition_voices.py           # ElevenLabs voice audition utility
 │   ├── build_audio.py               # ElevenLabs TTS & Whisper forced alignment
@@ -91,7 +94,7 @@ Sutradhar/
 │   └── render_and_qa.py             # Video renderer, audio mastering & KinoCut QA
 ├── templates/                       # Jinja2 Composition Templates
 │   └── composition/                 # Self-contained composition templates (index, styles, engine)
-├── tests/                           # Comprehensive automated test suite (155+ tests)
+├── tests/                           # Comprehensive automated test suite (190+ tests)
 ├── config.yaml                      # Global channel configuration & thresholds
 ├── package.json                     # Node.js dependencies & scripts
 ├── pronunciations_hi.yaml           # Hindi Devanagari pronunciation overrides
