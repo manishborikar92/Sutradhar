@@ -1,9 +1,20 @@
 # Sutradhar Unified Asset Manifest & Technical Specification
 # Schema Version: 1.0.0
-# Machine-readable catalog for automated video composition, AI character selection, and audio mastering.
+# Authoritative Machine-Readable Catalog for Video Composition & Asset Reuse.
+#
+# INSTRUCTIONS FOR AI AGENTS:
+# 1. Single Source of Truth: This file is the canonical registry for all reusable assets.
+# 2. Reusing Assets: Before creating a new character, backdrop, diagram, SFX, or BGM,
+#    inspect this manifest to reuse existing assets whenever suitable.
+# 3. Registering New Assets: Whenever you create, add, or permanently modify a reusable
+#    asset under the assets/ directory, you MUST register it here immediately under the
+#    appropriate category with full metadata (id, file, role, joints, framing, etc.).
+# 4. Scope Restriction: ONLY register permanent, reusable assets stored under assets/.
+#    Do NOT register ephemeral, temporary, or disposable build files (e.g., build/*.wav,
+#    build/*.jpg, build/*.mp4, or cached scratch files).
 
 version: "1.0.0"
-updated_at: "2026-11-23"
+updated_at: "2026-11-24"
 
 # ==============================================================================
 # AUDIO ASSET LIBRARY

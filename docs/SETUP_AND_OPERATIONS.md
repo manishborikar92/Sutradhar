@@ -167,7 +167,7 @@ curl -X GET "https://api.elevenlabs.io/v1/user/subscription" -H "xi-api-key: $en
 ```
 
 ### 4.2 Database Health & Migrations
-The database schema is defined in [docs/schema.sql](file:///c:/Users/manis/Projects/Sutradhar/docs/schema.sql) (Version 3.0.0). To verify database integrity or run automated migrations on an existing database:
+The database schema is defined in [docs/schema.sql](./docs/schema.sql) (Version 3.0.0). To verify database integrity or run automated migrations on an existing database:
 ```powershell
 .\.venv\Scripts\python.exe scripts/db_manager.py --init
 ```

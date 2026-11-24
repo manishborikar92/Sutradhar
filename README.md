@@ -195,7 +195,37 @@ npm run hf:check
 
 ## 9. Documentation Directory
 
-- [INSTRUCTIONS.md](file:///c:/Users/manis/Projects/Sutradhar/docs/INSTRUCTIONS.md): Authoritative agent instruction guide for autonomous daily production.
-- [SETUP_AND_OPERATIONS.md](file:///c:/Users/manis/Projects/Sutradhar/docs/SETUP_AND_OPERATIONS.md): Comprehensive setup, credentials configuration, and operational runbook.
-- [schema.sql](file:///c:/Users/manis/Projects/Sutradhar/docs/schema.sql): SQLite database schema v3.0.0.
-- [manifest.yaml](file:///c:/Users/manis/Projects/Sutradhar/assets/manifest.yaml): Complete asset catalog of characters, backdrops, BGM, SFX, and diagrams.
+- [INSTRUCTIONS.md](./docs/INSTRUCTIONS.md): Authoritative agent instruction guide for daily video production.
+- [SETUP_AND_OPERATIONS.md](./docs/SETUP_AND_OPERATIONS.md): Comprehensive setup, credentials configuration, and operational runbook.
+- [schema.sql](./docs/schema.sql): SQLite database schema v3.0.0.
+- [manifest.yaml](./assets/manifest.yaml): Complete asset catalog of characters, backdrops, BGM, SFX, and diagrams.
+
+---
+
+## 10. AI Agent Operating Guidelines
+
+To ensure optimal execution and avoid unnecessary context overhead, AI agents operating in this repository must follow these rules:
+
+- **Mandatory for Video Creation & Production:**
+  When assigned a task to create, script, animate, render, quality-check, or publish a video (or to execute the daily production pipeline), reading and strictly following [`docs/INSTRUCTIONS.md`](./docs/INSTRUCTIONS.md) is **MANDATORY**. It contains non-negotiable rules for Hindi storytelling, Viraj voice steering, Kathputli puppet directing, safe zones, KinoCut gates, and physical artifact verification.
+
+- **Optional for General Engineering & Maintenance:**
+  When assigned general engineering tasks—such as bug fixing, database migrations, unit testing, refactoring scripts, environment troubleshooting, or updating configuration files—reading `docs/INSTRUCTIONS.md` is **OPTIONAL**. Such tasks do not invoke the video production workflow and can proceed directly from code, tests, and documentation.
+
+---
+
+## 11. Standard Daily Video-Creation Prompt
+
+To initiate a video production run, use the standard prompt below. It allows full autonomous execution while providing clean, optional override slots:
+
+```text
+Read and follow docs/INSTRUCTIONS.md to produce today's video.
+
+[Optional Overrides — leave blank for 100% autonomous operation]:
+- Topic: 
+- Script: 
+- Playlist: 
+- Format (standalone / episodic_series): 
+- Special Instructions:
+```
+
