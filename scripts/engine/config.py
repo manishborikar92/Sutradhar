@@ -221,3 +221,57 @@ SUBTITLE_COLOR_ACTIVE: Final[str] = "#ffffff"   # Bright white
 SUBTITLE_COLOR_GOLD: Final[str] = "#fbbf24"     # Theatrical gold
 SUBTITLE_COLOR_KEYWORD: Final[str] = "#38bdf8"  # Divine teal
 SUBTITLE_SPEECH_GAP_FADE_SEC: Final[float] = 0.150  # 150ms speech gap threshold
+
+# ---------------------------------------------------------------------------
+# Phase 3: Broadcast Audio Pipeline Constants
+# ---------------------------------------------------------------------------
+BROADCAST_SAMPLE_RATE_HZ: Final[int] = 48000
+BROADCAST_CHANNELS: Final[int] = 2
+BROADCAST_BIT_DEPTH: Final[int] = 24
+
+LOUDNORM_TARGET_I: Final[float] = -14.0
+LOUDNORM_TARGET_TP: Final[float] = -1.5
+LOUDNORM_TARGET_LRA: Final[float] = 11.0
+
+SIDECHAIN_THRESHOLD: Final[float] = 0.03
+SIDECHAIN_RATIO: Final[float] = 8.0
+SIDECHAIN_ATTACK_MS: Final[int] = 20
+SIDECHAIN_RELEASE_MS: Final[int] = 500
+SIDECHAIN_MAKEUP: Final[float] = 1.0
+
+BGM_BASE_GAIN_DB: Final[float] = -22.0
+SFX_BASE_GAIN_DB: Final[float] = -10.0
+
+# BGM Functional Mood Taxonomy (v4.0)
+BGM_MOOD_THEATRICAL: Final[str] = "theatrical_narrative"
+BGM_MOOD_CONFRONTATION: Final[str] = "tense_confrontation"
+BGM_MOOD_COSMIC: Final[str] = "divine_cosmic"
+BGM_MOOD_TRAGEDY: Final[str] = "melancholy_tragedy"
+
+ALL_BGM_MOODS: Final[tuple[str, ...]] = (
+    BGM_MOOD_THEATRICAL,
+    BGM_MOOD_CONFRONTATION,
+    BGM_MOOD_COSMIC,
+    BGM_MOOD_TRAGEDY,
+)
+
+# ---------------------------------------------------------------------------
+# Phase 3: Dynamic Storytelling Props Constants
+# ---------------------------------------------------------------------------
+PROP_VEDIC_KUNDALI: Final[str] = "vedic_kundali"
+PROP_PLANETARY_STAIRCASE: Final[str] = "planetary_staircase"
+PROP_SUBJUGATION_BOOT: Final[str] = "subjugation_boot"
+PROP_THOUGHT_BUBBLE_INFANT: Final[str] = "thought_bubble_infant"
+PROP_THOUGHT_BUBBLE_CHEST_VS_BACK: Final[str] = "thought_bubble_chest_vs_back"
+PROP_COSMIC_EYE_BEAMS: Final[str] = "cosmic_eye_beams"
+PROP_FIRE_BRAZIER: Final[str] = "fire_brazier"
+
+ALL_STORYTELLING_PROPS: Final[tuple[str, ...]] = (
+    PROP_VEDIC_KUNDALI,
+    PROP_PLANETARY_STAIRCASE,
+    PROP_SUBJUGATION_BOOT,
+    PROP_THOUGHT_BUBBLE_INFANT,
+    PROP_THOUGHT_BUBBLE_CHEST_VS_BACK,
+    PROP_COSMIC_EYE_BEAMS,
+    PROP_FIRE_BRAZIER,
+)

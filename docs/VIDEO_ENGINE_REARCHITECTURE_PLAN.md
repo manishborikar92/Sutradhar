@@ -528,11 +528,11 @@ class ScenePlan(BaseModel):
 - [x] Implement `scripts/engine/subtitle_engine.py`: Word-by-word kinetic subtitle highlighting at bottom center.
 
 ### Phase 3: Broadcast 48kHz Stereo Audio Pipeline & Storytelling Props (Priority: P0 — Critical)
-- [ ] Refactor `scripts/render_and_qa.py`: Eliminate 24kHz downsampling; enforce $48\text{kHz}$ 24-bit stereo master audio pipeline.
-- [ ] Fix FFmpeg `amix` volume crush bug by passing `normalize=0`.
-- [ ] Implement EBU R128 integrated loudness normalization via `loudnorm=I=-14:TP=-1.5:LRA=11`.
-- [ ] Deprecate and purge technical diagrams in `assets/svg/diagrams/`; implement dynamic storytelling props (shattering Kundali, planetary staircase, subjugation boot, thought bubbles, fire braziers).
-- [ ] Expand `assets/bgm/` with full-length 2.5-minute theatrical Indian instrumental beds.
+- [x] Refactor `scripts/render_and_qa.py`: Eliminate 24kHz downsampling; enforce $48\text{kHz}$ 24-bit stereo master audio pipeline.
+- [x] Fix FFmpeg `amix` volume crush bug by passing `normalize=0`.
+- [x] Implement EBU R128 integrated loudness normalization via `loudnorm=I=-14:TP=-1.5:LRA=11`.
+- [x] Deprecate and purge technical diagrams in `assets/svg/diagrams/`; implement dynamic storytelling props (shattering Kundali, planetary staircase, subjugation boot, thought bubbles, fire braziers).
+- [x] Expand `assets/bgm/` with full-length 2.5-minute theatrical Indian instrumental beds.
 
 ### Phase 4: Automated Triple-Gate QA Suite & End-to-End Pilot Verification (Priority: P1 — High Impact)
 - [ ] Implement `scripts/engine/qa_verifier.py`: Automated assertion of $\text{ASL} \le 3.2\text{s}$, zero safe-zone violations, and 48kHz stereo spectral analysis.

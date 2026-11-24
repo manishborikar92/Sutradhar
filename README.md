@@ -15,7 +15,7 @@
 - **Single Master Storyteller Paradigm:** Voiced exclusively by **Viraj** (`uuyFQegRan8rpIQCGu9K`) via **ElevenLabs v4** (`eleven_v4`) at 44.1 kHz. Viraj performs all narrative roles, deities, and antagonists through inline emotional and cadence steering tags (`[...]`).
 - **Kathputli 2.5D Theatrical Puppetry:** Modular SVG character rigs with articulated limbs connected by visible brass rivet joints, animated with organic string-suspended micro-pendulum sway via HyperFrames.
 - **Clean-Canvas Aesthetic:** Zero burned-in captions, subtitles, or distracting UI badges on video frames. Rely natively on YouTube's automated closed captions to maintain pure theatrical immersion.
-- **KinoCut Audio & Visual Mastering:** Automated broadcast audio engineering adhering strictly to **-14.0 LUFS ± 0.5**, **True Peak $\le -1.0$ dBFS**, dynamic sidechain BGM ducking (6:1 ratio), and quality scoring ($\ge 80/100$).
+- **Broadcast 48kHz Stereo Audio Pipeline & Mastering:** Automated broadcast audio engineering adhering strictly to **48,000 Hz, 24-bit stereo**, **-14.0 LUFS** (EBU R128 `loudnorm=I=-14:TP=-1.5:LRA=11`), **True Peak $\le -1.5$ dBTP**, dynamic sidechain BGM ducking (8:1 ratio, 20ms attack, 500ms release, threshold 0.03), and FFmpeg volume protection (`normalize=0`).
 - **Autonomous Lifecycle & State Management:** Robust SQLite database (`episodes.db`) maintaining series universes, standalone stories, source research citations, thematic pillar rotation, and publishing records.
 - **YouTube Data API v3 Integration:** Direct automated upload supporting public releases, scheduled publication, automated series playlist curation, custom thumbnails, and live API read-back verification.
 
@@ -67,7 +67,7 @@ Sutradhar/
 │   └── svg/                         # Modular vector art library
 │       ├── backdrops/               # 13 Theatrical folk-art backdrops
 │       ├── characters/              # 10 Articulated Kathputli puppet rigs
-│       ├── diagrams/                # 4 Bespoke astronomical/mythic diagrams
+│       ├── props/                   # 7 Dynamic mythological storytelling props (Kundali, staircase, boot, etc.)
 │       ├── infographics/            # 5 Theatrical callouts & symbol cards
 │       └── vfx/                     # 5 Visual effect overlays
 ├── build/                           # Ephemeral build artifacts (ignored by Git)
@@ -83,6 +83,8 @@ Sutradhar/
 │   │   ├── puppet_rig.py            # Standardized 480x960 puppet rig & ContinuousLifeEngine
 │   │   ├── lipsync_engine.py        # Devanagari Akshara phonetic viseme parser
 │   │   ├── subtitle_engine.py       # Word-by-word kinetic Hindi subtitles with active scaling & keywords
+│   │   ├── prop_manager.py          # Dynamic storytelling props system & Golden Zone solver
+│   │   ├── foley_scheduler.py       # Multi-track BGM taxonomy & keyframe Foley scheduler
 │   │   └── composer.py              # Modular Jinja2 composition assembler
 │   ├── audition_voices.py           # ElevenLabs voice audition utility
 │   ├── build_audio.py               # ElevenLabs TTS & Whisper forced alignment

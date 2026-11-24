@@ -96,17 +96,19 @@ video:
     left_clear_px: 48
 audio_mastering:
   target_lufs: -14.0
-  true_peak_max_dbtp: -1.0
+  true_peak_max_dbtp: -1.5
   trailing_silence_min_sec: 0.7
   silence_floor_max_dbfs: -65.0
+  sample_rate_hz: 48000
+  channels: 2
   bgm_base_gain_db: -22.0
   sfx_gain_db: -10.0
   sidechain_ducking:
     enabled: true
     threshold: 0.03
-    ratio: 6
+    ratio: 8
     attack_ms: 20
-    release_ms: 250
+    release_ms: 500
   kinocut_min_score: 80
 assets:
   bgm_tracks:

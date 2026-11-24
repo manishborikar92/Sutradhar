@@ -49,6 +49,20 @@ from .config import (
     TWO_SHOT_SCALE,
 )
 from .lipsync_engine import build_lipsync_timeline, generate_gsap_lipsync
+from .prop_manager import (
+    PROP_CATALOG,
+    PropDefinition,
+    PropError,
+    generate_gsap_prop_animation,
+    get_prop_definition,
+    load_prop_svg,
+    solve_prop_layout,
+)
+from .foley_scheduler import (
+    FoleyCue,
+    resolve_bgm_track,
+    schedule_foley_for_episode,
+)
 from .puppet_rig import (
     ContinuousLifeEngine,
     get_pose,
@@ -74,11 +88,32 @@ FALLBACK_MANIFEST: dict[str, Any] = {
     "schema_version": "4.0",
     "language": "hi",
     "youtube_title": "कैलाश रहस्य #Shorts",
+    "bgm_mood": "theatrical_narrative",
     "audio": {
         "total_duration_sec": 41.50,
         "sample_rate": 48000,
         "narration_full_path": "build/audio/narration_full.wav",
     },
+    "props": [
+        {
+            "id": "prop_brazier_s1",
+            "prop_id": "fire_brazier",
+            "start_sec": 0.5,
+            "duration_sec": 6.5,
+        },
+        {
+            "id": "prop_kundali_s2",
+            "prop_id": "vedic_kundali",
+            "start_sec": 8.0,
+            "duration_sec": 6.0,
+        },
+        {
+            "id": "prop_boot_s3",
+            "prop_id": "subjugation_boot",
+            "start_sec": 15.0,
+            "duration_sec": 6.0,
+        },
+    ],
     "scenes": [
         {
             "scene_index": 1,
@@ -185,6 +220,10 @@ def compose_episode(
     characters_dir = assets_dir / "characters"
     if not characters_dir.is_dir():
         characters_dir = default_root / "assets" / "svg" / "characters"
+
+    props_dir = assets_dir / "props"
+    if not props_dir.is_dir():
+        props_dir = default_root / "assets" / "svg" / "props"
 
     if output_dir is None:
         out_dir = root / "build" / "composition"
@@ -397,6 +436,111 @@ def compose_episode(
     subtitles_code = generate_gsap_subtitles(subtitle_lines, container_id="subtitle_text", master_timeline_var="masterTl")
     word_cues_data = [w.to_dict() for w in word_cues]
 
+    # 5b. Dynamic Storytelling Props (Phase 3)
+    raw_props = list(manifest.get("props", []))
+    if not raw_props:
+        # Check per-scene props
+        for sc in scenes:
+            sc_props = sc.get("props") or ([sc.get("prop")] if sc.get("prop") else [])
+            st = float(sc.get("start_sec", 0.0))
+            dur = float(sc.get("duration_sec", sc.get("end_sec", st + 3.5) - st))
+            for p_idx, p_item in enumerate(sc_props):
+                if not p_item:
+                    continue
+                if isinstance(p_item, str):
+                    raw_props.append({
+                        "id": f"prop_{p_item}_{sc.get('scene_index', 1)}_{p_idx}",
+                        "prop_id": p_item,
+                        "start_sec": st,
+                        "duration_sec": dur,
+                    })
+                elif isinstance(p_item, dict):
+                    p_dict = dict(p_item)
+                    p_dict.setdefault("start_sec", st)
+                    p_dict.setdefault("duration_sec", dur)
+                    p_dict.setdefault("id", f"prop_{p_dict.get('prop_id', 'custom')}_{sc.get('scene_index', 1)}_{p_idx}")
+                    raw_props.append(p_dict)
+
+    # Narrative automatic prop placement if not explicitly configured
+    if not raw_props:
+        for sc in scenes:
+            txt = sc.get("narration_text", "")
+            st = float(sc.get("start_sec", 0.0))
+            dur = float(sc.get("duration_sec", sc.get("end_sec", st + 4.0) - st))
+            sc_idx = sc.get("scene_index", 1)
+
+            inferred_prop = None
+            if "कुंडली" in txt or "एकादश" in txt or "ग्रहों" in txt:
+                inferred_prop = "vedic_kundali"
+            elif "पादपीठ" in txt or "सिंहासन" in txt or "सीढ़ी" in txt:
+                inferred_prop = "planetary_staircase"
+            elif "दबा" in txt or "पैर" in txt or "चरण" in txt or "कुचल" in txt:
+                inferred_prop = "subjugation_boot"
+            elif "मेघनाद" in txt or "शिशु" in txt or "जन्म" in txt:
+                inferred_prop = "thought_bubble_infant"
+            elif "दृष्टि" in txt or "वक्र" in txt or "पीठ" in txt:
+                inferred_prop = "thought_bubble_chest_vs_back"
+            elif "नेत्र" in txt or "ज्वाला" in txt or "चमक" in txt:
+                inferred_prop = "cosmic_eye_beams"
+            elif sc_idx == 1:
+                inferred_prop = "fire_brazier"
+
+            if inferred_prop and inferred_prop in PROP_CATALOG:
+                raw_props.append({
+                    "id": f"prop_{inferred_prop}_{sc_idx}",
+                    "prop_id": inferred_prop,
+                    "start_sec": st + 0.5,
+                    "duration_sec": min(dur - 0.5, 5.0),
+                })
+
+    props_data: list[dict[str, Any]] = []
+    prop_anim_snippets: list[str] = []
+
+    for p_cfg in raw_props:
+        p_id = p_cfg.get("prop_id")
+        if not p_id or p_id not in PROP_CATALOG:
+            continue
+        elem_id = p_cfg.get("id", f"prop_{p_id}")
+        st_sec = float(p_cfg.get("start_sec", 0.0))
+        dur_sec = float(p_cfg.get("duration_sec", 3.5))
+
+        inline_style, eff_x, eff_y, eff_scale = solve_prop_layout(
+            prop_id=p_id,
+            anchor_x=p_cfg.get("anchor_x"),
+            anchor_y=p_cfg.get("anchor_y"),
+            scale=p_cfg.get("scale"),
+            z_index=p_cfg.get("z_index"),
+        )
+        try:
+            svg_markup = load_prop_svg(props_dir, p_id)
+        except Exception as exc:
+            logger.warning("Could not load prop SVG for '%s': %s", p_id, exc)
+            continue
+
+        props_data.append({
+            "id": elem_id,
+            "prop_id": p_id,
+            "style": inline_style,
+            "svg": svg_markup,
+            "start_sec": round(st_sec, 3),
+            "duration_sec": round(dur_sec, 3),
+        })
+
+        anim_code = generate_gsap_prop_animation(
+            prop_element_id=elem_id,
+            prop_id=p_id,
+            start_sec=st_sec,
+            duration_sec=dur_sec,
+            master_timeline_var="masterTl",
+        )
+        prop_anim_snippets.append(anim_code)
+
+    # 5c. Keyframe Foley Scheduling (Phase 3)
+    foley_cues = schedule_foley_for_episode(
+        beats_or_scenes=all_beats,
+        props_list=raw_props,
+    )
+
     # 6. Render Templates
     tpl_index = env.get_template("index.html.jinja2")
     tpl_styles = env.get_template("styles.css.jinja2")
@@ -417,7 +561,8 @@ def compose_episode(
         "audio_path": audio_filename,
         "shots": shots_data,
         "puppets": puppets_data,
-        "props": [],
+        "props": props_data,
+        "props_code": "\n".join(prop_anim_snippets),
         "vfx_elements": [],
         "word_cues": word_cues_data,
         "subtitles_code": subtitles_code,
@@ -439,7 +584,12 @@ def compose_episode(
     styles_out.write_text(tpl_styles.render(render_ctx), encoding="utf-8")
     engine_out.write_text(tpl_engine.render(render_ctx), encoding="utf-8")
 
-    logger.info("Assembled modular composition to %s", out_dir)
+    logger.info(
+        "Assembled modular composition to %s (%d props, %d foley cues)",
+        out_dir,
+        len(props_data),
+        len(foley_cues),
+    )
 
     return {
         "status": "ok",
@@ -452,6 +602,8 @@ def compose_episode(
         "beats_count": len(all_beats),
         "asl": asl,
         "characters": unique_chars,
+        "props_count": len(props_data),
+        "foley_cues_count": len(foley_cues),
         "duration_sec": total_duration_sec,
         "total_duration_sec": total_duration_sec,
     }

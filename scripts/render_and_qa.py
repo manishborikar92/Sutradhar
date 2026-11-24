@@ -46,6 +46,7 @@ if str(SCRIPT_DIR) not in sys.path:
 
 from db_manager import get_project_root, load_config  # noqa: E402
 from scripts.engine.composer import compose_episode  # noqa: E402
+from scripts.engine.foley_scheduler import PROP_SFX_MAP  # noqa: E402
 
 
 class RenderPipelineError(RuntimeError):
@@ -71,7 +72,7 @@ def probe_media(file_path: Path) -> dict[str, Any]:
         "-v",
         "error",
         "-show_entries",
-        "format=duration:stream=width,height,r_frame_rate,codec_type,codec_name",
+        "format=duration:stream=width,height,r_frame_rate,codec_type,codec_name,sample_rate,channels",
         "-of",
         "json",
         str(file_path),
@@ -171,6 +172,15 @@ def collect_sfx_schedule(root: Path, manifest: dict[str, Any]) -> list[tuple[Pat
             if to_em in ("rage", "wrath"):
                 offset = float(ec.get("offset", dur * float(ec.get("at_ratio", 0.5))))
                 raw_cues.append(("thunder_rumble.wav", st + offset))
+
+    # 4b. Dynamic Storytelling Props Foley Cues
+    for p in manifest.get("props", []):
+        p_id = p.get("prop_id") or p.get("id", "")
+        p_st = float(p.get("start_sec", 0.0))
+        p_dur = float(p.get("duration_sec", 3.0))
+        for known_prop, (sfx_file, offset_pct) in PROP_SFX_MAP.items():
+            if known_prop in p_id:
+                raw_cues.append((sfx_file, p_st + (p_dur * offset_pct)))
 
     # 5. Outro marquee and curtain close sequence
     if total_duration >= 6.0 and manifest.get("outro") is not False:
@@ -295,12 +305,12 @@ def build_audio_mix(
     # Master gain settings from config
     mastering_cfg = cfg.get("audio_mastering", {})
     bgm_base_gain = mastering_cfg.get("bgm_base_gain_db", -22.0)
-    sfx_gain = mastering_cfg.get("sfx_gain_db", -16.0)
+    sfx_gain = mastering_cfg.get("sfx_gain_db", -10.0)
     ducking_cfg = mastering_cfg.get("sidechain_ducking", {})
     duck_thresh = ducking_cfg.get("threshold", 0.03)
-    duck_ratio = ducking_cfg.get("ratio", 6)
+    duck_ratio = ducking_cfg.get("ratio", 8)
     duck_attack = ducking_cfg.get("attack_ms", 20)
-    duck_release = ducking_cfg.get("release_ms", 250)
+    duck_release = ducking_cfg.get("release_ms", 500)
 
     # Build FFmpeg command inputs
     # Input 0: raw video
@@ -321,7 +331,7 @@ def build_audio_mix(
                 "-f",
                 "lavfi",
                 "-i",
-                "aevalsrc=exprs='0.03*sin(2*PI*110*t)+0.02*sin(2*PI*165*t)':s=24000:c=stereo",
+                "aevalsrc=exprs='0.03*sin(2*PI*110*t)+0.02*sin(2*PI*165*t)':s=48000:c=stereo",
             ])
         else:
             cmd.extend([
@@ -339,15 +349,19 @@ def build_audio_mix(
     filters = []
 
     # 0. Broadcast Vocal Mastering Chain on Narration [1:a] -> [narration_mastered] & [narration_sidechain]
+    # Enforces 48,000Hz stereo up-mixing immediately so downstream mixing preserves stereo width!
     filters.append(
-        "[1:a]aresample=24000:async=1,highpass=f=80,equalizer=f=175:t=q:w=1.0:g=2.0,equalizer=f=5000:t=q:w=1.5:g=-2.0,equalizer=f=10000:t=q:w=1.0:g=1.5,acompressor=threshold=-18dB:ratio=2.5:attack=15:release=120,asplit=2[narration_mastered][narration_sidechain]"
+        "[1:a]aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo,"
+        "highpass=f=80,equalizer=f=175:t=q:w=1.0:g=2.0,equalizer=f=5000:t=q:w=1.5:g=-2.0,equalizer=f=10000:t=q:w=1.0:g=1.5,"
+        "acompressor=threshold=-18dB:ratio=2.5:attack=15:release=120,asplit=2[narration_mastered][narration_sidechain]"
     )
 
-    # 1. BGM Track Processing and Crossfading
+    # 1. BGM Track Processing and Crossfading (48kHz Stereo)
     if len(bgm_schedule) == 1:
         fade_start = max(0.0, total_duration - 1.2)
         filters.append(
-            f"[2:a]aresample=24000:async=1,atrim=0:{total_duration:.4f},asetpts=PTS-STARTPTS,afade=t=out:st={fade_start:.4f}:d=1.2,volume={bgm_base_gain}dB[bgm_base]"
+            f"[2:a]aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo,"
+            f"atrim=0:{total_duration:.4f},asetpts=PTS-STARTPTS,afade=t=out:st={fade_start:.4f}:d=1.2,volume={bgm_base_gain}dB[bgm_base]"
         )
     else:
         xfade_dur = 1.5
@@ -372,33 +386,40 @@ def build_audio_mix(
 
             delay_str = f",adelay={delay_ms}|{delay_ms}" if delay_ms > 0 else ""
             filters.append(
-                f"[{inp_idx}:a]aresample=24000:async=1,atrim=0:{seg_dur:.4f},asetpts=PTS-STARTPTS{fade_in_str}{fade_out_str}{delay_str}[bgm_seg_{k}]"
+                f"[{inp_idx}:a]aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo,"
+                f"atrim=0:{seg_dur:.4f},asetpts=PTS-STARTPTS{fade_in_str}{fade_out_str}{delay_str}[bgm_seg_{k}]"
             )
 
         bgm_seg_labels = "".join(f"[bgm_seg_{k}]" for k in range(len(bgm_schedule)))
         filters.append(
-            f"{bgm_seg_labels}amix=inputs={len(bgm_schedule)}:duration=longest:dropout_transition=2,volume={bgm_base_gain}dB[bgm_base]"
+            f"{bgm_seg_labels}amix=inputs={len(bgm_schedule)}:normalize=0:duration=longest:dropout_transition=2,volume={bgm_base_gain}dB[bgm_base]"
         )
 
-    # 2. Sidechain ducking of BGM under Narration
+    # 2. Sidechain ducking of BGM under Narration (ratio 8:1, attack 20ms, release 500ms, makeup 1.0)
     filters.append(
-        f"[bgm_base][narration_sidechain]sidechaincompress=threshold={duck_thresh}:ratio={duck_ratio}:attack={duck_attack}:release={duck_release}[bgm_ducked]"
+        f"[bgm_base][narration_sidechain]sidechaincompress=threshold={duck_thresh}:ratio={duck_ratio}:attack={duck_attack}:release={duck_release}:makeup=1[bgm_ducked]"
     )
 
-    # 3. SFX placement with resample and delay
+    # 3. SFX placement with 48kHz stereo formatting and delay
     mix_sources = ["[narration_mastered]", "[bgm_ducked]"]
     sfx_start_idx = 2 + len(bgm_schedule)
     for idx, (_, delay_sec) in enumerate(sfx_inputs):
         inp_idx = sfx_start_idx + idx
         delay_ms = int(round(delay_sec * 1000.0))
         out_lbl = f"[sfx_{idx}]"
-        filters.append(f"[{inp_idx}:a]aresample=24000:async=1,volume={sfx_gain}dB,adelay={delay_ms}|{delay_ms}[sfx_{idx}]")
+        filters.append(
+            f"[{inp_idx}:a]aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo,"
+            f"volume={sfx_gain}dB,adelay={delay_ms}|{delay_ms}[sfx_{idx}]"
+        )
         mix_sources.append(out_lbl)
 
-    # 4. Amix all streams together with true peak limiting
+    # 4. Amix all streams with normalize=0 to prevent volume crush, followed by EBU R128 integrated loudness normalization
     mix_count = len(mix_sources)
     filters.append(
-        f"{''.join(mix_sources)}amix=inputs={mix_count}:duration=first:dropout_transition=2,alimiter=limit=-1.5dB:level=false[a_mix]"
+        f"{''.join(mix_sources)}amix=inputs={mix_count}:normalize=0:duration=first:dropout_transition=2[mixed_raw]"
+    )
+    filters.append(
+        "[mixed_raw]loudnorm=I=-14:TP=-1.5:LRA=11[a_mix]"
     )
 
     filter_complex_str = ";".join(filters)
@@ -417,6 +438,10 @@ def build_audio_mix(
             "aac",
             "-b:a",
             "192k",
+            "-ar",
+            "48000",
+            "-ac",
+            "2",
             "-shortest",
             str(output_video_path),
         ]

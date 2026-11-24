@@ -23,22 +23,84 @@ audio:
   specs:
     master_loudness_target_lufs: -14.0
     master_loudness_tolerance_lufs: 0.5
-    true_peak_max_dbfs: -1.0
-    master_sample_rate_hz: 44100
+    true_peak_max_dbfs: -1.5
+    master_sample_rate_hz: 48000
+    bit_depth: 24
     channels: 2  # Stereo 2.0
-    bgm_ducking_ratio: "6:1"
-    bgm_ducking_threshold_db: -28.0
+    bgm_ducking_ratio: "8:1"
+    bgm_ducking_threshold_db: -30.0
+    bgm_attack_ms: 20
+    bgm_release_ms: 500
     bgm_fade_out_sec: 1.20
     procedural_fallback_enabled: true
 
-  # Background Music Tracks
+  # Background Music Tracks (48kHz Stereo Master Beds, 165s Loop-Free)
   bgm:
+    - id: theatrical_narrative
+      file: assets/bgm/theatrical_narrative.mp3
+      title: "Theatrical Narrative"
+      editorial_pillar: "Ancient Epics & Lore"
+      mood: "theatrical_narrative"
+      tempo_bpm: 88
+      duration_sec: 165.14
+      sample_rate_hz: 48000
+      channels: 2
+      key: "D minor / Raag Bhairav"
+      instrumentation: "Rudra Veena, Pakhawaj, Sitar, low cinematic drones"
+      usage_context: "Sovereign defiance, royal court decrees, epic expositions, mythical grandeur."
+      ducking_level_db: -18.0
+
+    - id: tense_confrontation
+      file: assets/bgm/tense_confrontation.mp3
+      title: "Tense Confrontation"
+      editorial_pillar: "Ancient Epics & Lore"
+      mood: "tense_confrontation"
+      tempo_bpm: 132
+      duration_sec: 165.14
+      sample_rate_hz: 48000
+      channels: 2
+      key: "E minor / High-Tension Drone"
+      instrumentation: "Aggressive Nagara, distorted acoustic resonance, rapid bronze hits"
+      usage_context: "Direct character confrontation, aggressive pride, climactic challenges, impending clash."
+      ducking_level_db: -16.0
+
+    - id: divine_cosmic
+      file: assets/bgm/divine_cosmic.mp3
+      title: "Divine Cosmic"
+      editorial_pillar: "Cosmic & Scientific Paradoxes"
+      mood: "divine_cosmic"
+      tempo_bpm: 65
+      duration_sec: 165.14
+      sample_rate_hz: 48000
+      channels: 2
+      key: "G minor / Ambient Drone"
+      instrumentation: "Analog synth drones, tanpura overtone beds, bowed glass, celestial pulses"
+      usage_context: "Event horizons, cosmic geometry, time dilation, Vedic astronomy, profound paradoxes."
+      ducking_level_db: -20.0
+
+    - id: melancholy_tragedy
+      file: assets/bgm/melancholy_tragedy.mp3
+      title: "Melancholy Tragedy"
+      editorial_pillar: "Ancient Epics & Lore"
+      mood: "melancholy_tragedy"
+      tempo_bpm: 52
+      duration_sec: 165.14
+      sample_rate_hz: 48000
+      channels: 2
+      key: "A minor / Raag Shivaranjani"
+      instrumentation: "Melancholic Sarangi, slow bowing cello, emotive flute, delicate drone"
+      usage_context: "Tragic realizations, karmic retribution, sacrifices, noble downfalls, melancholy reflections."
+      ducking_level_db: -20.0
+
     - id: dramatic_mythology
       file: assets/bgm/dramatic_mythology.mp3
       title: "Dramatic Mythology"
       editorial_pillar: "Ancient Epics & Lore"
       mood: "dramatic"
       tempo_bpm: 88
+      duration_sec: 165.14
+      sample_rate_hz: 48000
+      channels: 2
       key: "D minor / Raag Bhairav"
       instrumentation: "Rudra Veena, Pakhawaj, Sitar, low cinematic drones"
       usage_context: "Sovereign defiance, divine confrontation, mythical grandeur, climactic revelations."
@@ -197,6 +259,43 @@ audio:
       duration_sec: 3.00
       usage_cue: "Lingering divine Prabhavali aura, cosmic meditation energy bed."
       recommended_volume_db: -16.0
+
+    # Phase 3 Authentic 48kHz Master Foley SFX
+    - id: metal_clang
+      file: assets/sfx/metal_clang.wav
+      category: "impact"
+      sample_rate_hz: 48000
+      channels: 2
+      duration_sec: 1.50
+      usage_cue: "Subjugation boot iron clashing, armor impact, heavy metal resonance."
+      recommended_volume_db: -8.0
+
+    - id: foot_thud
+      file: assets/sfx/foot_thud.wav
+      category: "kinetic"
+      sample_rate_hz: 48000
+      channels: 2
+      duration_sec: 1.20
+      usage_cue: "Ravana ascending planetary staircase, crushing boot stomp shockwave."
+      recommended_volume_db: -7.0
+
+    - id: chain_rattle
+      file: assets/sfx/chain_rattle.wav
+      category: "kinetic"
+      sample_rate_hz: 48000
+      channels: 2
+      duration_sec: 2.00
+      usage_cue: "Bound planets in 11th house, celestial chains, puppet string tension."
+      recommended_volume_db: -12.0
+
+    - id: fire_crackle
+      file: assets/sfx/fire_crackle.wav
+      category: "atmosphere"
+      sample_rate_hz: 48000
+      channels: 2
+      duration_sec: 3.00
+      usage_cue: "Temple fire brazier, havan kund flame ignition, embers crackling."
+      recommended_volume_db: -14.0
 
 # ==============================================================================
 # VISUAL ASSET LIBRARY
@@ -491,37 +590,63 @@ visual:
       narrative_theme: "Bridge building, expeditions, voyages into the unknown"
       dominant_colors: ["#0c4a6e", "#0284c7", "#38bdf8"]
 
-  # Bespoke Scientific & Mythic Diagrams (assets/svg/diagrams/)
-  diagrams:
-    - id: kailash_axis_alignments
-      file: assets/svg/diagrams/kailash_axis_alignments.svg
-      domain: "Archaeo-astronomy"
-      description: "Cardinal alignment of Mount Kailash to Stonehenge, North Pole, and Giza."
-      recommended_motion: "pan_zoom_cardinal"
+  # Dynamic Mythological Storytelling Props (assets/svg/props/)
+  props:
+    - id: vedic_kundali
+      file: assets/svg/props/vedic_kundali.svg
+      type: "mandala"
+      description: "12-house Vedic birth chart mandala with 4-quadrant fracture capability."
+      base_width: 520
+      base_height: 520
+      recommended_motion: "kundali_shatter"
 
-    - id: black_hole_anatomy
-      file: assets/svg/diagrams/black_hole_anatomy.svg
-      domain: "Cosmic Physics"
-      description: "Event horizon, photon sphere, and singularity cross-section."
-      recommended_motion: "slow_spin_orbit"
+    - id: planetary_staircase
+      file: assets/svg/props/planetary_staircase.svg
+      type: "stepped_platform"
+      description: "9 stacked planetary deities as stepped throne platforms for Ravana's ascent."
+      base_width: 680
+      base_height: 660
+      recommended_motion: "staircase_climb"
 
-    - id: gravitational_time_dilation_clock
-      file: assets/svg/diagrams/gravitational_time_dilation_clock.svg
-      domain: "Relativity & Vedic Yugas"
-      description: "Dual clocks demonstrating time dilation between Brahma's realm and Earth."
-      recommended_motion: "pulse_sync"
+    - id: subjugation_boot
+      file: assets/svg/props/subjugation_boot.svg
+      type: "imperial_armor"
+      description: "Giant ornate conqueror boot with crushing ground shockwave."
+      base_width: 440
+      base_height: 440
+      recommended_motion: "boot_stomp"
 
-    - id: nalanda_scroll_astrolabe
-      file: assets/svg/diagrams/nalanda_scroll_astrolabe.svg
-      domain: "Ancient Indian Mathematics"
-      description: "Astrolabe coordinates mapped to Aryabhata's planetary epicycles."
-      recommended_motion: "unroll_and_zoom"
+    - id: thought_bubble_infant
+      file: assets/svg/props/thought_bubble_infant.svg
+      type: "theatrical_callout"
+      description: "Theatrical thought cloud framing infant Meghnada in divine cradle."
+      base_width: 440
+      base_height: 440
+      recommended_motion: "bubble_float"
 
-    - id: shani_drishti_mandala
-      file: assets/svg/diagrams/shani_drishti_mandala.svg
-      domain: "Vedic Archaeo-Astronomy & Karmic Geometry"
-      description: "12-house Vedic horoscope mandala illustrating Ravana's 11th-house lock and Shani Dev's 12th-house karmic aspect."
-      recommended_motion: "slow_spin_orbit"
+    - id: thought_bubble_chest_vs_back
+      file: assets/svg/props/thought_bubble_chest_vs_back.svg
+      type: "theatrical_callout"
+      description: "Astrological visual metaphor: Front chest vs. bowed spine karmic aspect."
+      base_width: 480
+      base_height: 440
+      recommended_motion: "medallion_pulse"
+
+    - id: cosmic_eye_beams
+      file: assets/svg/props/cosmic_eye_beams.svg
+      type: "energy_clash"
+      description: "Clashing divine third eyes and high-energy radiating gaze beams."
+      base_width: 540
+      base_height: 720
+      recommended_motion: "eye_beam_clash"
+
+    - id: fire_brazier
+      file: assets/svg/props/fire_brazier.svg
+      type: "ritual_flame"
+      description: "Indian royal havan kund with multi-layer animated flames and embers."
+      base_width: 320
+      base_height: 480
+      recommended_motion: "brazier_flicker"
 
   # Theatrical Infographics & Callout Cards (assets/svg/infographics/)
   infographics:
