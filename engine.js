@@ -560,7 +560,7 @@ function initTimeline() {
     // Puppet Resolution for Scene
     const p1 = getPuppet(scene.primary_character) || primaryPuppet;
     const p2 = getPuppet(scene.secondary_character) || (allPuppets.length > 1 && allPuppets[0] === p1 ? allPuppets[1] : allPuppets[0]);
-    const p3 = getPuppet(scene.tertiary_character) || (allPuppets.length > 2 ? allPuppets[2] : null);
+    const p3 = getPuppet(scene.tertiary_character) || (shotType === "triad_council" && allPuppets.length > 2 ? allPuppets[2] : null);
     const hasMultiple = !!(scene.secondary_character || shotType.includes("confrontation") || (scene.characters && scene.characters.length > 1));
 
     // Specific Shot Type & Puppet Choreography
@@ -586,7 +586,7 @@ function initTimeline() {
     else if (hasMultiple && p1 && p2 && p1 !== p2) {
       // MULTI-CHARACTER STAGING (2 or 3 puppets)
       allPuppets.forEach(p => {
-        if (p !== p1 && p !== p2 && p !== p3) masterTl.set(p, { display: "none", opacity: 0 }, t_start);
+        if (p !== p1 && p !== p2 && (!p3 || p !== p3)) masterTl.set(p, { display: "none", opacity: 0 }, t_start);
       });
 
       if (p3) {

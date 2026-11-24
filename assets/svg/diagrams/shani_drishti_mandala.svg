@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900" width="900" height="900">
+  <defs>
+    <!-- Celestial Midnight Radial Background Glow -->
+    <radialGradient id="mandala_core_glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.9" />
+      <stop offset="35%" stop-color="#b45309" stop-opacity="0.5" />
+      <stop offset="70%" stop-color="#451a03" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#020617" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Rich Indian Antique Gold Gradients -->
+    <linearGradient id="gold_orbit_grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="40%" stop-color="#f59e0b" />
+      <stop offset="80%" stop-color="#b45309" />
+      <stop offset="100%" stop-color="#78350f" />
+    </linearGradient>
+
+    <!-- Shani Karmic Ray Gradient (Deep Indigo Amber) -->
+    <linearGradient id="karmic_ray_grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1" />
+      <stop offset="50%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#dc2626" />
+    </linearGradient>
+
+    <!-- Glow Filter -->
+    <filter id="gold_bloom" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- ===================================================================== -->
+  <!-- DIAGRAM BASE: Sacred 12-Bhavas Vedic Kundali Mandala                   -->
+  <!-- ===================================================================== -->
+  <g id="diagram_base">
+    <!-- Dark Cosmic Void Foundation Disc -->
+    <circle cx="450" cy="450" r="410" fill="#030712" stroke="url(#gold_orbit_grad)" stroke-width="4" />
+    <circle cx="450" cy="450" r="390" fill="url(#mandala_core_glow)" />
+
+    <!-- Outer Concentric Planetary Rims -->
+    <circle class="draw-path" cx="450" cy="450" r="370" fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="6 8" opacity="0.6" />
+    <circle class="draw-path" cx="450" cy="450" r="340" fill="none" stroke="#b45309" stroke-width="2.5" opacity="0.8" />
+    <circle class="draw-path" cx="450" cy="450" r="260" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4 6" opacity="0.5" />
+
+    <!-- Classical Vedic Kundali Square Frame -->
+    <rect x="190" y="190" width="520" height="520" fill="#0b0f19" stroke="url(#gold_orbit_grad)" stroke-width="3.5" />
+
+    <!-- Diamond Intersection Lines (12 Traditional Houses) -->
+    <polygon points="450,190 710,450 450,710 190,450" fill="none" stroke="#f59e0b" stroke-width="3" />
+    <line x1="190" y1="190" x2="710" y2="710" stroke="#b45309" stroke-width="2.5" />
+    <line x1="190" y1="710" x2="710" y2="190" stroke="#b45309" stroke-width="2.5" />
+
+    <!-- Title & Domain Callouts -->
+    <text x="450" y="115" fill="#fef08a" font-family="'Georgia', serif" font-size="28" font-weight="900" text-anchor="middle" letter-spacing="4">कालचक्र नवग्रह मंडल</text>
+    <text x="450" y="148" fill="#f59e0b" font-family="'Georgia', serif" font-size="18" font-weight="700" text-anchor="middle" letter-spacing="2">VEDIC KARMIC MANDALA (12 HOUSES)</text>
+  </g>
+
+  <!-- ===================================================================== -->
+  <!-- STAGE 1: Ravana's 11th House Lock (Ekadash Bhava - House of Gains)   -->
+  <!-- ===================================================================== -->
+  <g id="stage_1">
+    <!-- Highlight 11th House Sector (Top Right Triangular Diamond) -->
+    <polygon points="450,190 580,320 710,190" fill="#78350f" fill-opacity="0.45" stroke="#f59e0b" stroke-width="2.5" stroke-dasharray="5 5" />
+    
+    <!-- 11th House Emblem Pill -->
+    <circle cx="580" cy="235" r="28" fill="#451a03" stroke="#f59e0b" stroke-width="2" />
+    <text x="580" y="242" fill="#fef08a" font-family="'Georgia', serif" font-size="20" font-weight="800" text-anchor="middle">११</text>
+    <text x="580" y="280" fill="#fef08a" font-family="'Georgia', serif" font-size="15" font-weight="700" text-anchor="middle">लाभ भाव</text>
+    <text x="580" y="298" fill="#f59e0b" font-family="'Georgia', serif" font-size="12" font-weight="600" text-anchor="middle">RAVANA'S LOCK</text>
+
+    <!-- Planetary Glyphs Bound in 11th House -->
+    <circle cx="535" cy="225" r="7" fill="#f59e0b" filter="url(#gold_bloom)" />
+    <circle cx="625" cy="225" r="7" fill="#f59e0b" filter="url(#gold_bloom)" />
+    <circle cx="550" cy="255" r="6" fill="#fef08a" />
+    <circle cx="610" cy="255" r="6" fill="#fef08a" />
+  </g>
+
+  <!-- ===================================================================== -->
+  <!-- STAGE 2: Shani's Transgression into 12th House (Vyaya / Moksha Bhava) -->
+  <!-- ===================================================================== -->
+  <g id="stage_2">
+    <!-- Highlight 12th House Sector (Top Left Triangular Diamond) -->
+    <polygon points="190,190 320,320 450,190" fill="#1e1b4b" fill-opacity="0.6" stroke="#6366f1" stroke-width="3" />
+
+    <!-- 12th House Emblem Pill -->
+    <circle cx="320" cy="235" r="30" fill="#0f172a" stroke="#6366f1" stroke-width="2.5" />
+    <text x="320" y="243" fill="#c7d2fe" font-family="'Georgia', serif" font-size="20" font-weight="800" text-anchor="middle">१२</text>
+    <text x="320" y="280" fill="#e0e7ff" font-family="'Georgia', serif" font-size="15" font-weight="700" text-anchor="middle">व्यय भाव</text>
+    <text x="320" y="298" fill="#a5b4fc" font-family="'Georgia', serif" font-size="12" font-weight="600" text-anchor="middle">HOUSE OF FALL</text>
+
+    <!-- Shani's Sacred Iron Raven Symbol in 12th House -->
+    <circle cx="320" cy="235" r="14" fill="none" stroke="#818cf8" stroke-width="2" stroke-dasharray="3 3" />
+  </g>
+
+  <!-- ===================================================================== -->
+  <!-- STAGE 3: Shani's Cosmic Gaze Vector (वक्र दृष्टि - Piercing Destiny)    -->
+  <!-- ===================================================================== -->
+  <g id="stage_3">
+    <!-- Dynamic Aspect Ray from 12th House to Central Ascendant (Lanka Throne) -->
+    <line x1="320" y1="235" x2="450" y2="450" stroke="url(#karmic_ray_grad)" stroke-width="4.5" stroke-linecap="round" />
+    
+    <!-- Secondary Aspect Rays (3rd, 7th, 10th Drishti) -->
+    <line x1="320" y1="235" x2="450" y2="710" stroke="#f59e0b" stroke-width="2" stroke-dasharray="6 6" opacity="0.75" />
+    <line x1="320" y1="235" x2="710" y2="450" stroke="#f59e0b" stroke-width="2" stroke-dasharray="6 6" opacity="0.75" />
+
+    <!-- Central Focus Bindu (Center of Mandala - Lanka Throne) -->
+    <circle cx="450" cy="450" r="38" fill="#180d05" stroke="#f59e0b" stroke-width="3" />
+    <circle cx="450" cy="450" r="16" fill="#f59e0b" filter="url(#gold_bloom)" />
+    <text x="450" y="515" fill="#fef08a" font-family="'Georgia', serif" font-size="16" font-weight="800" text-anchor="middle">लंका सिंहासन</text>
+    <text x="450" y="534" fill="#f59e0b" font-family="'Georgia', serif" font-size="13" font-weight="600" text-anchor="middle">LANKA THRONE</text>
+  </g>
+
+  <!-- ===================================================================== -->
+  <!-- STAGE 4: Karmic Inevitability (अटल नियति चक्र)                          -->
+  <!-- ===================================================================== -->
+  <g id="stage_4">
+    <!-- Cosmic Karma Ring -->
+    <circle cx="450" cy="450" r="160" fill="none" stroke="url(#karmic_ray_grad)" stroke-width="3" stroke-dasharray="8 8" />
+
+    <!-- Sanskrit Moral Verdict Banner -->
+    <rect x="230" y="745" width="440" height="55" rx="8" fill="#180d05" stroke="#b45309" stroke-width="2" />
+    <text x="450" y="772" fill="#fef08a" font-family="'Georgia', serif" font-size="20" font-weight="900" text-anchor="middle" letter-spacing="1">कर्मण्येवाधिकारस्ते • नियति शाश्वती</text>
+    <text x="450" y="791" fill="#f59e0b" font-family="'Georgia', serif" font-size="12" font-weight="700" text-anchor="middle" letter-spacing="2">KARMA OVERCOMES SUPREME HUBRIS</text>
+  </g>
+</svg>

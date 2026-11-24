@@ -517,6 +517,12 @@ visual:
       description: "Astrolabe coordinates mapped to Aryabhata's planetary epicycles."
       recommended_motion: "unroll_and_zoom"
 
+    - id: shani_drishti_mandala
+      file: assets/svg/diagrams/shani_drishti_mandala.svg
+      domain: "Vedic Archaeo-Astronomy & Karmic Geometry"
+      description: "12-house Vedic horoscope mandala illustrating Ravana's 11th-house lock and Shani Dev's 12th-house karmic aspect."
+      recommended_motion: "slow_spin_orbit"
+
   # Theatrical Infographics & Callout Cards (assets/svg/infographics/)
   infographics:
     - id: comparison_card
