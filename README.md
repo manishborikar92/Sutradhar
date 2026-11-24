@@ -76,17 +76,23 @@ Sutradhar/
 │   ├── SETUP_AND_OPERATIONS.md      # Installation, credentials & operations runbook
 │   └── schema.sql                   # SQLite schema definition (Version 3.0.0)
 ├── scripts/                         # Production pipeline CLI tools
+│   ├── engine/                      # Modular Video Engine Core (v4.0)
+│   │   ├── config.py                # Framing, 9:16 Golden Zone & joint limits
+│   │   ├── puppet_rig.py            # Standardized 480x960 puppet rig & ContinuousLifeEngine
+│   │   ├── lipsync_engine.py        # Devanagari Akshara phonetic viseme parser
+│   │   └── composer.py              # Modular Jinja2 composition assembler
 │   ├── audition_voices.py           # ElevenLabs voice audition utility
 │   ├── build_audio.py               # ElevenLabs TTS & Whisper forced alignment
 │   ├── db_manager.py                # Database migrations, context & state manager
-│   ├── generate_composition.py      # Multi-shot composition engine
+│   ├── generate_composition.py      # Composition engine CLI bridge
 │   ├── generate_pose_sheets.py      # Character puppet pose generator
 │   ├── preview_frames.py            # Pre-render snapshot & safe-zone validator
 │   ├── publish_youtube.py           # YouTube Data API v3 uploader & verifier
 │   └── render_and_qa.py             # Video renderer, audio mastering & KinoCut QA
-├── tests/                           # Comprehensive automated test suite (127 tests)
+├── templates/                       # Jinja2 Composition Templates
+│   └── composition/                 # Self-contained composition templates (index, styles, engine)
+├── tests/                           # Comprehensive automated test suite (155+ tests)
 ├── config.yaml                      # Global channel configuration & thresholds
-├── engine.js                        # HyperFrames client animation runtime
 ├── package.json                     # Node.js dependencies & scripts
 ├── pronunciations_hi.yaml           # Hindi Devanagari pronunciation overrides
 └── requirements.txt                 # Python dependencies

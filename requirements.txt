@@ -16,6 +16,7 @@ pydantic>=2.9.0,<3.0.0
 PyYAML>=6.0.2,<7.0.0
 Pillow>=10.4.0,<12.0.0
 python-dotenv>=1.0.1,<2.0.0
+Jinja2>=3.1.0,<4.0.0
 
 # YouTube Data API v3 & OAuth2
 google-api-python-client>=2.150.0,<3.0.0

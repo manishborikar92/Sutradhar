@@ -874,23 +874,24 @@ def build_episode_audio(
 
             speed = round(min(1.15, max(0.80, base_speed * multiplier)), 3)
 
-        # 5. Synthesize scene with ElevenLabs
+        # 5. Synthesize scene with ElevenLabs (passing calculated pacing speed)
+        scene_voice_settings = {**voice_settings, "speed": speed}
         try:
             if hasattr(tts_engine, "synthesize_scene"):
                 samples, sr = tts_engine.synthesize_scene(
                     tagged_text,
-                    voice_settings=voice_settings,
+                    voice_settings=scene_voice_settings,
                 )
             elif hasattr(tts_engine, "synthesize"):
                 samples, sr = tts_engine.synthesize(
                     tagged_text,
-                    voice_settings=voice_settings,
+                    voice_settings=scene_voice_settings,
                 )
             elif hasattr(tts_engine, "create"):
                 samples, sr = tts_engine.create(
                     tagged_text,
                     voice=None,
-                    speed=1.0,
+                    speed=speed,
                     lang=active_lang,
                 )
             else:

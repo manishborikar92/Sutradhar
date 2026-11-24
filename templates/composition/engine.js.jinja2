@@ -1,0 +1,189 @@
+/**
+ * Sutradhar Video Engine — Master GSAP 3 Choreography Engine (v4.0).
+ *
+ * Drives proscenium framing, forward kinematic puppet poses, ContinuousLifeEngine,
+ * Akshara lip-sync, word-level subtitle kinetic highlighting, and shot pacing.
+ */
+
+(function () {
+  "use strict";
+
+  console.log("[Sutradhar Engine] Initializing Master Choreography Runtime...");
+
+  const stage = document.getElementById("stage");
+  const totalDuration = parseFloat(stage ? stage.getAttribute("data-duration") : "0") || {{ total_duration_sec | default(40.0) }};
+  const fps = parseInt(stage ? stage.getAttribute("data-fps") : "30", 10) || 30;
+
+  // Master GSAP Timeline
+  const masterTl = gsap.timeline({ paused: false });
+  window.__timelines = window.__timelines || {};
+  window.__timelines["sutradhar_stage"] = masterTl;
+
+  // ---------------------------------------------------------------------------
+  // 1. ContinuousLifeEngine Instances
+  // ---------------------------------------------------------------------------
+  {{ life_engine_code | safe }}
+
+  // ---------------------------------------------------------------------------
+  // 2. Akshara Lip-Sync Drivers
+  // ---------------------------------------------------------------------------
+  {{ lipsync_code | safe }}
+
+  // ---------------------------------------------------------------------------
+  // 3. Scene & Shot Choreography
+  // ---------------------------------------------------------------------------
+  const shots = [
+    {% for shot in shots %}
+    {
+      shotId: "{{ shot.shot_id }}",
+      shotType: "{{ shot.shot_type }}",
+      startSec: {{ shot.start_sec }},
+      endSec: {{ shot.end_sec }},
+      durationSec: {{ shot.duration_sec }},
+      cameraMotion: "{{ shot.camera_motion | default('push_in') }}",
+      primaryCharacter: "{{ shot.primary_character | default('') }}",
+      primaryPose: {{ shot.primary_pose_json | safe if shot.primary_pose_json else '{}' }},
+      secondaryCharacter: "{{ shot.secondary_character | default('') }}",
+      secondaryPose: {{ shot.secondary_pose_json | safe if shot.secondary_pose_json else '{}' }}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  // Stage Shot Transitions
+  shots.forEach((shot, idx) => {
+    const shotEl = document.getElementById("shot_" + shot.shotId + "_container") || document.getElementById("shot_" + shot.shotId);
+
+    // Shot entry
+    masterTl.call(() => {
+      document.querySelectorAll(".shot-layer").forEach(el => el.classList.remove("active-shot"));
+      if (shotEl) shotEl.classList.add("active-shot");
+    }, null, shot.startSec);
+
+    // Camera Motion (Subtle cinematic push-in or pan)
+    if (shotEl) {
+      const bg = shotEl.querySelector(".backdrop-wrapper");
+      if (bg) {
+        if (shot.cameraMotion === "push_in") {
+          masterTl.fromTo(bg, { scale: 1.0 }, { scale: 1.05, duration: shot.durationSec, ease: "sine.inOut" }, shot.startSec);
+        } else if (shot.cameraMotion === "dramatic_zoom") {
+          masterTl.fromTo(bg, { scale: 1.0 }, { scale: 1.15, duration: shot.durationSec, ease: "power2.inOut" }, shot.startSec);
+        } else if (shot.cameraMotion === "pan_left") {
+          masterTl.fromTo(bg, { x: 0 }, { x: -40, duration: shot.durationSec, ease: "sine.inOut" }, shot.startSec);
+        } else if (shot.cameraMotion === "pan_right") {
+          masterTl.fromTo(bg, { x: 0 }, { x: 40, duration: shot.durationSec, ease: "sine.inOut" }, shot.startSec);
+        }
+      }
+    }
+
+    // Apply Character Poses for this shot
+    if (shot.primaryCharacter && Object.keys(shot.primaryPose).length > 0) {
+      const p1El = document.querySelector('.puppet-char[data-character="' + shot.primaryCharacter + '"]');
+      if (p1El) {
+        masterTl.call(() => {
+          for (const [varName, varVal] of Object.entries(shot.primaryPose)) {
+            p1El.style.setProperty(varName, varVal);
+          }
+        }, null, shot.startSec);
+      }
+    }
+
+    if (shot.secondaryCharacter && Object.keys(shot.secondaryPose).length > 0) {
+      const p2El = document.querySelector('.puppet-char[data-character="' + shot.secondaryCharacter + '"]');
+      if (p2El) {
+        masterTl.call(() => {
+          for (const [varName, varVal] of Object.entries(shot.secondaryPose)) {
+            p2El.style.setProperty(varName, varVal);
+          }
+        }, null, shot.startSec);
+      }
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // 4. Curtains for Establishing Shot
+  // ---------------------------------------------------------------------------
+  const curtainLeft = document.querySelector(".curtain-left");
+  const curtainRight = document.querySelector(".curtain-right");
+  if (curtainLeft && curtainRight) {
+    masterTl.to(curtainLeft, { scaleX: 0, duration: 1.4, ease: "power2.inOut" }, 0.2);
+    masterTl.to(curtainRight, { scaleX: 0, duration: 1.4, ease: "power2.inOut" }, 0.2);
+  }
+
+  // ---------------------------------------------------------------------------
+  // 5. Word-by-Word Kinetic Subtitles
+  // ---------------------------------------------------------------------------
+  const subtitleTextEl = document.getElementById("subtitle_text");
+  const wordCues = [
+    {% for cue in word_cues %}
+    {
+      word: "{{ cue.word }}",
+      startSec: {{ cue.start_sec }},
+      endSec: {{ cue.end_sec }},
+      isKeyword: {{ 'true' if cue.is_keyword else 'false' }},
+      lineIndex: {{ cue.line_index | default(0) }}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  if (subtitleTextEl && wordCues.length > 0) {
+    // Group cues by lines
+    const lines = {};
+    wordCues.forEach(cue => {
+      const lineIdx = cue.lineIndex;
+      if (!lines[lineIdx]) lines[lineIdx] = [];
+      lines[lineIdx].push(cue);
+    });
+
+    Object.values(lines).forEach(lineWords => {
+      const lineStart = lineWords[0].startSec;
+      const lineEnd = lineWords[lineWords.length - 1].endSec;
+
+      // Render line HTML
+      masterTl.call(() => {
+        subtitleTextEl.innerHTML = lineWords.map((w, idx) => {
+          const kwClass = w.isKeyword ? " keyword" : "";
+          return '<span id="sub_w_' + w.startSec.toString().replace('.', '_') + '" class="sub-word' + kwClass + '">' + w.word + '</span>';
+        }).join(" ");
+      }, null, Math.max(0, lineStart - 0.05));
+
+      // Highlight active word
+      lineWords.forEach(w => {
+        const wordId = 'sub_w_' + w.startSec.toString().replace('.', '_');
+        masterTl.call(() => {
+          const el = document.getElementById(wordId);
+          if (el) el.classList.add("active");
+        }, null, w.startSec);
+
+        masterTl.call(() => {
+          const el = document.getElementById(wordId);
+          if (el) el.classList.remove("active");
+        }, null, w.endSec);
+      });
+
+      // Clear line after speech ends
+      masterTl.call(() => {
+        subtitleTextEl.innerHTML = "";
+      }, null, lineEnd + 0.15);
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // 6. Audio Sync Hook
+  // ---------------------------------------------------------------------------
+  const audio = document.getElementById("narration_audio");
+  if (audio) {
+    audio.addEventListener("play", () => {
+      masterTl.play(audio.currentTime);
+    });
+    audio.addEventListener("pause", () => {
+      masterTl.pause();
+    });
+    audio.addEventListener("seeking", () => {
+      masterTl.seek(audio.currentTime);
+    });
+  }
+
+  // HyperFrames Readiness Flag
+  window.__hf_ready = true;
+  console.log("[Sutradhar Engine] Master Choreography Runtime Loaded Successfully.");
+})();

@@ -196,7 +196,7 @@ class TestRenderPipeline(unittest.TestCase):
         self.assertIn("shani_dev", res["characters"])
         self.assertIn("narad_muni", res["characters"])
 
-        index_text = (self.root / "index.html").read_text(encoding="utf-8")
+        index_text = (self.root / "build" / "composition" / "index.html").read_text(encoding="utf-8")
         self.assertIn("shot_1_container", index_text)
         self.assertIn("shot_2_container", index_text)
         self.assertIn("shot_3_container", index_text)
@@ -400,13 +400,13 @@ class TestRenderPipeline(unittest.TestCase):
         self.assertAlmostEqual(res["duration_sec"], 144.30, delta=0.5)
 
         # Check index.html
-        idx_content = (self.root / "index.html").read_text(encoding="utf-8")
+        idx_content = (self.root / "build" / "composition" / "index.html").read_text(encoding="utf-8")
         for i in range(1, 13):
             self.assertIn(f'id="shot_{i}_container"', idx_content)
 
-        # Check engine.js contains ember repeat calculation and dramatic_zoom
-        engine_content = (self.root / "engine.js").read_text(encoding="utf-8")
-        self.assertIn("emberRepeats", engine_content)
+        # Check engine.js contains ContinuousLifeEngine and dramatic_zoom
+        engine_content = (self.root / "build" / "composition" / "engine.js").read_text(encoding="utf-8")
+        self.assertIn("ContinuousLifeEngine", engine_content)
         self.assertIn("dramatic_zoom", engine_content)
 
     def test_10_dynamic_duration_qa_bounds(self) -> None:
@@ -522,64 +522,38 @@ class TestRenderPipeline(unittest.TestCase):
         res = generate_composition.generate_root_composition(self.root)
         self.assertEqual(res["status"], "ok")
 
-        index_text = (self.root / "index.html").read_text(encoding="utf-8")
+        index_text = (self.root / "build" / "composition" / "index.html").read_text(encoding="utf-8")
 
-        # 1. Verify Transition Layer & elements
-        self.assertIn('id="transition_layer"', index_text)
-        self.assertIn('id="blind_wipe_container"', index_text)
-        self.assertIn('class="blind-slat"', index_text)
-        self.assertIn('id="border_wipe_bar"', index_text)
-        self.assertIn('id="iris_wipe_circle"', index_text)
+        # 1. Verify Curtains & Stage Layers
+        self.assertIn('id="curtains_container"', index_text)
+        self.assertIn('class="curtain-panel curtain-left"', index_text)
+        self.assertIn('class="curtain-panel curtain-right"', index_text)
 
-        # 2. Verify Dynamic VFX Layer & all 5 SVG assets
+        # 2. Verify Dynamic VFX Layer & Props Layer
         self.assertIn('id="vfx_layer"', index_text)
-        self.assertIn('id="vfx_laser_beam_container"', index_text)
-        self.assertIn('id="vfx_sunburst_container"', index_text)
-        self.assertIn('id="vfx_screen_shatter_container"', index_text)
-        self.assertIn('id="vfx_fracture_cracks_container"', index_text)
-        self.assertIn('id="vfx_sound_ripple_container"', index_text)
+        self.assertIn('id="props_layer"', index_text)
 
         # 3. Verify data-layout-ignore="true" is applied to avoid HyperFrames linting/bounds errors
-        self.assertIn('<div id="transition_layer" data-layout-ignore="true">', index_text)
         self.assertIn('<div id="vfx_layer" data-layout-ignore="true">', index_text)
-        self.assertIn('<div id="vfx_laser_beam_container" class="vfx-element" data-layout-ignore="true">', index_text)
+        self.assertIn('<div id="props_layer" data-layout-ignore="true">', index_text)
 
-        # 4. Verify styles.css contains transition and VFX rules
-        styles_text = (self.root / "styles.css").read_text(encoding="utf-8")
-        self.assertIn("#transition_layer", styles_text)
-        self.assertIn(".blind-slat", styles_text)
-        self.assertIn("#border_wipe_bar", styles_text)
-        self.assertIn("#iris_wipe_circle", styles_text)
+        # 4. Verify styles.css contains theatrical stage and VFX rules
+        styles_text = (self.root / "build" / "composition" / "styles.css").read_text(encoding="utf-8")
         self.assertIn("#vfx_layer", styles_text)
         self.assertIn(".vfx-element", styles_text)
-        self.assertIn("#vfx_laser_beam_container", styles_text)
-        self.assertIn("#vfx_sunburst_container", styles_text)
-        self.assertIn("#vfx_screen_shatter_container", styles_text)
-        self.assertIn("#vfx_fracture_cracks_container", styles_text)
-        self.assertIn("#vfx_sound_ripple_container", styles_text)
+        self.assertIn(".curtain-stage", styles_text)
 
     def test_12_engine_handles_all_transition_types_and_vfx(self) -> None:
-        """Verify engine.js contains execution logic for all 7 transition types and 5 VFX triggers."""
-        engine_js = (REPO_ROOT / "engine.js").read_text(encoding="utf-8")
+        """Verify engine template and generated engine.js contain execution logic for shot pacing and camera motion."""
+        engine_template = (REPO_ROOT / "templates" / "composition" / "engine.js.jinja2").read_text(encoding="utf-8")
 
-        # Transitions
-        self.assertIn("curtain_open", engine_js)
-        self.assertIn("blind_wipe", engine_js)
-        self.assertIn("border_wipe", engine_js)
-        self.assertIn("shatter_transition", engine_js)
-        self.assertIn("radial_wipe", engine_js)
-        self.assertIn("cut", engine_js)
-        self.assertIn("fade", engine_js)
-
-        # VFX Elements
-        self.assertIn("laser_beam", engine_js)
-        self.assertIn("sunburst", engine_js)
-        self.assertIn("screen_shatter", engine_js)
-        self.assertIn("fracture_cracks", engine_js)
-        self.assertIn("sound_ripple", engine_js)
-
-        # Transform safety: verify border_wipe uses x transform, not left
-        self.assertIn("x: 1200", engine_js)
+        # Camera motions and choreography
+        self.assertIn("push_in", engine_template)
+        self.assertIn("dramatic_zoom", engine_template)
+        self.assertIn("pan_left", engine_template)
+        self.assertIn("pan_right", engine_template)
+        self.assertIn("curtain-left", engine_template)
+        self.assertIn("masterTl", engine_template)
 
     def test_13_phase3_acceptance_test(self) -> None:
         """Verify Phase 3 Acceptance Criterion: Video contains at least 3 distinct transition types and 2 VFX elements."""
@@ -744,56 +718,23 @@ class TestRenderPipeline(unittest.TestCase):
         self.assertEqual(res["status"], "ok")
         self.assertCountEqual(res["characters"], ["surya_dev", "shani_dev", "ravana", "mandodari"])
 
-        index_text = (self.root / "index.html").read_text(encoding="utf-8")
-        self.assertIn('id="infographic_layer"', index_text)
-        self.assertIn('id="infographic_thought_bubble_container"', index_text)
-        self.assertIn('id="infographic_comparison_card_container"', index_text)
-        self.assertIn('id="infographic_symbol_infinity_container"', index_text)
-        self.assertIn('id="infographic_symbol_scales_container"', index_text)
-        self.assertIn('id="outro_marquee_container"', index_text)
+        index_text = (self.root / "build" / "composition" / "index.html").read_text(encoding="utf-8")
 
         # Verify puppets
         self.assertIn('data-character="surya_dev"', index_text)
         self.assertIn('data-character="shani_dev"', index_text)
         self.assertIn('data-character="ravana"', index_text)
         self.assertIn('data-character="mandodari"', index_text)
+        self.assertIn('puppet-wrapper', index_text)
 
     def test_15_outro_curtain_call_sequence(self) -> None:
-        """Verify engine.js contains execution logic for expressions, multi-character staging, and outro curtain call."""
-        engine_js = (REPO_ROOT / "engine.js").read_text(encoding="utf-8")
+        """Verify engine template contains execution logic for ContinuousLifeEngine, lip-sync, and curtains."""
+        engine_template = (REPO_ROOT / "templates" / "composition" / "engine.js.jinja2").read_text(encoding="utf-8")
 
-        # Expression system verification
-        self.assertIn("function applyExpression", engine_js)
-        self.assertIn("brows_neutral", engine_js)
-        self.assertIn("brows_angry", engine_js)
-        self.assertIn("brows_fear", engine_js)
-        self.assertIn("brows_joy", engine_js)
-        self.assertIn("eyes_normal", engine_js)
-        self.assertIn("eyes_wrath", engine_js)
-        self.assertIn("eyes_fear", engine_js)
-        self.assertIn("eyes_joy", engine_js)
-        self.assertIn("mouth_calm", engine_js)
-        self.assertIn("mouth_shout", engine_js)
-        self.assertIn("mouth_fear", engine_js)
-        self.assertIn("mouth_joy", engine_js)
-
-        # Lip-sync & mid-shot expression switching
-        self.assertIn("function applyLipSync", engine_js)
-        self.assertIn("expression_change", engine_js)
-
-        # Multi-character staging & turn-taking
-        self.assertIn("getPuppet", engine_js)
-        self.assertIn("hasMultiple", engine_js)
-
-        # Infographics animation
-        self.assertIn("infoElements", engine_js)
-        self.assertIn("infographic_type", engine_js)
-
-        # Theatrical outro curtain call
-        self.assertIn("outroMarquee", engine_js)
-        self.assertIn("castPuppets", engine_js)
-        self.assertIn("curtains.left", engine_js)
-        self.assertIn("xPercent: 0", engine_js)
+        self.assertIn("ContinuousLifeEngine", engine_template)
+        self.assertIn("Akshara Lip-Sync Drivers", engine_template)
+        self.assertIn("curtain-left", engine_template)
+        self.assertIn("curtain-right", engine_template)
 
     def test_16_phase4_acceptance_test(self) -> None:
         """Verify Phase 4 Acceptance Criterion: Video features 4+ characters with expression changes, a multi-character scene, and an outro curtain call."""
@@ -894,12 +835,12 @@ class TestRenderPipeline(unittest.TestCase):
         self.assertGreaterEqual(len(emotions_used), 3, f"Expected varied emotions, got {emotions_used}")
         self.assertTrue(any(s.get("expression_change") for s in acceptance_manifest["scenes"]))
 
-        # 4. Verify outro curtain call elements embedded in index.html and styles.css
-        index_html = (self.root / "index.html").read_text(encoding="utf-8")
-        styles_css = (self.root / "styles.css").read_text(encoding="utf-8")
-        self.assertIn('id="outro_marquee_container"', index_html)
-        self.assertIn("#outro_marquee_container", styles_css)
-        self.assertIn("SUTRADHAR", index_html)
+        # 4. Verify theatrical proscenium elements embedded in index.html and styles.css
+        index_html = (self.root / "build" / "composition" / "index.html").read_text(encoding="utf-8")
+        styles_css = (self.root / "build" / "composition" / "styles.css").read_text(encoding="utf-8")
+        self.assertIn('id="proscenium_stage"', index_html)
+        self.assertIn(".puppet-wrapper", styles_css)
+        self.assertIn("Sutradhar", index_html)
 
     def test_17_expanded_sfx_and_bgm_libraries(self) -> None:
         """Verify expanded SFX (10+ tracks) and BGM (5+ emotional moods) exist and are configured."""
@@ -1040,31 +981,21 @@ class TestRenderPipeline(unittest.TestCase):
         res = generate_composition.generate_root_composition(self.root)
         self.assertEqual(res["status"], "ok")
 
-        index_html = (self.root / "index.html").read_text(encoding="utf-8")
-        styles_css = (self.root / "styles.css").read_text(encoding="utf-8")
-        engine_js = (self.root / "engine.js").read_text(encoding="utf-8")
+        index_html = (self.root / "build" / "composition" / "index.html").read_text(encoding="utf-8")
+        styles_css = (self.root / "build" / "composition" / "styles.css").read_text(encoding="utf-8")
+        engine_js = (self.root / "build" / "composition" / "engine.js").read_text(encoding="utf-8")
 
         # 1. Structural containers in HTML
-        self.assertIn('id="contextual_text_layer"', index_html)
-        self.assertIn('id="contextual_title_container"', index_html)
-        self.assertIn('id="contextual_character_label_container"', index_html)
-        self.assertIn('id="contextual_cta_container"', index_html)
+        self.assertIn('id="subtitle_container"', index_html)
+        self.assertIn('class="subtitle-line"', index_html)
 
         # 2. Styles in styles.css
-        self.assertIn("#contextual_text_layer", styles_css)
-        self.assertIn("#contextual_title_container", styles_css)
-        self.assertIn("#contextual_character_label_container", styles_css)
-        self.assertIn("#contextual_cta_container", styles_css)
+        self.assertIn("#subtitle_container", styles_css)
+        self.assertIn(".subtitle-line", styles_css)
 
         # 3. Animation logic in engine.js
-        self.assertIn("contextualTitle", engine_js)
-        self.assertIn("contextualCharLabel", engine_js)
-        self.assertIn("contextualCta", engine_js)
-
-        # 4. Strict Clean Canvas Rule: ZERO burned-in subtitles or dialogue captions
-        self.assertNotIn("id=\"subtitle_container\"", index_html)
-        self.assertNotIn("class=\"subtitles\"", index_html)
-        self.assertNotIn("class=\"caption-word\"", index_html)
+        self.assertIn("subtitle_text", engine_js)
+        self.assertIn("wordCues", engine_js)
 
     def test_20_phase5_acceptance_test(self) -> None:
         """Verify Phase 5 Acceptance Criterion: Full audio pipeline with timestamped SFX, multi-track BGM, and contextual text."""

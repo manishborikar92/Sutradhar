@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="{{ language | default('hi') }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1080, height=1920, initial-scale=1.0">
+  <title>{{ youtube_title | default('Sutradhar Episode') }}</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="stage" class="clip" data-composition-id="sutradhar_stage" data-width="1080" data-height="1920" data-fps="30" data-duration="{{ total_duration_sec }}">
+    <!-- 1. Background / Backdrops Layer -->
+    <div id="backdrops_layer">
+      {% for shot in shots %}
+      <div id="shot_{{ shot.shot_id }}_container" class="shot-layer{% if loop.first %} active-shot{% endif %}" data-shot-id="{{ shot.shot_id }}">
+        <div class="backdrop-wrapper" data-layout-ignore="true">
+          {{ shot.backdrop_svg | safe }}
+        </div>
+        {% if shot.foreground_svg %}
+        <div class="foreground-wrapper" data-layout-ignore="true">
+          {{ shot.foreground_svg | safe }}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- 2. Theatrical Proscenium Arch & Floor Shadow -->
+    <div id="proscenium_stage" data-layout-ignore="true">
+      <div class="stage-floor-shadow"></div>
+      <div class="proscenium-valance"></div>
+      <div class="proscenium-pillar pillar-left"></div>
+      <div class="proscenium-pillar pillar-right"></div>
+    </div>
+
+    <!-- 3. Dynamic Storytelling Props Layer -->
+    <div id="props_layer" data-layout-ignore="true">
+      {% for prop in props %}
+      <div id="{{ prop.id }}" class="prop-wrapper" style="{{ prop.style }}">
+        {{ prop.svg | safe }}
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- 4. Puppet Articulation Layer (Standardized 480x960px, transform-origin: 50% 100%) -->
+    <div id="characters_layer" data-layout-ignore="true">
+      {% for puppet in puppets %}
+      <div id="{{ puppet.wrapper_id }}" 
+           class="puppet-wrapper puppet-char" 
+           data-character="{{ puppet.character_name }}"
+           style="{{ puppet.inline_style }}">
+        {{ puppet.svg | safe }}
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- 5. Visual Effects Layer -->
+    <div id="vfx_layer" data-layout-ignore="true">
+      {% for vfx in vfx_elements %}
+      <div id="{{ vfx.id }}" class="vfx-element" data-layout-ignore="true">
+        {{ vfx.svg | safe }}
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- 6. Word-by-Word Kinetic Subtitle Overlay (Bottom-Center Theatrical Staging) -->
+    <div id="subtitle_container" class="subtitle-box" data-layout-ignore="true">
+      <div id="subtitle_text" class="subtitle-line"></div>
+    </div>
+
+    <!-- 7. Curtains for Establishing Shot / Outro -->
+    <div id="curtains_container" class="curtain-stage" data-layout-ignore="true">
+      <div class="curtain-panel curtain-left"></div>
+      <div class="curtain-panel curtain-right"></div>
+    </div>
+
+    <!-- 8. Audio Driver Hook -->
+    <audio id="narration_audio" src="{{ audio_path }}" data-start="0" data-duration="{{ total_duration_sec }}" preload="auto"></audio>
+  </div>
+
+  <script src="gsap.min.js"></script>
+  <script src="engine.js"></script>
+</body>
+</html>

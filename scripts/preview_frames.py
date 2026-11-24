@@ -32,11 +32,14 @@ from typing import Any, Optional
 from PIL import Image, ImageDraw, ImageFont
 
 SCRIPT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPT_DIR.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from db_manager import get_project_root, load_config  # noqa: E402
-from generate_composition import generate_root_composition  # noqa: E402
+from scripts.engine.composer import compose_episode  # noqa: E402
 
 
 class PreviewPipelineError(RuntimeError):
@@ -131,7 +134,7 @@ def stitch_contact_sheet(
 
 
 def sync_index_html_duration(root: Path, duration_sec: float) -> None:
-    index_file = root / "index.html"
+    index_file = root / "build" / "composition" / "index.html"
     if not index_file.is_file():
         return
     content = index_file.read_text(encoding="utf-8")
@@ -144,7 +147,7 @@ def sync_index_html_duration(root: Path, duration_sec: float) -> None:
     )
     if new_content != content:
         index_file.write_text(new_content, encoding="utf-8")
-        print(f"[INFO] Synced index.html data-duration to {dur_str}s", file=sys.stderr)
+        print(f"[INFO] Synced build/composition/index.html data-duration to {dur_str}s", file=sys.stderr)
 
 
 def run_preview_pipeline(root: Path) -> dict[str, Any]:
@@ -153,8 +156,8 @@ def run_preview_pipeline(root: Path) -> dict[str, Any]:
     manifest_path = build_dir / "manifest.js"
     manifest = parse_manifest_js(manifest_path)
 
-    # Ensure root composition files are generated & synchronized
-    generate_root_composition(root)
+    # Ensure composition files are generated & synchronized
+    compose_episode(root)
 
     scenes = manifest.get("scenes", [])
     if not scenes:
@@ -166,13 +169,13 @@ def run_preview_pipeline(root: Path) -> dict[str, Any]:
     npx_exe = shutil.which("npx") or ("npx.cmd" if sys.platform == "win32" else "npx")
 
     print(f"[INFO] Running HyperFrames lint...", file=sys.stderr)
-    lint_proc = subprocess.run([npx_exe, "hyperframes", "lint"], cwd=root, capture_output=True, text=True, check=False)
+    lint_proc = subprocess.run([npx_exe, "hyperframes", "lint", "build/composition"], cwd=root, capture_output=True, text=True, check=False)
     lint_clean = lint_proc.returncode == 0
     if not lint_clean:
         print(f"[WARN] HyperFrames lint output:\n{lint_proc.stderr or lint_proc.stdout}", file=sys.stderr)
 
     print(f"[INFO] Capturing {len(midpoints)} scene snapshots at [{midpoints_str}]...", file=sys.stderr)
-    cmd_snap = [npx_exe, "hyperframes", "snapshot", "--at", midpoints_str]
+    cmd_snap = [npx_exe, "hyperframes", "snapshot", "build/composition", "--at", midpoints_str]
     snap_proc = subprocess.run(cmd_snap, cwd=root, capture_output=True, text=True, check=False)
     if snap_proc.returncode != 0:
         raise PreviewPipelineError(f"hyperframes snapshot failed: {snap_proc.stderr or snap_proc.stdout}")
@@ -187,18 +190,22 @@ def run_preview_pipeline(root: Path) -> dict[str, Any]:
             snap_dir = candidate
 
     if not snap_dir:
-        # Fallback: scan .hyperframes/artifacts/snapshots for latest folder
-        base_snaps = root / ".hyperframes" / "artifacts" / "snapshots"
-        if base_snaps.is_dir():
-            subdirs = sorted(base_snaps.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True)
-            if subdirs and subdirs[0].is_dir():
-                snap_dir = subdirs[0]
+        # Fallback: scan composition and root .hyperframes/artifacts/snapshots
+        for base_snaps in [
+            root / "build" / "composition" / ".hyperframes" / "artifacts" / "snapshots",
+            root / ".hyperframes" / "artifacts" / "snapshots",
+        ]:
+            if base_snaps.is_dir():
+                subdirs = sorted(base_snaps.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True)
+                if subdirs and subdirs[0].is_dir():
+                    snap_dir = subdirs[0]
+                    break
 
     if not snap_dir or not snap_dir.is_dir():
         raise PreviewPipelineError(f"Could not locate snapshot output directory. Output:\n{out_text}")
 
-    # Gather frame PNGs
-    frame_files = sorted(snap_dir.glob("frame-*.png"))
+    # Gather frame PNGs (matching frame-*.png or at-*.png)
+    frame_files = sorted(list(snap_dir.glob("frame-*.png")) + list(snap_dir.glob("at-*.png")))
     if not frame_files:
         raise PreviewPipelineError(f"Zero snapshot frame PNGs found in {snap_dir}")
 

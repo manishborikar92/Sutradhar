@@ -513,12 +513,12 @@ class ScenePlan(BaseModel):
 ```
 
 ### Phase 1: Modular Engine Core, Puppet Sizing & Akshara Lip-Sync (Priority: P0 — Critical)
-- [ ] Scaffold `scripts/engine/` package and Jinja2 templates in `templates/composition/`.
-- [ ] Implement `scripts/engine/puppet_rig.py`: Standardize base puppet dimensions to $480\text{px} \times 960\text{px}$ with foot transform-origin (`50% 100%`).
-- [ ] Fix joint limits: Eliminate $105^\circ$ scarecrow angles; implement natural shoulder, elbow, and torso constraints.
-- [ ] Implement `ContinuousLifeEngine`: Diaphragmatic breathing ($2.2\text{s}$ sine), eye blinks ($3.2\text{s}$), and idle weight shifts.
-- [ ] Implement `scripts/engine/lipsync_engine.py`: Devanagari Akshara parser driving the 5 existing SVG mouth states (`mouth_calm`, `mouth_talk`, `mouth_shout`, `mouth_fear`, `mouth_joy`).
-- [ ] Fix dead pacing speed bug in `scripts/build_audio.py` by injecting `voice_settings["speed"] = speed`.
+- [x] Scaffold `scripts/engine/` package and Jinja2 templates in `templates/composition/`.
+- [x] Implement `scripts/engine/puppet_rig.py`: Standardize base puppet dimensions to $480\text{px} \times 960\text{px}$ with foot transform-origin (`50% 100%`).
+- [x] Fix joint limits: Eliminate $105^\circ$ scarecrow angles; implement natural shoulder, elbow, and torso constraints.
+- [x] Implement `ContinuousLifeEngine`: Diaphragmatic breathing ($2.2\text{s}$ sine), eye blinks ($3.2\text{s}$), and idle weight shifts.
+- [x] Implement `scripts/engine/lipsync_engine.py`: Devanagari Akshara parser driving the 5 existing SVG mouth states (`mouth_calm`, `mouth_talk`, `mouth_shout`, `mouth_fear`, `mouth_joy`).
+- [x] Fix dead pacing speed bug in `scripts/build_audio.py` by injecting `voice_settings["speed"] = speed`.
 
 ### Phase 2: Beat Decomposition, Dynamic Cinematography & Subtitles (Priority: P0 — Critical)
 - [ ] Implement `scripts/engine/beat_planner.py`: Deconstruct narrative scenes into $1.8\text{s} - 3.5\text{s}$ micro-beats (target ASL: $2.2\text{s} - 3.0\text{s}$).

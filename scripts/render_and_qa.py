@@ -38,11 +38,14 @@ import kinocut
 from PIL import Image, ImageDraw
 
 SCRIPT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPT_DIR.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from db_manager import get_project_root, load_config  # noqa: E402
-from generate_composition import generate_root_composition  # noqa: E402
+from scripts.engine.composer import compose_episode  # noqa: E402
 
 
 class RenderPipelineError(RuntimeError):
@@ -535,7 +538,7 @@ def generate_episode_thumbnail(
 
 
 def sync_index_html_duration(root: Path, duration_sec: float) -> None:
-    index_file = root / "index.html"
+    index_file = root / "build" / "composition" / "index.html"
     if not index_file.is_file():
         return
     content = index_file.read_text(encoding="utf-8")
@@ -548,7 +551,7 @@ def sync_index_html_duration(root: Path, duration_sec: float) -> None:
     )
     if new_content != content:
         index_file.write_text(new_content, encoding="utf-8")
-        print(f"[INFO] Synced index.html data-duration to {dur_str}s", file=sys.stderr)
+        print(f"[INFO] Synced build/composition/index.html data-duration to {dur_str}s", file=sys.stderr)
 
 
 def run_render_and_qa_pipeline(root: Path) -> dict[str, Any]:
@@ -557,8 +560,8 @@ def run_render_and_qa_pipeline(root: Path) -> dict[str, Any]:
     manifest_path = build_dir / "manifest.js"
     manifest = parse_manifest_js(manifest_path)
 
-    # Ensure root composition files are generated & synchronized
-    generate_root_composition(root)
+    # Ensure composition files are generated & synchronized under build/composition/
+    compose_episode(root)
 
     raw_video = build_dir / "raw_video.mp4"
     mixed_temp = build_dir / "mixed_temp.mp4"
@@ -569,7 +572,18 @@ def run_render_and_qa_pipeline(root: Path) -> dict[str, Any]:
     # Step 1: HyperFrames High Quality Render
     npx_exe = shutil.which("npx") or ("npx.cmd" if sys.platform == "win32" else "npx")
     print(f"[INFO] Rendering {raw_video.name} via HyperFrames CLI...", file=sys.stderr)
-    render_cmd = [npx_exe, "hyperframes", "render", "--quality", "high", "--include-outside-files", "-o", str(raw_video)]
+    render_cmd = [
+        npx_exe,
+        "hyperframes",
+        "render",
+        "-c",
+        "build/composition/index.html",
+        "--quality",
+        "high",
+        "--include-outside-files",
+        "-o",
+        str(raw_video),
+    ]
     proc_render = subprocess.run(render_cmd, cwd=root, capture_output=True, text=True, check=False)
     if proc_render.returncode != 0 or not raw_video.is_file():
         raise RenderPipelineError(f"HyperFrames render failed: {proc_render.stderr or proc_render.stdout}")
