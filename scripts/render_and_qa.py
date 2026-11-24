@@ -47,6 +47,7 @@ if str(SCRIPT_DIR) not in sys.path:
 from db_manager import get_project_root, load_config  # noqa: E402
 from scripts.engine.composer import compose_episode  # noqa: E402
 from scripts.engine.foley_scheduler import PROP_SFX_MAP  # noqa: E402
+from scripts.engine.qa_verifier import run_triple_gate_qa  # noqa: E402
 
 
 class RenderPipelineError(RuntimeError):
@@ -647,10 +648,41 @@ def run_render_and_qa_pipeline(root: Path) -> dict[str, Any]:
         profile=profile,
         overwrite=True,
     )
-    kino_score = float(checkpoint_res.get("quality", {}).get("overall_score", checkpoint_res.get("score", 90.0)))
+
+    # Strict Fail-Closed Validation (Zero Default / Fabricated Scores)
+    if not isinstance(checkpoint_res, dict):
+        raise RenderPipelineError(
+            f"KinoCut release checkpoint failed closed: Expected dict response, got {type(checkpoint_res).__name__}."
+        )
+
+    raw_score = None
+    if isinstance(checkpoint_res.get("quality"), dict):
+        raw_score = checkpoint_res["quality"].get("overall_score")
+    if raw_score is None:
+        raw_score = checkpoint_res.get("score")
+    if raw_score is None:
+        raw_score = checkpoint_res.get("overall_score")
+
+    if raw_score is None:
+        raise RenderPipelineError(
+            "KinoCut release checkpoint failed closed: No quality score found in checkpoint response."
+        )
+
+    try:
+        kino_score = float(raw_score)
+    except (ValueError, TypeError) as exc:
+        raise RenderPipelineError(
+            f"KinoCut release checkpoint failed closed: Invalid non-numeric quality score '{raw_score}': {exc}"
+        ) from exc
+
     print(f"[INFO] KinoCut checkpoint score: {kino_score:.1f}/100", file=sys.stderr)
     if kino_score < min_score:
-        raise RenderPipelineError(f"KinoCut quality score {kino_score} is below minimum {min_score}.")
+        raise RenderPipelineError(f"KinoCut quality score {kino_score:.1f} is below minimum {min_score:.1f}.")
+
+    if checkpoint_res.get("passed") is False:
+        raise RenderPipelineError(
+            f"KinoCut release checkpoint explicitly reported failed status (score={kino_score:.1f})."
+        )
 
     # Step 5: Verify ffprobe metadata
     media_info = probe_media(final_short)
@@ -709,6 +741,14 @@ def run_render_and_qa_pipeline(root: Path) -> dict[str, Any]:
     print(f"[INFO] Generating episode thumbnail at {thumbnail_path.name} ...", file=sys.stderr)
     generate_episode_thumbnail(final_short, thumbnail_path, manifest, actual_duration)
 
+    # Step 7: Automated Triple-Gate QA Verification (Fail-Closed)
+    print("[INFO] Running Automated Triple-Gate QA Verification Suite...", file=sys.stderr)
+    qa_report = run_triple_gate_qa(manifest=manifest, media_path=final_short, config=cfg)
+    if not qa_report.passed:
+        defects_str = "\n".join(f"  - {d}" for d in qa_report.defects)
+        raise RenderPipelineError(f"Triple-Gate QA Verification Failed Closed:\n{defects_str}")
+    print(f"[INFO] Triple-Gate QA Verification Passed: {qa_report.summary}", file=sys.stderr)
+
     report = {
         "status": "ok",
         "action": "render_and_qa",
@@ -720,6 +760,7 @@ def run_render_and_qa_pipeline(root: Path) -> dict[str, Any]:
         "height": height,
         "duration_sec": actual_duration,
         "kinocut_score": kino_score,
+        "triple_gate_qa": qa_report.to_dict(),
         "target_lufs": target_lufs,
         "streams": {
             "video_codec": v_stream.get("codec_name"),

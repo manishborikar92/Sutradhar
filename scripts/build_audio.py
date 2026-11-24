@@ -1089,8 +1089,14 @@ def build_episode_audio(
         )
         print(f"[WARN] {duration_warning}", file=sys.stderr)
 
+    try:
+        from scripts.engine.beat_planner import decompose_episode_into_beats
+        decomposed_beats = [b.to_dict() for b in decompose_episode_into_beats(manifest_scenes)]
+    except Exception:
+        decomposed_beats = manifest_scenes
+
     manifest_payload = {
-        "schema_version": "2.0",
+        "schema_version": "4.0",
         "language": active_lang,
         "content_format": active_format,
         "series_id": ep_plan.series_id,
@@ -1124,7 +1130,8 @@ def build_episode_audio(
             "trailing_silence_rms_dbfs": trailing_rms,
         },
         "scenes": manifest_scenes,
-        "beats": manifest_scenes,
+        "beats": decomposed_beats,
+        "micro_beats": decomposed_beats,
     }
 
     manifest_path = build_dir / "manifest.js"

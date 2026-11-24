@@ -22,17 +22,20 @@ To maintain flexibility while preserving automated production guarantees, follow
 
 ### 1.2 Core Production Mandates
 - **Pure Hindi Language Policy:** The channel operates **100% in Hindi (`hi`)**. All titles, descriptions, narration, dialogue, tags, and metadata must be authored in natural, culturally authentic Hindi in the **Devanagari script**. English-language script generation is discontinued.
-- **Single Master Storyteller Paradigm:** **Viraj (`uuyFQegRan8rpIQCGu9K`)** via **ElevenLabs v4 (`eleven_v4`)** at 44.1 kHz is the exclusive voice of the channel. Like a traditional Indian *Katha-vachak* or Rajasthani *Kathputli* puppeteer, Viraj performs all roles (narrator, gods, demons, sages, queens) through **inline steering tags (`[...]`)**.
-- **Duration Bounds & Pacing:**
+- **Single Master Storyteller Paradigm:** **Viraj (`uuyFQegRan8rpIQCGu9K`)** via **ElevenLabs v4 (`eleven_v4`)** synthesized and mastered at **48,000 Hz, 24-bit stereo** is the exclusive voice of the channel. Like a traditional Indian *Katha-vachak* or Rajasthani *Kathputli* puppeteer, Viraj performs all roles (narrator, gods, demons, sages, queens) through **inline steering tags (`[...]`)**.
+- **Duration Bounds & Dynamic Pacing:**
   - Hard Minimum Duration: **30.0 seconds**.
   - Hard Maximum Duration: **180.0 seconds** (3 minutes).
   - Target Retention Sweet Spot: **40.0 seconds to 120.0 seconds** (2 minutes).
-  - Scene Count: **5 to 15 scenes** per video.
-  - Scene Narration Density: **8 to 35 words** per scene.
-- **Clean-Canvas Rule:**
-  - **Zero Burned-in Subtitles/Captions:** Never render burned-in subtitles, dialogue captions, or speech words onto video frames. YouTube generates closed captions automatically from clean spoken audio.
-  - **Zero Distracting Badges:** No episode numbers, series titles, or part badges (`PART X OF Y`) cluttering the frame.
-  - **Contextual Overlays Only:** Approved theatrical title plaques, character lower-third identification pills, or outro marquees are permitted when strictly timed.
+  - Scene Count: **5 to 15 scenes** per video, decomposed into **1.8s to 3.5s micro-beats**.
+  - Average Shot Length (ASL): **Target 2.2s – 3.0s** (Strict Hard Bounds: **1.8s to 3.2s**).
+  - Maximum Static Shot Hold: **<= 3.8 seconds** (every beat must feature camera push, pan, or gesture transition).
+  - Opening Hook Limit: **<= 2.0 seconds** for the establishing beat.
+- **Theatrical Subtitles & Immersion Rules:**
+  - **Word-by-Word Kinetic Hindi Subtitles:** Staged bottom-centered (`Y >= 1400px`, bottom 340px) using elegant serif typography, warm cream text (`#fef3c7`), active-word scaling ($1.08\times$, `#ffffff`), gold emphasis (`#fbbf24`), and teal highlighting (`#38bdf8`) for critical mythological and cosmic keywords.
+  - **Complete Facial Clearance:** Subtitle and overlay staging must maintain full clearance below character heads ($Y \le 800\text{px}$) with zero facial occlusion.
+  - **Zero Distracting Modern Badges:** Never render intrusive modern badges, channel subscribe popups, or episodic part badges (`PART X OF Y`) cluttering the frame. Maintain authentic Rajasthani Kathputli proscenium theater immersion.
+  - **Theatrical Props & Overlays:** Illustrated dynamically through physical narrative props (Vedic Kundali, planetary staircase, subjugation boot, thought bubbles, fire braziers) rather than static English technical diagrams.
 - **Permanent Safety Rules:**
   - **Never run `git add`, `git commit`, or `git push`** without explicit user authorization in the current turn.
   - **Never manually edit or delete `episodes.db`**. All database operations must execute via `scripts/db_manager.py`.
@@ -202,30 +205,40 @@ Whenever a new reusable asset is added or modified in `assets/`, the AI **must i
       dominant_colors: ["#hex1", "#hex2", "#hex3"]
 ```
 
-#### Adding a Bespoke Diagram:
+#### Adding a Dynamic Storytelling Prop:
 ```yaml
-    - id: diagram_identifier
-      file: assets/svg/diagrams/diagram_name.svg
-      domain: "Archaeo-astronomy | Cosmic Physics | Ancient Engineering"
-      description: "Concise summary of diagram subject"
-      recommended_motion: "pan_zoom | slow_spin | pulse_sync"
+    - id: prop_identifier
+      file: assets/svg/props/prop_name.svg
+      type: "mandala | stepped_platform | imperial_armor | theatrical_callout | energy_clash | ritual_flame"
+      description: "Concise summary of prop narrative function"
+      recommended_motion: "kundali_shatter | staircase_climb | boot_stomp | bubble_float | eye_beam_clash | brazier_flicker"
 ```
 
 ---
 
 ## 6. Visual Directing, Screen Space & Composition
 
-### 6.1 Character Screen Space Occupancy & Framing Standards
-Characters must occupy appropriate screen space according to the narrative requirements of each scene:
+### 6.1 Shot Scale Hierarchy & Golden Action Zone Framing
+Characters and scenes are framed using the 9:16 Golden Action Zone framing system:
+- **Base Puppet Rig Dimensions:** Standardized strictly to **$480\text{px} \times 960\text{px}$** with transform origin anchored at the feet (**`50% 100%`**).
+- **Anatomical Forward Kinematics:** Joint rotations are strictly constrained within natural human limits, permanently eliminating awkward scarecrow angles.
+- **Continuous Biological Life:** Characters continuously breathe via diaphragmatic sine curves ($2.2\text{s}$ cycle), blink at randomized natural intervals ($3.2\text{s}$ base), and perform subtle idle weight shifts.
 
-| Framing Mode | Target Screen Height | Recommended Scale | Y-Offset (Center) | Usage Guidelines |
-| :--- | :---: | :---: | :---: | :--- |
-| **Close-Up (`close_up`)** | **55% – 70%** | `0.95 – 1.05` | `240 – 280px` | Climax emotional turns, intense dialogue monologues, defiant eye contact. Character face and chest dominate frame. |
-| **Medium Shot (`medium`)** | **45% – 55%** | `0.70 – 0.85` | `380 – 430px` | Standard narrative dialogue, storytelling, teaching gestures, moral debates. Balanced torso and gestures. |
-| **Wide Shot (`wide`)** | **25% – 35%** | `0.50 – 0.60` | `550 – 620px` | Establishing scene vistas, cosmic deities in space, grand temple courtyards. Emphasizes environmental scale. |
-| **Confrontation (`two_character_confrontation`)** | **40% – 50%** | `0.70 – 0.80` | `400 – 440px` | Two characters facing off across stage (`p1` at `x: -190px`, `p2` at `x: +190px, scaleX: -1.0`). Active speaker scales up to `1.15x`. |
+| Shot Scale | Canonical ID | Scale Factor | Anchor Y | Screen Height % | Composition & Editorial Intent |
+| :--- | :--- | :---: | :---: | :---: | :--- |
+| **Extreme Wide Shot** | `extreme_wide` | `0.45` | `1500px` | 22.5% | Grand mythic landscapes, Himalayan peaks, cosmic court vistas. |
+| **Full Shot** | `full_shot` | `0.65` | `1460px` | 32.5% | Full character establishing shot with complete proscenium arch visibility. |
+| **Medium Shot** | `medium` | `0.90` | `1380px` | 45.0% | Default narrative dialogue, teaching gestures, standard storytelling. |
+| **Medium Close-Up** | `medium_close_up` | `1.25` | `1280px` | 55.0% | Heightened emotion, philosophical confrontation, intense dialogue. |
+| **Close-Up** | `close_up` | `1.65` | `1200px` | 60.0% | Climactic expressions, sovereign fury, divine revelations. |
+| **Extreme Close-Up** | `extreme_close_up`| `2.20` | `1120px` | 70.0% | Third eye awakening, laser gaze beams, supreme defiance. |
 
-*Scene-Dependent Flexibility:* Scales and offsets may be modulated within the ranges above to account for multi-armed deities, towering asuras, or sitting sages.
+### 6.2 Two-Character Staging, Negative Space & Eyeline Vectors
+In two-character scenes and confrontations:
+- **Character Bounding Widths:** Maintained at **$340\text{px} – 380\text{px}$** (strict hard maximum of $400\text{px}$).
+- **Central Conversational Negative Space:** Maintained at **$160\text{px} – 200\text{px}$** between character bounds.
+- **Zero Collision Guarantee:** Character bounding boxes must never intersect (**$\text{overlap} = 0\text{px}$**).
+- **Automated Eyeline Convergence:** Head pitch and gaze angles are computed automatically from relative character coordinates, ensuring consistent eyelines across cuts and Over-The-Shoulder (OTS) reverse shots.
 
 ### 6.2 YouTube Shorts Mobile Safe-Zone Clearances (1080×1920)
 All critical visual elements must remain inside the active theatrical stage:
@@ -321,32 +334,38 @@ flowchart TD
 ### 8.1 Pre-Render Gate: Snapshot Inspection (`build/qa_grid.jpg`)
 After running `scripts/preview_frames.py`, visually inspect `build/qa_grid.jpg`:
 - **Anatomy & Joints:** Verify that puppet limbs are cleanly attached to brass rivet pins with zero detached hands or floating heads.
-- **Prop Alignment:** Confirm weapons and sacred manuscripts stay within safe boundaries and do not penetrate torso geometry unnaturally.
-- **Clean Canvas:** Verify zero burned-in subtitles, zero closed-caption text, and zero on-screen episode numbers.
-- **Safe-Zone Clearance:** Confirm heads stay below Y=288px and hands/props stay above Y=1400px.
+- **Prop Alignment:** Confirm dynamic props (Kundali, staircase, boot, thought bubbles) stay within safe boundaries and do not penetrate torso geometry unnaturally.
+- **Subtitle & Facial Clearance:** Verify bottom-centered word-by-word kinetic subtitles do not occlude character faces or heads.
+- **Safe-Zone Clearance:** Confirm heads stay below Y=288px and interactive elements stay above Y=1400px.
 
-### 8.2 Post-Render Gate: Physical Artifact Verification
-After running `scripts/render_and_qa.py`, verify the actual output files before publishing:
+### 8.2 Post-Render Gate: Automated Triple-Gate QA & Artifact Verification
+After running `scripts/render_and_qa.py`, verify the actual output files before publishing using the fail-closed Triple-Gate QA Verifier (`scripts/engine/qa_verifier.py`):
 
-1. **Contact Sheet Verification (`build/final_qa_grid.jpg`):**
-   - Inspect all decoded video frames to confirm the rendered MP4 matches the intended staging.
-   - Check for video stutter, dropped frames, black voids, or incorrect background scaling.
-2. **Thumbnail Verification (`build/thumbnail.jpg`):**
-   - Confirm thumbnail resolution is exactly `1080×1920`.
-   - Confirm file size is **$\le 2.0\text{ MB}$** (YouTube upload limit).
-   - Verify thumbnail captures a high-impact narrative hook (typically at midpoint of Shot 3 or climax).
-3. **KinoCut Audio Mastering Gate (`build/render_verification.json`):**
-   - Mastered Integrated Loudness: **-14.0 LUFS ± 0.5** (strict YouTube Shorts standard).
-   - True Peak Max: **$\le -1.0\text{ dBFS}$** (strictly prevents clipping on mobile DACs).
-   - KinoCut Quality Score: **$\ge 80.0 / 100$**.
-   - Trailing Silence: Clean digital silence floor ($\le -65\text{ dBFS}$) for $\ge 0.75\text{s}$ at conclusion.
-4. **BGM Ducking & SFX Balance:**
-   - Confirm BGM sidechain-ducks by **6:1 ratio** (-18.0 dB bed under speech), rising smoothly during narrative pauses.
-   - Confirm BGM concludes with a smooth **1.20s exponential fade** (zero abrupt cutoffs).
-   - Verify SFX volume balance: impacts (`sub_hit`, `sword_clash`) hit cleanly at -6 to -8 dB without drowning dialogue; ambient drones (`energy_hum`) linger at -16 dB.
-5. **Lip-Sync & Cut Synchronization:**
-   - Verify character mouth states (`mouth_talk` vs `mouth_calm`) align with spoken word timestamps from `build/manifest.js`.
-   - Confirm scene transitions occur on natural speech breath pauses, never clipping spoken words.
+1. **Gate 1: Cinematography & Temporal Pacing QA:**
+   - Average Shot Length (ASL): **Target 2.2s – 3.0s** (Strict Hard Bounds: **1.8s to 3.2s**).
+   - Maximum Static Shot Hold: **<= 3.8 seconds** for all beats.
+   - Opening Hook Limit: **<= 2.0 seconds**.
+   - Beat Duration Floor: **>= 1.2 seconds**.
+2. **Gate 2: Geometric & Safe-Zone QA:**
+   - 9:16 Canvas bounds ($1080\times 1920\text{px}$) strictly enforced.
+   - Character Bounding Width: **340px – 380px** (hard maximum 400px in multi-character framing).
+   - Conversational Spacing: **160px – 200px** central negative space between opponents.
+   - Zero Collision: Zero character overlap (**$\text{overlap} = 0\text{px}$**).
+   - Facial Clearance: Complete clearance below character heads ($Y \le 800\text{px}$).
+3. **Gate 3: Acoustic & Spectral Quality QA:**
+   - Sample Rate: **48,000 Hz** master (zero downsampling).
+   - Channels: **2-channel stereo** (zero mono downmixing).
+   - Spectral Ceiling: **>= 18,000 Hz** frequency retention.
+   - EBU R128 Integrated Loudness: **-14.0 LUFS ± 1.0** via `loudnorm=I=-14:TP=-1.5:LRA=11`.
+   - True Peak Max: **<= -1.5 dBTP** (protects mobile DACs against intersample clipping).
+   - BGM Sidechain Ducking: **8:1 ratio** (threshold 0.03, attack 20ms, release 500ms, makeup 1.0).
+   - FFmpeg Mixing Volume Protection: Explicit `normalize=0` (zero voiceover crushing).
+4. **Strict Fail-Closed KinoCut Checkpoint (`build/render_report.json`):**
+   - KinoCut Quality Score: **>= 80.0 / 100**.
+   - Zero Default Scores: Missing, malformed, or non-numeric scores fail closed immediately (the legacy default score of 90.0 is permanently eliminated).
+5. **Thumbnail & Contact Sheet Verification:**
+   - Contact Sheet (`build/final_qa_grid.jpg`): Inspect decoded video frames for visual integrity, smooth transitions, and zero black voids.
+   - Thumbnail (`build/thumbnail.jpg`): Exactly `1080×1920`, file size **<= 2.0 MB**, capturing a high-impact narrative hook.
 
 ### 8.3 Defect Resolution & Repair Loop
 - If visual anomalies, audio clipping, or duration violations are discovered during artifact inspection, modify `build/episode_plan.json` or the relevant SVG rig.

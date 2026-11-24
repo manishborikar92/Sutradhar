@@ -2,11 +2,11 @@
   <defs>
     <!-- Warm Royal Twilight Sky (Midnight Obsidian to Sandstone Amber) -->
     <linearGradient id="lanka_sky" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#060a16"/>
-      <stop offset="35%" stop-color="#141828"/>
-      <stop offset="65%" stop-color="#3d2010"/>
-      <stop offset="85%" stop-color="#92400e"/>
-      <stop offset="100%" stop-color="#d97706"/>
+      <stop offset="0%" stop-color="#040814"/>
+      <stop offset="35%" stop-color="#0b1a30"/>
+      <stop offset="65%" stop-color="#142846"/>
+      <stop offset="85%" stop-color="#3d352a"/>
+      <stop offset="100%" stop-color="#7c4a1e"/>
     </linearGradient>
 
     <!-- Golden Sandstone Palace Gradient -->
@@ -26,10 +26,10 @@
 
     <!-- Reflective Golden Courtyard Water Gradient -->
     <linearGradient id="courtyard_water" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#92400e"/>
-      <stop offset="30%" stop-color="#78350f"/>
-      <stop offset="65%" stop-color="#451a03"/>
-      <stop offset="100%" stop-color="#1c0701"/>
+      <stop offset="0%" stop-color="#0a1931"/>
+      <stop offset="30%" stop-color="#0a2240"/>
+      <stop offset="65%" stop-color="#07162c"/>
+      <stop offset="100%" stop-color="#030b18"/>
     </linearGradient>
 
     <!-- Carved Sandstone Pillar Gradient -->
@@ -63,8 +63,8 @@
 
   <!-- DISTANT GOLDEN MOUNTAIN RIDGES & CLIFFS OF LANKA -->
   <g id="lanka_mountains">
-    <path d="M 0 780 L 140 680 L 320 740 L 480 640 L 680 720 L 890 620 L 1080 710 L 1080 1400 L 0 1400 Z" fill="#381005" opacity="0.85"/>
-    <path d="M 0 880 L 180 790 L 420 850 L 620 760 L 840 830 L 1080 750 L 1080 1400 L 0 1400 Z" fill="#240802"/>
+    <path d="M 0 780 L 140 680 L 320 740 L 480 640 L 680 720 L 890 620 L 1080 710 L 1080 1400 L 0 1400 Z" fill="#141c2b" opacity="0.85"/>
+    <path d="M 0 880 L 180 790 L 420 850 L 620 760 L 840 830 L 1080 750 L 1080 1400 L 0 1400 Z" fill="#0d131f"/>
   </g>
 
   <!-- GOLDEN CITADEL & SPIRES (Swarna Lanka Architecture) -->
