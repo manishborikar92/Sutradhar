@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Automated tests for Phase 2: Configuration & Language Standardization.
+"""Automated tests for Configuration & Language Standardization.
 
 Verifies:
 1. config.yaml language lock: primary_language is 'hi', English 'en' profile is purged.

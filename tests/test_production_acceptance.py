@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-"""Sutradhar — Phase 5 Production Acceptance Gates & End-to-End Verification.
+"""Sutradhar — Production Acceptance Gates & End-to-End Verification.
 
-Audits all 6 production verification gates specified in
-docs/INSTRUCTIONS.md:
+Audits production verification gates:
   1. Gate 1 (Single Voice Standard): Viraj (uuyFQegRan8rpIQCGu9K) on eleven_v4
   2. Gate 2 (Character Acting Verification): Distinct acoustic profiles across archetypes
   3. Gate 3 (Zero Tag Leakage): 0 tags in Whisper transcription and subtitles
   4. Gate 4 (Zero-Waste Caching): Sub-2-second rebuild with 0 network calls
   5. Gate 5 (KinoCut Quality Gate): 44.1 kHz 16-bit PCM, -14 LUFS, trailing silence >= 0.75s
-  6. Gate 6 (Code Cleanliness): ~350 MB freed, zero Kokoro/Gemini TTS runtime refs
+  6. Gate 6 (Code Cleanliness): Zero legacy Kokoro/Gemini TTS runtime refs
 """
 
 from __future__ import annotations

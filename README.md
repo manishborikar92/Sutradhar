@@ -85,18 +85,20 @@ Sutradhar/
 │   │   ├── subtitle_engine.py       # Word-by-word kinetic Hindi subtitles with active scaling & keywords
 │   │   ├── prop_manager.py          # Dynamic storytelling props system & Golden Zone solver
 │   │   ├── foley_scheduler.py       # Multi-track BGM taxonomy & keyframe Foley scheduler
-│   │   └── composer.py              # Modular Jinja2 composition assembler
+│   │   ├── composer.py              # Modular Jinja2 composition assembler
+│   │   └── qa_verifier.py           # Automated Triple-Gate QA suite (cinematography, geometry, 48kHz audio)
 │   ├── audition_voices.py           # ElevenLabs voice audition utility
+│   ├── build_assets.py              # 48kHz BGM beds & acoustic SFX generator
 │   ├── build_audio.py               # ElevenLabs TTS & Whisper forced alignment
 │   ├── db_manager.py                # Database migrations, context & state manager
+│   ├── elevenlabs_engine.py         # ElevenLabs API client & audio decoder
 │   ├── generate_composition.py      # Composition engine CLI bridge
-│   ├── generate_pose_sheets.py      # Character puppet pose generator
 │   ├── preview_frames.py            # Pre-render snapshot & safe-zone validator
 │   ├── publish_youtube.py           # YouTube Data API v3 uploader & verifier
-│   └── render_and_qa.py             # Video renderer, audio mastering & KinoCut QA
+│   └── render_and_qa.py             # Video renderer, 48kHz audio mastering & KinoCut QA
 ├── templates/                       # Jinja2 Composition Templates
 │   └── composition/                 # Self-contained composition templates (index, styles, engine)
-├── tests/                           # Comprehensive automated test suite (190+ tests)
+├── tests/                           # Comprehensive automated test suite (249 tests)
 ├── config.yaml                      # Global channel configuration & thresholds
 ├── package.json                     # Node.js dependencies & scripts
 ├── pronunciations_hi.yaml           # Hindi Devanagari pronunciation overrides
@@ -181,12 +183,12 @@ In daily production, the pipeline executes 7 static commands sequentially with z
 
 Every generated episode must pass strict automated production gates before being uploaded:
 
-- **Audio Loudness:** Integrated loudness mastered to **-14.0 LUFS ± 0.5** with True Peak $\le -1.0$ dBFS.
-- **Dialogue Separation:** Background music sidechain-ducked by **6:1 ratio** (-18.0 dB ducking bed under speech).
+- **Audio Loudness:** Broadcast 48kHz stereo master normalized to **-14.0 LUFS ± 1.0** with True Peak $\le -1.5$ dBTP.
+- **Dialogue Separation:** Background music sidechain-ducked by **8:1 ratio** (fast 20ms attack, 500ms release).
 - **Audio Tail:** Smooth exponential fade-out over **1.20s** at conclusion (zero abrupt cutoffs).
-- **Visual Composition:** 1080×1920 vertical canvas adhering to YouTube Shorts safe-zone clearances (Top: 288px, Bottom: 520px, Right: 192px, Left: 48px).
-- **Clean Canvas:** Zero burned-in subtitles, captions, or part labels.
-- **KinoCut Gate:** Automated composite quality score $\ge 80.0 / 100$.
+- **Visual Composition:** 1080×1920 vertical canvas adhering to YouTube Shorts safe-zone clearances (Top: 288px, Bottom: 500px, Right: 192px, Left: 48px).
+- **Subtitles:** Word-by-word kinetic Hindi subtitles centered at bottom ($Y \ge 1400\text{px}$) with zero facial occlusion ($Y_{\text{head}} \le 800\text{px}$).
+- **KinoCut Gate:** Automated release checkpoint score $\ge 80.0 / 100$ and 13/13 Triple-Gate QA verification pass.
 
 ---
 
