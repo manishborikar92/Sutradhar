@@ -29,6 +29,12 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from db_manager import get_project_root, load_config, PublishResult, StateError  # noqa: E402
+from thumbnail_utils import (  # noqa: E402
+    ThumbnailValidationError,
+    ThumbnailVerificationError,
+    upload_thumbnail_and_verify,
+    validate_local_thumbnail,
+)
 
 
 class PublishPipelineError(RuntimeError):
@@ -262,6 +268,18 @@ def run_publish_pipeline(root: Path) -> dict[str, Any]:
                 "status": status_body,
             }
 
+            # Pre-validate local custom thumbnail BEFORE consuming video upload quota
+            local_thumb_info: Optional[dict[str, Any]] = None
+            if thumbnail_path.is_file():
+                local_thumb_info = validate_local_thumbnail(
+                    thumbnail_path, expected_size=(1080, 1920), allowed_formats=("JPEG",)
+                )
+                print(
+                    f"[INFO] Validated local thumbnail '{thumbnail_path.name}' "
+                    f"({local_thumb_info['width']}x{local_thumb_info['height']}, {local_thumb_info['bytes']:,} B).",
+                    file=sys.stderr,
+                )
+
             media = MediaFileUpload(str(final_video_path), chunksize=1 * 1024 * 1024, resumable=True)
             request = youtube.videos().insert(part="snippet,status", body=body, media_body=media)
             response = None
@@ -272,38 +290,30 @@ def run_publish_pipeline(root: Path) -> dict[str, Any]:
                     print(f"[INFO] Upload progress: {pct}%", file=sys.stderr)
             video_id = response.get("id")
 
-            # 2. Upload Custom Thumbnail (build/thumbnail.jpg)
+            # 2. Wait for YouTube video processing to succeed, then upload & CDN-verify custom thumbnail
             thumbnail_status = "not_provided"
+            thumbnail_verification: dict[str, Any] = {"upload_status": "not_provided", "match": True}
             if thumbnail_path.is_file() and video_id:
-                max_retries = 3
-                for attempt in range(1, max_retries + 1):
-                    try:
-                        media_thumb = MediaFileUpload(str(thumbnail_path), mimetype="image/jpeg", resumable=False)
-                        thumb_req = youtube.thumbnails().set(videoId=video_id, media_body=media_thumb)
-                        thumb_res = thumb_req.execute()
-                        thumbnail_status = "uploaded"
-                        print(f"[INFO] Successfully uploaded and applied custom thumbnail for video {video_id}.", file=sys.stderr)
-                        break
-                    except Exception as thumb_exc:
-                        is_403 = False
-                        if hasattr(thumb_exc, "resp") and getattr(thumb_exc.resp, "status", None) == 403:
-                            is_403 = True
-                        elif "403" in str(thumb_exc):
-                            is_403 = True
-
-                        if is_403:
-                            thumbnail_status = "403_forbidden_custom_thumbnails_pending"
-                            print(
-                                f"[WARN] Thumbnail upload returned 403 (Channel phone verification / Intermediate Features needed for custom thumbnails). Non-fatal: {thumb_exc}",
-                                file=sys.stderr,
-                            )
-                            break
-                        elif attempt < max_retries:
-                            print(f"[WARN] Thumbnail upload attempt {attempt} failed: {thumb_exc}. Retrying in 2s...", file=sys.stderr)
-                            time.sleep(2.0)
-                        else:
-                            thumbnail_status = f"failed: {thumb_exc}"
-                            print(f"[WARN] Thumbnail upload failed after {max_retries} attempts: {thumb_exc}", file=sys.stderr)
+                thumbnail_verification = upload_thumbnail_and_verify(
+                    youtube,
+                    video_id,
+                    thumbnail_path,
+                    is_short=True,
+                    expected_build_dir=build_dir,
+                    media_upload_cls=MediaFileUpload,
+                )
+                thumbnail_status = thumbnail_verification["upload_status"]
+                if thumbnail_status == "uploaded":
+                    print(
+                        f"[INFO] Custom thumbnail applied & verified on YouTube CDN ({thumbnail_verification.get('cdn_url')}) "
+                        f"for video {video_id}.",
+                        file=sys.stderr,
+                    )
+                else:
+                    print(
+                        f"[WARN] Custom thumbnail pending permission (403) for video {video_id}: {thumbnail_verification.get('error')}",
+                        file=sys.stderr,
+                    )
 
             # 3. Add to Series Playlist
             playlist_id = plan_data.get("youtube_playlist_id")
@@ -428,7 +438,7 @@ def run_publish_pipeline(root: Path) -> dict[str, Any]:
                             "match": s_stat.get("containsSyntheticMedia", True) is True,
                         },
                         "thumbnail": {
-                            "upload_status": thumbnail_status,
+                            **thumbnail_verification,
                             "snippet_thumbnails": list(s_snip.get("thumbnails", {}).keys()),
                         },
                     }

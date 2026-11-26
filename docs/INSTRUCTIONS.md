@@ -365,7 +365,7 @@ After running `scripts/render_and_qa.py`, verify the actual output files before 
    - Zero Default Scores: Missing, malformed, or non-numeric scores fail closed immediately (the legacy default score of 90.0 is permanently eliminated).
 5. **Thumbnail & Contact Sheet Verification:**
    - Contact Sheet (`build/final_qa_grid.jpg`): Inspect decoded video frames for visual integrity, smooth transitions, and zero black voids.
-   - Thumbnail (`build/thumbnail.jpg`): Exactly `1080×1920`, file size **<= 2.0 MB**, capturing a high-impact narrative hook.
+   - Thumbnail (`build/thumbnail.jpg`): Exactly `1080×1920` (`9:16` RGB JPEG, file size **<= 2.0 MB**, non-blank, safe margins inside the central `2:3` Shorts shelf crop `1080×1620`), capturing a high-impact narrative hook. Uploaded strictly **after** `processingDetails.processingStatus == "succeeded"` and verified live against `shortsAspectRatio` (`sardefault.jpg`) from YouTube's CDN.
 
 ### 8.3 Defect Resolution & Repair Loop
 - If visual anomalies, audio clipping, or duration violations are discovered during artifact inspection, modify `build/episode_plan.json` or the relevant SVG rig.

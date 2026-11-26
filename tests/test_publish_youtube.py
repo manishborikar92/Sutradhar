@@ -32,6 +32,26 @@ import db_manager
 import publish_youtube
 
 
+def _make_test_jpeg_bytes(size: tuple[int, int] = (1080, 1920), variant: str = "hero") -> bytes:
+    """Create a valid high-variance JPEG test image in memory."""
+    import io
+    from PIL import Image, ImageDraw
+
+    im = Image.new("RGB", size, (18, 26, 62) if variant == "hero" else (210, 225, 190))
+    draw = ImageDraw.Draw(im)
+    w, h = size
+    if variant == "hero":
+        draw.rectangle([80, 260, w - 80, 620], fill=(246, 196, 83))
+        draw.ellipse([w // 2 - 220, 820, w // 2 + 220, 1260], fill=(255, 244, 210))
+        draw.rectangle([0, h - 420, w, h], fill=(95, 48, 28))
+    else:
+        draw.rectangle([0, 0, w, h // 2], fill=(40, 110, 115))
+        draw.ellipse([120, 400, w - 120, 1500], fill=(25, 20, 35))
+    buf = io.BytesIO()
+    im.save(buf, format="JPEG", quality=92)
+    return buf.getvalue()
+
+
 class TestPublishYouTube(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp_dir = Path(tempfile.mkdtemp(prefix="sutradhar_pub_test_"))
@@ -177,7 +197,7 @@ class TestPublishYouTube(unittest.TestCase):
         mock_insert.next_chunk.return_value = (None, {"id": "mock_yt_vid_public"})
         mock_videos.insert.return_value = mock_insert
 
-        # Mock videos.list for read-back verification
+        # Mock videos.list for processing wait + read-back verification
         mock_vid_list = MagicMock()
         mock_vid_list.execute.return_value = {
             "items": [
@@ -189,13 +209,29 @@ class TestPublishYouTube(unittest.TestCase):
                         "categoryId": "27",
                         "defaultLanguage": self.cfg["channel"]["primary_language"],
                         "defaultAudioLanguage": self.cfg["channel"]["primary_language"],
-                        "thumbnails": {"default": {"url": "https://i.ytimg.com/vi/mock/default.jpg"}},
+                        "thumbnails": {
+                            "default": {"url": "https://i.ytimg.com/vi/mock_yt_vid_public/default.jpg"},
+                            "maxres": {"url": "https://i.ytimg.com/vi/mock_yt_vid_public/maxresdefault.jpg"},
+                            "shortsAspectRatio": {
+                                "url": "https://i.ytimg.com/vi/mock_yt_vid_public/sardefault.jpg",
+                                "width": 1080,
+                                "height": 1920,
+                            },
+                        },
                     },
                     "status": {
+                        "uploadStatus": "processed",
                         "privacyStatus": "public",
                         "selfDeclaredMadeForKids": False,
                         "containsSyntheticMedia": True,
                         "publishAt": None,
+                    },
+                    "processingDetails": {
+                        "processingStatus": "succeeded",
+                        "thumbnailsAvailability": "available",
+                    },
+                    "contentDetails": {
+                        "hasCustomThumbnail": True,
                     },
                 }
             ]
@@ -206,7 +242,19 @@ class TestPublishYouTube(unittest.TestCase):
         # Mock thumbnails.set
         mock_thumbnails = MagicMock()
         mock_thumb_set = MagicMock()
-        mock_thumb_set.execute.return_value = {"default": {"url": "https://i.ytimg.com/vi/mock/default.jpg"}}
+        mock_thumb_set.execute.return_value = {
+            "items": [
+                {
+                    "default": {"url": "https://i.ytimg.com/vi/mock_yt_vid_public/default.jpg"},
+                    "maxres": {"url": "https://i.ytimg.com/vi/mock_yt_vid_public/maxresdefault.jpg"},
+                    "shortsAspectRatio": {
+                        "url": "https://i.ytimg.com/vi/mock_yt_vid_public/sardefault.jpg",
+                        "width": 1080,
+                        "height": 1920,
+                    },
+                }
+            ]
+        }
         mock_thumbnails.set.return_value = mock_thumb_set
         mock_youtube.thumbnails.return_value = mock_thumbnails
 
@@ -236,8 +284,9 @@ class TestPublishYouTube(unittest.TestCase):
         mock_pl_items.list.return_value = mock_pl_item_list
         mock_youtube.playlistItems.return_value = mock_pl_items
 
-        # Create dummy thumbnail.jpg
-        (self.build_dir / "thumbnail.jpg").write_bytes(b"\xFF\xD8\xFF" + b"\x00" * 1024)
+        # Create real 1080x1920 JPEG thumbnail.jpg
+        thumb_bytes = _make_test_jpeg_bytes((1080, 1920), "hero")
+        (self.build_dir / "thumbnail.jpg").write_bytes(thumb_bytes)
 
         with patch.dict(
             os.environ,
@@ -250,7 +299,9 @@ class TestPublishYouTube(unittest.TestCase):
         ):
             with patch("google.oauth2.credentials.Credentials") as mock_creds_cls, \
                  patch("googleapiclient.discovery.build", return_value=mock_youtube) as mock_build, \
-                 patch("googleapiclient.http.MediaFileUpload"):
+                 patch("googleapiclient.http.MediaFileUpload"), \
+                 patch("thumbnail_utils.fetch_cdn_image", return_value=(200, thumb_bytes)), \
+                 patch("time.sleep"):
 
                 res = publish_youtube.run_publish_pipeline(self.tmp_dir)
 
@@ -266,12 +317,14 @@ class TestPublishYouTube(unittest.TestCase):
                 self.assertFalse(body["status"]["selfDeclaredMadeForKids"])
                 self.assertEqual(body["status"]["privacyStatus"], "public")
 
-                # Verify publish_verification.json was written
+                # Verify publish_verification.json was written including live CDN parity
                 verif_file = self.build_dir / "publish_verification.json"
                 self.assertTrue(verif_file.is_file())
                 verif = json.loads(verif_file.read_text(encoding="utf-8"))
                 self.assertEqual(verif["verification_verdict"], "PASSED")
                 self.assertEqual(verif["thumbnail_upload_status"], "uploaded")
+                self.assertTrue(verif["checks"]["thumbnail"]["match"])
+                self.assertEqual(verif["checks"]["thumbnail"]["primary_slot"], "shortsAspectRatio")
                 self.assertTrue(verif["checks"]["title"]["match"])
                 self.assertTrue(verif["checks"]["privacyStatus"]["match"])
                 self.assertTrue(verif["checks"]["playlist_membership"]["is_member"])
@@ -294,7 +347,8 @@ class TestPublishYouTube(unittest.TestCase):
                 {
                     "id": "mock_vid_403",
                     "snippet": {"title": self.sample_plan["youtube_title"][:100], "categoryId": "27"},
-                    "status": {"privacyStatus": "public", "publishAt": None},
+                    "status": {"uploadStatus": "processed", "privacyStatus": "public", "publishAt": None},
+                    "processingDetails": {"processingStatus": "succeeded"},
                 }
             ]
         }
@@ -318,7 +372,7 @@ class TestPublishYouTube(unittest.TestCase):
         mock_pl_items.list.return_value.execute.return_value = {"items": []}
         mock_youtube.playlistItems.return_value = mock_pl_items
 
-        (self.build_dir / "thumbnail.jpg").write_bytes(b"\xFF\xD8\xFF" + b"\x00" * 1024)
+        (self.build_dir / "thumbnail.jpg").write_bytes(_make_test_jpeg_bytes((1080, 1920), "hero"))
 
         with patch.dict(
             os.environ,
@@ -331,7 +385,8 @@ class TestPublishYouTube(unittest.TestCase):
         ):
             with patch("google.oauth2.credentials.Credentials"), \
                  patch("googleapiclient.discovery.build", return_value=mock_youtube), \
-                 patch("googleapiclient.http.MediaFileUpload"):
+                 patch("googleapiclient.http.MediaFileUpload"), \
+                 patch("time.sleep"):
 
                 res = publish_youtube.run_publish_pipeline(self.tmp_dir)
 
@@ -344,6 +399,86 @@ class TestPublishYouTube(unittest.TestCase):
                 self.assertTrue(verif_file.is_file())
                 verif = json.loads(verif_file.read_text(encoding="utf-8"))
                 self.assertEqual(verif["thumbnail_upload_status"], "403_forbidden_custom_thumbnails_pending")
+
+    def test_09_thumbnail_validation_and_cdn_mismatch_fails(self) -> None:
+        """Invalid local dimensions or live CDN auto-frame mismatch must fail closed."""
+        # 1. Wrong 16:9 thumbnail must fail BEFORE touching YouTube upload API
+        (self.build_dir / "thumbnail.jpg").write_bytes(_make_test_jpeg_bytes((1280, 720), "hero"))
+        mock_youtube = MagicMock()
+        with patch.dict(
+            os.environ,
+            {
+                "SUTRADHAR_OFFLINE_STUB": "0",
+                "YOUTUBE_CLIENT_ID": "mock_client_id",
+                "YOUTUBE_CLIENT_SECRET": "mock_secret",
+                "YOUTUBE_REFRESH_TOKEN": "mock_refresh",
+            },
+        ):
+            with patch("google.oauth2.credentials.Credentials"), \
+                 patch("googleapiclient.discovery.build", return_value=mock_youtube):
+                res_bad = publish_youtube.run_publish_pipeline(self.tmp_dir)
+                self.assertEqual(res_bad["upload_status"], "FAILED")
+                self.assertIn("Invalid thumbnail dimensions", res_bad["error_message"])
+                mock_youtube.videos.return_value.insert.assert_not_called()
+
+        # 2. Valid local 1080x1920 thumbnail vs mismatched live CDN image (e.g., auto-frame oar2.jpg)
+        local_bytes = _make_test_jpeg_bytes((1080, 1920), "hero")
+        wrong_cdn_bytes = _make_test_jpeg_bytes((1080, 1920), "autoframe")
+        (self.build_dir / "thumbnail.jpg").write_bytes(local_bytes)
+
+        mock_yt2 = MagicMock()
+        mock_yt2.videos().insert().next_chunk.return_value = (None, {"id": "mock_vid_mismatch"})
+        mock_yt2.videos().list().execute.return_value = {
+            "items": [
+                {
+                    "id": "mock_vid_mismatch",
+                    "snippet": {
+                        "thumbnails": {
+                            "maxres": {"url": "https://i.ytimg.com/vi/mock_vid_mismatch/maxresdefault.jpg"},
+                            "shortsAspectRatio": {
+                                "url": "https://i.ytimg.com/vi/mock_vid_mismatch/sardefault.jpg",
+                                "width": 1080,
+                                "height": 1920,
+                            },
+                        }
+                    },
+                    "status": {"uploadStatus": "processed", "privacyStatus": "public"},
+                    "processingDetails": {"processingStatus": "succeeded", "thumbnailsAvailability": "available"},
+                    "contentDetails": {"hasCustomThumbnail": True},
+                }
+            ]
+        }
+        mock_yt2.thumbnails().set().execute.return_value = {
+            "items": [
+                {
+                    "shortsAspectRatio": {
+                        "url": "https://i.ytimg.com/vi/mock_vid_mismatch/sardefault.jpg",
+                        "width": 1080,
+                        "height": 1920,
+                    }
+                }
+            ]
+        }
+
+        with patch.dict(
+            os.environ,
+            {
+                "SUTRADHAR_OFFLINE_STUB": "0",
+                "YOUTUBE_CLIENT_ID": "mock_client_id",
+                "YOUTUBE_CLIENT_SECRET": "mock_secret",
+                "YOUTUBE_REFRESH_TOKEN": "mock_refresh",
+            },
+        ):
+            with patch("google.oauth2.credentials.Credentials"), \
+                 patch("googleapiclient.discovery.build", return_value=mock_yt2), \
+                 patch("googleapiclient.http.MediaFileUpload"), \
+                 patch("thumbnail_utils.fetch_cdn_image", return_value=(200, wrong_cdn_bytes)), \
+                 patch("time.sleep"):
+                res_mm = publish_youtube.run_publish_pipeline(self.tmp_dir)
+                self.assertEqual(res_mm["upload_status"], "FAILED")
+                self.assertIn("does not match local", res_mm["error_message"])
+                verif = json.loads((self.build_dir / "publish_verification.json").read_text(encoding="utf-8"))
+                self.assertTrue(verif["verification_verdict"].startswith("FAILED:"))
 
     def test_06_e2e_db_manager_integration(self) -> None:
         """Piping publish_youtube output straight to db_manager.py --record-published must succeed in public mode."""

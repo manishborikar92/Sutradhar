@@ -48,6 +48,7 @@ from db_manager import get_project_root, load_config  # noqa: E402
 from scripts.engine.composer import compose_episode  # noqa: E402
 from scripts.engine.foley_scheduler import PROP_SFX_MAP  # noqa: E402
 from scripts.engine.qa_verifier import run_triple_gate_qa  # noqa: E402
+from thumbnail_utils import ThumbnailValidationError, validate_local_thumbnail  # noqa: E402
 
 
 class RenderPipelineError(RuntimeError):
@@ -544,20 +545,28 @@ def generate_episode_thumbnail(
     if not output_thumbnail_path.is_file():
         raise RenderPipelineError(f"Failed to generate thumbnail at '{output_thumbnail_path}'.")
 
-    # Verify dimensions and enforce size <= 2MB
+    # Verify dimensions, RGB color mode, and enforce size <= 2MB
     with Image.open(output_thumbnail_path) as im:
         w, h = im.size
-        if w != 1080 or h != 1920:
-            im_resized = im.resize((1080, 1920), Image.Resampling.LANCZOS)
+        if w != 1080 or h != 1920 or im.mode != "RGB":
+            im_resized = im.convert("RGB").resize((1080, 1920), Image.Resampling.LANCZOS)
             im_resized.save(output_thumbnail_path, "JPEG", quality=92)
 
     max_size_bytes = 2 * 1024 * 1024  # 2MB YouTube hard limit
     if output_thumbnail_path.stat().st_size > max_size_bytes:
         with Image.open(output_thumbnail_path) as im:
-            im.save(output_thumbnail_path, "JPEG", quality=85)
+            im.convert("RGB").save(output_thumbnail_path, "JPEG", quality=85)
+
+    try:
+        thumb_info = validate_local_thumbnail(
+            output_thumbnail_path, expected_size=(1080, 1920), allowed_formats=("JPEG",)
+        )
+    except ThumbnailValidationError as exc:
+        raise RenderPipelineError(f"Generated thumbnail failed validation: {exc}") from exc
 
     print(
-        f"[INFO] Generated thumbnail at {output_thumbnail_path.name} ({output_thumbnail_path.stat().st_size:,} bytes, 1080x1920 @ {t_thumb:.2f}s)",
+        f"[INFO] Generated thumbnail at {output_thumbnail_path.name} ({thumb_info['bytes']:,} bytes, "
+        f"{thumb_info['width']}x{thumb_info['height']} @ {t_thumb:.2f}s)",
         file=sys.stderr,
     )
     return output_thumbnail_path

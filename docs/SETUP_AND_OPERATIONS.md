@@ -141,14 +141,14 @@ flowchart TD
 ```
 - Renders 1080×1920 MP4 at 30 fps via HyperFrames.
 - Applies sidechain ducking (6:1 ratio) to BGM, masters to **-14.0 LUFS**, checks KinoCut gate ($\ge 80.0$).
-- Generates `build/thumbnail.jpg` ($\le 2\text{ MB}$) and `build/final_qa_grid.jpg`.
+- Generates `build/thumbnail.jpg` (`1080×1920` RGB JPEG $\le 2\text{ MB}$, validated via `scripts/thumbnail_utils.py` with `2:3` Shorts grid center-crop safe margins) and `build/final_qa_grid.jpg`.
 
 ### Stage 6: Upload to YouTube & Read-Back Verification
 ```powershell
 .\.venv\Scripts\python.exe scripts/publish_youtube.py
 ```
-- Uploads `build/final_short.mp4` with `build/thumbnail.jpg`.
-- Attaches video to series playlist and performs immediate live API read-back verification.
+- Pre-validates `build/thumbnail.jpg` locally before consuming upload quota.
+- Uploads `build/final_short.mp4`, attaches video to series playlist, **waits for `processingDetails.processingStatus == "succeeded"` before invoking `thumbnails.set`** (preventing YouTube from silently dropping `shortsAspectRatio` / `sardefault.jpg` and reverting Shorts surfaces to auto-extracted `oar2.jpg` frames), and retrieves `sardefault.jpg` directly from `i.ytimg.com` for dimension and pixel similarity verification. Note: legacy `16:9`/`4:3` containers (`maxresdefault.jpg`, `hqdefault.jpg`) are automatically blurred/pillarboxed by YouTube when serving a `9:16` Shorts custom thumbnail.
 
 ### Stage 7: Persist State in SQLite
 ```powershell
