@@ -88,43 +88,37 @@ All Round 1 POCs used cached Episode 3 narration (`63.503s`, `0` ElevenLabs cred
 
 ---
 
-## 7. Current Phase: Reference-Driven Style Exploration (Round 2)
+## 7. Reference-Driven Exploration & Cleanup History (Round 2 -> Two Final Candidates)
 
-### Reference Videos Under Study
+### Rejected Experiments & Cleanup Completed
 
-1. **Reference 1:** `https://www.youtube.com/shorts/inbAAQMK8vs`
-2. **Reference 2:** `https://www.youtube.com/shorts/XPWJGGvpA28`
-3. **Reference 3:** `https://www.youtube.com/shorts/UWjpa9rpkwk`
+- **Rejected Styles (Removed from Active Development):** `V2` (Paper-Cut Diorama), `V3` (WebGL 3D), Reference 2 (`XPWJGGvpA28`), Reference 3 (`UWjpa9rpkwk`), and Round-2 drafts `exp_ref1`, `exp_ref2`, `exp_ref3`. All rejected POC directories, temporary proxies, and download copies were cleanly removed so `playground/` remains focused and uncluttered.
+- **Preserved Benchmark:** Original [`V1 — Dawn Ridge`](file:///C:/Users/manis/Projects/Sutradhar/playground/v1_dawn_ridge_benchmark/v1_dawn_ridge.mp4) (`107.58 MB`, `63.503s`, `1080×1920@30fps`) remains intact inside `playground/v1_dawn_ridge_benchmark/` as the quality baseline.
+- **Retained Study Reference:** Reference 1 ([`inbAAQMK8vs`](file:///C:/Users/manis/Projects/Sutradhar/playground/analysis/ref1_analysis.md), `Ravin docx`, `3.66M` views) studied for anatomical vector rig staging, theatrical wainscoting/perspective interiors, infographic flow props, horizontal camera pans/whip-pans, and snappy acoustic foley pacing. Zero copyrighted Ref-1 assets are reused.
 
-> Strictly for technical study and inspiration. Zero copyrighted video, audio, artwork, or brand assets from any reference may ever be reused directly.
+### Clean Experimental Workspace (`playground/`)
 
-### Organized Experimental Workspace (`playground/`)
+All exploration materials live exclusively inside `playground/` (leaving every production file untouched):
 
-All new exploration materials live exclusively inside `playground/` (leaving every production file untouched):
+- `playground/references/` — Reference 1 (`ref1_inbAAQMK8vs`) study video & metadata JSON
+- `playground/analysis/` — `ref1_analysis.md`, `ep3_script_timeline.txt`, `candidates_shot_plan.md`, `v1_timeline_sheet.jpg`, `tool_research.md`, `hf_catalog.json`
+- `playground/shared/` — Cached Episode 3 narration-derived master audio (`master_mix_poc.wav`, custom `mix_candidate_a.wav` & `mix_candidate_b.wav` with **0** ElevenLabs credits spent), aligned Hindi captions (`captions_data.js`), local SIL OFL fonts, local GSAP
+- `playground/v1_dawn_ridge_benchmark/` — Preserved untouched copy of original V1 benchmark MP4, English thumbnail, grid, and report
+- `playground/scripts/` — Shared HTML/caption composer (`poc_shared_composer.py`), audio mixer (`mix_candidate_audio.py`), check/preview/render runner (`poc_runner.py`), `build_candidate_a.py`, `build_candidate_b.py`
+- `playground/candidate_a_dawn_ridge/` — Final **Candidate A** full MP4, bespoke English thumbnail, 15-frame preview & MP4 contact sheets, quality report, and sources
+- `playground/candidate_b_ref1_cinematic/` — Final **Candidate B** full MP4, bespoke English thumbnail, 15-frame preview & MP4 contact sheets, quality report, and sources
 
-- `playground/references/` — Downloaded reference MP4s and metadata JSONs
-- `playground/analysis/` — Scene-by-scene technical breakdowns (`ref1_analysis.md`, `ref2_analysis.md`, `ref3_analysis.md`) + `tool_research.md` + extracted timeline contact sheets & cut closeups
-- `playground/shared/` — Cached master Episode 3 audio (`master_mix_poc.wav`), aligned Hindi captions (`captions_data.js`), local SIL OFL fonts, local GSAP
-- `playground/v1_dawn_ridge_benchmark/` — Preserved copy of V1 MP4, English thumbnail, contact sheet, quality report, and HTML/JS sources
-- `playground/scripts/` — Reusable POC analysis, frame-check, render, grid, and quality-report tooling
-- `playground/exp_ref1/`, `playground/exp_ref2/`, `playground/exp_ref3/` — Three genuinely distinct new 2.5D style POCs (sources, preview captures, final MP4s, English thumbnails, review grids, quality reports)
+### Fixed Composition & Verification Rules Across Final Candidates
 
-### Fixed Composition & Verification Rules Across All New POCs
-
-- Story & Audio: Episode 3 (`ब्रह्मलोक और राजा ककुद्मी की समय-यात्रा`, `63.503s`, cached `master_mix_poc.wav`, **0** ElevenLabs credits spent).
-- Typography Layout:
-  - No top-left episode banners, badges, or redundant metadata boxes.
-  - Strictly necessary minimal contextual labels at **top-center** only (`top >= 288px`, centered cleanly around `X = 540px`).
-  - Hindi kinetic captions at **bottom-center** inside YouTube Shorts safe band (`top ~1248–1280px`, `Y <= 1400px` clear of bottom UI).
-  - Dedicated **English thumbnail** created specifically for each style.
-- Quality Gates:
-  - Must pass `hyperframes check --strict --safe-zone shorts` (`0` errors) and custom temporal/frame visual inspections directly on the **rendered MP4s** before reporting results.
+- **Story & Audio:** Episode 3 (*ब्रह्मलोक और राजा ककुद्मी की समय-यात्रा*, `63.503s`, cached narration + local `assets/bgm/` + local/HyperFrames SFX, **0** ElevenLabs credits spent).
+- **Typography Layout (`>= 28px` craft floor):** Zero top-left episode labels; minimal contextual top-center anchors (`top: 288px`); bottom-center synchronized Devanagari kinetic captions (`top: 1250px`, generous inter-word padding/gap preventing collision on scaled Devanagari words); custom English `1080×1920` poster thumbnails built via dedicated `thumb/index.html`.
+- **Quality Gates:** Verified end-to-end via `hyperframes check --strict --safe-zone shorts` (**0 errors, 0 warnings**), `hyperframes measure look`, FFprobe, KinoCut `default`/`ui-capture-dark`, 15-frame MP4 review sheets, and full visual/audio playback watch-through directly on the rendered MP4s.
 
 ---
 
 ## 8. Production Codebase Immutability Boundary
 
-Until the user reviews the 4-way comparison (`V1 Dawn Ridge` vs `Ref 1 POC` vs `Ref 2 POC` vs `Ref 3 POC`), picks a direction, and approves an implementation plan, the following MUST remain completely untouched:
+Until the user reviews the side-by-side comparison between **Candidate A** and **Candidate B**, selects a final direction, and approves the implementation plan, the following MUST remain completely untouched:
 
 - `scripts/`, `templates/`, `assets/`, `tests/`
 - `config.yaml`, `episodes.db`, `requirements.txt`, `package.json`, `package-lock.json`
@@ -133,8 +127,13 @@ Until the user reviews the 4-way comparison (`V1 Dawn Ridge` vs `Ref 1 POC` vs `
 
 ---
 
-## 9. Reference Breakdowns & Experiment Log (Updated As Work Progresses)
+## 9. Final Two-Candidate Comparison & Measured Telemetry (`playground/two_candidate_comparison.json`)
 
-- *Pending Step 2–3:* Download and scene-by-scene technical breakdown of `inbAAQMK8vs`, `XPWJGGvpA28`, `UWjpa9rpkwk`.
-- *Pending Step 4:* Free/OSS tooling & library verification (`tool_research.md`).
-- *Pending Step 5–6:* Rendered metrics and visual review links for `exp_ref1`, `exp_ref2`, `exp_ref3`.
+| Direction | Render Specs & Sizes | HyperFrames Strict Check | Look Telemetry (`luma / contrast / sat / warmth`) | KinoCut Scores (`default` / `ui-capture-dark` / `static_frac`) | Creative & Motion Summary |
+| --- | --- | --- | --- | --- | --- |
+| **Baseline `V1 — Dawn Ridge`** ([MP4](file:///C:/Users/manis/Projects/Sutradhar/playground/v1_dawn_ridge_benchmark/v1_dawn_ridge.mp4)) | `107.58 MB` · `63.503s` · `1080×1920@30fps` | `ok: true` (`0` errors, `0` warnings) | `68.7 / 39.9 / 0.436 / —` | `57.0` / `88.8` / `3.7%` static | Original benchmark with atmospheric silhouettes, static mid-scenes & matte dark bottom void |
+| **Candidate A — Refined Dawn Ridge** ([MP4](file:///C:/Users/manis/Projects/Sutradhar/playground/candidate_a_dawn_ridge/candidate_a_dawn_ridge.mp4) · [Thumb](file:///C:/Users/manis/Projects/Sutradhar/playground/candidate_a_dawn_ridge/candidate_a_dawn_ridge_thumbnail.jpg) · [Grid](file:///C:/Users/manis/Projects/Sutradhar/playground/candidate_a_dawn_ridge/candidate_a_dawn_ridge_review_grid.jpg)) | `49.08 MB` · `63.533s` · `1080×1920@30fps` · `thumb 270 KB` | **`ok: true` (`0` errors, `0` warnings)** | `51.0 / 37.9 / 0.570 / -4.9` | `50.2` / `86.6` (**`temporal_motion 88.2`**, **`11.8%` static**, audio `96.4`) | Elevated V1 painter-cinematic style: `14` continuous sub-beats, mirrored starlight lake/ghat lower third + floating clay diyas, 3-dome Vimana ascent, Rajasthani cusped Sabha + Veena soundwaves + dolly pan, sculptural 4-armed Lotus Brahma & 27 spokes, 3D spacetime mesh + Vedic Armillary Sphere, Marigold/Agni Halayudha Balarama wedding, fracturing clock -> 27-star Infinity Prana finale |
+| **Candidate B — Ref-1 Cinematic Vector** ([MP4](file:///C:/Users/manis/Projects/Sutradhar/playground/candidate_b_ref1_cinematic/candidate_b_ref1_cinematic.mp4) · [Thumb](file:///C:/Users/manis/Projects/Sutradhar/playground/candidate_b_ref1_cinematic/candidate_b_ref1_cinematic_thumbnail.jpg) · [Grid](file:///C:/Users/manis/Projects/Sutradhar/playground/candidate_b_ref1_cinematic/candidate_b_ref1_cinematic_review_grid.jpg)) | `36.99 MB` · `63.533s` · `1080×1920@30fps` · `thumb 235 KB` | **`ok: true` (`0` errors, `0` warnings)** | `48.9 / 40.0 / 0.603 / +10.8` | `53.4` / **`90.6` (`all_passed: true`)** (`temporal_motion 55.6`, `44.4%` static, `color_balance 57.0`, audio `95.9`) | Original `Ravin docx`-inspired story-vector film: articulated `~600–740px` anatomy rigs (winged crowns, lashed blinking eyes, curled palm/thumb hands, pleated silk dhotis/lehengas), wainscoting dado halls & perspective planks, clock smear -> whip-pan globe -> spotlight 4-branch `× 27` tree -> unfurling Mt. Meru scroll map -> lateral column truck-pan -> seated Brahma & `27`-sector Magnifying Glass -> Relativity/Siddhanta schematic & 2-Clock Race -> Dwapara `"?"` bubbles & sky-blue Balarama glowing hand-clasp wedding -> Cosmic Lotus finale |
+
+*Ready for final user selection between Candidate A (`candidate_a_dawn_ridge`) and Candidate B (`candidate_b_ref1_cinematic`) (or specific refinements) before designing and implementing the production architecture.*
+
