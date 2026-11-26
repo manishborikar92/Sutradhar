@@ -22,7 +22,7 @@ import time
 import unittest
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import soundfile as sf
@@ -150,9 +150,11 @@ class TestPhase5ProductionGates(unittest.TestCase):
         mock_session = MagicMock()
         mock_session.request.side_effect = RuntimeError("Network call attempted during cached execution!")
 
-        t0 = time.perf_counter()
-        result = build_audio.build_episode_audio(REPO_ROOT)
-        elapsed = time.perf_counter() - t0
+        # Bypass the live DB continuity check — this gate tests caching speed, not series continuity
+        with patch("build_audio.verify_active_series_continuity_readonly"):
+            t0 = time.perf_counter()
+            result = build_audio.build_episode_audio(REPO_ROOT)
+            elapsed = time.perf_counter() - t0
 
         self.assertEqual(result.get("status"), "ok")
         self.assertLess(elapsed, 2.0, f"Re-run took {elapsed:.3f}s (must be < 2.0s)")

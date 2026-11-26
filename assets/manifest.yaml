@@ -590,6 +590,18 @@ visual:
       narrative_theme: "Bridge building, expeditions, voyages into the unknown"
       dominant_colors: ["#0c4a6e", "#0284c7", "#38bdf8"]
 
+    - id: mehrauli_iron_pillar
+      file: assets/svg/backdrops/mehrauli_iron_pillar.svg
+      setting: "Mehrauli Gupta Courtyard & Rustless Iron Pillar"
+      narrative_theme: "Hidden history, ancient Indian metallurgy, Chandragupta II inscription, protective misawite shield"
+      dominant_colors: ["#0f172a", "#7c2d12", "#f59e0b"]
+
+    - id: brahmaloka_time_chakra
+      file: assets/svg/backdrops/brahmaloka_time_chakra.svg
+      setting: "Brahmaloka Celestial Court & Relativistic Kalachakra Mandala"
+      narrative_theme: "Cosmic & Scientific Paradoxes, Vedic time dilation, King Kakudmi & Revati, 27 Chatur-Yuga wheel"
+      dominant_colors: ["#020617", "#1e1b4b", "#fbbf24"]
+
   # Dynamic Mythological Storytelling Props (assets/svg/props/)
   props:
     - id: vedic_kundali

@@ -154,59 +154,63 @@
     </g>
 
     <!-- LEFT ARM (Viewer's Left - Holding Palm-Leaf Manuscript) -->
-    <g id="shoulder_front_left_joint" transform="translate(290, 480)">
-      <g id="shoulder_front_left_rot">
-        <path d="M 0 0 L -50 85 L -18 95 L 18 10 Z" fill="url(#scholar_skin_shadow)" stroke="#4a2608" stroke-width="2.5"/>
-        <g id="elbow_front_left_joint" transform="translate(-35, 90)">
-          <g id="elbow_front_left_rot">
-            <path d="M 0 0 L 20 85 L 50 75 L 18 0 Z" fill="url(#scholar_skin_base)" stroke="#4a2608" stroke-width="2.5"/>
-            <g id="wrist_front_left_joint" transform="translate(30, 80)">
-              <g id="wrist_front_left_rot">
-                <path d="M -8 0 L -10 30 L 12 30 L 8 0 Z" fill="url(#scholar_skin_shadow)" stroke="#4a2608" stroke-width="2"/>
-                <!-- Palm-Leaf Manuscript (Tala-Patra Bundle) -->
-                <g id="tala_patra" transform="translate(0, 15) rotate(15)">
-                  <rect x="-15" y="-60" width="140" height="24" rx="4" fill="url(#palm_leaf)" stroke="#473a1d" stroke-width="2"/>
-                  <rect x="-18" y="-56" width="140" height="24" rx="4" fill="url(#palm_leaf)" stroke="#473a1d" stroke-width="2"/>
-                  <!-- Binding Cord -->
-                  <circle cx="20" cy="-44" r="3.5" fill="#800000"/>
-                  <circle cx="80" cy="-44" r="3.5" fill="#800000"/>
-                  <line x1="-10" y1="-44" x2="110" y2="-44" stroke="#800000" stroke-width="1.5" stroke-dasharray="4 4"/>
+    <g id="shoulder_front_left_anchor" transform="translate(290, 480)">
+      <g id="shoulder_front_left_joint">
+        <g id="shoulder_front_left_rot">
+          <path d="M 0 0 L -50 85 L -18 95 L 18 10 Z" fill="url(#scholar_skin_shadow)" stroke="#4a2608" stroke-width="2.5"/>
+          <g id="elbow_front_left_joint" transform="translate(-35, 90)">
+            <g id="elbow_front_left_rot">
+              <path d="M 0 0 L 20 85 L 50 75 L 18 0 Z" fill="url(#scholar_skin_base)" stroke="#4a2608" stroke-width="2.5"/>
+              <g id="wrist_front_left_joint" transform="translate(30, 80)">
+                <g id="wrist_front_left_rot">
+                  <path d="M -8 0 L -10 30 L 12 30 L 8 0 Z" fill="url(#scholar_skin_shadow)" stroke="#4a2608" stroke-width="2"/>
+                  <!-- Palm-Leaf Manuscript (Tala-Patra Bundle) -->
+                  <g id="tala_patra" transform="translate(0, 15) rotate(15)">
+                    <rect x="-15" y="-60" width="140" height="24" rx="4" fill="url(#palm_leaf)" stroke="#473a1d" stroke-width="2"/>
+                    <rect x="-18" y="-56" width="140" height="24" rx="4" fill="url(#palm_leaf)" stroke="#473a1d" stroke-width="2"/>
+                    <!-- Binding Cord -->
+                    <circle cx="20" cy="-44" r="3.5" fill="#800000"/>
+                    <circle cx="80" cy="-44" r="3.5" fill="#800000"/>
+                    <line x1="-10" y1="-44" x2="110" y2="-44" stroke="#800000" stroke-width="1.5" stroke-dasharray="4 4"/>
+                  </g>
+                  <use href="#scholar_pin" x="0" y="0"/>
                 </g>
-                <use href="#scholar_pin" x="0" y="0"/>
               </g>
+              <use href="#scholar_pin" x="0" y="0"/>
             </g>
-            <use href="#scholar_pin" x="0" y="0"/>
           </g>
+          <use href="#scholar_pin" x="0" y="0"/>
         </g>
-        <use href="#scholar_pin" x="0" y="0"/>
       </g>
     </g>
 
     <!-- RIGHT ARM (Viewer's Right - Holding Brass Astrolabe / Sight Ring) -->
-    <g id="shoulder_front_right_joint" transform="translate(510, 480)">
-      <g id="shoulder_front_right_rot">
-        <path d="M 0 0 L 50 85 L 18 95 L -18 10 Z" fill="url(#scholar_skin_shadow)" stroke="#4a2608" stroke-width="2.5"/>
-        <g id="elbow_front_right_joint" transform="translate(35, 90)">
-          <g id="elbow_front_right_rot">
-            <path d="M 0 0 L -20 85 L -50 75 L -18 0 Z" fill="url(#scholar_skin_base)" stroke="#4a2608" stroke-width="2.5"/>
-            <g id="wrist_front_right_joint" transform="translate(-30, 80)">
-              <g id="wrist_front_right_rot">
-                <path d="M -8 0 L -10 30 L 12 30 L 8 0 Z" fill="url(#scholar_skin_shadow)" stroke="#4a2608" stroke-width="2"/>
-                <!-- Brass Astrolabe / Armillary Ring -->
-                <g id="scholar_astrolabe" transform="translate(0, 15)">
-                  <circle cx="0" cy="0" r="36" fill="none" stroke="url(#brass_astrolabe)" stroke-width="4.5"/>
-                  <circle cx="0" cy="0" r="26" fill="none" stroke="url(#brass_astrolabe)" stroke-width="2.5"/>
-                  <line x1="-36" y1="0" x2="36" y2="0" stroke="url(#brass_astrolabe)" stroke-width="3"/>
-                  <line x1="0" y1="-36" x2="0" y2="36" stroke="url(#brass_astrolabe)" stroke-width="3"/>
-                  <circle cx="0" cy="0" r="6" fill="#fff5cc" stroke="#593c00" stroke-width="1.5"/>
+    <g id="shoulder_front_right_anchor" transform="translate(510, 480)">
+      <g id="shoulder_front_right_joint">
+        <g id="shoulder_front_right_rot">
+          <path d="M 0 0 L 50 85 L 18 95 L -18 10 Z" fill="url(#scholar_skin_shadow)" stroke="#4a2608" stroke-width="2.5"/>
+          <g id="elbow_front_right_joint" transform="translate(35, 90)">
+            <g id="elbow_front_right_rot">
+              <path d="M 0 0 L -20 85 L -50 75 L -18 0 Z" fill="url(#scholar_skin_base)" stroke="#4a2608" stroke-width="2.5"/>
+              <g id="wrist_front_right_joint" transform="translate(-30, 80)">
+                <g id="wrist_front_right_rot">
+                  <path d="M -8 0 L -10 30 L 12 30 L 8 0 Z" fill="url(#scholar_skin_shadow)" stroke="#4a2608" stroke-width="2"/>
+                  <!-- Brass Astrolabe / Armillary Ring -->
+                  <g id="scholar_astrolabe" transform="translate(0, 15)">
+                    <circle cx="0" cy="0" r="36" fill="none" stroke="url(#brass_astrolabe)" stroke-width="4.5"/>
+                    <circle cx="0" cy="0" r="26" fill="none" stroke="url(#brass_astrolabe)" stroke-width="2.5"/>
+                    <line x1="-36" y1="0" x2="36" y2="0" stroke="url(#brass_astrolabe)" stroke-width="3"/>
+                    <line x1="0" y1="-36" x2="0" y2="36" stroke="url(#brass_astrolabe)" stroke-width="3"/>
+                    <circle cx="0" cy="0" r="6" fill="#fff5cc" stroke="#593c00" stroke-width="1.5"/>
+                  </g>
+                  <use href="#scholar_pin" x="0" y="0"/>
                 </g>
-                <use href="#scholar_pin" x="0" y="0"/>
               </g>
+              <use href="#scholar_pin" x="0" y="0"/>
             </g>
-            <use href="#scholar_pin" x="0" y="0"/>
           </g>
+          <use href="#scholar_pin" x="0" y="0"/>
         </g>
-        <use href="#scholar_pin" x="0" y="0"/>
       </g>
     </g>
 

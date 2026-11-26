@@ -262,9 +262,14 @@ def run_publish_pipeline(root: Path) -> dict[str, Any]:
                 "status": status_body,
             }
 
-            media = MediaFileUpload(str(final_video_path), chunksize=-1, resumable=True)
+            media = MediaFileUpload(str(final_video_path), chunksize=1 * 1024 * 1024, resumable=True)
             request = youtube.videos().insert(part="snippet,status", body=body, media_body=media)
-            response = request.execute()
+            response = None
+            while response is None:
+                status, response = request.next_chunk()
+                if status:
+                    pct = int(status.progress() * 100)
+                    print(f"[INFO] Upload progress: {pct}%", file=sys.stderr)
             video_id = response.get("id")
 
             # 2. Upload Custom Thumbnail (build/thumbnail.jpg)

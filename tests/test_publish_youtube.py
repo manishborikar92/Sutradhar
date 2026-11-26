@@ -174,6 +174,7 @@ class TestPublishYouTube(unittest.TestCase):
         mock_videos = MagicMock()
         mock_insert = MagicMock()
         mock_insert.execute.return_value = {"id": "mock_yt_vid_public"}
+        mock_insert.next_chunk.return_value = (None, {"id": "mock_yt_vid_public"})
         mock_videos.insert.return_value = mock_insert
 
         # Mock videos.list for read-back verification
@@ -284,6 +285,7 @@ class TestPublishYouTube(unittest.TestCase):
         mock_videos = MagicMock()
         mock_insert = MagicMock()
         mock_insert.execute.return_value = {"id": "mock_vid_403"}
+        mock_insert.next_chunk.return_value = (None, {"id": "mock_vid_403"})
         mock_videos.insert.return_value = mock_insert
 
         mock_vid_list = MagicMock()
@@ -412,6 +414,7 @@ class TestPublishYouTube(unittest.TestCase):
             ]
         }
         mock_youtube.videos().insert().execute.return_value = {"id": "mock_vid_shani"}
+        mock_youtube.videos().insert().next_chunk.return_value = (None, {"id": "mock_vid_shani"})
         mock_youtube.playlistItems().insert().execute.return_value = {"id": "mock_item_id"}
         mock_youtube.videos().list().execute.return_value = {
             "items": [{"id": "mock_vid_shani", "snippet": {"title": "Test Title", "categoryId": "27"}, "status": {"privacyStatus": "public"}}]
