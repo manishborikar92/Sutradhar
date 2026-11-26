@@ -88,52 +88,67 @@ All Round 1 POCs used cached Episode 3 narration (`63.503s`, `0` ElevenLabs cred
 
 ---
 
-## 7. Reference-Driven Exploration & Cleanup History (Round 2 -> Two Final Candidates)
+## 7. Reference-Driven Exploration, Candidate Review & Refinement Log
 
-### Rejected Experiments & Cleanup Completed
+### Cleanup & Status Decisions
 
-- **Rejected Styles (Removed from Active Development):** `V2` (Paper-Cut Diorama), `V3` (WebGL 3D), Reference 2 (`XPWJGGvpA28`), Reference 3 (`UWjpa9rpkwk`), and Round-2 drafts `exp_ref1`, `exp_ref2`, `exp_ref3`. All rejected POC directories, temporary proxies, and download copies were cleanly removed so `playground/` remains focused and uncluttered.
-- **Preserved Benchmark:** Original [`V1 — Dawn Ridge`](file:///C:/Users/manis/Projects/Sutradhar/playground/v1_dawn_ridge_benchmark/v1_dawn_ridge.mp4) (`107.58 MB`, `63.503s`, `1080×1920@30fps`) remains intact inside `playground/v1_dawn_ridge_benchmark/` as the quality baseline.
-- **Retained Study Reference:** Reference 1 ([`inbAAQMK8vs`](file:///C:/Users/manis/Projects/Sutradhar/playground/analysis/ref1_analysis.md), `Ravin docx`, `3.66M` views) studied for anatomical vector rig staging, theatrical wainscoting/perspective interiors, infographic flow props, horizontal camera pans/whip-pans, and snappy acoustic foley pacing. Zero copyrighted Ref-1 assets are reused.
+- **Retained Provisional Benchmark (Unchanged):** [`V1 — Dawn Ridge`](file:///C:/Users/manis/Projects/Sutradhar/playground/v1_dawn_ridge_benchmark/v1_dawn_ridge.mp4) (`107.58 MB`, `63.503s`, `1080×1920@30fps`) remains preserved intact inside `playground/v1_dawn_ridge_benchmark/`.
+- **Rejected Directions (Removed from Active Development):** `V2` (Paper-Cut Diorama), `V3` (WebGL 3D), Reference 2 (`XPWJGGvpA28`), Reference 3 (`UWjpa9rpkwk`), Round-2 drafts `exp_ref1..3`, and **Candidate A — Refined Dawn Ridge** (`candidate_a_dawn_ridge/`, `build_candidate_a.py`, `mix_candidate_a.wav`, `two_candidate_comparison.json` deleted cleanly while keeping shared assets intact).
+- **Retained Under Active Refinement (`Candidate B`):** Reference-1 (`inbAAQMK8vs`) inspired story-vector short in [`playground/candidate_b_ref1_cinematic/`](file:///C:/Users/manis/Projects/Sutradhar/playground/candidate_b_ref1_cinematic/candidate_b_ref1_cinematic.mp4) (neither V1 nor Candidate B is final yet — awaiting final selection after comparing updated Candidate B against V1).
 
 ### Clean Experimental Workspace (`playground/`)
 
 All exploration materials live exclusively inside `playground/` (leaving every production file untouched):
 
-- `playground/references/` — Reference 1 (`ref1_inbAAQMK8vs`) study video & metadata JSON
+- `playground/references/` — Reference 1 (`ref1_inbAAQMK8vs`) study video & metadata JSON (zero Ref-1 copyrighted assets reused)
 - `playground/analysis/` — `ref1_analysis.md`, `ep3_script_timeline.txt`, `candidates_shot_plan.md`, `v1_timeline_sheet.jpg`, `tool_research.md`, `hf_catalog.json`
-- `playground/shared/` — Cached Episode 3 narration-derived master audio (`master_mix_poc.wav`, custom `mix_candidate_a.wav` & `mix_candidate_b.wav` with **0** ElevenLabs credits spent), aligned Hindi captions (`captions_data.js`), local SIL OFL fonts, local GSAP
-- `playground/v1_dawn_ridge_benchmark/` — Preserved untouched copy of original V1 benchmark MP4, English thumbnail, grid, and report
-- `playground/scripts/` — Shared HTML/caption composer (`poc_shared_composer.py`), audio mixer (`mix_candidate_audio.py`), check/preview/render runner (`poc_runner.py`), `build_candidate_a.py`, `build_candidate_b.py`
-- `playground/candidate_a_dawn_ridge/` — Final **Candidate A** full MP4, bespoke English thumbnail, 15-frame preview & MP4 contact sheets, quality report, and sources
-- `playground/candidate_b_ref1_cinematic/` — Final **Candidate B** full MP4, bespoke English thumbnail, 15-frame preview & MP4 contact sheets, quality report, and sources
-
-### Fixed Composition & Verification Rules Across Final Candidates
-
-- **Story & Audio:** Episode 3 (*ब्रह्मलोक और राजा ककुद्मी की समय-यात्रा*, `63.503s`, cached narration + local `assets/bgm/` + local/HyperFrames SFX, **0** ElevenLabs credits spent).
-- **Typography Layout (`>= 28px` craft floor):** Zero top-left episode labels; minimal contextual top-center anchors (`top: 288px`); bottom-center synchronized Devanagari kinetic captions (`top: 1250px`, generous inter-word padding/gap preventing collision on scaled Devanagari words); custom English `1080×1920` poster thumbnails built via dedicated `thumb/index.html`.
-- **Quality Gates:** Verified end-to-end via `hyperframes check --strict --safe-zone shorts` (**0 errors, 0 warnings**), `hyperframes measure look`, FFprobe, KinoCut `default`/`ui-capture-dark`, 15-frame MP4 review sheets, and full visual/audio playback watch-through directly on the rendered MP4s.
+- `playground/shared/` — Cached Episode 3 narration-derived master audio (`master_mix_poc.wav`, custom `mix_candidate_b.wav` with **0** ElevenLabs credits spent), aligned Hindi captions (`captions_data.js`), local SIL OFL fonts, local GSAP
+- `playground/v1_dawn_ridge_benchmark/` — Preserved untouched original V1 benchmark MP4, English thumbnail, grid, and report
+- `playground/scripts/` — Shared shell generator (`poc_shared_composer.py`), audio mixer (`mix_candidate_audio.py`), check/preview/render runner (`poc_runner.py`), `build_candidate_b.py`
+- `playground/candidate_b_ref1_cinematic/` — Corrected **Candidate B** MP4, English thumbnail, 15-frame preview & MP4 contact sheets, quality report, and sources
 
 ---
 
-## 8. Production Codebase Immutability Boundary
+## 8. Candidate B Audit, Root Causes & Corrections Applied
 
-Until the user reviews the side-by-side comparison between **Candidate A** and **Candidate B**, selects a final direction, and approves the implementation plan, the following MUST remain completely untouched:
+After inspecting the previous rendered Candidate B MP4 and acting on user review, the following root causes and architectural defects were identified and fixed:
 
-- `scripts/`, `templates/`, `assets/`, `tests/`
-- `config.yaml`, `episodes.db`, `requirements.txt`, `package.json`, `package-lock.json`
-- `docs/INSTRUCTIONS.md`, `docs/schema.sql`, `docs/SETUP_AND_OPERATIONS.md`, `README.md`
-- `.venv/` Python environment
+1. **Removed Top Progress Bar & All Top-Center Overlays:**
+   - **Root Cause:** `poc_shared_composer.build_poc_shell()` unconditionally generated `#editorial`, `compositions/editorial.html`, `#progress-bar` / `#progress-fill` CSS, DOM nodes, GSAP progress tweens, and `#top-s1` motion assertions.
+   - **Fix:** Updated [`poc_shared_composer.py`](file:///C:/Users/manis/Projects/Sutradhar/playground/scripts/poc_shared_composer.py) with `include_editorial=False, include_progress=False` and updated [`build_candidate_b.py`](file:///C:/Users/manis/Projects/Sutradhar/playground/scripts/build_candidate_b.py) with `anchors=[]`. Verified zero `<div id="editorial">`, zero `<div id="progress-bar">`, zero top CSS rules, and no `editorial.html` inside `src/`. Synchronized Hindi kinetic captions remain clean at bottom-center (`top: 1274px`, `data-layout-allow-safe-zone="true"`).
+2. **Fixed Wall-vs-Floor Geometry Disconnection & Character Grounding (`HORIZON_Y = 1142`):**
+   - **Root Cause:** `drawPalaceInterior()` previously placed the floor edge down at `Y = 1345` while characters stood at `Y = 1225..1270`, causing standing heroes to float `75–120px` up on the rear wall wainscoting. Characters also lacked drawn feet below garment hems, seated shadows offset negatively, `S3A` Gandharvas hovered without a stage, `S3B` hourglass hovered without a table, and `S4` Brahma hovered without a throne podium.
+   - **Fix:** Unified palace wall baseboard at `HORIZON_Y = 1142` (gleaming gold trim + foreshortened 1-point perspective planks & trapezoidal carpets spanning `Y = 1142..1920`). Standing characters stand squarely on the floor plane (`Y = 1226..1230`) with sculpted sandaled feet, golden ankle cuffs (*nupura*), and two-layer cast shadows at `(0, 0)`. Built a stepped carpeted Royal Music Dais in `S3A` with seated *Padmasana* Gandharvas flush atop silk cushions (`seatY = 1112`), grounded the `S3B` hourglass on a turned temple pedestal table (`Y = 1228`) and expanded wainscoting pan range (`-450..W+1050`), placed `S4` Brahma's pink lotus atop a stepped golden throne podium sliding coherently with Brahma during `4B`, framed `S6B` mandap columns on floor plinths + grounded *Agni* kalash urn, and mounted `S1A`/`S7` clocks on stone console arches fading cleanly in `S7`.
+3. **Character Anatomy, Hairlines & Prop Articulation:**
+   - Replaced flat semicircle hairline across forehead (which left a dark bar over Brahma/Balarama) with a high-arched parted curve clear of brows/tilak; integrated Gandharva lap Sitar directly inside character rig coordinates (`-86..-112` below pearl collar); anchored Balarama's *Halayudha* shaft neatly in his outer grip; softened wedding hand-clasp aura behind visible joined palms.
 
 ---
 
-## 9. Final Two-Candidate Comparison & Measured Telemetry (`playground/two_candidate_comparison.json`)
+## 9. Production Codebase Immutability Boundary
 
-| Direction | Render Specs & Sizes | HyperFrames Strict Check | Look Telemetry (`luma / contrast / sat / warmth`) | KinoCut Scores (`default` / `ui-capture-dark` / `static_frac`) | Creative & Motion Summary |
+Until final style selection (`V1` vs `Candidate B`) and explicit implementation plan approval, all production pipeline code, templates, assets, and configs remain untouched:
+`scripts/`, `templates/`, `assets/`, `tests/`, `config.yaml`, `requirements.txt`, `package.json`, `package-lock.json`, `docs/INSTRUCTIONS.md`, `docs/schema.sql`, `docs/SETUP_AND_OPERATIONS.md`, `README.md`, and `.venv/`. (`episodes.db`, `build/publish_result.json`, and `build/publish_verification.json` were synced specifically for the authorized Candidate B Episode 3 YouTube replacement documented below.)
+
+---
+
+## 10. Current Comparison Summary (`V1 Benchmark` vs Corrected `Candidate B`)
+
+| Direction | Render Specs & Sizes | HyperFrames Strict Check | Look Telemetry (`luma / contrast / sat / bw / warmth`) | KinoCut Scores (`default` / `ui-capture-dark` / `static_frac`) | Visual Status |
 | --- | --- | --- | --- | --- | --- |
-| **Baseline `V1 — Dawn Ridge`** ([MP4](file:///C:/Users/manis/Projects/Sutradhar/playground/v1_dawn_ridge_benchmark/v1_dawn_ridge.mp4)) | `107.58 MB` · `63.503s` · `1080×1920@30fps` | `ok: true` (`0` errors, `0` warnings) | `68.7 / 39.9 / 0.436 / —` | `57.0` / `88.8` / `3.7%` static | Original benchmark with atmospheric silhouettes, static mid-scenes & matte dark bottom void |
-| **Candidate A — Refined Dawn Ridge** ([MP4](file:///C:/Users/manis/Projects/Sutradhar/playground/candidate_a_dawn_ridge/candidate_a_dawn_ridge.mp4) · [Thumb](file:///C:/Users/manis/Projects/Sutradhar/playground/candidate_a_dawn_ridge/candidate_a_dawn_ridge_thumbnail.jpg) · [Grid](file:///C:/Users/manis/Projects/Sutradhar/playground/candidate_a_dawn_ridge/candidate_a_dawn_ridge_review_grid.jpg)) | `49.08 MB` · `63.533s` · `1080×1920@30fps` · `thumb 270 KB` | **`ok: true` (`0` errors, `0` warnings)** | `51.0 / 37.9 / 0.570 / -4.9` | `50.2` / `86.6` (**`temporal_motion 88.2`**, **`11.8%` static**, audio `96.4`) | Elevated V1 painter-cinematic style: `14` continuous sub-beats, mirrored starlight lake/ghat lower third + floating clay diyas, 3-dome Vimana ascent, Rajasthani cusped Sabha + Veena soundwaves + dolly pan, sculptural 4-armed Lotus Brahma & 27 spokes, 3D spacetime mesh + Vedic Armillary Sphere, Marigold/Agni Halayudha Balarama wedding, fracturing clock -> 27-star Infinity Prana finale |
-| **Candidate B — Ref-1 Cinematic Vector** ([MP4](file:///C:/Users/manis/Projects/Sutradhar/playground/candidate_b_ref1_cinematic/candidate_b_ref1_cinematic.mp4) · [Thumb](file:///C:/Users/manis/Projects/Sutradhar/playground/candidate_b_ref1_cinematic/candidate_b_ref1_cinematic_thumbnail.jpg) · [Grid](file:///C:/Users/manis/Projects/Sutradhar/playground/candidate_b_ref1_cinematic/candidate_b_ref1_cinematic_review_grid.jpg)) | `36.99 MB` · `63.533s` · `1080×1920@30fps` · `thumb 235 KB` | **`ok: true` (`0` errors, `0` warnings)** | `48.9 / 40.0 / 0.603 / +10.8` | `53.4` / **`90.6` (`all_passed: true`)** (`temporal_motion 55.6`, `44.4%` static, `color_balance 57.0`, audio `95.9`) | Original `Ravin docx`-inspired story-vector film: articulated `~600–740px` anatomy rigs (winged crowns, lashed blinking eyes, curled palm/thumb hands, pleated silk dhotis/lehengas), wainscoting dado halls & perspective planks, clock smear -> whip-pan globe -> spotlight 4-branch `× 27` tree -> unfurling Mt. Meru scroll map -> lateral column truck-pan -> seated Brahma & `27`-sector Magnifying Glass -> Relativity/Siddhanta schematic & 2-Clock Race -> Dwapara `"?"` bubbles & sky-blue Balarama glowing hand-clasp wedding -> Cosmic Lotus finale |
+| **Original `V1 — Dawn Ridge` (Benchmark)** ([MP4](file:///C:/Users/manis/Projects/Sutradhar/playground/v1_dawn_ridge_benchmark/v1_dawn_ridge.mp4)) | `107.58 MB` · `63.503s` · `1080×1920@30fps` | `ok: true` (`0` errors, `0` warnings) | `68.7 / 39.9 / 0.436 / 0% / —` | `57.0` / `88.8` / `3.7%` static | Untouched benchmark |
+| **Corrected `Candidate B — Ref-1 Cinema`** ([MP4](file:///C:/Users/manis/Projects/Sutradhar/playground/candidate_b_ref1_cinematic/candidate_b_ref1_cinematic.mp4) · [Thumb](file:///C:/Users/manis/Projects/Sutradhar/playground/candidate_b_ref1_cinematic/candidate_b_ref1_cinematic_thumbnail.jpg) · [Grid](file:///C:/Users/manis/Projects/Sutradhar/playground/candidate_b_ref1_cinematic/candidate_b_ref1_cinematic_review_grid.jpg) · [QA JSON](file:///C:/Users/manis/Projects/Sutradhar/playground/candidate_b_ref1_cinematic/candidate_b_ref1_cinematic_quality_report.json)) | `36,921,509 B` · `63.533s` · `1080×1920@30fps` · `thumb 240,599 B` | **`ok: true` (`0` errors, `0` warnings)** | `46.5 / 41.1 / 0.604 / 0% / +13.4` | `52.7` / `89.4` (`temporal_motion 52.8`, `47.2%` static, audio `95.9`) | Clean top stage (zero top text/progress bar), grounded feet/seats/pedestals across all scenes |
 
-*Ready for final user selection between Candidate A (`candidate_a_dawn_ridge`) and Candidate B (`candidate_b_ref1_cinematic`) (or specific refinements) before designing and implementing the production architecture.*
+---
+
+## 11. Episode 3 YouTube Replacement & Record Sync (2026-11-26 UTC)
+
+Corrected `Candidate B` replaced the earlier Episode 3 YouTube upload on `Sutradhar Chronicles` (`UCfuoX2JogzVfq-UJnt1DQLw`, Series 3 playlist `PLfT89QTc7oLs`):
+
+- **New Public Replacement Video:** `oBcyiPy26rg` ([Watch](https://youtu.be/oBcyiPy26rg) · [Shorts](https://www.youtube.com/shorts/oBcyiPy26rg)), uploaded & published `2026-11-26T16:46:07Z`, verified `2026-11-26T16:49:10Z` (`uploadStatus=processed`, `processingStatus=succeeded`, `privacyStatus=public`, `definition=hd`, `duration=PT1M4S`, `defaultLanguage=en`, `defaultAudioLanguage=hi`, custom English thumbnail `maxresdefault.jpg` HTTP `200`, added to `PLfT89QTc7oLs`, all `26/26` live checks passed).
+- **Previous Inferior Upload Permanently Deleted:** `Y63AyoTo-Jo` (*"जब ब्रह्मलोक के १ क्षण में पृथ्वी के करोड़ों साल बीत गए #Shorts"*), playlist item removed and video permanently deleted via YouTube Data API v3 at `2026-11-26T16:49:31Z`; independently verified inaccessible (`api_items_remaining=0`, `still_in_playlist=false`, `still_in_channel_uploads=false`, `oembed_http_status=404`).
+- **Database, Audit & Local Assets Synced:**
+  - Pre-mutation SQLite backup: [episodes_db_pre_ep3_replace_20261126T165040Z.sqlite](file:///C:/Users/manis/Projects/Sutradhar/playground/backups/episodes_db_pre_ep3_replace_20261126T165040Z.sqlite)
+  - Updated `episodes` row `episode_id=3` + appended `publishing_history` audit entries (`INITIAL_UPLOAD_REPLACED`/`PERMANENTLY_DELETED` for `Y63AyoTo-Jo` and `REPLACEMENT_PUBLISHED`/`PUBLISHED` for `oBcyiPy26rg`) at `2026-11-26T16:50:40Z`; `PRAGMA integrity_check == "ok"` and `scripts/db_manager.py --context` verified.
+  - Updated [publish_result.json](file:///C:/Users/manis/Projects/Sutradhar/build/publish_result.json), [publish_verification.json](file:///C:/Users/manis/Projects/Sutradhar/build/publish_verification.json), and [candidate_b_publish_report.json](file:///C:/Users/manis/Projects/Sutradhar/playground/candidate_b_ref1_cinematic/candidate_b_publish_report.json).
+  - Preserved local reference collections intact: Original `V1 — Dawn Ridge` (`playground/v1_dawn_ridge_benchmark/`), Reference 1 (`playground/references/ref1_inbAAQMK8vs.mp4` + `playground/analysis/`), and Corrected `Candidate B` (`playground/candidate_b_ref1_cinematic/`).
 
