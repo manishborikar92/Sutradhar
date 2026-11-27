@@ -4,7 +4,7 @@
 Auditions Viraj (uuyFQegRan8rpIQCGu9K) across configured vocal steering tags
 and character archetypes (narrator, divine, antagonist, grief, devotional, climax, outro).
 Evaluates duration, WPM, RMS dBFS (acoustic energy), and faster-whisper lexical alignment accuracy.
-Saves candidate WAVs and audition_report.json under build/audition/.
+Saves candidate WAVs and audition_report.json under build/auditions/.
 
 Strictly read-only with respect to config.yaml and episodes.db.
 """
@@ -21,28 +21,27 @@ import numpy as np
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_DIR))
+    sys.path.insert(0, str(_SCRIPT_DIR))
 
-from build_audio import (  # noqa: E402
-    align_narration_words,
-    apply_pronunciations,
-    default_elevenlabs_factory,
-    default_whisper_factory,
-    load_pronunciations,
-    probe_duration_sec,
-    transcribe_scene_words,
-    trim_and_pad_audio,
-    write_text_atomic,
-    write_wav_atomic,
-)
-from db_manager import get_project_root, load_config  # noqa: E402
-from elevenlabs_engine import (  # noqa: E402
+from db_manager import get_project_root, load_config, resolve_paths  # noqa: E402
+from sutradhar.audio.elevenlabs_tts import (  # noqa: E402
     DEFAULT_TAG_TEMPLATES,
     DEFAULT_VOICE_ID,
     DEFAULT_VOICE_SETTINGS,
     ElevenLabsEngine,
     FakeElevenLabs,
+    apply_pronunciations,
+    load_pronunciations,
     strip_audio_tags,
+)
+from sutradhar.audio.whisper_aligner import (  # noqa: E402
+    align_narration_words,
+    default_whisper_factory,
+    probe_duration_sec,
+    transcribe_scene_words,
+    trim_and_pad_audio,
+    write_text_atomic,
+    write_wav_atomic,
 )
 
 # Canonical Hindi audition passage featuring mythological terms and natural rhetorical pauses
@@ -129,13 +128,13 @@ def run_audition(
     voice_settings = {**DEFAULT_VOICE_SETTINGS, **tts_cfg.get("voice_settings", {})}
 
     lang = cfg.get("channel", {}).get("primary_language", "hi")
-    text_reps, _ = load_pronunciations(root, cfg, lang=lang)
+    text_reps = load_pronunciations(root, cfg, lang=lang)
 
     # Initialize TTS Engine
     if tts_factory is not None:
         tts_engine = tts_factory(cfg, root)
     else:
-        tts_engine = default_elevenlabs_factory(cfg, root)
+        tts_engine = ElevenLabsEngine(config=cfg, project_root=root)
 
     # Initialize Whisper Model
     whisper_builder = whisper_factory or default_whisper_factory
@@ -145,7 +144,7 @@ def run_audition(
         print(f"[WARN] faster-whisper not available; alignment scoring will be skipped: {exc}", file=sys.stderr)
         whisper_model = None
 
-    audition_dir = root / cfg.get("paths", {}).get("build_dir", "build") / "audition"
+    audition_dir = resolve_paths(root, cfg)["auditions_dir"]
     audition_dir.mkdir(parents=True, exist_ok=True)
 
     candidates = (

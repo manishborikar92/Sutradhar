@@ -121,8 +121,8 @@ class TestAuditionVoices(unittest.TestCase):
         self.assertEqual(report["tags_evaluated"], 2)
         self.assertEqual(len(report["results"]), 2)
 
-        # Verify files on disk
-        audition_dir = self.root / "build/audition"
+        # Verify files on disk (unified build/auditions/ output directory)
+        audition_dir = self.root / "build/auditions"
         self.assertTrue((audition_dir / "audition_report.json").is_file())
         for r in report["results"]:
             wav_file = self.root / r["wav_file"]
