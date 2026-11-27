@@ -1,7 +1,7 @@
 # Sutradhar Video Style Exploration & Redesign Context
 
-> **Status:** Active Visual Exploration Stage (Pre-Implementation)
-> **Rule of Thumb:** Do **NOT** modify production code, assets, config, DB, docs instructions, tests, or dependencies until a visual direction is explicitly selected by the user and the full implementation plan is approved.
+> **Status:** Style Exploration Completed -> Superseded for Architecture Planning by [VIDEO_PRODUCTION_REDESIGN_PLAN.md](file:///C:/Users/manis/Projects/Sutradhar/docs/VIDEO_PRODUCTION_REDESIGN_PLAN.md)
+> **Rule of Thumb (Planning Phase):** Keep this document preserved as the permanent historical exploration record. Do **NOT** modify production code, assets, config, DB schema, or live YouTube metadata until the user approves the full redesign plan in `docs/VIDEO_PRODUCTION_REDESIGN_PLAN.md`.
 
 ---
 
@@ -154,4 +154,11 @@ Corrected `Candidate B` replaced the earlier Episode 3 YouTube upload on `Sutrad
   - *Root cause:* Calling YouTube Data API v3 `thumbnails.set` immediately after `videos.insert` (while `processingStatus == "processing"`) returned HTTP `200` and `hasCustomThumbnail=true` on legacy `16:9`/`4:3` slots (`maxresdefault.jpg` / `hqdefault.jpg` blurred/pillarboxed), **but caused YouTube to drop `shortsAspectRatio` (`sardefault.jpg`, `1080×1920`)**, leaving Shorts grids (`@SutradharChronicles/shorts`, Search Shorts shelf, Playlist card) showing auto-captured `oar2.jpg` / `hq2.jpg` frames.
   - *Fixes applied:* Extracted shared validator & CDN verifier ([thumbnail_utils.py](file:///C:/Users/manis/Projects/Sutradhar/scripts/thumbnail_utils.py)), enforced `processingStatus == "succeeded"` gating + live `sardefault.jpg` CDN pixel-similarity verification in [publish_youtube.py](file:///C:/Users/manis/Projects/Sutradhar/scripts/publish_youtube.py) and [replace_ep3_youtube.py](file:///C:/Users/manis/Projects/Sutradhar/playground/scripts/replace_ep3_youtube.py), tightened `2:3` Shorts card safe-zone padding in [build_candidate_b.py](file:///C:/Users/manis/Projects/Sutradhar/playground/scripts/build_candidate_b.py) (`top: 255px`, `bottom: 208px`), re-uploaded the refined thumbnail (`240,181 B`) to `oBcyiPy26rg` only (MP4 untouched), and verified `https://i.ytimg.com/vi/oBcyiPy26rg/sardefault.jpg` (`1080×1920`, `184,955 B`, `MAE=0.24`, `dhash_distance=0`) plus [verified_live_sardefault.jpg](file:///C:/Users/manis/Projects/Sutradhar/playground/candidate_b_ref1_cinematic/verified_live_sardefault.jpg).
 - **Preserved local reference collections intact:** Original `V1 — Dawn Ridge` (`playground/v1_dawn_ridge_benchmark/`), Reference 1 (`playground/references/ref1_inbAAQMK8vs.mp4` + `playground/analysis/`), and Corrected `Candidate B` (`playground/candidate_b_ref1_cinematic/`).
+
+---
+
+## 12. Visual Direction Selection & Link to Full Production Redesign Plan
+
+- **Selected Visual Foundation:** Adopt corrected **Candidate B — Ref-1 Inspired Cinema** (articulated Canvas2D character storytelling, jewel-tone architectural depth, `HORIZON_Y` floor/pedestal grounding, progressive props & infographics, 34-cue Pixabay + local audio soundscape, unobstructed top stage, bottom-center Hindi kinetic captions, and safe-zone `1080×1920` English cover thumbnails) **combined with Original V1 — Dawn Ridge's sunrise, horizon-mist ridges, feathered cloud drift, god-rays, and atmospheric depth engine** for outdoor, Himalayan, and cosmic sequences.
+- **Next Stage Document:** The complete codebase re-architecture, asset extraction/migration matrix, schema v4 plan, redesigned `docs/INSTRUCTIONS.md` specification, semi-automated workflow (`30 Shorts/month` ElevenLabs Starter optimization), Ep 3 (`oBcyiPy26rg` / `PLfT89QTc7oLs`) English playlist/DB harmonization plan, testing gates, and 6-phase execution roadmap are detailed in **[VIDEO_PRODUCTION_REDESIGN_PLAN.md](file:///C:/Users/manis/Projects/Sutradhar/docs/VIDEO_PRODUCTION_REDESIGN_PLAN.md)** (awaiting user approval before implementation begins).
 
