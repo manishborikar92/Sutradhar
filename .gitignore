@@ -1,9 +1,13 @@
 # Ephemeral build outputs, renders & caches
 build/
 dist/
+runtime_cache/
 *.mp4
 *.wav
 !assets/**
+
+# Playground benchmarks, experiments & snapshots
+playground/
 
 # Local database state & journals
 episodes.db
@@ -15,6 +19,7 @@ episodes.db-wal
 backup/
 
 # Secrets & credentials (keep example files tracked)
+.secrets/
 .env
 .env.*
 !.env.example

@@ -1,12 +1,9 @@
 # Sutradhar Hindi Pronunciation Overrides for ElevenLabs v4 Neural Engine
 # Format:
-#   text_replacements: Exact Devanagari text substitutions for schwa restoration, sandhi splits, and halant clarity
-#   ipa_replacements: Phonetic stream regex substitutions (preserved for hybrid/legacy compatibility)
+#   text_replacements: Exact Devanagari substitutions for schwa restoration, halant clarity & sandhi spacing
+#   (All identity no-op mappings removed cleanly in Schema v4 foundation cleanup.)
 
 text_replacements:
-  # Storyteller Timbre & Brand
-  "सूत्रधार": "सूत्रधार"
-
   # Classical Sanskrit Halant & Schwa Restoration
   "स्वयं": "स्वयम्"
   "ब्रह्मांड": "ब्रह्माण्ड"
@@ -16,16 +13,3 @@ text_replacements:
   "लंकापति": "लंका पति"
   "कालचक्र": "काल चक्र"
   "सर्वनाश": "सर्व नाश"
-
-  # Core Mythological Personas & Sacred Locales
-  "दशानन": "दशानन"
-  "कैलाश": "कैलाश"
-  "महादेव": "महादेव"
-  "शिव": "शिव"
-  "स्तुति": "स्तुति"
-  "स्तोत्र": "स्तोत्र"
-  "युग": "युग"
-  "कर्म": "कर्म"
-  "नियति": "नियति"
-  "धर्म": "धर्म"
-

@@ -1,12 +1,16 @@
 project:
   name: Sutradhar
-  version: 0.3.0
+  version: 0.4.0
   docs_dir: docs
 channel:
   language_mode: per_channel
+  audio_language: hi
+  caption_language: hi
+  metadata_language: en
+  thumbnail_language: en
   primary_language: hi
   default_audio_language: hi
-  default_language: hi
+  default_language: en
   category_id: '27'
   self_declared_made_for_kids: false
   contains_synthetic_media: true
@@ -26,30 +30,6 @@ series:
   completed_history_window: 20
   require_bespoke_asset_per_episode: true
 content_format: episodic_series
-target_duration_range:
-  min_seconds: 30
-  max_seconds: 180
-  preferred_min_seconds: 40
-  preferred_max_seconds: 120
-format_pacing:
-  episodic_series:
-    target_duration_min_sec: 40
-    target_duration_max_sec: 120
-    hard_duration_min_sec: 30
-    hard_duration_max_sec: 180
-    min_scenes: 5
-    max_scenes: 15
-    min_words_per_scene: 8
-    max_words_per_scene: 35
-  standalone:
-    target_duration_min_sec: 40
-    target_duration_max_sec: 120
-    hard_duration_min_sec: 30
-    hard_duration_max_sec: 180
-    min_scenes: 5
-    max_scenes: 15
-    min_words_per_scene: 8
-    max_words_per_scene: 35
 episode_pacing:
   target_duration_min_sec: 40
   target_duration_max_sec: 120
@@ -60,10 +40,10 @@ episode_pacing:
   min_words_per_scene: 8
   max_words_per_scene: 35
 contextual_text:
-  title_cards: true
+  title_cards: false
   infographics: true
-  character_labels: true
-  cta_cards: true
+  character_labels: false
+  cta_cards: false
 tts:
   engine: elevenlabs
   model_id: eleven_v4
@@ -71,6 +51,10 @@ tts:
   sample_rate: 44100
   output_format: mp3_44100_128
   cache_dir: build/cache/audio
+  max_billed_chars_per_episode: 900
+  target_billed_chars_min: 760
+  target_billed_chars_max: 840
+  monthly_credit_budget: 30000
   voice_settings:
     stability: 0.55
     similarity_boost: 0.80
@@ -89,6 +73,7 @@ video:
   height: 1920
   fps: 30
   render_quality: high
+  max_file_bytes: 57671680
   safe_zones:
     top_clear_px: 288
     bottom_clear_px: 520
@@ -106,10 +91,12 @@ audio_mastering:
   sidechain_ducking:
     enabled: true
     threshold: 0.03
-    ratio: 8
+    ratio: 6.5
     attack_ms: 20
     release_ms: 500
   kinocut_min_score: 80
+  kinocut_dark_min_score: 88
+  kinocut_default_min_score: 55
 assets:
   bgm_tracks:
   - dramatic_mythology.mp3
@@ -173,3 +160,4 @@ paths:
   build_dir: build
   assets_dir: assets
   docs_dir: docs
+  auditions_dir: build/auditions

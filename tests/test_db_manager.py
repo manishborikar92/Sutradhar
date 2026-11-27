@@ -1228,22 +1228,29 @@ class TestDbManagerCompliance(unittest.TestCase):
         )
         self.assertIn("doom of Lanka", plan_obj.series_bible_json.episodes[0].resolution)
 
-    def test_19_context_output_autonomous_planning_guidelines(self) -> None:
-        """Verify db_manager.py --context provides rich autonomous storytelling guidelines."""
+    def test_19_context_output_lean_v4_structure(self) -> None:
+        """Verify db_manager.py --context returns lean Schema v4 JSON without legacy prompt prose."""
         self.assertEqual(self.run_cli("--init").returncode, 0)
         res = self.run_cli("--context")
         self.assertEqual(res.returncode, 0, res.stderr)
         out = json.loads(res.stdout)
 
-        guidelines = out["autonomous_planning_guidelines"]
-        self.assertIn("narrative_templates", guidelines)
-        self.assertIn("eight_phase_complete_arc", guidelines["narrative_templates"])
-        self.assertIn("five_phase_compact_arc", guidelines["narrative_templates"])
-        self.assertIn("in_medias_res", guidelines["narrative_templates"])
-
-        self.assertIn("story_completeness_rules", guidelines)
-        self.assertIn("standalone_mandate", guidelines["story_completeness_rules"])
-        self.assertIn("pacing_rules", guidelines)
+        self.assertEqual(out["schema_version"], 4)
+        self.assertNotIn("autonomous_planning_guidelines", out)
+        self.assertEqual(
+            out["language_policy"],
+            {
+                "audio_language": "hi",
+                "caption_language": "hi",
+                "metadata_language": "en",
+                "thumbnail_language": "en",
+            },
+        )
+        self.assertEqual(out["next_pillar"], "Ancient Epics & Lore")
+        self.assertIsNone(out["last_completed_pillar"])
+        self.assertEqual(out["monthly_tts_budget"]["monthly_limit"], 30000)
+        self.assertEqual(out["monthly_tts_budget"]["max_billed_chars_per_episode"], 900)
+        self.assertIn("episode_pacing", out["channel_config"])
 
     def test_20_acceptance_standalone_eight_phase_complete_story(self) -> None:
         """Verify acceptance criterion: complete 8-phase standalone story resolves central conflict."""

@@ -46,12 +46,29 @@ class TestPhase2ConfigStandardization(unittest.TestCase):
             self.cfg = yaml.safe_load(fh)
 
     def test_01_channel_language_standardization(self) -> None:
-        """Verify channel is locked to Hindi as primary and default language."""
+        """Verify strict bilingual separation: Hindi audio/captions, English metadata/thumbnails."""
         channel = self.cfg.get("channel", {})
         self.assertEqual(channel.get("primary_language"), "hi")
+        self.assertEqual(channel.get("audio_language"), "hi")
+        self.assertEqual(channel.get("caption_language"), "hi")
         self.assertEqual(channel.get("default_audio_language"), "hi")
-        self.assertEqual(channel.get("default_language"), "hi")
+        self.assertEqual(channel.get("metadata_language"), "en")
+        self.assertEqual(channel.get("thumbnail_language"), "en")
+        self.assertEqual(channel.get("default_language"), "en")
         self.assertEqual(channel.get("language_mode"), "per_channel")
+
+        policy = db_manager.get_language_policy(self.cfg)
+        self.assertEqual(policy.audio_language, "hi")
+        self.assertEqual(policy.caption_language, "hi")
+        self.assertEqual(policy.metadata_language, "en")
+        self.assertEqual(policy.thumbnail_language, "en")
+
+        # Verify cleaned Phase 1 canonical config consolidation
+        self.assertNotIn("target_duration_range", self.cfg)
+        self.assertNotIn("format_pacing", self.cfg)
+        self.assertEqual(self.cfg.get("audio_mastering", {}).get("sidechain_ducking", {}).get("ratio"), 6.5)
+        self.assertEqual(self.cfg.get("paths", {}).get("auditions_dir"), "build/auditions")
+        self.assertEqual(self.cfg.get("tts", {}).get("max_billed_chars_per_episode"), 900)
 
     def test_02_english_purged_from_languages(self) -> None:
         """Verify obsolete English ('en') profile is completely removed from languages."""
@@ -145,13 +162,16 @@ class TestPronunciationsHi(unittest.TestCase):
         self.assertIn("text_replacements", data)
         reps = data["text_replacements"]
         self.assertIsInstance(reps, dict)
-        self.assertGreater(len(reps), 5)
+        self.assertEqual(len(reps), 6)
+        self.assertTrue(all(k != v for k, v in reps.items()), "No-op self-mappings must be pruned")
 
-        # Verify key classical terms
+        # Verify key classical terms & sandhi spacing overrides
         self.assertEqual(reps.get("स्वयं"), "स्वयम्")
         self.assertEqual(reps.get("ब्रह्मांड"), "ब्रह्माण्ड")
+        self.assertEqual(reps.get("अहंकार"), "अहङ्कार")
         self.assertEqual(reps.get("लंकापति"), "लंका पति")
-        self.assertEqual(reps.get("दशानन"), "दशानन")
+        self.assertEqual(reps.get("कालचक्र"), "काल चक्र")
+        self.assertEqual(reps.get("सर्वनाश"), "सर्व नाश")
 
     def test_03_elevenlabs_engine_integration_with_config(self) -> None:
         """Verify ElevenLabsEngine loads defaults seamlessly from config.yaml."""
