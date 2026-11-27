@@ -85,6 +85,10 @@ TAG_SPLIT_RE = re.compile(r"(\[.*?\])")
 # Exceptions & Data Models
 # ---------------------------------------------------------------------------
 
+class AudioBuildError(RuntimeError):
+    """Raised when audio validation, DSP, budget checks, or alignment fails."""
+
+
 class ElevenLabsError(RuntimeError):
     """Base exception for all ElevenLabs TTS operations."""
 
@@ -119,7 +123,7 @@ class ElevenLabsAPIError(ElevenLabsError):
         self.response_body = response_body
 
 
-class TTSBudgetError(ElevenLabsError):
+class TTSBudgetError(ElevenLabsError, AudioBuildError):
     """Raised before any paid TTS call when billed characters or Hindi ratio fail policy."""
 
 

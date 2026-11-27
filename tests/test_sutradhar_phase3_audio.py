@@ -2,16 +2,22 @@
 
 from __future__ import annotations
 
+import hashlib
+import io
 import json
+import os
 import shutil
+import sqlite3
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 from typing import Any
+from unittest.mock import MagicMock, patch
 
 import numpy as np
+import requests
 import soundfile as sf
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -28,9 +34,11 @@ from sutradhar.audio.caption_builder import (  # noqa: E402
 )
 from sutradhar.audio.elevenlabs_tts import (  # noqa: E402
     DEFAULT_TAG_TEMPLATES,
+    ElevenLabsEngine,
     FakeElevenLabs,
     TTSBudgetError,
     apply_pronunciations_preserving_tags,
+    compute_cache_key,
     compute_scene_sha256,
     get_monthly_tts_usage,
     load_pronunciations,
@@ -49,13 +57,18 @@ from sutradhar.audio.sound_mixer import (  # noqa: E402
     resolve_bgm_path,
 )
 from sutradhar.audio.whisper_aligner import (  # noqa: E402
+    _split_bursts_into_clauses,
     _tokens_match,
+    _words_cache_path,
     align_narration_words,
+    default_whisper_factory,
     detect_speech_bursts,
     indic_phonetic_skeleton,
     load_16k_mono_array,
     norm_indic_token,
+    probe_duration_sec,
     resample_to_16k_mono,
+    transcribe_scene_adaptive,
 )
 from sutradhar.config import load_config  # noqa: E402
 from sutradhar.db import cmd_context, cmd_init  # noqa: E402
@@ -455,6 +468,249 @@ class TestPhase3AudioPipeline(unittest.TestCase):
             self.assertLessEqual(result["true_peak_dbtp"], -1.5)
             tail_silences = [s for s in result["silences"] if s["end"] >= 5.8]
             self.assertTrue(tail_silences and tail_silences[-1]["duration"] >= 0.7)
+
+    def test_07_continuous_multi_clause_rms_snapping_no_index_error(self) -> None:
+        """Continuous multi-sentence WAV entering RMS burst snapping must never raise IndexError."""
+        single_split = _split_bursts_into_clauses([(0.05, 4.20)], n_clauses=3, scene_dur=4.8)
+        self.assertEqual(len(single_split), 3)
+        self.assertTrue(all(len(g) >= 1 for g in single_split))
+        self.assertLess(single_split[0][0][1], single_split[1][0][1])
+        self.assertLess(single_split[1][0][1], single_split[2][0][1])
+
+        multi_split = _split_bursts_into_clauses([(0.1, 1.8), (2.2, 4.0)], n_clauses=4, scene_dur=4.5)
+        self.assertEqual(len(multi_split), 4)
+        self.assertTrue(all(len(g) >= 1 for g in multi_split))
+
+        with tempfile.TemporaryDirectory() as td:
+            wav_path = Path(td) / "continuous_multi_clause.wav"
+            sr = 44100
+            t = np.linspace(0.0, 4.0, int(4.0 * sr), endpoint=False, dtype=np.float32)
+            speech = (0.3 * np.sin(2.0 * np.pi * 220.0 * t)).astype(np.float32)
+            audio = np.concatenate(
+                [np.zeros(int(0.05 * sr), dtype=np.float32), speech, np.zeros(int(0.65 * sr), dtype=np.float32)]
+            )
+            sf.write(str(wav_path), audio, sr, subtype="PCM_16")
+
+            bursts = detect_speech_bursts(wav_path)
+            self.assertEqual(len(bursts), 1)
+
+            narration = "प्रथम वाक्य यहाँ समाप्त होता है। द्वितीय वाक्य निरंतर चलता है! तृतीय भाग भी जुड़ा है?"
+            sparse_whisper = [
+                {"word": "प्रथम", "start": 0.06, "end": 0.42},
+                {"word": "द्वितीय", "start": 1.35, "end": 3.40},  # >1.5s span + <0.75 match_ratio
+            ]
+            aligned, ratio = align_narration_words(
+                narration_text=narration,
+                whisper_words=sparse_whisper,
+                scene_duration=4.7,
+                global_offset=0.0,
+                wav_path=wav_path,
+            )
+            self.assertLess(ratio, 0.75)
+            self.assertEqual([w["word"] for w in aligned], narration.split())
+            for i, w in enumerate(aligned):
+                self.assertLess(w["start"], w["end"])
+                if i > 0:
+                    self.assertGreaterEqual(w["start"], aligned[i - 1]["end"])
+
+    def test_08_stale_words_cache_invalidation_and_ep3_scene6_recovery(self) -> None:
+        """Stale pre-v3 .words.json must be bypassed so adaptive Whisper recovery runs and refreshes cache."""
+        live_s6 = REPO_ROOT / "build" / "audio" / "scene_6.wav"
+        live_plan_path = REPO_ROOT / "build" / "episode_plan.json"
+        self.assertTrue(live_s6.is_file(), f"Missing {live_s6}")
+        self.assertTrue(live_plan_path.is_file(), f"Missing {live_plan_path}")
+
+        ep3_plan = json.loads(live_plan_path.read_text(encoding="utf-8"))
+        s6_clean = strip_audio_tags(ep3_plan["scenes"][5]["narration_text"])
+
+        with tempfile.TemporaryDirectory() as td:
+            td_root = Path(td)
+            audio_dir = td_root / "audio"
+            cache_dir = td_root / "cache" / "audio"
+            audio_dir.mkdir(parents=True, exist_ok=True)
+            cache_dir.mkdir(parents=True, exist_ok=True)
+
+            tmp_wav = audio_dir / "scene_6.wav"
+            shutil.copy2(live_s6, tmp_wav)
+            dur = probe_duration_sec(tmp_wav)
+
+            # 1. Seed pre-v3 legacy MD5 cache with poor 0.40 alignment
+            legacy_md5 = hashlib.md5(
+                tmp_wav.read_bytes() + s6_clean.encode("utf-8") + b"hi"
+            ).hexdigest()
+            stale_words = [
+                {"word": "और", "start": 0.0, "end": 0.4},
+                {"word": "देवी", "start": 0.4, "end": 5.48},
+                {"word": "रेवती", "start": 5.48, "end": 5.92},
+                {"word": "का", "start": 5.92, "end": 6.14},
+                {"word": "विवाह", "start": 6.14, "end": 6.60},
+            ]
+            (cache_dir / f"{legacy_md5}.words.json").write_text(
+                json.dumps(stale_words, ensure_ascii=False), encoding="utf-8"
+            )
+
+            whisper_proxy = default_whisper_factory(self.cfg)
+            # 2. Also seed an old bare-list file directly at the v3 cache path to prove payload validation
+            v3_cache_path = _words_cache_path(
+                tmp_wav,
+                s6_clean,
+                "hi",
+                model_size="base",
+                vad_filter=True,
+            )
+            self.assertIsNotNone(v3_cache_path)
+            assert v3_cache_path is not None
+            v3_cache_path.write_text(json.dumps(stale_words, ensure_ascii=False), encoding="utf-8")
+
+            words, _ = transcribe_scene_adaptive(
+                whisper_model=whisper_proxy,
+                wav_path=tmp_wav,
+                narration_text=s6_clean,
+                language="hi",
+                scene_duration=dur,
+                use_cache=True,
+            )
+            aligned, ratio = align_narration_words(
+                narration_text=s6_clean,
+                whisper_words=words,
+                scene_duration=dur,
+                wav_path=tmp_wav,
+            )
+            max_word_dur = max(w["end"] - w["start"] for w in aligned)
+            self.assertGreaterEqual(ratio, 0.75, f"Expected Ep 3 Scene 6 recovery ratio >= 0.75, got {ratio}")
+            self.assertLess(max_word_dur, 1.5, f"Expected max_word_dur < 1.5s, got {max_word_dur}")
+
+            # 3. Refreshed v3 cache payload must now hit cleanly without re-running Whisper
+            cached_payload = json.loads(v3_cache_path.read_text(encoding="utf-8"))
+            self.assertEqual(cached_payload.get("aligner_version"), "align_v3")
+            self.assertTrue(cached_payload.get("adaptive"))
+            with patch.object(whisper_proxy, "transcribe", side_effect=AssertionError("Should hit refreshed cache")):
+                words_2, ratio_2 = transcribe_scene_adaptive(
+                    whisper_model=whisper_proxy,
+                    wav_path=tmp_wav,
+                    narration_text=s6_clean,
+                    language="hi",
+                    scene_duration=dur,
+                    use_cache=True,
+                )
+            self.assertEqual(len(words_2), len(words))
+            self.assertGreaterEqual(ratio_2, 0.75)
+
+    def test_09_custom_tts_factory_live_budget_gate_legacy_cache_and_cli_ledger(self) -> None:
+        """Verify live-engine budget gate works under custom factory, legacy cache reporting, and CLI temp DB ledger."""
+        # 1. Custom tts_factory wrapping ElevenLabsEngine with strict_budget=None must STILL abort >900 chars
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            shutil.copy2(REPO_ROOT / "config.yaml", root / "config.yaml")
+            shutil.copy2(REPO_ROOT / "pronunciations_hi.yaml", root / "pronunciations_hi.yaml")
+            (root / "build").mkdir(parents=True, exist_ok=True)
+
+            long_line = "[slowly, solemn, deep] अमृत के लिए देव और असुरों ने सागर मथा और भयानक हलाहल निकला। [pause] ब्रह्मांड जलने लगा था और सभी भयभीत थे।"
+            plan = _make_hindi_plan([long_line for _ in range(8)])
+            for k in ("audio_language", "caption_language", "metadata_language", "thumbnail_language"):
+                plan.pop(k, None)  # Explicitly omit v2 keys and thumbnail_spec
+            (root / "build" / "episode_plan.json").write_text(
+                json.dumps(plan, ensure_ascii=False), encoding="utf-8"
+            )
+
+            mock_session = MagicMock(spec=requests.Session)
+            mock_session.headers = {}
+            mock_session.request.side_effect = AssertionError("HTTP call must never happen when >900 chars!")
+
+            with self.assertRaises(TTSBudgetError) as ctx:
+                build_audio.build_episode_audio(
+                    root,
+                    tts_factory=lambda cfg, r: ElevenLabsEngine(
+                        api_key="sk_test_mock_key_12345",
+                        config=cfg,
+                        project_root=r,
+                        session=mock_session,
+                    ),
+                    whisper_factory=lambda cfg: _FakeWhisper(),
+                    strict_budget=None,
+                )
+            self.assertIn("900", str(ctx.exception))
+            self.assertEqual(mock_session.request.call_count, 0)
+
+        # 2. Legacy stripped-tag cache hits report synth_text & len(synth_text), AND main() records temp audio_ledger
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            shutil.copy2(REPO_ROOT / "config.yaml", root / "config.yaml")
+            shutil.copy2(REPO_ROOT / "pronunciations_hi.yaml", root / "pronunciations_hi.yaml")
+            (root / "assets").mkdir()
+            (root / "build" / "cache" / "audio").mkdir(parents=True, exist_ok=True)
+            cmd_init(root, self.cfg)
+
+            lines = [
+                "[slowly, solemn, deep] अमृत के लिए सागर मथा। [pause] पर पहले विष निकला!",
+                "[calm, serene] देवता भयभीत हो भागे। [pause] कोई रक्षक न बचा।",
+                "[solemn] तब आशा बची—कैलाश के महादेव। [pause] देव शरण में गए।",
+                "[calm] शिव ने कहा मैं विष पिऊँगा। [pause] करुणा से हृदय भरा।",
+                "[gentle, peaceful] शिव कहलाए—नीलकंठ! [pause] जगत की पीड़ा थाम ली।",
+            ]
+            plan = _make_hindi_plan(lines)
+            (root / "build" / "episode_plan.json").write_text(
+                json.dumps(plan, ensure_ascii=False), encoding="utf-8"
+            )
+
+            # Seed legacy stripped-tag MP3 cache for all 5 scenes using ElevenLabsEngine
+            buf = io.BytesIO()
+            t = np.linspace(0.0, 9.0, int(9.0 * 44100), endpoint=False, dtype=np.float32)
+            sf.write(buf, (0.3 * np.sin(2.0 * np.pi * 220.0 * t)).astype(np.float32), 44100, format="MP3")
+            mp3_bytes = buf.getvalue()
+
+            mock_session = MagicMock(spec=requests.Session)
+            mock_session.headers = {}
+            mock_session.request.side_effect = AssertionError("Legacy cache should hit with zero HTTP calls!")
+
+            live_engine = ElevenLabsEngine(
+                api_key="sk_test_mock_key_12345",
+                config=self.cfg,
+                project_root=root,
+                session=mock_session,
+            )
+            reps = load_pronunciations(root, self.cfg, lang="hi")
+            from sutradhar.audio.elevenlabs_tts import DEFAULT_VOICE_SETTINGS, apply_pronunciations
+            from sutradhar.models import EpisodePlan
+
+            ep_obj = EpisodePlan.model_validate(plan, context={"config": self.cfg})
+            expected_legacy_texts: list[str] = []
+            for idx, sc in enumerate(ep_obj.scenes):
+                speed = build_audio._compute_scene_speed(sc, self.cfg, "hi", False, False)
+                vs = {**DEFAULT_VOICE_SETTINGS, **self.cfg["tts"].get("voice_settings", {}), "speed": speed}
+                clean_t = strip_audio_tags(sc.narration_text)
+                tag_t = resolve_scene_tag(sc, idx, len(ep_obj.scenes), self.cfg["tts"]["tag_templates"], False)
+                legacy_txt = f"{tag_t} {apply_pronunciations(clean_t, reps)}".strip()
+                expected_legacy_texts.append(legacy_txt)
+                cache_key = compute_cache_key(legacy_txt, live_engine.voice_id, live_engine.model_id, vs)
+                (root / "build" / "cache" / "audio" / f"{cache_key}.mp3").write_bytes(mp3_bytes)
+
+            with patch.dict(os.environ, {"SUTRADHAR_ROOT": str(root)}), patch.object(
+                sys, "argv", ["build_audio.py"]
+            ), patch.object(build_audio, "default_elevenlabs_factory", return_value=live_engine), patch.object(
+                build_audio, "default_whisper_factory", return_value=_FakeWhisper()
+            ):
+                rc = build_audio.main()
+            self.assertEqual(rc, 0)
+            self.assertEqual(mock_session.request.call_count, 0)
+
+            man = json.loads((root / "build" / "audio" / "audio_manifest.json").read_text(encoding="utf-8"))
+            for sc, exp_txt in zip(man["scenes"], expected_legacy_texts):
+                self.assertEqual(sc["tts_text_applied"], exp_txt)
+                self.assertEqual(sc["billed_chars"], len(exp_txt))
+                self.assertNotIn("[pause]", sc["tts_text_applied"])
+
+            # Verify temp episodes.db audio_ledger recorded all 5 cache hits cleanly
+            conn = sqlite3.connect(str(root / "episodes.db"))
+            rows = conn.execute("SELECT scene_index, billed_chars, cache_hit FROM audio_ledger ORDER BY scene_index").fetchall()
+            conn.close()
+            self.assertEqual(len(rows), 5)
+            self.assertTrue(all(r[2] == 1 for r in rows))
+            self.assertEqual([r[1] for r in rows], [len(t) for t in expected_legacy_texts])
+
+            # And verify live REPO_ROOT DB is protected under pytest
+            with patch.dict(os.environ, {"PYTEST_CURRENT_TEST": "tests/test_sutradhar_phase3_audio.py::test_09"}):
+                self.assertIsNone(build_audio._resolve_cli_ledger_db(REPO_ROOT))
 
 
 if __name__ == "__main__":

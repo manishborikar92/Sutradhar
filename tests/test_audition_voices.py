@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -130,6 +131,30 @@ class TestAuditionVoices(unittest.TestCase):
             info = sf.info(str(wav_file))
             self.assertEqual(info.samplerate, 44100)
             self.assertEqual(info.channels, 1)
+
+    def test_06_standalone_runpy_without_scripts_on_sys_path(self) -> None:
+        """Verify audition_voices.py runs standalone via runpy without scripts/ pre-added to sys.path."""
+        script_path = REPO_ROOT / "scripts" / "audition_voices.py"
+        code = (
+            "import runpy, sys; "
+            "sys.path = [p for p in sys.path if 'scripts' not in p.replace('\\\\', '/').lower()]; "
+            f"ns = runpy.run_path({str(script_path)!r}, run_name='not_main'); "
+            "assert callable(ns['run_audition']) and callable(ns['main'])"
+        )
+        env = {k: v for k, v in os.environ.items() if k != "PYTHONPATH"}
+        proc = subprocess.run(
+            [sys.executable, "-c", code],
+            cwd=str(REPO_ROOT),
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(
+            proc.returncode,
+            0,
+            f"Standalone runpy failed:\nSTDOUT:\n{proc.stdout}\nSTDERR:\n{proc.stderr}",
+        )
 
 
 if __name__ == "__main__":

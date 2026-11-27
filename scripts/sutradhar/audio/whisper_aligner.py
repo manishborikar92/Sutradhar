@@ -17,11 +17,16 @@ from typing import Any, Optional
 import numpy as np
 import soundfile as sf
 
-from sutradhar.audio.elevenlabs_tts import DEFAULT_SAMPLE_RATE, strip_audio_tags
+from sutradhar.audio.elevenlabs_tts import (
+    DEFAULT_SAMPLE_RATE,
+    AudioBuildError,
+    strip_audio_tags,
+)
 
 DEFAULT_WHISPER_MODEL = "small"
 FALLBACK_WHISPER_MODEL = "base"
 WHISPER_SAMPLE_RATE = 16000
+ALIGNER_CACHE_VERSION = "align_v3"
 
 SILENCE_THRESHOLD = 0.003
 TRIM_MARGIN_SEC = 0.10
@@ -32,10 +37,6 @@ MIN_PEAK_AMPLITUDE = 1e-4
 
 WORD_NORM_RE = re.compile(r"[^a-z0-9'\u0900-\u097F\u0600-\u06FF]+", re.IGNORECASE)
 MAX_SINGLE_WORD_SPAN_SEC = 1.50
-
-
-class AudioBuildError(RuntimeError):
-    """Raised when audio validation, DSP, or Whisper word alignment fails."""
 
 
 # ---------------------------------------------------------------------------
@@ -253,16 +254,19 @@ def is_whisper_model_cached(model_size: str, cache_dir: Optional[Path] = None) -
 def resolve_local_whisper_model(
     preferred: str = DEFAULT_WHISPER_MODEL,
     fallback: str = FALLBACK_WHISPER_MODEL,
+    *,
+    quiet: bool = False,
 ) -> str:
     """Return `preferred` when complete in local HF cache; otherwise fall back cleanly."""
     if is_whisper_model_cached(preferred):
         return preferred
     if fallback and fallback != preferred and is_whisper_model_cached(fallback):
-        print(
-            f"[WARN] faster-whisper '{preferred}' model.bin is missing or incomplete in local HF cache; "
-            f"using locally cached '{fallback}'.",
-            file=sys.stderr,
-        )
+        if not quiet:
+            print(
+                f"[WARN] faster-whisper '{preferred}' model.bin is missing or incomplete in local HF cache; "
+                f"using locally cached '{fallback}'.",
+                file=sys.stderr,
+            )
         return fallback
     return preferred
 
@@ -576,16 +580,48 @@ def _split_clauses(tokens: list[str]) -> list[list[str]]:
     return clauses
 
 
+def _partition_burst_across_clauses(
+    burst: tuple[float, float],
+    n_clauses: int,
+    clause_weights: Optional[list[int]] = None,
+) -> list[list[tuple[float, float]]]:
+    """Partition a single continuous burst across `n_clauses` chronologically."""
+    b_start, b_end = float(burst[0]), float(burst[1])
+    if b_end <= b_start:
+        b_end = b_start + 0.05 * n_clauses
+    weights = (
+        [max(1, int(w)) for w in clause_weights]
+        if clause_weights is not None and len(clause_weights) == n_clauses
+        else [1] * n_clauses
+    )
+    total_w = float(sum(weights))
+    span = b_end - b_start
+    groups: list[list[tuple[float, float]]] = []
+    cursor = b_start
+    for idx, w in enumerate(weights):
+        nxt = b_end if idx == n_clauses - 1 else cursor + span * (w / total_w)
+        groups.append([(round(cursor, 4), round(max(cursor + 0.02, nxt), 4))])
+        cursor = nxt
+    return groups
+
+
 def _split_bursts_into_clauses(
     bursts: list[tuple[float, float]],
     n_clauses: int,
     scene_dur: float,
+    *,
+    clause_weights: Optional[list[int]] = None,
 ) -> list[list[tuple[float, float]]]:
+    """Map active speech bursts onto `n_clauses`, always returning length `n_clauses`."""
+    if n_clauses <= 0:
+        return []
     if not bursts:
         step = max(0.3, (scene_dur - 0.2) / max(1, n_clauses))
         return [[(i * step, (i + 1) * step)] for i in range(n_clauses)]
-    if n_clauses <= 1 or len(bursts) <= 1:
-        return [bursts]
+    if n_clauses == 1:
+        return [list(bursts)]
+    if len(bursts) == 1:
+        return _partition_burst_across_clauses(bursts[0], n_clauses, clause_weights=clause_weights)
 
     gaps = [(bursts[i + 1][0] - bursts[i][1], i) for i in range(len(bursts) - 1)]
     top_cuts = sorted(
@@ -597,8 +633,23 @@ def _split_bursts_into_clauses(
         groups.append(bursts[prev : cut + 1])
         prev = cut + 1
     groups.append(bursts[prev:])
+
     while len(groups) < n_clauses:
-        groups.append([groups[-1][-1]])
+        best_idx = max(
+            range(len(groups)),
+            key=lambda idx: sum(max(0.0, e - s) for s, e in groups[idx]),
+        )
+        target = groups[best_idx]
+        if len(target) > 1:
+            mid_i = len(target) // 2
+            groups[best_idx : best_idx + 1] = [target[:mid_i], target[mid_i:]]
+        else:
+            s, e = target[0]
+            if e - s >= 0.12:
+                mid_t = round(0.5 * (s + e), 4)
+                groups[best_idx : best_idx + 1] = [[(s, mid_t)], [(mid_t, e)]]
+            else:
+                groups.append([groups[-1][-1]])
     return groups
 
 
@@ -627,14 +678,102 @@ def _extract_segment_words(segments: Any) -> list[dict[str, Any]]:
     return words
 
 
-def _words_cache_path(wav_path: Path, clean_prompt: str, language: str) -> Optional[Path]:
+def _resolve_whisper_cache_tag(whisper_model: Any) -> str:
+    """Resolve model identifier for `.words.json` cache key without loading heavy weights."""
+    if isinstance(whisper_model, LazyWhisperProxy):
+        if whisper_model.loaded_model_size:
+            return whisper_model.loaded_model_size
+        align_cfg = whisper_model.cfg.get("alignment", {})
+        preferred = str(align_cfg.get("model_size", DEFAULT_WHISPER_MODEL))
+        local_only = bool(align_cfg.get("local_files_only", True))
+        return (
+            resolve_local_whisper_model(preferred, FALLBACK_WHISPER_MODEL, quiet=True)
+            if local_only
+            else preferred
+        )
+    for attr in ("loaded_model_size", "model_size_or_path", "model_size"):
+        val = getattr(whisper_model, attr, None)
+        if isinstance(val, str) and val.strip():
+            return val.strip()
+    return type(whisper_model).__name__
+
+
+def _words_cache_path(
+    wav_path: Path,
+    clean_prompt: str,
+    language: str,
+    *,
+    model_size: str = DEFAULT_WHISPER_MODEL,
+    vad_filter: bool = True,
+    aligner_version: str = ALIGNER_CACHE_VERSION,
+) -> Optional[Path]:
     if not wav_path.is_file():
         return None
     cache_dir = wav_path.parent.parent / "cache" / "audio"
+    salt = f":{aligner_version}:{model_size}:vad={int(bool(vad_filter))}"
     content_hash = hashlib.md5(
-        wav_path.read_bytes() + clean_prompt.encode("utf-8") + language.encode("utf-8")
+        wav_path.read_bytes()
+        + clean_prompt.encode("utf-8")
+        + language.encode("utf-8")
+        + salt.encode("utf-8")
     ).hexdigest()
     return cache_dir / f"{content_hash}.words.json"
+
+
+def _read_words_cache(
+    cache_file: Optional[Path],
+    *,
+    expected_model: str,
+    expected_vad: bool,
+    require_adaptive: bool = False,
+) -> Optional[tuple[list[dict[str, Any]], bool]]:
+    """Load cached Whisper words only if schema version, model, and VAD match current aligner."""
+    if cache_file is None or not cache_file.is_file() or cache_file.stat().st_size == 0:
+        return None
+    try:
+        payload = json.loads(cache_file.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    if not isinstance(payload, dict):
+        return None
+    if payload.get("aligner_version") != ALIGNER_CACHE_VERSION:
+        return None
+    if payload.get("model_size") != expected_model or bool(payload.get("vad_filter")) != bool(expected_vad):
+        return None
+    words = payload.get("words")
+    if not isinstance(words, list) or not words:
+        return None
+    if require_adaptive and not bool(payload.get("adaptive", False)):
+        return None
+    return words, bool(payload.get("recovery_attempted", False))
+
+
+def _write_words_cache(
+    cache_file: Optional[Path],
+    words: list[dict[str, Any]],
+    *,
+    model_size: str,
+    vad_filter: bool,
+    adaptive: bool,
+    recovery_attempted: bool = False,
+    match_ratio: Optional[float] = None,
+) -> None:
+    if cache_file is None or not words:
+        return
+    try:
+        cache_file.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "aligner_version": ALIGNER_CACHE_VERSION,
+            "model_size": model_size,
+            "vad_filter": bool(vad_filter),
+            "adaptive": bool(adaptive),
+            "recovery_attempted": bool(recovery_attempted),
+            "match_ratio": match_ratio,
+            "words": words,
+        }
+        write_text_atomic(cache_file, json.dumps(payload, ensure_ascii=False))
+    except Exception:
+        pass
 
 
 def transcribe_scene_words(
@@ -650,15 +789,25 @@ def transcribe_scene_words(
     if not hasattr(whisper_model, "transcribe"):
         return []
     clean_prompt = strip_audio_tags(narration_text)
+    model_tag = _resolve_whisper_cache_tag(whisper_model)
 
     cache_file: Optional[Path] = None
     if use_cache:
-        try:
-            cache_file = _words_cache_path(wav_path, clean_prompt, language)
-            if cache_file is not None and cache_file.is_file() and cache_file.stat().st_size > 0:
-                return json.loads(cache_file.read_text(encoding="utf-8"))
-        except Exception:
-            pass
+        cache_file = _words_cache_path(
+            wav_path,
+            clean_prompt,
+            language,
+            model_size=model_tag,
+            vad_filter=vad_filter,
+        )
+        cached = _read_words_cache(
+            cache_file,
+            expected_model=model_tag,
+            expected_vad=vad_filter,
+            require_adaptive=False,
+        )
+        if cached is not None:
+            return cached[0]
 
     try:
         audio_input: Any = (
@@ -677,11 +826,13 @@ def transcribe_scene_words(
         )
         words = _extract_segment_words(segments)
         if use_cache and cache_file is not None and words:
-            try:
-                cache_file.parent.mkdir(parents=True, exist_ok=True)
-                write_text_atomic(cache_file, json.dumps(words, ensure_ascii=False))
-            except Exception:
-                pass
+            _write_words_cache(
+                cache_file,
+                words,
+                model_size=model_tag,
+                vad_filter=vad_filter,
+                adaptive=False,
+            )
         return words
     except Exception as exc:
         print(f"[WARN] faster-whisper transcription skipped: {exc}", file=sys.stderr)
@@ -700,26 +851,66 @@ def transcribe_scene_adaptive(
     """Transcribe with primary prompt, retrying prompt-free or clause-sliced if match < 0.70."""
     clean_text = strip_audio_tags(narration_text)
     dur = scene_duration or (probe_duration_sec(wav_path) if wav_path.is_file() else 0.0)
-    cache_file = _words_cache_path(wav_path, clean_text, language) if use_cache else None
-    was_cached = bool(cache_file is not None and cache_file.is_file() and cache_file.stat().st_size > 0)
+    model_tag = _resolve_whisper_cache_tag(whisper_model)
+    is_real = _is_real_whisper(whisper_model)
+    cache_file = (
+        _words_cache_path(
+            wav_path,
+            clean_text,
+            language,
+            model_size=model_tag,
+            vad_filter=True,
+        )
+        if use_cache
+        else None
+    )
+
+    if use_cache:
+        cached = _read_words_cache(
+            cache_file,
+            expected_model=model_tag,
+            expected_vad=True,
+            require_adaptive=True,
+        )
+        if cached is not None:
+            cached_words, recovery_attempted = cached
+            _, cached_ratio = align_narration_words(
+                narration_text=clean_text,
+                whisper_words=cached_words,
+                scene_duration=dur,
+                wav_path=wav_path if wav_path.is_file() else None,
+            )
+            if cached_ratio >= 0.70 or recovery_attempted or not is_real:
+                return cached_words, cached_ratio
 
     words = transcribe_scene_words(
         whisper_model=whisper_model,
         wav_path=wav_path,
         narration_text=clean_text,
         language=language,
-        use_cache=use_cache,
+        use_cache=False,
         vad_filter=True,
     )
-    if not words or was_cached or not _is_real_whisper(whisper_model) or not wav_path.is_file():
-        if not words:
-            return words, 0.0
+    if not words:
+        return words, 0.0
+
+    if not is_real or not wav_path.is_file():
         _, ratio = align_narration_words(
             narration_text=clean_text,
             whisper_words=words,
             scene_duration=dur,
             wav_path=wav_path if wav_path.is_file() else None,
         )
+        if use_cache and cache_file is not None:
+            _write_words_cache(
+                cache_file,
+                words,
+                model_size=model_tag,
+                vad_filter=True,
+                adaptive=True,
+                recovery_attempted=False,
+                match_ratio=ratio,
+            )
         return words, ratio
 
     _, best_ratio = align_narration_words(
@@ -729,6 +920,16 @@ def transcribe_scene_adaptive(
         wav_path=wav_path,
     )
     if best_ratio >= 0.70:
+        if use_cache and cache_file is not None:
+            _write_words_cache(
+                cache_file,
+                words,
+                model_size=model_tag,
+                vad_filter=True,
+                adaptive=True,
+                recovery_attempted=False,
+                match_ratio=best_ratio,
+            )
         return words, best_ratio
 
     arr_16k = load_16k_mono_array(wav_path)
@@ -802,6 +1003,16 @@ def transcribe_scene_adaptive(
                 if r_cl > best_ratio:
                     best_ratio, best_words = r_cl, merged_clause_words
 
+    if use_cache and cache_file is not None and best_words:
+        _write_words_cache(
+            cache_file,
+            best_words,
+            model_size=model_tag,
+            vad_filter=True,
+            adaptive=True,
+            recovery_attempted=True,
+            match_ratio=best_ratio,
+        )
     return best_words, best_ratio
 
 
@@ -888,12 +1099,22 @@ def _apply_rms_burst_snapping(
         return word_spans
 
     clauses = _split_clauses(canon_tokens)
-    clause_bursts = _split_bursts_into_clauses(bursts, len(clauses), scene_duration)
+    clause_weights = [
+        sum(max(1, len(norm_indic_token(t)) or len(t)) for t in c_toks)
+        for c_toks in clauses
+    ]
+    clause_bursts = _split_bursts_into_clauses(
+        bursts, len(clauses), scene_duration, clause_weights=clause_weights
+    )
     tok_offset = 0
 
     for c_idx, c_tokens in enumerate(clauses):
         c_end_idx = tok_offset + len(c_tokens)
-        c_b = clause_bursts[c_idx]
+        c_b = (
+            clause_bursts[c_idx]
+            if c_idx < len(clause_bursts) and clause_bursts[c_idx]
+            else bursts[-1:]
+        )
         c_lo = c_b[0][0]
         c_hi = c_b[-1][1]
 
@@ -926,7 +1147,8 @@ def _apply_rms_burst_snapping(
                             e = min(e, s + 0.90)
                         else:
                             e = s + 0.90
-                    word_spans[i] = (max(0.0, s), min(c_hi + 0.12, max(s + 0.04, e)))
+                    hi_bound = max(s + 0.04, c_hi + 0.12)
+                    word_spans[i] = (max(0.0, s), min(hi_bound, max(s + 0.04, e)))
                     i += 1
         tok_offset = c_end_idx
 

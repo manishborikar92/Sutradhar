@@ -21,7 +21,7 @@ import numpy as np
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(_SCRIPT_DIR))
+    sys.path.insert(0, str(SCRIPT_DIR))
 
 from db_manager import get_project_root, load_config, resolve_paths  # noqa: E402
 from sutradhar.audio.elevenlabs_tts import (  # noqa: E402

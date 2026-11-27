@@ -76,7 +76,6 @@ from sutradhar.audio.whisper_aligner import (  # noqa: E402
     write_text_atomic,
     write_wav_atomic,
 )
-from sutradhar.models import EpisodePlanV2  # noqa: E402
 
 align_caption_words = align_narration_words
 _LazyWhisperProxy = LazyWhisperProxy
@@ -257,7 +256,7 @@ def _resolve_duration_bounds(ep_plan: Any, cfg: dict[str, Any]) -> tuple[str, fl
 def build_episode_audio(
     root: Path,
     tts_factory: Optional[Callable[..., Any]] = None,
-    whisper_factory: Callable[[dict[str, Any]], Any] = default_whisper_factory,
+    whisper_factory: Optional[Callable[[dict[str, Any]], Any]] = None,
     strict_budget: Optional[bool] = None,
     ledger_db_path: Optional[Path] = None,
     episode_id: Optional[int] = None,
@@ -324,10 +323,8 @@ def build_episode_audio(
 
     # Check if an already-synthesized legacy episode (pre-Phase 3 [pause]-stripped cache)
     # is 100% cached on disk so Gate 4 rebuilds execute with 0 API calls in < 2s.
-    is_live_engine = (
-        tts_factory is None
-        and kwargs.get("elevenlabs_factory") is None
-        and isinstance(tts_engine, ElevenLabsEngine)
+    is_live_engine = isinstance(tts_engine, ElevenLabsEngine) and not isinstance(
+        tts_engine, FakeElevenLabs
     )
     if is_live_engine:
         for item in prepared:
@@ -354,31 +351,30 @@ def build_episode_audio(
             item["is_cached"] = False
 
     has_cache_miss = is_live_engine and any(not item["is_cached"] for item in prepared)
+    has_v2_policy_fields = bool(
+        getattr(ep_plan, "thumbnail_spec", None)
+        or getattr(ep_plan, "audio_language", None)
+        or getattr(ep_plan, "caption_language", None)
+    )
     enforce_hard_budget = (
         strict_budget is True
         or (
             strict_budget is None
-            and (
-                has_cache_miss
-                or isinstance(ep_plan, EpisodePlanV2)
-                or bool(getattr(ep_plan, "thumbnail_spec", None))
-            )
+            and (has_cache_miss or has_v2_policy_fields)
         )
     )
     if enforce_hard_budget:
-        try:
-            validate_pre_tts_budget(
-                [item["synth_text"] for item in prepared],
-                [item["clean_text"] for item in prepared],
-                max_billed_chars=max_billed_chars,
-                warn_billed_chars=warn_billed_chars,
-                language=active_lang,
-                enforce_devanagari=(strict_budget is True or active_lang == "hi"),
-            )
-        except TTSBudgetError as exc:
-            raise AudioBuildError(str(exc)) from exc
+        validate_pre_tts_budget(
+            [item["synth_text"] for item in prepared],
+            [item["clean_text"] for item in prepared],
+            max_billed_chars=max_billed_chars,
+            warn_billed_chars=warn_billed_chars,
+            language=active_lang,
+            enforce_devanagari=(strict_budget is True or active_lang == "hi"),
+        )
 
-    whisper_model = whisper_factory(cfg)
+    whisper_builder = whisper_factory or default_whisper_factory
+    whisper_model = whisper_builder(cfg)
     fps = int(cfg["video"]["fps"])
     width = int(cfg["video"]["width"])
     height = int(cfg["video"]["height"])
@@ -468,8 +464,8 @@ def build_episode_audio(
             {
                 "speaker_role": "character_dialogue" if is_dialogue else "narrator",
                 "narration_text": clean_text,
-                "tts_text_applied": tagged_text,
-                "billed_chars": len(tagged_text),
+                "tts_text_applied": synth_text,
+                "billed_chars": len(synth_text),
                 "audio_path": _posix_rel(scene_wav, root),
                 "duration_sec": scene_dur,
                 "start_sec": start_sec,
@@ -636,6 +632,33 @@ def build_episode_audio(
     }
 
 
+def _resolve_cli_ledger_db(root: Path) -> Optional[Path]:
+    """Resolve `audio_ledger` DB path for CLI builds without mutating live DB under pytest."""
+    try:
+        cfg = load_config(root)
+        db_path = resolve_paths(root, cfg)["db_file"].resolve()
+    except Exception:
+        return None
+    if not db_path.is_file():
+        return None
+    repo_live_db = (SCRIPT_DIR.parent / "episodes.db").resolve()
+    if db_path == repo_live_db and os.environ.get("PYTEST_CURRENT_TEST"):
+        return None
+    try:
+        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+        try:
+            has_ledger = bool(
+                conn.execute(
+                    "SELECT 1 FROM sqlite_master WHERE type='table' AND name='audio_ledger'"
+                ).fetchone()
+            )
+        finally:
+            conn.close()
+    except sqlite3.Error:
+        return None
+    return db_path if has_ledger else None
+
+
 def main() -> int:
     if len(sys.argv) > 1:
         print(
@@ -646,7 +669,7 @@ def main() -> int:
         return 1
     try:
         root = get_project_root()
-        result = build_episode_audio(root)
+        result = build_episode_audio(root, ledger_db_path=_resolve_cli_ledger_db(root))
         print(json.dumps(result, indent=2, ensure_ascii=False))
         return 0
     except KeyboardInterrupt:
