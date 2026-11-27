@@ -1,484 +1,486 @@
-# Sutradhar Video Production System — Complete Redesign, Re-Architecture & Implementation Plan
+# Sutradhar Video Production System — Revalidated Redesign, Cleanup & Implementation Plan
 
-> **Document Status:** Master Architecture & Implementation Specification (Pre-Implementation Planning Stage — Awaiting User Approval)  
-> **Historical Record:** [VIDEO_STYLE_EXPLORATION_PLAN.md](file:///C:/Users/manis/Projects/Sutradhar/docs/VIDEO_STYLE_EXPLORATION_PLAN.md) (preserved intact as the chronological audit, POC exploration, Ep 3 replacement, and thumbnail fix record)  
-> **Constraints:** Hydrogen via Antigravity only · ElevenLabs Starter only (`$0` additional spending) · `30 Shorts / month` target · Hindi narration & captions · English thumbnails & YouTube metadata
+> **Document Status:** Master Architecture, Cleanup & Implementation Specification (Planning Phase Only — Awaiting User Approval)  
+> **Companion Historical Log:** [VIDEO_STYLE_EXPLORATION_PLAN.md](file:///C:/Users/manis/Projects/Sutradhar/docs/VIDEO_STYLE_EXPLORATION_PLAN.md) (chronological audit, Round 1–2 POCs, Ep 3 replacement `oBcyiPy26rg`, and Ep 4 `7PWFV7lQG6U` evolution)  
+> **Hard Constraints:** Hydrogen via Antigravity only · ElevenLabs Starter only (`30,000` credits/mo, `$0` additional spend) · `30 Shorts / month` target · Hindi audio & captions · English thumbnails, titles, descriptions, tags & playlists · Zero live code/DB/asset edits until plan approval
 
 ---
 
 ## Table of Contents
 
-1. [Executive Summary & Transformation Objective](#1-executive-summary--transformation-objective)
-2. [Current Architecture & Complete Root-Cause Analysis](#2-current-architecture--complete-root-cause-analysis)
-3. [Final Visual Direction & Design System (Candidate B + V1 Sunrise Synthesis)](#3-final-visual-direction--design-system-candidate-b--v1-sunrise-synthesis)
-4. [Playground Asset & Technique Extraction Plan](#4-playground-asset--technique-extraction-plan)
-5. [Complete Asset Library Replacement & Migration Strategy](#5-complete-asset-library-replacement--migration-strategy)
-6. [Target Codebase Architecture & Module Reorganization](#6-target-codebase-architecture--module-reorganization)
-7. [Database Schema & Data-Model Redesign](#7-database-schema--data-model-redesign)
-8. [Complete Audit & Redesign of `docs/INSTRUCTIONS.md`](#8-complete-audit--redesign-of-docsinstructionsmd)
-9. [End-to-End Semi-Automated Production Workflow (30 Shorts/Month)](#9-end-to-end-semi-automated-production-workflow-30-shortsmonth)
-10. [ElevenLabs Starter Optimization, Hindi Alignment & Audio Mastering](#10-elevenlabs-starter-optimization-hindi-alignment--audio-mastering)
-11. [Thumbnail Generation & YouTube Publishing Reliability](#11-thumbnail-generation--youtube-publishing-reliability)
-12. [Live Episode 3 (`oBcyiPy26rg`) & Channel Metadata Harmonization Plan](#12-live-episode-3-obcyipy26rg--channel-metadata-harmonization-plan)
-13. [Centralized Language Policy Enforcement](#13-centralized-language-policy-enforcement)
-14. [Technical Research & Zero-Cost Tool Evaluation](#14-technical-research--zero-cost-tool-evaluation)
-15. [Automated Testing & Fail-Closed Quality Gates](#15-automated-testing--fail-closed-quality-gates)
-16. [Phased Implementation Roadmap & Acceptance Criteria](#16-phased-implementation-roadmap--acceptance-criteria)
-17. [Sample End-to-End Acceptance Verification Protocol](#17-sample-end-to-end-acceptance-verification-protocol)
-18. [Risks, Constraints & Mitigation Matrix + Open Decisions](#18-risks-constraints--mitigation-matrix--open-decisions)
+1. [Executive Summary & Tri-Milestone Synthesis](#1-executive-summary--tri-milestone-synthesis)
+2. [Episode 4 (`ep4_neelakantha_shiva` / `7PWFV7lQG6U`) Deep Forensic Audit](#2-episode-4-ep4_neelakantha_shiva--7pwfv7lqg6u-deep-forensic-audit)
+3. [Revalidated Visual Direction ("Sutradhar Kinetic Storycraft v2")](#3-revalidated-visual-direction-sutradhar-kinetic-storycraft-v2)
+4. [Codebase-Wide Legacy, Backward-Compatibility & Dead-Code Audit](#4-codebase-wide-legacy-backward-compatibility--dead-code-audit)
+5. [Repository Classification & Cleanup Action Matrix](#5-repository-classification--cleanup-action-matrix)
+6. [Target Project Directory & File Architecture](#6-target-project-directory--file-architecture)
+7. [Module-by-Module Rewrite vs Consolidate Justification Matrix](#7-module-by-module-rewrite-vs-consolidate-justification-matrix)
+8. [Playground Technique Extraction & Upgraded Scene Runtime (`V1` + `Cand B` + `Ep 4`)](#8-playground-technique-extraction--upgraded-scene-runtime-v1--cand-b--ep-4)
+9. [Complete Visual & Audio Asset Replacement Strategy](#9-complete-visual--audio-asset-replacement-strategy)
+10. [Database Schema v4, Migrations & Historical Data Sync (`Ep 1–4`)](#10-database-schema-v4-migrations--historical-data-sync-ep-14)
+11. [Upgraded Pydantic Data Models (`EpisodePlan` & `StoryboardIR`)](#11-upgraded-pydantic-data-models-episodeplan--storyboardir)
+12. [Audit & Blueprint for Redesigned `docs/INSTRUCTIONS.md`, `SETUP_AND_OPERATIONS.md`, `README.md` & Configs](#12-audit--blueprint-for-redesigned-docsinstructionsmd-setup_and_operationsmd-readmemd--configs)
+13. [End-to-End Semi-Automated Production Workflow (`30 Shorts/Month`)](#13-end-to-end-semi-automated-production-workflow-30-shortsmonth)
+14. [ElevenLabs Starter Optimization, Hindi Word Alignment & Audio Mixing](#14-elevenlabs-starter-optimization-hindi-word-alignment--audio-mixing)
+15. [Encoder Bitrate Guardrails & Fail-Closed Automated Quality Gates](#15-encoder-bitrate-guardrails--fail-closed-automated-quality-gates)
+16. [Thumbnail Pipeline, YouTube Hardening & Live `Ep 3`/`Ep 4` Harmonization](#16-thumbnail-pipeline-youtube-hardening--live-ep-3ep-4-harmonization)
+17. [Centralized Language Policy & Zero-Cost Tool Evaluation](#17-centralized-language-policy--zero-cost-tool-evaluation)
+18. [Phased Implementation & Cleanup Roadmap (7 Phases)](#18-phased-implementation--cleanup-roadmap-7-phases)
+19. [Risks, Rollback Recovery & Git/Credential Security Hygiene](#19-risks-rollback-recovery--gitcredential-security-hygiene)
+20. [Approval Checklist & Minimal Open Decisions](#20-approval-checklist--minimal-open-decisions)
 
 ---
 
-## 1. Executive Summary & Transformation Objective
+## 1. Executive Summary & Tri-Milestone Synthesis
 
-The existing `Sutradhar` production pipeline passes `168` automated unit tests while historically producing ~`1/10` visual quality videos because its runtime violated the HyperFrames seek contract, silently discarded all subtitles on key mismatches, froze static DOM SVGs inside dark theater borders, hid missing VFX/transitions behind synthetic QA telemetry, stripped TTS `[pause]` tags, mis-aligned Devanagari words, and uploaded Shorts thumbnails before video processing finished.
+Inspection of the legacy codebase (`scripts/`, `templates/`, `assets/`, `tests/`, `backup/`, `build/`, `docs/`) alongside **three distinct playground milestones** reveals why legacy production delivered ~`1/10` videos—and clarifies the exact unified blueprint needed for scalable production:
 
-Meanwhile, controlled experimentation in `playground/` proved that two complementary visual and engineering approaches succeed natively on the exact zero-additional-cost stack (**Hydrogen + HyperFrames `0.9.70` + GSAP `3.15.1` + Canvas2D/DOM + ElevenLabs Starter + FFmpeg 7.1 + local `faster-whisper`**):
-- **`Candidate B — Ref-1 Inspired Cinema`** ([candidate_b_ref1_cinematic.mp4](file:///C:/Users/manis/Projects/Sutradhar/playground/candidate_b_ref1_cinematic/candidate_b_ref1_cinematic.mp4), `36,921,509 B`, `63.533s`, `1080×1920@30fps`): Proved that clean Canvas2D articulated character rigs, unified floor grounding (`HORIZON_Y = 1142`), storytelling props & progressive infographic visuals, lateral pan continuity, clean unobstructed stage margins, and crisp 34-cue multi-track SFX/BGM soundscapes can achieve HyperFrames `--strict` (`7/7` suites, `0` errors) and publish cleanly as Episode 3 (`oBcyiPy26rg`) with CDN-verified (`MAE = 0.24`, `dhash = 0`) custom thumbnail `sardefault.jpg`.
-- **`V1 — Dawn Ridge`** ([v1_dawn_ridge.mp4](file:///C:/Users/manis/Projects/Sutradhar/playground/v1_dawn_ridge_benchmark/v1_dawn_ridge.mp4), `112,807,077 B`, `63.503s`): Proved a deterministic multi-plane Canvas atmospheric system with evolving dawn sky palettes, additive solar disc & breathing god-rays, soft feathered clouds, 5-plane horizon-mist mountain ridges (`l.fog`), depth-parallax motion (`0.03..1.0`), swaying flora/motes, and `5%` shifted seeded grain achieving `96.3%` temporal motion (`3.68%` static).
+1. **Legacy Production (`scripts/engine/`, `templates/composition/`, `assets/svg/`):** Passes existing mocked/coupled unit tests while failing at runtime due to broken HyperFrames seek determinism (`gsap.delayedCall` + `masterTl` `{paused: false}` + `.call()`), key mismatch destroying subtitles (`start_sec` vs `start`), mismatched `480×960` wrappers floating puppet feet over missing fonts, synthetic FFmpeg `sine=` tones masquerading as instruments, hardcoded Episode-1 Ravana/Shani biases, synthetic `qa_verifier` passing payloads, and pre-processing YouTube thumbnail uploads that dropped `sardefault.jpg`.
+2. **Milestone 1 — Original `V1 — Dawn Ridge`** ([v1_dawn_ridge.mp4](file:///C:/Users/manis/Projects/Sutradhar/playground/v1_dawn_ridge_benchmark/v1_dawn_ridge.mp4), `112.81 MB`, `63.503s`): Validated deterministic Canvas2D atmospheric evolution (5-plane `l.fog` mountain ridges, volumetric sunrise glow, feathered clouds, bird flocks, `3.68%` static frames).
+3. **Milestone 2 — Corrected `Candidate B — Ref-1 Cinema` (Ep 3 `oBcyiPy26rg`)** ([candidate_b_ref1_cinematic.mp4](file:///C:/Users/manis/Projects/Sutradhar/playground/candidate_b_ref1_cinematic/candidate_b_ref1_cinematic.mp4), `36.92 MB`, `63.533s`): Proved articulated Ref-1 visual storytelling, unified `HORIZON_Y = 1142` room/furniture grounding, progressive infographics, clean unobstructed top frame, 34-cue multi-track audio (`-13.90 LUFS`), `1080×1920` `2:3`-safe English thumbnails, and live CDN `sardefault.jpg` verification (`MAE = 0.24`, `dhash = 0`).
+4. **Milestone 3 — Latest `Episode 4 — Neelakantha Shiva` (Ep 4 `7PWFV7lQG6U`)** ([ep4_neelakantha_shiva.mp4](file:///C:/Users/manis/Projects/Sutradhar/playground/ep4_neelakantha_shiva/ep4_neelakantha_shiva.mp4), `553.76 MB`, `61.97s`): Achieved the first synthesis of `Candidate B` storytelling and `V1` Kailash sunrise atmosphere while upgrading anatomy (`traceCapsule` limb sculpting, 5-finger `drawSculptedHand`, `2.5D` head `turn` parallax), choreographing 4-character *Samudra Manthan* action, hitting **`0.54%` static** (`temporal_motion = 99.5`), **KinoCut `ui-capture-dark = 94.0` (`all_passed: true`)**, **`color_balance = 73.6 PASS`**, **`776` ElevenLabs billed chars**, and `3` distinct BGM MD5s — **yet exposed new engineering flaws** (`553.76 MB` bitrate bloat, Kailash right-ridge snow fin in the thumbnail, unsplit em-dash caption keywords `"कहलाए—नीलकंठ!"`, post-render dummy `episode_plan.json` + missing `publishing_history`, `WhisperModel("base")` fallback, and `2,560`-line Python string generation).
 
-**Redesign Goal:** Extract the strongest modules from Candidate B and V1 into a declarative, modular, story-adaptive production architecture; eliminate broken SVG rigging, synthetic drones, and conflicting rules; rewrite `docs/INSTRUCTIONS.md` into an authoritative directing system; preserve and generalize all thumbnail/CDN safeguards; enforce clean English metadata / Hindi audio separation; and support **30 Shorts/month** within ElevenLabs Starter's `30,000` credits/month base budget with minimal, high-leverage human checkpoints.
-
----
-
-## 2. Current Architecture & Complete Root-Cause Analysis
-
-### 2.1 End-to-End Comparison: Old Production vs Playground Proven Baseline
-
-| Subsystem | Old Production Baseline (`scripts/`, `templates/`, `assets/`) | Proven Playground & Recent Fixes (`playground/`, `thumbnail_utils.py`) | Measured Impact |
-| --- | --- | --- | --- |
-| **Seek Contract & Engine** | `masterTl = gsap.timeline({ paused: false })`, `repeat: 60` + `gsap.delayedCall` loops, detached `lipTl`, `.call()` DOM swaps, 4,606-line `build/composition/index.html` outside project | Pure seek-driven `proxy = { t }` (`ease: "none"`) + `hf-seek` listener calling deterministic `renderWorld(t)`, seeded Lehmer PRNG, zero `.call()` mutations | `hyperframes check`: old `sweep_static` failure (`62.5%` static) vs **7/7 strict pass** (`3.68%` static in V1) |
-| **Hindi Kinetic Captions** | `subtitle_engine.py` reads `start_sec`/`end_sec`, whereas `build_audio.py` emits `start`/`end`/`global_start` -> cues collapse to `0.00..0.42s`; `bottom: 340px` in blocked zone; no bundled Devanagari `.woff2` | `captions_data.js` (`41` 1–4 word cues, `23` keywords) + `poc_shared_composer.py::_write_captions_html` at `top: 1274px` + 31 local SIL OFL `.woff2` fonts (`Noto Sans Devanagari`) | Zero vanished subtitles; readable, zero-overlap bottom-center kinetic highlights |
-| **Character Grounding & Rigs** | `480×960` (1:2) DOM wrapper around `800×1200` (2:3) SVGs leaves feet `150–250px` above shadow; `composer.py` L360 skips single-char scale; `cssText` wipes `--rot-*`; `sutradhar_narrator.svg` uses `display: none` + lacks joints | Canvas2D articulated `drawRef1Character` grounded at `(0,0)` on `HORIZON_Y=1142` wall/floor seam (`Y=1226..1230`) with exposed sandals, dual floor shadows, Padmasana cushions, stepped daises | Eliminated floating stick-dolls, broken joints, and scale lock |
-| **Environments, Props & VFX** | Hardcoded proscenium bars (`120px` top, `48px` sides, `520px` black void), `"vfx_elements": []`, omitted transitions, `fire_brazier` (`z=22`) behind narrator legs (`z=40`) | Full-bleed Canvas architectural interiors & V1 atmospheric dawn landscapes (`drawSunOrAura`, `drawClouds`, `drawRidges`), 9 grounded animated props/infographics, whip blurs, embers, petals | Upgraded visual telemetry and authentic spatial storytelling |
-| **Audio & Alignment** | `build_audio.py` L825 strips `[tags]` before L837 check (erasing `[pause]`), hostile antagonist fallback, `base` Whisper yields Scene 6 `match=0.3` (`"देवी"` `5.08s`), `build_assets.py` synthetic `sine=` BGM/SFX | `mix_candidate_audio.py` mixes 48kHz voice EQ + Pixabay-licensed HyperFrames bundled SFX + crossfaded 3-act BGM (`ratio=6.5` ducking) to `-14.0 LUFS` / `-1.5 dBTP` | Broadcast audio balance (`-13.90 LUFS`, `-1.50 dBTP`); still needs Whisper `small` + energy-burst alignment fix |
-| **QA & Verification** | `preview_frames.py` skips `hyperframes check --json` & inspects 1 midpoint frame/scene; `qa_verifier.py` generates fake `dom_snapshots`; `kinocut` dark `90.0` masks failure | `poc_runner.py` enforces `hyperframes check --strict --safe-zone shorts`, 15-frame review grid, `hyperframes measure look`, KinoCut `default` + `ui-capture-dark` | Real visual & motion checks replace synthetic passes |
-| **Thumbnail & Publishing** | Raw `ffmpeg` video frame grab (`1080×1920`), `thumbnails.set` invoked while `processingStatus="processing"` (drops `shortsAspectRatio`), Hindi `defaultLanguage`, Hindi playlists | Dedicated `1080×1920` cover art (`2:3` safe margins `top: 255px`, `bottom: 208px`), waits for `processingStatus=="succeeded"`, CDN `sardefault.jpg` fetch & `MAE/dhash` check | Live `oBcyiPy26rg` `sardefault.jpg` HTTP `200`, `MAE=0.24`, `dhash=0`, `30/30` API checks |
-
-### 2.2 Detailed Defect Catalogue (Root Cause per Code Component)
-
-1. **`scripts/engine/composer.py` & `templates/composition/`:**
-   - **Broken scale & multi-character crowding (`L263–328`, `L360–399`):** Mounts every episode character simultaneously and only runs staging on two-character scenes (`if beat.primary_character and beat.secondary_character:`), freezing solo shots at `0.75x`. Inline `p1El.style.cssText = ...` (`engine.js.jinja2` L66) erases animated `--rot-*` CSS custom properties.
-   - **Scene-wrapper camera bug:** Camera moves only transform `.backdrop-wrapper`, leaving foreground characters & props unmoved (disconnected parallax).
-   - **Hardcoded zero VFX & dead transitions (`L566`):** Returns `"vfx_elements": []`; `shatter_transition`, `border_wipe`, `blind_wipe`, `radial_wipe`, and `fade` have no timeline execution paths.
-2. **`scripts/engine/subtitle_engine.py` (`L128–129`), `puppet_rig.py` (`L336–434`), `lipsync_engine.py` (`L252–289`):**
-   - **Schema drift:** `subtitle_engine.py` expects `"start_sec"`/`"end_sec"`, receives `"start"`/`"end"` from `build_audio.py`, collapses cues to `[0, 0.3s]`. Hardcoded Ravana/Kailash keywords (`DEFAULT_KEYWORD_PATTERNS` L31–41) do not adapt to historical or cosmic scripts.
-   - **Non-seekable GSAP:** Creates `lipTl` referencing scene-local `w.get("start")` rather than `global_start` (observed generating negative/backward timestamps in `build/composition/engine.js` L231–265) and launches unbounded `ContinuousLifeEngine` loops outside `masterTl`.
-3. **`assets/svg/` (`42` files) & `assets/manifest.yaml`:**
-   - **`sutradhar_narrator.svg`** lacks `--rot-*` vars, `#torso_group`, `#eyes_normal`, `#mouth_shout/fear/joy`, and hides `#mouth_talk` via `display: none`.
-   - **Cross-rig naming fragmentation:** `shiva.svg` (`#shiva_thigh_left_rot`) and `mandodari`/`indra_dev`/`surya_dev` (`#<name>_torso_group`) mismatch `ContinuousLifeEngine`'s query (`#torso_group, #shani_torso_group`), breaking idle breathing/shifts.
-   - **`assets/fonts/` missing (`0` files):** Production CSS calls `'Playfair Display'`, `'EB Garamond'`, `'Noto Sans Devanagari'` with zero bundled `.woff2` files on disk.
-   - **Nonexistent Ep 1 asset reference:** `episodes` row 1 (`episode_id=1`) references `assets/svg/diagrams/shani_drishti_mandala.svg`, and `assets/svg/diagrams/` does not exist on disk (`MANIFEST_KEYS` confirms SVGs were split into `props/` and `infographics/`).
-4. **`scripts/build_audio.py` & `scripts/elevenlabs_engine.py`:**
-   - **Inline vocal tag deletion (`L825–847`):** Calls `strip_audio_tags` before checking for leading tags, making L837 unreachable and stripping mid-sentence `[pause]` markers (confirmed in Ep 3 scenes 4–5).
-   - **Unmapped emotion fallback (`L233–234`):** Defaults unrecognized `character_dialogue` emotion combinations to `antagonist` (`[arrogant, booming, furious, shouts]`).
-   - **Devanagari alignment drift (`L457–638`):** Uses `faster-whisper base` over PyAV-monkeypatched 44.1kHz WAVs (`match_ratio` `0.4211` in Scene 3, `0.3` in Scene 6 stretching `"देवी"` across `5.08s`) with pure character-length interpolation and zero audio-energy onset anchoring.
-   - **Identity pronunciation file (`pronunciations_hi.yaml`):** 11 of 16 mappings map strings identically to themselves; `ipa_replacements` (`build_audio.py` L168–174) is dead code.
-   - **Raw synthetic audio (`build_assets.py`):** Produces pure FFmpeg sine/noise synthesis rather than curated musical stems and realistic SFX.
-5. **`scripts/preview_frames.py`, `scripts/render_and_qa.py`, `scripts/engine/qa_verifier.py`:**
-   - `preview_frames.py` runs `hyperframes lint` only (ignoring `hyperframes check --strict --json` and multi-timestamp motion checks).
-   - `render_and_qa.py` evaluates `collect_sfx_schedule` against raw `audio_manifest.json` before inferred props exist, queues SFX for unimplemented outro curtains, omits `dom_snapshots` when invoking `qa_verifier.py`, and relies on `kinocut` `ui-capture-dark` (`90.0`).
-   - `qa_verifier.py` fabricates synthetic `dom_snapshots` (`L345–381`) when omitted so Gate 2 always passes.
-6. **`scripts/db_manager.py` & `scripts/publish_youtube.py`:**
-   - `--context` outputs unbounded episode summaries/assets + >1,000 tokens of contradictory prose guidelines; `cmd_create_series` queries only `status = 'COMPLETED'` so open-ended active series (`total_planned_episodes: null`) never rotate pillars; `StoryPhase` cliffhanger checks ignore Hindi phrases; Series 1 has `completed_episodes=0` despite published `cd1cc1mhfwg`.
-   - `publish_youtube.py` reads `pub_cfg.get("category_id")` instead of `channel.category_id`, couples `defaultLanguage` to `hi`, creates Devanagari playlists, hardcodes 3 tags, and swallows playlist errors.
+**Revalidated Redesign Mandate:** Fuse the proven visual strengths of **`V1` + `Candidate B` + `Episode 4`** behind modular, declarative ES/JavaScript runtime modules (`templates/runtime/`) and a clean Python orchestrator (`scripts/sutradhar/`); aggressively eliminate legacy backward-compatibility shims, orphaned `.pyc`/duplicate files, synthetic BGM clones, and self-contradictory documentation while safeguarding all live SQLite history (`episodes` 1–4, `publishing_history`, playlists `PLH-P2bxD4o-I`, `PLZpM1QZQbBWw`, `PLfT89QTc7oLs`) and fitting **30 Shorts/month** within ElevenLabs Starter (`30,000` credits/mo) at **$0 additional cost**.
 
 ---
 
-## 3. Final Visual Direction & Design System ("Sutradhar Kinetic Storycraft")
+## 2. Episode 4 (`ep4_neelakantha_shiva` / `7PWFV7lQG6U`) Deep Forensic Audit
 
-The production aesthetic unifies **Candidate B's illustrated Ref-1 storytelling clarity** with **V1 Dawn Ridge's dynamic sunrise and atmospheric depth** as a structured, modular design system — **not** rigid one-size-fits-all theater framing.
+### 2.1 Four-Stage Quantitative Comparison
 
-### 3.1 Core Aesthetic DNA
-1. **Rich Flat-Vector & Atmospheric Hybrid:**
-   - Clean, bold silhouettes and legible geometric proportions (`Candidate B`: `#0C1023` cosmic indigo, `#0D3B44` teal court, `#4C1623` royal crimson, `#5A3220` perspective teak floor, `#F6C453` brass/gold accents, `#E8B186` warm skin) **paired with** atmospheric depth gradients, glowing horizon mist (`V1` `l.fog`), volumetric god-rays, and subtle `5%` deterministic grain whenever environments open outdoors or into cosmic vistas.
-2. **Spatial Grounding & Camera Continuity Law (`Zero Floating Objects`):**
-   - **Unified Grounding Coordinates (`1080×1920` Canvas):**
-     - **Architecture / Interior Stage:** Horizon wall-floor baseboard fixed cleanly via parameterized `horizonY` (default `1142` for story shots beneath `1274px` captions; `1445` for full-bleed cover thumbnails without subtitles). Standing feet anchor directly onto floorboards at `horizonY + 84..88` (`1226..1230`) with sandaled toes, golden anklets (*nupura*), and two-layer cast elliptical floor shadows centered at `(0, 0)`. Seated characters anchor cleanly on silk dais/lotus seat planes; artifacts rest flush on pedestals, tables, niches, or desks.
-     - **Outdoor / Landscape Stage (V1 Synthesis):** Characters/trees/temples stand strictly along computed ridge crest points (`ridge[x] + embedOffset`) with anchored base shadows, framed inside near/far ridge depth planes (`df = 0.06..0.69`).
-   - **Continuous Pan & Depth Parallax:** Adjacent spatial scenes connect via smooth colonnade/landscape camera pans (`pan_left`/`pan_right`/`push_in`/`pull_out`) applying `camX * depthFactor` per plane (`0.03` stars, `0.05` sun/god-rays, `0.12..0.40` clouds/mid-arches, `0.65` near hills/columns, `1.0` heroes/props).
-3. **Unobstructed Frame Discipline & Safe Zones:**
-   - **No permanent top progress bar and no noisy episode badges.** Top-center contextual callout pills remain **off by default** (`include_editorial=false`) and appear **strictly when narrative clarity demands a concise landmark, count, or entity contrast** (`title_cards` / `character_labels`, max `2–4` words, within `y = 260..390`).
-   - **YouTube `9:16` + `2:3` Shorts Safe Zones:**
-     - **Video Active Stage:** Primary heads/expressions reside within `y = 290..1150`, keeping the bottom-center Hindi kinetic caption lane (`top: 1274px`, `height <= 145px`) completely unobstructed above YouTube's bottom player overlay (`y >= 1430`) and clearing right-edge engagement icons (`x >= 888`).
-     - **Thumbnail Safe Zone (`1080×1920` & `2:3` Center Crop `y = 150..1770`):** Top typography badge starts at `top >= 250px` (`>= 100px` inside `2:3` crop, clear of top-left `"New"` badge) and bottom signature band sits at `bottom >= 205px` (`>= 55px` above `2:3` bottom cut).
+| Metric / Property | Legacy Production (Pre-Redesign Ep 3) | Original `V1 — Dawn Ridge` | Corrected `Candidate B` (`oBcyiPy26rg`) | Latest `Episode 4` (`7PWFV7lQG6U`) | Target Redesign Requirement |
+| --- | --- | --- | --- | --- | --- |
+| **MP4 Size / Avg Bitrate** | `23.8 MB` (`final_short.mp4`) | `112.81 MB` (`14.2 Mbps`) | `36.92 MB` (`4.65 Mbps`) | **`553.76 MB` (`71.29 Mbps` bloat!)** | **`<= 55 MB` (`<= 7.5 Mbps`)** crisp H.264 |
+| **Duration / Resolution / FPS** | `63.53s` · `1080×1920@30` | `63.503s` · `1080×1920@30` | `63.533s` · `1080×1920@30` | `61.97s` · `1080×1920@30` (`has_b_frames=0`) | `40–65s` sweet spot · `1080×1920@30` |
+| **`hyperframes check --strict --safe-zone shorts`** | Fails (`sweep_static`) | `ok: true` (`0` err / `0` warn) | `ok: true` (`0` err / `0` warn) | `ok: true` (`0` err / `0` warn; text pills hidden inside `data-layout-ignore` canvas) | `ok: true` **without** hiding labels in `data-layout-ignore` |
+| **Look (`luma / contrast / sat / warmth`)** | Flat dark borders | `68.7 / 39.9 / 0.436 / —` | `46.5 / 41.1 / 0.604 / +13.4` | `54.8 / 43.5 / 0.48 / -7.2` | Balanced exposure (`luma 48–68`, `sat >= 0.48`) |
+| **KinoCut `ui-capture-dark` / `default`** | Hardcoded `90.0` fake DOM | `88.8` / `57.0` | `89.4` / `52.7` | **`94.0` (`all_passed: true`) / `59.8`** | **`ui-capture-dark >= 88`, `default >= 55`** |
+| **KinoCut `static_fraction` / `color_balance`** | `62.5%` static | `3.68%` static / `48.0 FAIL` | `47.24%` static / `51.0 FAIL` | **`0.54%` (`temporal_motion 99.5`) / `73.6 PASS`** | **`static_fraction <= 0.15` & `color_balance PASS`** |
+| **ElevenLabs Billed Chars (`eleven_v4`)** | `~975` (`build_audio.py` stripped tags) | Reused Ep 3 audio | Reused Ep 3 audio (`975` orig) | **`776` billed chars** (incl. `[tags]`, tag-safe!) | **`760–840` target (`<= 900` hard cap)** |
+| **Whisper Match Avg (`faster-whisper`)** | `0.69` (`S6: 0.30` using `base`) | `0.69` (`base`) | `0.69` (`base`) | `0.7155` (`S5: 0.0` under `base`, saved by RMS bursts) | **`>= 0.85` via `small` + RMS + fixed tokenizer** |
+| **Audio Loudness & Track Diversity** | `-14.0 LUFS`, single `sine=` bed | `-14.0 LUFS`, 1 synth bed | `-13.90 LUFS`, 34 SFX (3 BGM clones!) | **`-14.0 LUFS` / `-1.4 dBFS`, 3 distinct MD5 BGM acts + 24 SFX** | `-14.0 ± 0.5 LUFS`, `<= -1.5 dBTP`, real stems |
+| **Shorts Thumbnail & Live `sardefault.jpg`** | Dropped (`404`, pre-processing) | Offline only | **`1080×1920`, `240 KB`, `MAE=0.24`, `dhash=0`** | **`1080×1920`, `211 KB`, `MAE=0.273`, `dhash=1`** (`20/20` checks, but Kailash snow shard glitch) | **`MAE <= 12`, `dhash <= 16` + visual art gate** |
 
-### 3.2 Narrative-Adaptive Visual Grammar Matrix (Four Modes)
+### 2.2 Critical Separation: What to Extract vs What Must Be Rejected
 
-AI scene planners select the visual grammar per beat rather than forcing every story into a fixed box:
+#### A. Proven Episode 4 Breakthroughs Worth Standardizing
+1. **Anatomical Character Craft (`SHARED_ILLUSTRATOR_JS` in [build_ep4_visuals.py](file:///C:/Users/manis/Projects/Sutradhar/playground/ep4_neelakantha_shiva/build_ep4_visuals.py)):**
+   - **Tapered Capsule Limbs (`traceCapsule` / `drawAnatomicalArm`):** Two-pass organic shoulder-to-wrist contour + inner warmth highlight (`#E8B186`), replacing Candidate B's uniform thick round strokes (`24px`) while preserving crisp dark ink outlines (`#3B1E12`).
+   - **5-Finger `drawSculptedHand` Poses:** Expressive wrist-attached hands supporting `"cup"`, `"namaskar"`, `"grip"`, and `"relax"` without extra draw calls.
+   - **2.5D Head Turn Parallax (`drawMythFace` with `turn` ∈ `[-0.35, +0.35]`):** Dynamically shifts facial midline, nose bridge, mouth, brow curvature, iris gaze offset, and near/far ear visibility (`earVis`) across scenes, giving 2D Canvas rigs authentic dimensionality.
+2. **Action Choreography + V1 Atmospheric Fusion:**
+   - Synchronized multi-actor Vasuki churning (`S1` Devas vs Asuras pulling over `drawKurma` & swirling waves), emerald *Halahala* billowing plumes (`S2`), V1-derived `RIDGES_KAILASH` + `drawKailashSacredPeak` + twilight-to-sunrise evolution + `drawV1Birds` (`S3–S7`), rack-focus background dimming (`0.42`, `S4`), flowing cobra/scorpion aura effects (*Srimad Bhagavatam 8.7.46*, `S5`), and progressive emerald-to-sapphire *Neelakantha* throat glow (`S5–S7`).
+   - Resulted in **`99.5` temporal motion**, **26 points higher KinoCut `color_balance` (`73.6 PASS` vs `48–51 FAIL`)**, and rich visual contrast across every act.
+3. **Production-Ready Audio Upgrades ([build_ep4_audio.py](file:///C:/Users/manis/Projects/Sutradhar/playground/ep4_neelakantha_shiva/build_ep4_audio.py), [mix_ep4_audio.py](file:///C:/Users/manis/Projects/Sutradhar/playground/ep4_neelakantha_shiva/mix_ep4_audio.py)):**
+   - Fixed `build_audio.py`'s inline-tag bug (`apply_pronunciations_preserving_tags` splits cleanly around `[...]`), proved **`776`-character `eleven_v4` delivery** is emotionally rich, added `16 kHz` `ffmpeg` resampling + RMS speech-burst energy fallback rescuing unaligned Whisper spans (`S5`), and selected **3 genuinely distinct MD5 BGM stems** (`tense_confrontation` `6de030fe3022`, `dramatic_mythology` `13fd74c89eb4`, `cosmic_mystery` `2ad448da0b96`).
+4. **`2:3` Shorts Crop Automated Verification (`run_ep4.py` L123–130):** Automatically generates `ep4_thumbnail_2x3_crop.jpg` (`y = 150..1770`) alongside the full `1080×1920` cover so reviewer inspection catches `2:3` Shorts shelf slicing early.
 
-| Story / Beat Situation | Primary Visual Environment | Lighting & Atmospheric Layer | Character / Camera Staging | Graphic / Prop Treatment |
-| --- | --- | --- | --- | --- |
-| **1. Royal Court / Palace Mythological Drama** | `architectural_stage.js` interior (`dado`, fluted plinth columns, carved balcony windows, floor planks/carpet, optional opening curtains in Beat 1 only) | Warm diya flicker halos, focus vignette rack (`background brightness 0.30` spotlighting speaker) | Medium/full grounded articulated puppets (`Y=1226`), eye contact & gesture keyframe lerp, lateral colonnade pans | Handed props (bowls, crowns, scrolls), subtle golden focus aura |
-| **2. Dawn / Epic Quest / Himalayan & Outdoor Awakening** | `atmosphere_v1.js` sky + `SunDisc` + `FogRidgeStack` (5 depth planes) + `FeatheredCloudLayer` + temple domes/pine silhouettes | Evolving sky stops & crest warmth synced to timeline `p`, additive `lighter` solar rays, `ambientMotes`, `5%` shifted grain | Wide-to-medium push-in framing (`scale 1.0 -> 1.11`), bird flocks, swaying trees/grass blades, lantern glow silhouettes or foreground travelers | Floating atmospheric emblems, rising dawn transition into daytime action |
-| **3. Historical / Archaeological Discovery** | Textured courtyard/pillar architecture, parchment scroll tabletops, architectural cutaways | Focused gallery spot lighting, dust motes, warm parchment vignette | Hero scholar/king alongside grounded physical artifact pedestal (`scale` cut-ins, detail zoom) | Circular magnifying inspection lens, route scroll paths (`stroke-dashoffset` trajectory), artifact callout pills |
-| **4. Cosmic & Vedic Scientific Paradox** | Deep indigo nebula, `starfield` / `spiral-galaxy`, minimal grid blueprint planes (`60px` rule grid) | Slow glow halos, orbital luminescence, echo-smear radial motion trails | Split comparison frames, progressive reveal anchored directly to spoken anchor words | One-part-at-a-time growing models (2-clock race bars, spacetime curvature funnel, `27`-sector lens, Kalachakra cosmic rings) |
-
----
-
-## 4. Playground Asset & Technique Extraction Plan
-
-Every proven module in `playground/` maps directly to permanent parameterized production modules:
-
-| Playground Source (`path` & exact symbols/lines) | Origin | Target Production Module | Extraction & Generalization Strategy |
-| --- | --- | --- | --- |
-| `playground/v1_dawn_ridge_benchmark/src/canvas_v1.js`: `makeRidge` (`L26–38`), `drawSky` (`L93–100`), `drawMilkyWayBand` (`L102–117`), `drawStars` (`L119–134`), `drawSunOrAura` (`L136–164`), `drawCloud`/`drawClouds` (`L166–190`), `drawRidges` (`L192–208`) | V1 | `templates/runtime/backdrops/atmosphere_v1.js` | Replace fixed arrays/globals with `AtmosphereEngine(cfg, prng)` accepting `{ skyStopsFrom/To, sunPos, sunInt, rayCount, rayAngle, ridges, cloudSpec, fogBlend, stars }` so any pillared outdoor or sunrise beat works parametrically. |
-| `canvas_v1.js`: `drawPine` (`L210–226`), `drawTempleDome` (`L228–267`), `drawKalachakra` (`L269–347`), `drawMotes` (`L491–509`), `drawBirds` (`L511–529`), `noiseCv` grain/vignette (`L79–91`, `L1098–1129`), `blendCv` crossfade (`L1054–1096`) | V1 | `templates/runtime/fx/post_fx.js` & `atmosphere_v1.js` | Extract offscreen grain tile, radial vignette, offscreen scene-transition buffer (`xfade`, `dip`, `whip`), Kalachakra chakra prop, flora sway, and depth-sorted motes into shared Canvas helpers. |
-| `playground/scripts/build_candidate_b.py::WORLD_JS`: `drawPalaceInterior` (`L126–273`) & thumbnail floor (`L1991–2015`) | Cand B | `templates/runtime/backdrops/architectural_stage.js` | Parameterize `horizonY`, `wallPalette`, `floorPalette`, `carpetSpec`, `columnStyle`, `windowLit`, `hasDiyas`, `curtainOpenProgress` (`0..1`) with unified perspective plank projection. |
-| `WORLD_JS`: `drawRef1Character` (`L348–883`), `drawJointedArm` (`L574–622`), faces/crowns/beards/instruments | Cand B | `templates/runtime/rigs/character_engine.js` + `assets/characters/*.json` | Decouple appearance tokens (`skin`, `dhoti`, `sash`, `crown`, `hair`, `accessories`) from kinematic skeleton (`shoulder/elbow/wrist/torso/head/blink/mouth` continuous lerp interpolation) so 1 deep rig engine powers arbitrary characters without copy-pasting draw code. |
-| `WORLD_JS`: `drawGroundedHourglassStand` (`L276–342`), `drawBrassClock` (`L886–940`), `drawVectorEarthGlobe` (`L942–972`), `drawClockShrineNiche` (`L992–1016`), Map Scroll (`L1149–1255`), Magnifying Lens (`L1443–1489`), Relativity/Two-Clock (`L1507–1613`), Mandap/Kalash (`L1682–1779`), Mandala (`L1798–1819`) | Cand B | `templates/runtime/props/props_library.js` | Turn every inline scene prop into a clean declarative renderer `(ctx, propState, t, progress)` grounded at `(x, y)` with animation progress `0..1`. |
-| `playground/scripts/poc_shared_composer.py` (`L18–178`, `L180–459`) | Shared | `scripts/visual/stage_composer.py` + `templates/runtime/core/seek_runtime.js` + `captions_overlay.js` | Port exact `proxy = { t }` GSAP contract, `hf-seek` handler, strict non-overlapping `.caption-group` timing clamp (`endT = min(end, nextStart - 0.03)`), and optional opt-in `editorial` overlays; retire `.call()` timeline mutations completely. |
-| `WORLD_JS::drawWhipBlurOverlay` + HyperFrames Registry (`cinematic-zoom`, `chromatic-radial-split`, `directional-wipe`, `transitions-radial`, `grain-overlay`, `starfield`, `sun-burst`, `camera-rig-depth-stack`, `caption-editorial-emphasis`) | Cand B + HF OSS | `templates/runtime/fx/transitions.js` + `hyperframes add` components | Use Canvas whip/iris/dip wipes cleanly between Canvas scenes and selectively install verified OSS HyperFrames blocks (`starfield`, `grain-overlay`, `caption-*`) where appropriate. |
-| `playground/scripts/build_candidate_b.py::THUMBNAIL_HTML` (`L1874–2250`) | Cand B | `templates/thumbnail/cover_template.html.jinja2` | Eliminate the 300-line duplicate canvas character/clock drawing inside `THUMBNAIL_HTML` by importing `character_engine.js` & `props_library.js` directly, retaining `1080×1920` layout + `top: 255px` / `bottom: 208px` `2:3` safe margins. |
-| `playground/shared/fonts/*` (31 `.woff2` + `fonts.css`) | Shared | `assets/fonts/` (moved permanently out of `playground/`) | Copy all 31 SIL OFL `.woff2` font files & unified `fonts.css` into production `assets/fonts/` so both video compositions and thumbnails work 100% offline. |
-| `playground/scripts/mix_candidate_audio.py` & `HF SFX` (`node_modules/hyperframes/.../sfx/*.mp3`) | Cand B | `scripts/audio/mixer.py` + `assets/audio/sfx/` | Copy/reference the 19 Pixabay-licensed bundled HyperFrames SFX (`CREDITS.md` verified `$0` commercial OK) alongside `mix_candidate_audio.py`'s declarative 3-act BGM crossfade, voice EQ/presence chain, and sidechain ducking (`threshold=0.028, ratio=6.5`). |
-| `playground/scripts/poc_runner.py` & `replace_ep3_youtube.py` | Both | `scripts/qa/` & `scripts/publishing/` | Promote `--strict --safe-zone shorts`, multi-timestamp contact sheets, `measure look`, dual KinoCut scoring, phased upload safeguards, binary SQLite backup, and `publishing_history`. |
+#### B. Episode 4 Shortcuts, Flaws & Temporary Workarounds Not to Copy
+1. **`553.76 MB` (`71.29 Mbps`) Video Bloat ([run_ep4.py](file:///C:/Users/manis/Projects/Sutradhar/playground/ep4_neelakantha_shiva/run_ep4.py) L192 + [world.js](file:///C:/Users/manis/Projects/Sutradhar/playground/ep4_neelakantha_shiva/src/world.js) L2158–2167):** Shifting `noiseCv` every `1/30s` frame under HyperFrames `--quality looks` (`has_b_frames=0`) defeated H.264 inter-frame temporal compression, producing a **15× larger MP4** than Candidate B (`36.92 MB`) for zero perceived gain after YouTube transcoding.
+2. **Thumbnail Right-Slope Polygon Glitch (`drawKailashSacredPeak` L1214 & `thumb/index.html` L1272 + CSS `font-weight: 900`):** Visual inspection of both `ep4_thumbnail.jpg` and live `sardefault.jpg` shows an oblique grey/white-edged triangular snow shard jutting into open sky behind Shiva's crescent moon. Code inspection proved why: gully `[122, -208, 62, 38]` draws right to `x = 184, y = -196`, extending outside the mountain perimeter vertex `(175, -195)` (exaggerated at `scale = 1.66`). Additionally, `.pill` requests `font-weight: 900` on `Inter`, which falls back cleanly to synthetic bold or `800` because `fonts.css` bundles only weights `500/700/800`.
+3. **Unvalidated Canvas Text Pills & Margin Crowding (`world.js` L1675–1687, L2010–2022; `captions.html` L11–18):**
+   - Drawing `"FIRST TO EMERGE · HALAHALA"` (`y = 320..372`) and `"NEELAKANTHA"` (`y = 315..367`) inside `<canvas data-layout-ignore="true">` bypassed HyperFrames' DOM overlap/contrast/safe-zone inspector.
+   - Caption container `.caption-group` (`top: 1256px`, `max-height: 148px`) extends down to **`y = 1404px`**, grazing `4px` into the blocked bottom `520px` zone (`y >= 1400`), while `S1` ocean waves leave a dark navy lower third during ocean framing.
+4. **Post-Render Plan Inversion, Fictional Asset Path & Missing Audit Log ([publish_ep4.py](file:///C:/Users/manis/Projects/Sutradhar/playground/ep4_neelakantha_shiva/publish_ep4.py) L99–248, L346–409):**
+   - `ep4_episode_plan.json` was generated *23 minutes after* `ep4_neelakantha_shiva.mp4` solely to satisfy `EpisodePlan` during `--prepare-only`, carrying mismatched TTS speed metadata (`0.90` vs `0.95/0.88` used during audio synthesis) and a **nonexistent SVG path** (`assets/svg/backdrops/samudra_manthan_halahala.svg`).
+   - `_record_ep4_in_db` inserted `episode_id=4` directly via raw SQL instead of updating `publishing_history`, leaving Ep 4 (`7PWFV7lQG6U`) absent from `publishing_history`.
+5. **Caption Tokenizer & Audio Mix Bugs ([build_ep4_audio.py](file:///C:/Users/manis/Projects/Sutradhar/playground/ep4_neelakantha_shiva/build_ep4_audio.py) L412, L480; [mix_ep4_audio.py](file:///C:/Users/manis/Projects/Sutradhar/playground/ep4_neelakantha_shiva/mix_ep4_audio.py)):**
+   - `norm_tok = re.sub(r"[^\u0900-\u097Fa-zA-Z0-9]", "", w["word"])` concatenates em-dash hyphenated phrases without splitting, producing `"बचीकैलाश"` (missing `"कैलाश"`) and `"कहलाएनीलकंठ"` (missing **titular keyword `"नीलकंठ"`** -> `kw: false` at `captions_data.js` L349 & L839!).
+   - Docstring mentions `faster-whisper small` alignment, yet `L480` still instantiates `WhisperModel("base", ...)` — causing Scene 5 to score **`0.0` Whisper match** and rely solely on energy bursts.
+   - `mix_ep4_audio.py` plays **3 orphaned UI SFX** (`pop.mp3`/`click-soft.mp3` at `13.85s`, `14.55s`, `54.10s`) for meters cut from `world.js`, starts `5.54s` `whoosh-cinematic.mp3` at scene boundaries instead of cresting cuts at `+33ms`, and runs `loudnorm` twice (once on voice, once on final mix).
+6. **Code & Binary Duplication (`build_ep4_visuals.py`):** Inlines `~2,200` lines of JS inside Python strings (`src/world.js` and duplicate copy inside `thumb/index.html`) without ES modules or reusable component files, and copies `78` duplicate font/lib files (`3.77 MB` incl. unused `691 KB` `three.module.min.js`) + `17.84 MB` duplicate `master_mix_ep4.wav` per folder.
 
 ---
 
-## 5. Complete Asset Library Replacement & Migration Strategy
+## 3. Revalidated Visual Direction ("Sutradhar Kinetic Storycraft v2")
 
-The user has explicitly authorized replacing inferior existing SVGs (`assets/svg/*`) and synthetic drones cleanly rather than preserving broken legacy structures. **No deletion happens during planning**; execution replaces assets cleanly once every reference in scripts, templates, tests, and `episodes.db` is migrated.
+Visual direction is now anchored on the verified **Tri-Milestone Synthesis (`V1 Atmosphere` + `Candidate B Staging` + `Episode 4 Anatomy/Action`)**:
 
-### 5.1 What Gets Replaced, Reused, Adapted, or Created
-
-1. **Characters (`assets/svg/characters/` [10 files] -> Replace with Parametric Canvas/SVG Rig Profiles `assets/characters/*.json` + Hybrid SVG Accessory Partials):**
-   - **Retire/Replace (`10` legacy brittle DOM SVGs):** `sutradhar_narrator.svg`, `ravana.svg`, `shiva.svg`, `hanuman.svg`, `narad_muni.svg`, `mandodari.svg`, `indra_dev.svg`, `shani_dev.svg`, `surya_dev.svg`, `ancient_scholar.svg`.
-   - **Replacement Design:** Every character becomes a clean **data-driven Character Definition JSON** (`assets/characters/<id>.json`) consumed by the single deep `character_engine.js` Canvas2D renderer (grounded at `(x, footY)` with continuous FK shoulder/elbow/wrist/head/torso keyframes, high-arched hairline, animated eyes/brows/mouth phonemes, optional multi-head/multi-arm/beard/crown/weapon/garment palettes). For close-up illustrated portraits or unique mythological insignia (e.g., Ravana's 10-head crown crest, Shiva's Trishul/damaru, Balarama's Halayudha), lightweight Canvas path drawers or clean SVG vector partials are registered modularly cleanly inside `assets/custom_parts/`.
-   - **Visual Consistency Across Episodes:** Shared skin tones (`warm_ivory`, `royal_wheat`, `blue_divine`, `ash_vibhuti`), shared stroke ink (`#3B1E12`), unified crown filigree geometry, and locked proportional limb ratios guarantee returning series characters (Kakudmi, Revati, Balarama, Shani, Ravana, Sutradhar) look identical across episodes.
-2. **Backdrops (`assets/svg/backdrops/` [15 files] -> Replace with Environment Preset Catalog `assets/environments/*.json` + Reusable Layered Renderers):**
-   - **Retire/Replace:** All 15 flat polygon/black-slab backdrop SVGs (`mount_kailash.svg`, `brahmaloka_time_chakra.svg`, `mehrauli_iron_pillar.svg`, etc.). Keep Ep 1–3 historical paths valid in `publishing_history`/`legacy_asset_note` or map them smoothly via alias resolution during DB migration.
-   - **New Production Presets:** Parametrized JSON configs pairing `atmosphere_v1.js` + `architectural_stage.js`: `dawn_ridge_kailash`, `cosmic_brahmaloka_court`, `royal_palace_colonnade`, `temple_mandap_twilight`, `ancient_courtyard_archaeology`, `vedic_cosmos_observatory`, `forest_ashram_rays`, `parched_drought_horizon`, `ocean_dawn_shore`. New episode backdrops simply customize palette/column/mountain/celestial parameters or compose bespoke landmarks (`mehrauli_pillar_relief`, `nalanda_observatory`) cleanly!
-3. **Props, Infographics & VFX (`assets/svg/props/` [7], `infographics/` [5], `vfx/` [5] -> Unified Declarative `assets/props/` & `templates/runtime/` Modules):**
-   - **Extract & Upgrade from Candidate B:** `brass_echo_clock`, `pedestal_hourglass`, `spinning_earth_globe`, `clock_shrine_niche`, `parchment_route_scroll`, `magnifying_sector_lens`, `spacetime_two_clock_comparator`, `wedding_mandap_kalash`, `cosmic_kalachakra_lotus`.
-   - **Adapt from Legacy Concepts (Better Execution):** Replace crude `vedic_kundali.svg`, `planetary_staircase.svg`, `comparison_card.svg`, `screen_shatter.svg` with genuine Ref-1/HyperFrames Canvas + SVG animated primitives (`growing_chart_node`, `orbit_diagram`, `timeline_slider`, `radial_iris_wipe`, `ember_drift`, `petal_shower`, `whip_smear`, `crack_propagation`, `sonic_ripple`).
-   - **Bespoke Asset Policy Update:** Replace the brittle rule *"must save a static diagram SVG under hardcoded folder"* with *"every episode must feature at least one story-specific visual prop, landmark backdrop customization, or animated explanatory visual registered cleanly in `assets/manifest.yaml` (or scoped under `assets/episodes/<ep_id>/`) when reusable."*
-4. **Fonts (`assets/fonts/` — Currently EMPTY -> Populate with 31 SIL OFL `.woff2` Files):**
-   - Promote all `31` fonts + `fonts.css` from `playground/shared/fonts/` into `assets/fonts/` (`Noto Sans Devanagari`, `Tiro Devanagari Hindi`, `Rozha One`, `Cinzel`, `Cormorant Garamond`, `Inter`). Verify `font-display: block` + `await document.fonts.ready` inside headless HyperFrames.
-5. **Audio Library (`assets/bgm/` [10 `.mp3`] & `assets/sfx/` [17 `.wav`] + Bundled Pixabay HyperFrames SFX):**
-   - **Retire synthetic `build_assets.py` sine-wave generators** as primary audio!
-   - **SFX Upgrade (`assets/sfx/`):** Import the 19 Pixabay-licensed (`CREDITS.md` verified free commercial use) HyperFrames SFX (`whoosh-cinematic`, `whoosh-short`, `impact-bass-1/2`, `click-soft`, `pop`, `sparkle`, `chime`, `ping`, `riser`, `glitch-1..3`, etc.), retain only acoustically verified distinct `.wav` cues (e.g. `conch_blast`, `thunder_rumble`, `cosmic_chime`, `curtain_whoosh`), and organize by cue category (`transition`, `reveal`, `ui_pop`, `mythic_impact`, `ambient_bed`).
-   - **BGM Upgrade (`assets/bgm/`):** Replace identical copied alias `.mp3` files (`dramatic_mythology.mp3` etc. were clones of `theatrical_narrative.mp3`!) with genuinely distinct, freely licensed (`CC0` / Pixabay / Musopen / public domain) acoustic/cinematic Indian & ambient instrumental tracks curated once offline at `$0` cost — **OR** clearly gate fallback drone synthesis strictly as emergency degraded mode (`allow_synth_fallback: false` in production QA).
-
-### 5.2 Dependency Mapping & Clean Deletion Checklist (For Execution Phase)
-Before removing any file under `assets/svg/`, tests and scripts will be migrated first in Phase 2–4:
-- Update `scripts/db_manager.py::cmd_context()` `available_rigs` scanner to read unified `assets/manifest.yaml` v2 (`characters`, `environments`, `props`, `fonts`, `bgm`, `sfx`) instead of hardcoded `.svg` file globs.
-- Update `tests/test_render_pipeline.py` & `tests/test_db_manager.py` asset existence tests against `assets/manifest.yaml` v2 before archiving/removing legacy SVGs (`assets/svg/`).
-- Preserve `episodes` rows 1–3 audit integrity by storing `legacy_asset_path` metadata safely so historical rows never fail FK/validation checks.
+1. **Anatomical Richness Without Sacrificing Silhouette Readability:** Standardize `traceCapsule` layered limb geometry, `drawSculptedHand` pose states, `drawMythFace` `2.5D` head turns, asymmetrical high-arched hairlines (zero forehead bars), crisp foreground ink outlines (`#3B1E12`), and shared divine/mortal palettes so recurring heroes (*Shiva, Devi, Brahma, Shani, Kakudmi, Balarama, Ravana*) stay visually consistent across episodes.
+2. **Continuous Motion & Spatial Grounding Law (`HORIZON_Y` Invariant):**
+   - Interior architectural scenes snap walls/wainscoting to `HORIZON_Y = 1142` (`1445` for subtitle-free covers), planting feet with exposed sandals & dual ellipse shadows at `(0, 0)` and grounding every seated figure or artifact on carved daises, lotus thrones, or turned tables.
+   - Outdoor/Himalayan scenes integrate V1 multi-plane `FogRidgeStack`, celestial `SunDisc` + additive god-rays, feathered drifting clouds, birds, flora sway, and peak-clamped rock/snow ridges (`drawKailashSacredPeak` mathematically clamped inside outer ridge polygon).
+   - Every beat evolves continuously (`static_fraction <= 0.15`, zero holds `> 3.2s`) via parallax depth factors (`0.03` stars -> `1.0` actors), secondary motion (flowing garments, aura rings, particles), and rack-focus depth dimming.
+3. **Clean Stage, DOM-Validated Labels & Safe-Zone Calibration:**
+   - Top UI bar stays completely clean (`0` permanent progress bars, `0` episode counters). Optional narrative callout pills (e.g., concise location transitions, `2–4` words max) render **only when opted in by the Storyboard IR as crisp HTML/DOM elements** so `hyperframes check --strict --safe-zone shorts` inspects contrast, clipping, and top-safe margins (`Y >= 295`).
+   - Bottom-center Hindi kinetic captions sit strictly inside `top: 1246px`, `max-height: 144px` (`<= Y = 1390px`, always clearing `Y >= 1400px` bottom Shorts UI zone!), framed against rich scene silhouettes/water/terrain rather than dead black rectangles.
 
 ---
 
-## 6. Target Codebase Architecture & Module Reorganization
+## 4. Codebase-Wide Legacy, Backward-Compatibility & Dead-Code Audit
 
-Applying deep-module design (`codebase-design` principles: few deep interfaces at crisp seams, dependency injection for testability, zero duplicated helpers):
+An exhaustive read-only inspection of every folder and file (`excluding node_modules/`, `.venv/`, `.git/`) exposed structural bloat, hidden `.pyc` buildup, duplicated logic, conflicting constants, and dead shims:
+
+### 4.1 Folder-by-Folder & Root Inventory Summary
+
+| Location | Measured Contents | Exact Audit Findings & Liabilities |
+| --- | --- | --- |
+| **`scripts/`** | `21` `.py` (`439.6 KB`, `11,053` L) + `30` `.pyc` (`726.2 KB`) | **100% of `scripts/engine/` (`10` modules) + `generate_composition.py` + `preview_frames.py` + `render_and_qa.py` implement the broken v4.0 DOM/SVG engine** already bypassed by Ep 3 & Ep 4. **Zero-importer modules:** `build_assets.py` (FFmpeg sine/noise generator), `engine/__init__.py`. **Orphan `.pyc`s:** `scripts/__pycache__/generate_pose_sheets.cpython-312.pyc`, `75,877 B` stale `generate_composition.cpython-310.pyc`, plus Python 3.10 bytecode alongside 3.12. |
+| **`templates/`** | `3` Jinja2 files (`16.7 KB`) | Legacy DOM/SVG templates (`index.html.jinja2`, `styles.css.jinja2`, `engine.js.jinja2`) using `#curtains_container`, `#38bdf8` cyan keywords, `bottom: 340px` subtitles, missing `@font-face`, and forbidden `.call()` / non-paused `masterTl`. |
+| **`assets/`** | `72` files (`44.80 MiB`) | **`assets/bgm/` (`10` MP3s, `37.8 MiB`) contains only `4` unique MD5 hashes** (6 files are exact clones: `cosmic_mystery == divine_cosmic == serene_blessing`, `dramatic_mythology == epic_history == theatrical_narrative`, `melancholy_tragedy == sorrow_tragedy`, `tense_confrontation == wrath_confrontation`). **`assets/svg/` (`42` SVGs):** broken puppet joints, forbidden `#38bdf8` cyan in `shiva.svg` & `5/7` props, duplicate backdrop `lanka_sandstone_throne == golden_lanka_citadel` (`cc1dff5c35`), unreferenced `granite_underside.svg` & `kailash_tectonic_fracture.svg`, and **deleted `assets/svg/diagrams/`** still cited in DB Ep 1 & tests. **`assets/fonts/` missing (`0` files).** **`assets/js/DrawSVGPlugin.min.js`** unused. `manifest.yaml` sets `fps: 60` (conflicts with `config.yaml` `fps: 30`). |
+| **`backup/`** | `27` files (`2.04 MiB`) | Obsolete Kokoro-era SQL backups (`episodes_backup.sql == episodes_backup_2026-11-22_195144.sql`, MD5 `c69ec6f0...`), empty `youtube_inventory.json`, Kokoro YAML snapshots (`config_snapshot/`), and v2 archive videos (`samples_v2_archive/`). |
+| **`build/`** | `210` files (`149.15 MiB`) | Contains `41.29 MB` across `7` stale `.hyperframes/` runs in `build/composition/`, redundant `narration_full.wav` copies x3 (`16.8 MB`), superseded pre-redesign Ep 3 renders (`raw_video.mp4`, `final_short.mp4`), **plus two live dependencies**: (1) `build/auditions/elevenlabs/viraj_character_acting/*.wav` is **hard-required by `tests/test_production_acceptance.py:72–78`**, and (2) `build/cache/audio/` + `build/audio/` hold paid Ep 3 TTS/Whisper caches and Ep 3 replacement JSONs. |
+| **`playground/`** | `523` files (`918.74 MiB`) | Holds authoritative visual benchmarks (`v1_dawn_ridge_benchmark/`, `references/ref1_inbAAQMK8vs.mp4`) and live YouTube source deliverables (`candidate_b_ref1_cinematic/` -> `oBcyiPy26rg`; `ep4_neelakantha_shiva/` -> `7PWFV7lQG6U`) — **PLUS `~130+ MB` pure disposable clutter**: `186` duplicate `.woff2`/lib copies (`~11.2 MB` incl. unused `three.module.min.js`), `~90.3 MB` intermediate `mp4_frames/`/`previews/`/`thumb_capture/`/`.hyperframes/`, duplicate `17.84 MB` `src/audio/master_mix_ep4.wav` == `audio/master_mix_ep4.wav`, duplicate `18.29 MB` `shared/master_mix_poc.wav` == `mix_candidate_b.wav`, orphan `fix_b_assets.cpython-310.pyc`, and raw extraction folders under `analysis/`. **CRITICAL GIT RISK:** `.gitignore` ignores `build/`, NOT `playground/`, causing `523` files (`918.74 MiB`) to sit staged for git commit! |
+| **`tests/`** | `20` `.py` (`7,968` L) + `56` `.pyc` (`1.29 MB`) | `9` suites test solely the legacy `scripts/engine/*` SVG modules; `test_render_pipeline.py` hard-asserts exact DOM IDs across legacy SVGs; `test_production_acceptance.py:156` mutates live `build/`; `test_db_manager.py`/`test_build_audio.py`/`test_publish_youtube.py` cite deleted `assets/svg/diagrams/` or deleted `pronunciations.yaml`; **6 orphan `.pyc`s** from deleted `test_phase2_config.*` & `test_phase5_production_gates.*`. |
+| **Root & `docs/`** | `13` root files + `.hyperframes/` + `.pytest_cache/` + `5` docs | `.env.local.example` references unused `GEMINI_API_KEY`; bare `client_secret_*.json` (`418 B`) sits at root unused by `publish_youtube.py` (which uses `.env.local`); `config.yaml` duplicates pacing rules `3×` (`target_duration_range`, `format_pacing`, `episode_pacing`) & sets `sidechain.ratio: 8`; `pronunciations_hi.yaml` has `11/16` identity no-ops; `requirements.txt` carries unused `huggingface-hub` & `google-auth-oauthlib`; `package.json` pins `hyperframes: ^0.9.19` while `node_modules` runs `0.9.70`; `docs/schema.sql` omits `publishing_history`; `docs/INSTRUCTIONS.md`, `SETUP_AND_OPERATIONS.md`, & `README.md` directly contradict live code & one another. |
+
+### 4.2 Legacy Shims, Duplicated Functions & Dead Code Targeted for Clean Removal
+
+In accordance with strict architectural cleanliness (zero needless compatibility scaffolding, safe data preservation only), every item below will be removed once replaced/migrated:
+- **`scripts/db_manager.py` (`2,041` lines):** Remove `VOICE_ID_RE` (`L39`), Kokoro `default_voice` synthesis (`L173–180`), omitted `content` config shim (`L208/214`), dual `cliffhanger_or_payoff` <-> `satisfying_takeaway` sync (`L380–388` after DB cleanup), `shots -> scenes` JSON remapper (`L814–820`), legacy `assets/svg/diagrams` `BESPOKE_ASSET_DIRS` list (`L45`/`L1636`), and contradictory `"zero burned-in subtitles"` prompt instructions (`L1623`).
+- **`scripts/build_audio.py` (`1,195` lines):** Remove PyAV monkeypatch if verified redundant under clean `16 kHz` WAV resampling, silent `ipa_replacements` return (`L169–174`), `else: antagonist` emotion fallback (`L234`), unused `measure_spectral_centroid` (`L249`) & `measure_f0` (`L256`), alias `align_caption_words` (`L580`), 4-way test double `TypeError` adapter (`L783–799`), unreachable `L837` tag branch (fixed cleanly by tag-preserving replacement!), and Kokoro `.create()` branch (`L890–896`).
+- **`scripts/elevenlabs_engine.py`:** Remove unused `get_cached_audio_path()` (`L559`).
+- **Legacy Engine & Runner Duplicates:** Remove `generate_composition.py` (38-line compat bridge), `parse_manifest_js()` (duplicated `3×` across `composer`, `preview_frames`, `render_and_qa`), unused `sync_index_html_duration()` (`2×`), `composer.py` `FALLBACK_MANIFEST` & Ep-1 hardcoded prop inference, `puppet_rig.py` / `lipsync_engine.py` / `prop_manager.py` / `cinematography.py` / `subtitle_engine.py` / `foley_scheduler.py` (w/ conflicting BGM defaults & discarded foley output), `qa_verifier.py` fake `dom_snapshots` synthesizer (`L346–381`), and `render_and_qa.py` `aevalsrc` primary BGM sine fallback.
+
+---
+
+## 5. Repository Classification & Cleanup Action Matrix
+
+Every folder and artifact maps cleanly to one of four lifecycle verdicts (executing **strictly in safe phase order — never before linked tests or DB migrations complete**):
+
+| Classification | Exact Scope / Files | Rationale & Constraints |
+| --- | --- | --- |
+| **1. Retain As-Is** | `episodes.db` (`+ -shm/-wal`), `.env.local`, `.env.local.example` (cleaned of `GEMINI_API_KEY`), `package.json` / `package-lock.json` (`hyperframes` pin synced), `assets/sfx/` unique acoustic cues (`conch_blast`, `cosmic_chime`, `crystal_shatter`, `curtain_whoosh`, `energy_hum`, `fire_crackle`, `foot_thud`, `laser_strike`, `magma_crack`, `sub_hit`, `sword_clash`, `tension_swell`, `thunder_rumble`, `whoosh_soft`), `assets/bgm/` unique 4 MD5 tracks (temporarily until replaced), `playground/references/ref1_inbAAQMK8vs.*`, `playground/analysis/{ref1_analysis.md, candidates_shot_plan.md, tool_research.md, ep3_script_timeline.txt}`, and live published source bundles in `playground/candidate_b_ref1_cinematic/` + `playground/ep4_neelakantha_shiva/` + `v1_dawn_ridge_benchmark/` *(note: binary MP4 archival policy decided in Section 20)*. | Preserves live database truth, paid audio caches, validated creative benchmarks, and published episode deliverables cleanly. |
+| **2. Consolidate & Rewrite** | `scripts/db_manager.py`, `scripts/build_audio.py`, `scripts/elevenlabs_engine.py`, `scripts/preview_frames.py`, `scripts/render_and_qa.py`, `scripts/publish_youtube.py`, `scripts/thumbnail_utils.py`, `scripts/audition_voices.py`; `config.yaml`, `pronunciations_hi.yaml`, `assets/manifest.yaml`; `playground/shared/fonts/` -> `assets/fonts/`; `playground/scripts/{build_candidate_b.py, poc_shared_composer.py, poc_runner.py}` & `playground/ep4_neelakantha_shiva/{build_ep4_*.py, mix_ep4_audio.py, run_ep4.py}` -> clean `scripts/sutradhar/` & modular `templates/runtime/` ES JS modules; `docs/{INSTRUCTIONS.md, SETUP_AND_OPERATIONS.md, schema.sql}`, `README.md`, `.gitignore`, `requirements.txt`; and `tests/` rewritten cleanly for the modular architecture. | Eliminates string-in-Python generators, broken DOM/SVG coupling, conflicting docs, duplicate configs, and ad-hoc playground runners. |
+| **3. Migrate Dependencies BEFORE Removing** | **A. `episodes.db` historical rows & YouTube IDs:** Ep 1 `cd1cc1mhfwg` (`PLH-P2bxD4o-I`, missing `assets/svg/diagrams/shani_drishti_mandala.svg`, stale `completed_episodes=0`), Ep 2 `hcKmhzjQkz4` (`PLZpM1QZQbBWw`), Ep 3 `oBcyiPy26rg` (`PLfT89QTc7oLs` + deleted `Y63AyoTo-Jo` in `publishing_history` + `playground/backups/episodes_db_pre_ep3_replace_*.sqlite`), Ep 4 `7PWFV7lQG6U` (standalone, fake `samudra_manthan_halahala.svg`, missing `publishing_history` row).<br>**B. Hard Test Couplings:** `test_production_acceptance.py` (`build/auditions/elevenlabs/viraj_character_acting/*.wav` + mutating `build/`), `test_render_pipeline.py` (hard-asserts `9` char SVGs + `5` infographic SVGs), `test_db_manager.py`/`test_build_audio.py`/`test_publish_youtube.py` (`diagrams/` + deleted `pronunciations.yaml`), `test_audio_pipeline.py`/`test_foley_and_bgm.py` (old BGM filenames), plus the 9 `scripts/engine/` unit tests.<br>**C. Audio Cost Caches:** `build/audio/` + `build/cache/audio/` + `playground/ep4_neelakantha_shiva/audio/` (zero repeat ElevenLabs spend). | Guarantees **0% test breakage**, **0% lost YouTube/DB lineage**, and **$0 wasted ElevenLabs credits** across all phases. |
+| **4. Delete Safely (Once Phase Prerequisites Met)** | **A. Pure Junk/Cache/Duplicates (`~140 MB` immediate post-approval sweep once `.gitignore` adds `playground/`):** All `playground/*/{mp4_frames,previews,thumb_capture,preview_snap,thumb_snap,.hyperframes,__pycache__}`, `186` duplicate `fonts/`/`lib/` copies inside individual `playground/*/{src,thumb}` folders, unused `691 KB` `three.module.min.js`, duplicate `ep4/src/audio/master_mix_ep4.wav` (`17.84 MB`), duplicate `playground/shared/master_mix_poc.wav` (`18.29 MB`), raw event-strip extraction folders under `playground/analysis/`, stale `build/composition/.hyperframes/` (`41.29 MB`), duplicate `build/composition/narration_full.wav` + `build/cache/audio/f0b64db1...wav` (`11.20 MB`), `build/raw_video.mp4` (`25.04 MB`), `build/final_short_release_review/`, all orphan/Python-3.10 `__pycache__/*.pyc` + root `.hyperframes/` + `.pytest_cache/`, and obsolete `backup/` (`2.04 MiB`, replaced by clean schema-v4 backup snapshot).<br>**B. Legacy Engine & Clutter (`Phases 3–6` after test migration):** `scripts/build_assets.py`, `scripts/generate_composition.py`, `scripts/engine/*` (`10` files), `templates/composition/*.jinja2`, `assets/svg/*` (`42` SVGs), `assets/js/DrawSVGPlugin.min.js`, `6` duplicate `assets/bgm/` alias clones (`23.8 MB`), obsolete `playground/scripts/{replace_ep3_youtube.py, mix_candidate_audio.py, analyze_reference.py}` & `ep4/publish_ep4.py` (once folded into unified CLI). | Removes > `180+ MB` of dead cache/dups, legacy DOM rigs, synthetic generators, and single-use patch scripts cleanly without touching live source recordings. |
+
+---
+
+## 6. Target Project Directory & File Architecture
+
+Designed using strict deep-module boundaries, separating **Python orchestration (`scripts/sutradhar/`)**, **modular browser ES/JS runtime (`templates/runtime/`)** (eliminating `2,560`-line Python strings), **clean canonical assets (`assets/`)**, **local secrets hygiene**, and **ephemeral build outputs (`build/`)**:
 
 ```text
 Sutradhar/
-├── config.yaml                         # Single source of truth (channel audio/caption/metadata split, paths, QA thresholds)
-├── pronunciations_hi.yaml              # Cleaned authentic Devanagari phonetic overrides (no identity mappings)
+├── .gitignore                          # Includes build/, .secrets/, episodes.db*, runtime caches, & playground/
+├── .secrets/                           # Untracked local credentials folder (migrated OAuth client_secret*.json if retained)
+├── .env.local                          # ELEVENLABS_API_KEY + YOUTUBE_CLIENT_ID / SECRET / REFRESH_TOKEN (untracked)
+├── .env.local.example                  # Clean template (removes unused GEMINI_API_KEY)
+├── config.yaml                         # Single source of truth (no 3x duplicated pacing blocks, unified fps=30 & audio rules)
+├── pronunciations_hi.yaml              # Cleaned authentic Devanagari overrides (0 identity no-ops)
+├── package.json                        # Pinned HyperFrames (^0.9.70+) & GSAP (3.15.1)
+├── requirements.txt                    # Pruned dependencies (removes unused huggingface-hub & google-auth-oauthlib)
+├── README.md                           # Rewritten accurate developer overview
 ├── docs/
-│   ├── INSTRUCTIONS.md                 # Authoritative context-aware Creative & Production Spec for AI Agents
-│   ├── VIDEO_STYLE_EXPLORATION_PLAN.md # Historical audit & Candidate B / V1 exploration record
-│   ├── VIDEO_PRODUCTION_REDESIGN_PLAN.md # Master architecture & roadmap (this file)
-│   ├── SETUP_AND_OPERATIONS.md         # Lean CLI & operational runbook
-│   └── schema.sql                      # Canonical SQLite v4 schema (incl. series localization & publishing_history)
+│   ├── INSTRUCTIONS.md                 # Rewritten 16-Part Authoritative AI Story & Directing Spec
+│   ├── SETUP_AND_OPERATIONS.md         # Accurate CLI runbook, Starter economics & Shorts troubleshooting
+│   ├── schema.sql                      # Canonical SQLite v4 schema (incl. series_title_en/hi, publishing_history, audio_ledger)
+│   ├── VIDEO_STYLE_EXPLORATION_PLAN.md # Preserved Round 1–2, Ep 3 & Ep 4 exploration record
+│   └── VIDEO_PRODUCTION_REDESIGN_PLAN.md # This master specification
 ├── assets/
-│   ├── manifest.yaml                   # Schema v2.0 machine-readable asset registry
-│   ├── fonts/                          # 31 SIL OFL .woff2 fonts + fonts.css
-│   ├── characters/                     # Parametric Ref-1/Cand-B character specs (*.json) + optional vector crests
-│   ├── environments/                   # Parameterized V1 dawn + Ref-1 architectural backdrop presets (*.json)
-│   ├── props/                          # Declarative animated prop & infographic definitions
+│   ├── manifest.yaml                   # Schema v2.0 machine-readable catalog (characters, environments, props, fonts, bgm, sfx)
+│   ├── fonts/                          # Canonical single copy: 31 SIL OFL .woff2 + fonts.css (referenced cleanly by builds)
+│   ├── characters/                     # Parametric character profiles (*.json: skin/dhoti/crown/pose/turn tokens) + bespoke parts
+│   ├── environments/                   # Parametric V1 Dawn + Ref-1 Architectural stage presets (*.json)
+│   ├── props/                          # Declarative prop & infographic descriptors (*.json)
 │   └── audio/
-│       ├── bgm/                        # Curated royalty-free multi-act musical beds
-│       └── sfx/                        # Bundled Pixabay SFX + distinct foley cues + CREDITS.md
+│       ├── bgm/                        # Curated distinct royalty-free multi-act musical beds + CREDITS.md (0 dup MD5s)
+│       └── sfx/                        # Bundled Pixabay HyperFrames SFX + clean repo acoustic WAVs + CREDITS.md
 ├── templates/
-│   ├── runtime/                        # Clean ES/JS deterministic Canvas2D + GSAP HyperFrames modules
-│   │   ├── index.html.jinja2           # Thin declarative composition shell (mounts runtime modules + captions + audio)
-│   │   ├── core/seek_runtime.js        # Deterministic proxy={t} timeline, hf-seek, seeded PRNG, camera transforms
-│   │   ├── backdrops/atmosphere_v1.js  # V1 Dawn Ridge sky, rising sun, god-rays, feathered clouds, fog ridges, motes
-│   │   ├── backdrops/architectural_stage.js # Ref-1 perspective floor/wall seam, pillars, carpet, diyas, curtains
-│   │   ├── rigs/character_engine.js    # Articulated Ref-1/Cand-B vector rig, continuous FK lerping, shadows, expressions
-│   │   ├── props/props_library.js      # Grounded brass clock, hourglass, scroll map, sector lens, funnels, mandap, chakra
-│   │   ├── fx/transitions.js           # Whip smear, iris circle, dip cut, focus rack, alpha crossfade, vignette, grain
-│   │   └── captions/captions.html.jinja2 # Zero-overlap kinetic Hindi captions (top: 1274px, bundled fonts, fitText safe)
+│   ├── runtime/                        # Pure readable JavaScript + HTML/CSS (mounted/bundled into build/, ZERO Python string blobs)
+│   │   ├── index.html.jinja2           # Thin declarative HyperFrames shell loading ES modules, captions & mastered WAV
+│   │   ├── styles.css                  # Safe-zone calibrated layout & font-face import
+│   │   ├── core/seek_runtime.js        # Deterministic proxy={t}, hf-seek, camera rig, focusRack, seeded mulberry32 PRNG
+│   │   ├── backdrops/atmosphere_v1.js  # V1 skies, sun/rays, feathered clouds, bird flocks, peak-clamped FogRidgeStack
+│   │   ├── backdrops/architectural_stage.js # Ref-1 HORIZON_Y walls/floor planks, colonnade pan, diyas, optional curtains
+│   │   ├── rigs/character_engine.js    # Ep 4 traceCapsule limbs, drawSculptedHand, 2.5D head turn, blink, mouth & shadows
+│   │   ├── props/props_library.js      # Sacred ocean/Vasuki/Kurma/Mandara, brass clock, hourglass, scroll, Kalash, mandala
+│   │   ├── fx/transitions.js           # Alpha xfade, whip smear, radial iris, dip cut, throttled grain, subtle vignette
+│   │   └── captions/captions.html.jinja2 # Top: 1246px, max-height: 144px (<Y=1400), bundled Devanagari, highlight keywords
 │   └── thumbnail/
-│       └── cover_template.html.jinja2  # Shared 1080x1920 English cover composer importing runtime character/prop JS
-├── scripts/                            # Thin, stable 7+1 CLI entrypoints calling modular internal packages
-│   ├── sutradhar/                      # Deep cohesive Python modules behind clean CLI facades
-│   │   ├── config.py                   # Validated config + strict LanguagePolicy (hi narration/captions vs en meta/thumb)
-│   │   ├── db.py                       # Schema v4 migrations, lean --context, series/pillar rotation, history & repair
-│   │   ├── models.py                   # Pydantic v2 EpisodePlan, SceneVisualSpec (Storyboard IR), PublishResult
+│       └── cover_template.html.jinja2  # Shared 1080x1920 English cover importing character_engine/backdrops (2:3 safe)
+├── scripts/
+│   ├── sutradhar/                      # Cohesive modular Python package
+│   │   ├── config.py                   # Pydantic-validated config.yaml + strict LanguagePolicy
+│   │   ├── db.py                       # Schema v4 migrations, lean --context, fixed pillar rotation, --repair, history sync
+│   │   ├── models.py                   # EpisodePlan, SceneVisualSpec (StoryboardIR), ThumbnailSpec, PublishResult
 │   │   ├── audio/
-│   │   │   ├── elevenlabs_tts.py       # Pre-flight quota cap, inline-tag-safe chunking, SHA-256 WAV/MP3 cache
-│   │   │   ├── whisper_aligner.py      # FFmpeg 16kHz PCM, faster-whisper small + RMS speech-burst onset anchoring
-│   │   │   └── sound_mixer.py          # Declarative BGM 3-act splice, Pixabay SFX, voice EQ, sidechain & 2-pass loudnorm
+│   │   │   ├── elevenlabs_tts.py       # Tag-preserving pronunciations, pre-flight quota check, scene SHA-256 cache
+│   │   │   ├── whisper_aligner.py      # ffmpeg 16kHz + faster-whisper small + RMS speech-burst snapping
+│   │   │   ├── caption_builder.py      # Em-dash safe tokenizer, 1-4 word chunks, non-overlap clamp, kw highlights
+│   │   │   └── sound_mixer.py          # 3-act BGM crossfade, +33ms SFX scheduling (no orphan cues), single 2-pass loudnorm
 │   │   ├── visual/
-│   │   │   ├── caption_builder.py      # 1-4 word Hindi cue chunker, endT overlap guard, contextual keyword detector
-│   │   │   ├── storyboard_composer.py  # Compiles Storyboard IR + AudioManifest into HyperFrames HTML + motion assertions
-│   │   │   └── thumbnail_builder.py    # Renders dedicated 1080x1920 English cover with 2:3 Shorts safe-zone checks
+│   │   │   ├── storyboard_composer.py  # Compiles EpisodePlan/StoryboardIR + AudioManifest into build/composition/ (symlinks/copies fonts once)
+│   │   │   └── thumbnail_builder.py    # Snapshot 1080x1920 JPEG + automated y=150..1770 2:3 Shorts crop verification
 │   │   ├── qa/
-│   │   │   ├── hyperframes_runner.py   # Subprocess wrapper (`lint`, `check --strict --safe-zone shorts`, `snapshot`, `measure look`)
-│   │   │   ├── audio_inspector.py      # FFmpeg `ebur128`, `silencedetect`, spectral floor + A/V hit onset validation
-│   │   │   └── quality_gate.py         # Real DOM/Canvas telemetry verification + dual-profile KinoCut (zero fake snapshots)
+│   │   │   ├── hyperframes_runner.py   # strict lint/check/snapshot/measure look + real hf-seek idempotency check
+│   │   │   ├── render_optimizer.py     # CRF/bitrate encode control ensuring <= 55 MB crisp 1080x1920@30fps H.264 output
+│   │   │   └── quality_gate.py         # Real DOM/Canvas telemetry, ebur128, KinoCut dual-profile, thumbnail bounds gate
 │   │   └── publishing/
-│   │       ├── thumbnail_verifier.py   # Migrated `thumbnail_utils.py` (pre-validation, post-processing wait, CDN MAE/dhash)
-│   │       ├── metadata_policy.py      # English title/desc/tags builder, scriptural citations, playlist localization
-│   │       └── youtube_client.py       # Resilient YouTube Data API v3 upload, playlist sync, post-upload audit
-│   ├── db_manager.py                   # Preserved stable CLI facade
-│   ├── build_audio.py                  # Preserved stable CLI facade
-│   ├── preview_frames.py               # Upgraded preflight CLI (`check --strict`, 15-frame storyboard grid + thumb preview)
-│   ├── render_and_qa.py                # Upgraded render + audio master + fail-closed QA gate CLI
-│   ├── publish_youtube.py              # Upgraded YouTube publisher + CDN verification CLI
-│   └── thumbnail_utils.py              # Backward-compatible re-export of `sutradhar.publishing.thumbnail_verifier`
-└── tests/                              # Deterministic offline/mocked unit + contract + Chromium visual smoke tests
+│   │       ├── thumbnail_verifier.py   # Moved thumbnail_utils.py (pre-validate, post-processing wait, CDN sardefault MAE/dhash)
+│   │       ├── metadata_policy.py      # English titles/tags/descriptions + Hindi audio lock + scriptural provenance
+│   │       └── youtube_client.py       # Resumable upload, playlist creation/update, processing poll, publishing_history audit
+│   ├── db_manager.py                   # Clean thin CLI facade (`--init`, `--context`, `--create-series`, `--record-published`, `--repair`)
+│   ├── build_audio.py                  # Clean thin CLI facade
+│   ├── preview_frames.py               # Clean thin CLI facade (`--strict --safe-zone shorts`, 15-frame grid + thumb 2:3 crop)
+│   ├── render_and_qa.py                # Clean thin CLI facade (render, <=55MB bitrate check, mix, KinoCut, thumbnail)
+│   ├── publish_youtube.py              # Clean thin CLI facade (`--publish`, `--update-metadata`, `--update-thumbnail`, `--verify-only`)
+│   ├── thumbnail_utils.py              # Re-export facade preserved cleanly for test/tool stability
+│   └── audition_voices.py              # Standalone voice audition tool (`build/auditions/` path unified)
+└── tests/                              # Offline mocked unit + contract + Chromium seek/motion smoke suites (0 build/ mutation)
 ```
 
-### Clean Retention vs Replacement Decisions
-- **Keep CLI Interface Continuity (`scripts/db_manager.py`, `build_audio.py`, `preview_frames.py`, `render_and_qa.py`, `publish_youtube.py`)**: Keeps runbooks intuitive while replacing bloated single-file monoliths (`db_manager.py` 2,041 lines, `build_audio.py` 1,195 lines) with crisp deep sub-modules under `scripts/sutradhar/`.
-- **Retire Completely:** `scripts/engine/composer.py`, `puppet_rig.py`, `lipsync_engine.py`, `subtitle_engine.py` (after migrating `beat_planner` & `foley_scheduler` concepts cleanly into `storyboard_composer.py` + `sound_mixer.py`), `scripts/build_assets.py` synthetic generators, and legacy `templates/composition/*.jinja2`.
-- **Sandbox Playground Lifecycle:** Keep `playground/v1_dawn_ridge_benchmark/`, `playground/references/`, and `playground/candidate_b_ref1_cinematic/` preserved safely as visual benchmarks until the new pipeline matches or beats Candidate B on a test episode; later archive experimental builder drafts cleanly once acceptance passes.
+---
+
+## 7. Module-by-Module Rewrite vs Consolidate Justification Matrix
+
+| Existing Module / File | Verdict | Architectural Justification |
+| --- | --- | --- |
+| `scripts/db_manager.py` (`2,041` L) | **Rewrite Modularly -> `sutradhar/{config,db,models}.py` + thin CLI** | Strips out Kokoro regexes, duplicated prompt prose (`>1,000` tokens in `--context`), broken `COMPLETED` pillar query, and deleted `diagrams/` asset checks while codifying schema v4 (`publishing_history`, `audio_ledger`, bilingual series titles). |
+| `scripts/elevenlabs_engine.py` (`877` L) | **Consolidate -> `sutradhar/audio/elevenlabs_tts.py`** | Client retry/cache/`FakeElevenLabs` core is solid; fold in Ep 4's `apply_pronunciations_preserving_tags`, per-scene SHA-256 ledger tracking, and strict `900`-char pre-TTS abort; drop dead `get_cached_audio_path`. |
+| `scripts/build_audio.py` (`1,195` L) | **Split & Rewrite -> `whisper_aligner.py` + `caption_builder.py` + thin CLI** | Decouples TTS from alignment & captioning; replaces `base` model, dead `L837` tag bug, `antagonist` fallback, and PyAV monkeypatch with `ffmpeg 16kHz` + `faster-whisper small` + RMS onset snapper + fixed em-dash Devanagari tokenizer. |
+| `scripts/engine/composer.py`, `puppet_rig.py`, `lipsync_engine.py`, `subtitle_engine.py`, `prop_manager.py`, `cinematography.py`, `templates/composition/*` | **Retire & Rewrite -> `templates/runtime/*.js` + `storyboard_composer.py`** | Replaces un-seekable DOM/SVG puppet hacks, broken `480×960` coordinate scaling, zero-VFX stubs, and `2,560`-line Python string JS blobs with modular deterministic Canvas2D ES runtime (`traceCapsule`, `2.5D` head turn, `HORIZON_Y`, `atmosphere_v1`). |
+| `scripts/engine/beat_planner.py` & `foley_scheduler.py` | **Consolidate Concepts -> `models.py` & `sound_mixer.py`** | Retains micro-beat pacing metrics (`ASL`, static hold bounds) and mood/foley taxonomy without Ravana/Lanka hardcoding or conflicting BGM maps (`foley_scheduler` vs `config.yaml`). |
+| `scripts/render_and_qa.py`, `preview_frames.py`, `engine/qa_verifier.py` | **Rewrite -> `hyperframes_runner.py`, `render_optimizer.py`, `quality_gate.py` + thin CLIs** | Eliminates duplicated `parse_manifest_js` (`3×`), dead `sync_index_html_duration`, synthetic `dom_snapshots` pass fabrication, raw frame thumbnails, and `sine=` BGM fallback; enforces `--strict --safe-zone shorts`, `<= 55 MB` MP4 cap, and `>= 88` dark / `>= 55` default KinoCut gates. |
+| `scripts/generate_composition.py` & `scripts/build_assets.py` | **Delete (Post Test Migration)** | Zero-value wrapper (`generate_composition`) and synthetic sine/noise generator (`build_assets`) replaced cleanly by curated real audio + `storyboard_composer.py`. |
+| `scripts/thumbnail_utils.py` & `scripts/publish_youtube.py` | **Consolidate & Upgrade -> `sutradhar/publishing/`** | Keeps proven `thumbnail_utils` CDN validation while merging `replace_ep3_youtube.py` & `publish_ep4.py` features: English metadata enforcement, playlist update helpers, `processingStatus=="succeeded"` gate, `sardefault.jpg` parity, and `publishing_history` logging. |
+| `playground/ep4_neelakantha_shiva/build_ep4_*.py`, `mix_ep4_audio.py`, `run_ep4.py`, `playground/scripts/*` | **Extract Patterns, Then Retire Runners** | Every hard-won Ep 4 & Cand B algorithm (`SHARED_ILLUSTRATOR_JS`, `drawKailashSacredPeak`, `drawPalaceInterior`, `mix_ep4_audio`, `ep4_thumbnail_2x3_crop`) moves permanently into `templates/runtime/` and `scripts/sutradhar/`, ending one-off ad-hoc runners. |
 
 ---
 
-## 7. Database Schema & Data-Model Redesign
+## 8. Playground Technique Extraction & Upgraded Scene Runtime (`V1` + `Cand B` + `Ep 4`)
 
-### 7.1 Concrete Schema v4 Extensions (`docs/schema.sql` & `scripts/sutradhar/db.py`)
-1. **Separate Display/Metadata Languages on `series`:**
-   - Add `series_title_en TEXT`, `series_title_hi TEXT`, `metadata_language TEXT NOT NULL DEFAULT 'en'`, `audio_language TEXT NOT NULL DEFAULT 'hi'`, `updated_at TIMESTAMP` cleanly while retaining `series_title TEXT NOT NULL` (updated during migration to canonical English title for YouTube playlists, preserving original Hindi in `series_title_hi`!).
-2. **Enrich `episodes` Without Breaking Existing Unique Slot Constraints:**
-   - Preserve `idx_unique_non_failed_episode_slot` and FK guarantees.
-   - Add explicit queryable fields: `duration_sec REAL`, `audio_language TEXT NOT NULL DEFAULT 'hi'`, `metadata_language TEXT NOT NULL DEFAULT 'en'`, `thumbnail_asset_path TEXT`, `video_asset_path TEXT`, `kinocut_score REAL`, `static_fraction REAL`, `tts_billed_chars INTEGER`, `visual_direction_version TEXT DEFAULT 'v2_cand_b_v1'`, `published_at TEXT`, `video_url TEXT`.
-   - Extend `status` `CHECK`: allow `'PLANNED'`, `'PREVIEW_APPROVED'`, `'PUBLISHED'`, `'PRIVATE_REVIEW'`, `'FAILED'`, `'SUPERSEDED'` cleanly (adjusting unique index `WHERE status NOT IN ('FAILED', 'SUPERSEDED')`).
-3. **Formalize `publishing_history` in Canonical Schema (`docs/schema.sql`):**
-   - Bring the audit table already created during Candidate B replacement cleanly into `docs/schema.sql` + automated schema migration, adding `cdn_thumbnail_url TEXT`, `cdn_mae REAL`, `cdn_dhash_distance INTEGER`, and `checks_json TEXT` so every live upload & replacement verification stays permanently auditable.
-4. **Add `audio_ledger` Table (`30 Shorts / Month` Quota Protection):**
-   - Track `(ledger_id, episode_id, scene_index, sha256_key, billed_chars, model_id, voice_id, cache_hit INTEGER, created_at)` so monthly ElevenLabs consumption is queryable directly via `--context` (`monthly_tts_chars_used`, `monthly_budget_remaining`).
-5. **Fix `cmd_context` & Pillar Rotation Bugs (`db_manager.py` Fixes):**
-   - **`--context` lean payload:** Drop the 1,000-token prose duplicate guidelines (`autonomous_planning_guidelines`); return concise schema constraints, `active_series_list` (latest 3 planned/next slot rather than full historical episode essays), bounded `previously_covered_topics` (`LIMIT 30`), `monthly_tts_budget` stats, and clean asset IDs from `assets/manifest.yaml`.
-   - **Pillar rotation fix:** Compute `last_completed_pillar` from the **most recent non-failed published `episodes` row joined with `series`/pillar** rather than `WHERE series.status = 'COMPLETED'`, so pillar rotation (`Ancient Epics & Lore -> Hidden History -> Cosmic & Scientific Paradoxes`) advances reliably on every episode even with ongoing `total_planned_episodes: null` series!
-   - **Add `--repair` / `--update-series` administrative subcommands:** Safe transactional repair tool to fix Series 1's stale `completed_episodes=0` -> `1` and update Ep 1–3 metadata localization without ad-hoc SQLite hacks.
+No playground code is left stranded or duplicated across HTML/Python files. Exact extractions:
 
-### 7.2 Upgraded Pydantic Models (`EpisodePlan` & `StoryboardIR`)
-- Decouple story script from rendering mechanics cleanly:
-  - **Language split enforced by Pydantic validators:**
-    - `narration_language == "hi"`, `caption_language == "hi"`, `metadata_language == "en"`, `thumbnail_language == "en"`.
-    - `youtube_title`, `youtube_description`, `youtube_tags` (8–15 English tags), `thumbnail_spec` (`pill`, `headline_line1`, `headline_line2`, `sub_pill`, `scene_motif`) MUST pass English/ASCII-ratio & formatting validators (no accidental Devanagari leak into YouTube metadata!).
-    - `narration_text` MUST contain Devanagari text AND pass **both** English & Hindi anti-cliffhanger validators (`अधिक जानने के लिए पार्ट 2`, `अगले भाग में`, `जारी रहेगा`, `to be continued`, `part 2`, `wait for next part`).
-    - Pre-TTS character budget validator: total `sum(len(tagged_scene_text)) <= config.tts.max_billed_chars_per_episode` (`900` hard cap, `<= 850` target).
-  - **Context-Aware `SceneVisualSpec` Schema:**
-    - `environment_preset`, `atmosphere_mode` (`dawn_progression`, `royal_court`, `cosmos_observatory`, `archival_chamber`), `camera_move` (`push_in`, `pan_left`, `pan_right`, `whip_pan`, `rack_focus`, `split_reveal`), `transition_in`, `characters` (`[{ id, role, x, surface_type ('floor'|'dais'|'throne'|'terrain'), pose, expression, gaze_target }]`), `props` (`[{ id, anchor_x, anchor_y_offset, mount ('floor'|'table'|'pedestal'|'sky'), cue_word, motion }]`), `infographic_spec`, `sfx_cues`, `bgm_mood`.
+| Audited Playground Source | Target Production ES Module / File | Refactoring & Hardening Change |
+| --- | --- | --- |
+| `ep4/build_ep4_visuals.py::SHARED_ILLUSTRATOR_JS`: `traceCapsule`, `drawAnatomicalArm`, `drawSculptedHand`, `drawMythFace` (`turn`), `drawMythCharacter` (`L280–999`), `drawVasukiSerpent`, `drawKurmaAvatar`, `drawV1Ridges`, `drawV1Birds` | `templates/runtime/rigs/character_engine.js` & `backdrops/mythic_sets.js` | Separate bone solver + silhouette palettes from inline JS strings into readable ES classes driven by JSON character configs (`role`, `pose`, `expr`, `turn`, `accessories`, `aura`). Add subtle phoneme jaw/lip openness interpolation driven by aligned audio frames. |
+| `ep4/build_ep4_visuals.py::drawKailashSacredPeak` (`L1175–1231`) | `templates/runtime/backdrops/atmosphere_v1.js` | Fix overhanging snow gully bug cleanly (`[122, -208, 62, 38]` -> `[102, -202, 52, 32]` clipped via `ctx.clip()` to main mountain silhouette path!) so jagged gullies **never** protrude into open sky at large thumbnail scale `1.66×`. |
+| `v1/src/canvas_v1.js`: `makeRidge`, `drawSky`, `drawMilkyWayBand`, `drawStars`, `drawSunOrAura`, `drawClouds`, `drawRidges`, `drawPine`, `drawTempleDome`, `drawMotes` | `templates/runtime/backdrops/atmosphere_v1.js` | Unified parametric atmospheric backdrop engine controllable per scene via `StoryboardIR` (`skyFrom`, `skyTo`, `horizonGlow`, `sunIntensity`, `cloudDensity`, `mistStrength`). |
+| `cand_b/build_candidate_b.py::WORLD_JS`: `drawPalaceInterior`, `drawGroundedHourglassStand`, `drawBrassClock`, `drawVectorEarthGlobe`, `drawClockShrineNiche`, map scroll, sector lens, spacetime comparison, mandap & Kalachakra | `templates/runtime/backdrops/architectural_stage.js` & `props/props_library.js` | Expose declarative prop drawers grounded cleanly on `HORIZON_Y` floorboards, tables, daises, or lotus pedestals. |
+| `ep4/src/index.html` + `captions.html` + `world.js::drawGlow`, `focusRack`, transitions (`L2110–2168`) | `templates/runtime/core/seek_runtime.js`, `fx/transitions.js`, `captions/captions.html.jinja2` | Pure deterministic `proxy = { t }` + `hf-seek`; optional DOM contextual pills (not canvas `fillText` inside `data-layout-ignore`) validated by HyperFrames `--safe-zone shorts`; calibrate caption box to `top: 1246px`, `max-height: 144px` (`y <= 1390px`), pre-loaded via `document.fonts.ready`. |
+| `ep4/thumb/index.html` & `cand_b::THUMBNAIL_HTML` | `templates/thumbnail/cover_template.html.jinja2` | Eliminate duplicate character code by importing shared `character_engine.js` & `atmosphere_v1.js`; fix `.pill` CSS weight to supported `800` matching `fonts.css`; keep `top >= 250px` / `bottom >= 205px` (`2:3` crop `y = 150..1770`) safety. |
 
 ---
 
-## 8. Complete Audit & Redesign of `docs/INSTRUCTIONS.md`
+## 9. Complete Visual & Audio Asset Replacement Strategy
 
-### 8.1 Precise Problems Identified in Existing `docs/INSTRUCTIONS.md`
-Inspecting `docs/INSTRUCTIONS.md` (`L1–433`) proves the user's suspicion: it actively pushed AI agents toward rigid ~`1/10` videos:
-1. **Conflicting Language Rules (`L24`, `L130` vs actual requirements):** Mandates `"100% Hindi titles, descriptions, tags, playlists (e.g. 'शनि कथा')"`, directly conflicting with our English thumbnail & English YouTube metadata strategy.
-2. **Self-Contradictory Caption Mandates (`L35` vs `L38` vs `L424`):** Demands kinetic Hindi serif subtitles at `Y >= 1400` inside `L35`, then tells final QA (`L424`) to confirm `"zero captions"`, while placing captions directly inside the `520px` YouTube bottom UI dead zone (`L246`).
-3. **Harmful Visual Prohibitions & Mandatory Proscenium (`L165`, `L223`, `L266`):** `L165` states *"Strictly Zero Cyan/Teal"* (ruling out deep emerald/teal night palaces cleanly demonstrated in Candidate B!); `L266` forces *"Velvet curtains parting mandatory for Scene 1"* on every single video even when a Vedic dawn sunrise or cosmic opening fits far better; `L37–38` locks aesthetics exclusively into `"Rajasthani Kathputli proscenium theater"`.
-4. **Shallow Template Checklists Over Visual Directing (`L155–279`):** Instructs `"create a 800x1200 SVG with #puppet_pin brass rivets"` without explaining how Canvas/vector proportions relate, how floor planes meet rear walls (`HORIZON_Y`), why props need physical pedestals/tables, how sunrise sky stops and fog gradients blend depth, or how diagrams should reveal beat-by-beat rather than appearing as static SVG flashcards.
-5. **No Cinematographic Rhythm or Genre Adaptation:** Forces identical beats/transitions (`L265`, `L273`) mechanically ("insert >=3 transitions, >=2 VFX") without teaching **motivated cause** (e.g., clock smear morphing into iris, horizontal colonnade walk continuity, spotlight rack focus).
-6. **Zero Guidance on Thumbnails, `sardefault.jpg`, or Visual Inspection Criteria:** Mentions `build/thumbnail.jpg` in 2 lines (`L368`, `L425`) as `"1080x1920 <= 2MB"` with zero layout/English-title rules, zero `2:3` Shorts grid awareness, and zero visual rejection triggers (hovering limbs, dead black areas, cut-off Devanagari fonts, static `sweep_static` failures).
-
-### 8.2 Blueprint for the Redesigned `docs/INSTRUCTIONS.md`
-
-When Phase 5 executes, `docs/INSTRUCTIONS.md` will be cleanly rewritten as a crisp, non-contradictory **15-Part AI Directing & Production Specification** (around 350–450 high-signal lines, eliminating duplicate prose from `db_manager.py --context`):
-
-1. **Artistic Standard & Visual Grammar ("Candidate B + V1 Dawn Synthesis"):** Clear visual bar (`Candidate B` + `V1` minimum threshold), rich jewel + dawn atmospheric palettes cleanly documented (no arbitrary "zero teal" bans), clean canvas framing free of top overlays/dead bottom slabs.
-2. **Story Analysis & Self-Contained Scriptwriting (`15–60s` Sweet Spot, `<= 850` Billed Chars):** Pre-TTS ElevenLabs credit cap enforcement, genuine Sanskrit/scriptural provenance, hard anti-cliffhanger policy in Hindi + English, tight conversational pacing (`2.2` words/sec Hindi).
-3. **Narrative-Adaptive Visual Mode Selection (Decision Matrix):** Explicit creative rules distinguishing Palace Drama vs Outdoor Dawn/Nature vs Historical/Archaeological vs Scientific/Cosmic Explainer scenes — instructing *when* to deploy V1 Sunrise atmospheres, *when* to use Ref-1 palace colonnades, and *when* to use split infographic builds.
-4. **Character Design, Consistency & Articulation Rules:** Articulated Canvas2D rig hierarchy, grounded feet + dual floor shadows (`y=0`), continuous micro-breathing/blinking/eyeline gaze convergence, asymmetric gesture variation (never robotic mirror twins), high-arched hairlines clear of forehead *tilak*.
-5. **Environments, Lighting & Spatial Grounding Law (`HORIZON_Y` Invariant):** Explicit wall-to-floor seam math, pedestal/dais/table/cushion grounding for every prop/seated character, depth parallax factors (`0.03` stars -> `1.0` heroes), horizon-fog blending (`V1 l.fog`), focus spotlights cleanly dimming background actors.
-6. **Asset Discovery, Reuse & Bespoke Creation Workflow:** Query `assets/manifest.yaml` & `npx hyperframes catalog --json` first; only author new character presets, landmark environment JSONs, or animated prop drawers when existing assets cannot depict the beat authentically.
-7. **Deterministic Animation & HyperFrames Seek Contract:** `proxy = { t }`, `hf-seek`, seeded PRNG (`mulberry32`), zero `Math.random()`, `Date.now()`, `repeat: -1`, `.call()` DOM swaps, or `display: none` animatable groups; `document.fonts.ready` gate; motion craft (long ease-out arrivals `expo.out`/`power4.out`, `30–50%` overlap, micro camera drift on held moments).
-8. **Cinematography, Motivated Transitions & Light/Atmospheric FX:** Matching camera velocity into horizontal colonnade whip pans, iris apertures, dip cuts, Gaussian rack focus, volumetric glow pools, sunrise `p`-evolution, dust motes/embers/petals, and `5%` shifted grain.
-9. **Hindi Narration, Vocal Tags & Synchronized Kinetic Captions:** ElevenLabs v4 viraj voice steering tags preserving mid-sentence `[pause]`; `faster-whisper small` + RMS onset snapping; 1–4 word non-overlapping Devanagari pills (`top: 1274px`, `42px` bold `Noto Sans Devanagari`) with keyword gold/amber accenting.
-10. **Context-Appropriate On-Screen Labels (Minimalism Rule):** Clean canvas by default (`include_editorial=false`); zero top progress bars; permit brief location/entity pills (`King Kakudmi`, `Dwaraka -> Brahmaloka`) or progressive infographic numbers **only** when directly clarifying unseen spatial leaps or quantitative scales.
-11. **Sound Design (`sound.md` Discipline), BGM & Mix Targets:** 3-act BGM progression matched cleanly across narrative phases (`-16` to `-20 dB`), Pixabay/acoustic SFX peaking `+1 frame` after visual motion hits (`3–6 dB` over bed, rotate takes), sidechain ducking, strict `-14.0 LUFS` / `-1.5 dBTP` / `48kHz 24-bit stereo`.
-12. **Dedicated English Thumbnail Composition (`1080×1920` & `2:3` Safe Zone):** Hero text hook (`3–6` punchy English words + pill badge), `top >= 250px` / `bottom >= 205px` safe zone for `2:3` YouTube Shorts grid visibility, grounded illustrated focal figure/prop (`Y=1445/1525`), strict prohibition of raw frame grabs.
-13. **Multi-Point Visual QA & Rejection Criteria:** Mandatory `hyperframes check --strict --safe-zone shorts`, multi-timestamp contact sheet (`15` frames covering transitions + ends), `hyperframes snapshot --at 0.05` thumbnail inspection, `measure look` + KinoCut telemetry, audio inspection; **explicit rejection list** (floating characters/props, empty lower-third black slabs, colliding caption text, missing Devanagari glyphs, static scene holds `> 3.5s`, mismatched caption-voice cues).
-14. **Centralized Language & YouTube Metadata Policy:** Hindi voice + Hindi kinetic captions + English cover thumbnail + English YouTube title/description/tags/playlists (`defaultLanguage="en"`, `defaultAudioLanguage="hi"`).
-15. **Publishing Safeguards, Quota Conservation & Error Recovery:** Never exceed 2 repair loops without stopping; immutable TTS WAV caching; wait for `processingStatus == "succeeded"` before `thumbnails.set`; retrieve and verify `sardefault.jpg` (`MAE <= 12`, `dhash <= 16`); zero manual SQLite edits; zero unapproved `git` operations.
+1. **Eliminate Duplicate & Fake BGM Beds (`assets/audio/bgm/`):**
+   - Delete the `6` duplicate alias files sharing identical MD5 hashes (`dramatic_mythology.mp3 == theatrical_narrative.mp3 == epic_history.mp3`, `cosmic_mystery.mp3 == divine_cosmic.mp3 == serene_blessing.mp3`, etc.).
+   - Retain the `4` genuinely distinct existing tracks (`tense_confrontation`, `dramatic_mythology`, `cosmic_mystery`, `sorrow_tragedy`) and curate `2–4` additional free royalty-free (`CC0`/Pixabay/Musopen) Indian ambient/classical tracks offline at `$0`, cataloging licenses & MD5 hashes in `assets/audio/bgm/CREDITS.md` and `assets/manifest.yaml`. Zero primary `sine=` FFmpeg fallback (`allow_synth_fallback: false`).
+2. **Unified Real Foley & Transition SFX (`assets/audio/sfx/`):**
+   - Consolidate the `19` bundled Pixabay MP3s (`node_modules/hyperframes/dist/skills/media-use/audio/assets/sfx/*.mp3`) alongside curated repo `.wav` cues (`conch_blast`, `thunder_rumble`, `fire_crackle`, `cosmic_chime`, `curtain_whoosh`, `sword_clash`, `crystal_shatter`, `magma_crack`).
+   - Normalize mix envelopes cleanly: `whoosh-cinematic` (`5.54s`) and `riser` (`10.0s`) compute negative pre-roll offset (`cue_time - peak_offset_sec`) so their energy crest lands cleanly at `+33ms` after visual scene cuts rather than starting at the cut; zero orphaned SFX for unrendered widgets!
+3. **Single Canonical Fonts Directory (`assets/fonts/`):**
+   - Promote the `31` SIL OFL `.woff2` files + `fonts.css` once into `assets/fonts/` (`fonts/` weights explicitly verified: `Noto Sans Devanagari`, `Tiro Devanagari Hindi`, `Cinzel`, `Cormorant Garamond`, `Inter` `500/700/800`, `Rozha One`). Compositions reference/mount `assets/fonts` cleanly once without copying `3.7 MB` per experiment or shipping unused `three.module.min.js`.
+4. **Replace Brittle `assets/svg/` Library (`42` SVGs):**
+   - Once Phase 3 unit/integration tests migrate away from SVG DOM ID assertions, remove `assets/svg/` cleanly (eliminating `#38bdf8` cyan props, broken `shiva`/`sutradhar` skeletons, duplicate `lanka_sandstone_throne.svg`, unreferenced `granite_underside`/`kailash_tectonic_fracture`, and unused `DrawSVGPlugin.min.js`).
+   - Replace *"must save an SVG file under `assets/svg/diagrams/`"* with **true reusable Canvas/JSON asset uniqueness**: each episode either introduces a new JSON character preset (`assets/characters/`), environment preset (`assets/environments/`), or custom Canvas/SVG prop/landmark renderer module registered in `assets/manifest.yaml` v2 (`bespoke_asset_id`), keeping `assets/episodes/<ep_slug>/` available for episode-specific landmark code without bloating global presets.
 
 ---
 
-## 9. End-to-End Semi-Automated Production Workflow (30 Shorts/Month)
+## 10. Database Schema v4, Migrations & Historical Data Sync (`Ep 1–4`)
 
-Designed for **~10–12 minutes total runtime + ~4 minutes human supervision per episode**, making `30 Shorts / month` comfortably realistic with near-zero manual art fixes:
+Live `episodes.db` already holds Series `1–3` and Published Episodes `1–4` plus a dynamically created `publishing_history` table (`rows 1–3` for Ep 3 only). Schema v4 formalizes and heals all drift cleanly via a single idempotent Python migration (following `sqlite3.backup` pre-flight snapshot):
+
+1. **Formalize `publishing_history` in Canonical `docs/schema.sql` & `db.py`:**
+   - Include columns: `history_id`, `episode_id`, `action`, `youtube_video_id`, `previous_video_id`, `playlist_id`, `status`, `notes`, `cdn_thumbnail_url`, `cdn_mae REAL`, `cdn_dhash_distance INTEGER`, `checks_json TEXT`, `details_json`, `created_at`.
+   - **Backfill Missing Audit Rows:** Insert clean historical `PUBLISHED` entries for **Ep 1 (`cd1cc1mhfwg`)**, **Ep 2 (`hcKmhzjQkz4`)**, and **Ep 4 (`7PWFV7lQG6U`)** (alongside Ep 4's `sardefault.jpg` `MAE=0.273`, `dhash=1`, `20/20` checks from `ep4_publish_verification.json`) so `publishing_history` covers 100% of live uploads!
+2. **Upgrade `series` Table & Heal Series `1–3`:**
+   - Add `series_title_en TEXT`, `series_title_hi TEXT`, `metadata_language TEXT NOT NULL DEFAULT 'en'`, `audio_language TEXT NOT NULL DEFAULT 'hi'`, `updated_at TIMESTAMP`.
+   - Migrate Series 3 (`PLfT89QTc7oLs`): preserve Hindi `"वैदिक ब्रह्मांड और काल-रहस्य"` in `series_title_hi`, update canonical `series_title` / `series_title_en` to `"Vedic Cosmos & Mysteries of Time"`.
+   - **Heal Series 1 Stale Counter:** Fix `series_id = 1` (`"शनि कथा"`) `completed_episodes = 0 -> 1` cleanly (since Ep 1 `cd1cc1mhfwg` is `PUBLISHED`). Optionally apply approved English playlist titles to Series 1 & 2 (`PLH-P2bxD4o-I`, `PLZpM1QZQbBWw`).
+3. **Upgrade `episodes` Table & Preserve Legacy Asset Integrity:**
+   - Add `duration_sec REAL`, `audio_language TEXT NOT NULL DEFAULT 'hi'`, `metadata_language TEXT NOT NULL DEFAULT 'en'`, `thumbnail_asset_path TEXT`, `video_asset_path TEXT`, `file_bytes INTEGER`, `kinocut_score REAL`, `static_fraction REAL`, `tts_billed_chars INTEGER`, `visual_direction_version TEXT DEFAULT 'v2_storycraft'`, `legacy_asset_path TEXT`, `published_at TEXT`, `video_url TEXT`.
+   - Extend `status` `CHECK` to `('PLANNED', 'PREVIEW_APPROVED', 'PUBLISHED', 'PRIVATE_REVIEW', 'FAILED', 'SUPERSEDED')` (`idx_unique_non_failed_episode_slot` scoped `WHERE status NOT IN ('FAILED', 'SUPERSEDED')`).
+   - Preserve Ep 1 (`assets/svg/diagrams/shani_drishti_mandala.svg`) and Ep 4 (`assets/svg/backdrops/samudra_manthan_halahala.svg`) inside `legacy_asset_path` cleanly while setting `bespoke_asset_path` to canonical v2 asset IDs (`canvas_prop:shani_drishti_mandala`, `canvas_prop:samudra_manthan_halahala`) so historical `PUBLISHED` rows stay searchable without requiring deleted dummy SVGs on disk!
+4. **Add `audio_ledger` Table (`30 Shorts/mo` Budget Accountability):**
+   - Track `(ledger_id, episode_id, scene_index, sha256_key, billed_chars, model_id, voice_id, cache_hit INTEGER, created_at)` queried directly by `db_manager.py --context`.
+5. **Fix `cmd_context` Pillar Rotation Bug & Bloat:**
+   - Compute `last_completed_pillar` from the **latest non-failed published `episodes` row joined cleanly with series/pillar** (not `WHERE series.status = 'COMPLETED'`), ensuring open-ended `total_planned_episodes = NULL` series advance pillars reliably on every episode (`Ancient Epics & Lore -> Hidden History -> Cosmic & Scientific Paradoxes`).
+   - Remove the `1,000`-token contradictory prose guidelines block from `--context`; return concise `next_pillar`, `monthly_tts_budget`, `previously_covered_topics` (`LIMIT 30`), `active_series_list`, and asset IDs from `assets/manifest.yaml` v2.
+
+---
+
+## 11. Upgraded Pydantic Data Models (`EpisodePlan` & `StoryboardIR`)
+
+Eliminate Episode 4's post-render JSON inversion by making `EpisodePlan` + `StoryboardIR` the **single pre-synthesis & pre-render contract**:
+
+- **Strict Execution Ordering:** `EpisodePlan` (`build/episode_plan.json`) MUST pass Pydantic validation **before** calling ElevenLabs (`build_audio.py`) AND **before** rendering visuals (`preview_frames.py`), guaranteeing planned scene speeds, vocal tags, character assignments, and bespoke asset IDs match the rendered video 1:1.
+- **Bilingual Policy Validators:**
+  - `audio_language == "hi"`, `caption_language == "hi"`, `metadata_language == "en"`, `thumbnail_language == "en"`.
+  - Reject Devanagari inside `youtube_title`, `youtube_description`, `youtube_tags`, and `thumbnail_spec.{pill,headline_line1,headline_line2,sub_pill}`.
+  - Require Devanagari (`>= 70%` tokens) inside `narration_text` alongside **both Hindi and English anti-cliffhanger checks** (`"अगले भाग में"`, `"जारी रहेगा"`, `"पार्ट 2"`, `"to be continued"`, `"part 2"`).
+- **Pre-TTS Credit Budget Validator:** Sum billed characters across all tagged phonetic scene strings (`total_billed_chars <= 900`, soft warning `> 850`) **before** any ElevenLabs request runs.
+- **Declarative `SceneVisualSpec` (`StoryboardIR`):** Captures `atmosphere_mode` (`palace_court | dawn_epic | archival | cosmic_explainer`), `environment_preset`, `horizon_y`, `camera_move`, `transition_in` + `transition_sfx` + peak alignment, `bgm_mood`, progressive `props[]` with explicit `mount` (`floor | dais | table | pedestal | terrain | sky`) and audio cue trigger (`cue_word`), `characters[]` (`id`, `role`, `x`, `surface_type`, `pose`, `expr`, `turn`, `gaze_target`), and optional DOM `contextual_pill` (`enabled_by_default=False`).
+
+---
+
+## 12. Audit & Blueprint for Redesigned `docs/INSTRUCTIONS.md`, `SETUP_AND_OPERATIONS.md`, `README.md` & Configs
+
+### 12.1 Document & Config Contradictions Verified Across the Repo
+1. **`docs/INSTRUCTIONS.md` (`433` lines):**
+   - Mandates *100% Hindi titles/tags/playlists* (`L24/L130`) while production requires English YouTube metadata & thumbnails.
+   - Places captions at `Y >= 1400` (`L35/L338`) directly inside its own *Bottom Safe Zone `520px`* (`Y >= 1400`, `L246`), while `L424` tells QA to confirm *"zero captions"*.
+   - Forces mandatory Scene 1 velvet curtains (`L266`), prohibits all Cyan/Teal (`L165`, yet `#38bdf8` appears in `shiva.svg`, 5/7 props, `subtitle_engine.py`), dictates obsolete `800×1200` SVG puppet brass rivets (`L155`) alongside `480×960` wrappers (`L223`), and cites deleted `assets/svg/diagrams/` (`L167`) & stale `6:1` ducking (`L421` vs `config.yaml` `8:1`).
+2. **`docs/SETUP_AND_OPERATIONS.md` (`183` lines):**
+   - Instructs `python scripts/publish_youtube.py --auth-only` (`L77`), which immediately exits `1` because `publish_youtube.py` rejects CLI arguments; claims ElevenLabs Starter provides `~37,000` chars / `65+ Shorts` (`L57`) vs verified **`30,000` credits / `30` Shorts**; cites `6:1` ducking (`L143`) and `unittest discover` (`127 tests`, `L178`).
+3. **`README.md` (`244` lines):**
+   - Claims *"Zero burned-in captions"* (`L17`) while Section 3 documents `subtitle_engine.py`; states conflicting voice `44.1 kHz` vs `48 kHz`; cites inaccurate asset counts (`6` BGM / `13` SFX / `13` backdrops vs `10` / `17` / `15`), `249` tests (`L101`) vs `127` tests (`L200`), and obsolete `generate_composition.py`.
+4. **`config.yaml` (`175` lines) & `pronunciations_hi.yaml`:**
+   - `config.yaml` duplicates duration/scene bounds across `3` separate keys (`target_duration_range`, `format_pacing`, `episode_pacing`), mixes `top_clear_px: 288` with legacy `engine/config.py` `left=80/bottom=500`, and retains `ratio: 8` (`L109`) vs tuned `6.5` ducking in Ep 4/Cand B mixes. `pronunciations_hi.yaml` contains `11` useless identical self-mappings (`"सूत्रधार": "सूत्रधार"`, `"शिव": "शिव"`, etc.).
+
+### 12.2 Blueprint for Rewritten `docs/INSTRUCTIONS.md` (16-Part Authoritative Directing Spec)
+Consolidated to **~350–420 high-signal lines** (`db_manager --context` stripped of duplicate prose), grounded directly in V1 + Candidate B + Episode 4 visual & technical standards:
+1. **Priority Hierarchy & Visual North Star:** Explicit user overrides > autonomous pillar cycle; visual baseline anchored on **Candidate B + V1 + Ep 4 synthesis**.
+2. **Pure Language Split & Platform Policy:** Hindi (`hi`) narration + synchronized bottom captions; English (`en`) thumbnails, titles, descriptions, tags, and series playlists.
+3. **Scriptwriting, Scriptural Grounding & ElevenLabs Budget (`<= 850` target, `<= 900` hard cap):** Concise `42–58s` retention pacing (`760–840` billed chars incl. tags), zero Hindi/English cliffhangers, authentic scripture provenance (`story_research`), immutable pre-TTS validation in `build/episode_plan.json`.
+4. **Narrative-Adaptive Visual Modes (No Fixed Proscenium Box):** Decision rules selecting `Palace Drama`, `Dawn/Mythic Epic` (`V1` skies + sculpted ridges), `Archival/Archaeological` (pedestals, magnifying lenses, route scrolls), or `Cosmic Explainer` (split comparisons, dual clocks, starfields).
+5. **Anatomical Character Design & Rig Continuity:** `traceCapsule` layered limb fills, 5-finger `drawSculptedHand` poses, `2.5D` head `turn`, eyebrow/eye/blinking life, high-arched hairlines clear of *tilak*, locked palette/proportion consistency across returning series characters.
+6. **Spatial Grounding Law (`HORIZON_Y` Invariant) & Peak Safety:** Every standing/seated character or prop grounded flush on floor/dais/throne/table/terrain (`(0,0)` dual shadows); procedural mountains/glaciers clipped cleanly inside ridge silhouettes (preventing Ep 4's Kailash thumbnail shard).
+7. **Cinematography, Framing, Motion Fluidity & Rack Focus:** Active blocking across `EWS`->`ECU`, `static_fraction <= 0.15`, depth parallax (`0.03..1.0`), rack-focus background dim (`0.35–0.45`) during emotional beats, avoiding empty dead lower thirds on ocean/outdoor scenes.
+8. **Deterministic HyperFrames Contract:** ES module runtime in `templates/runtime/`, `proxy = { t }` (`ease: "none"`), `hf-seek`, seeded PRNG (`mulberry32`), zero `.call()`, zero `repeat: -1`, `document.fonts.ready` gate, **capped film grain (`<= 55 MB` MP4 size ceiling)**.
+9. **Motivated Transitions & VFX:** Smooth crossfades, directional whip pans anchored on character velocity, radial iris wipes, emerald/sapphire/gold particle motes & glow halos — motivated purely by story shifts.
+10. **Synchronized Hindi Captions & Validated DOM Labels:** Top bar kept strictly uncluttered (`0` progress bars); optional brief contextual labels authored **only as HTML/DOM overlays** (never invisible inside `data-layout-ignore` canvas) validated by HyperFrames; captions strictly inside `top: 1246px, max-height <= 144px` (`<= Y = 1390px`), `Noto Sans Devanagari`, em-dash split keyword highlights.
+11. **Voice Direction, `faster-whisper small` & Multi-Act Audio Mix:** Preserve `[pause]`/`[sighs]` tags; 3 distinct BGM acts (`-16` to `-20 dB`, zero duplicate MD5 tracks); Pixabay/acoustic SFX cresting `+33ms` after motion hits (no orphaned UI pops); `6.5:1` sidechain ducking; single 2-pass `loudnorm` (`-14.0 LUFS` / `-1.5 dBTP`, `48kHz stereo`).
+12. **Dedicated English Cover Thumbnails (`1080×1920` & `2:3` Safe):** Shared runtime artwork (`<= 2 MB` JPEG), `2:3` Shorts center-crop margins (`top >= 250px`, `bottom >= 205px`), valid font weights (`500/700/800`), automated `thumbnail_2x3_crop.jpg` visual inspection.
+13. **Asset Reuse First & Bespoke Canvas/JSON Authoring:** Inspect `assets/manifest.yaml` v2 and `npx hyperframes catalog --json` first; register reusable presets cleanly instead of inventing nonexistent SVG filepaths.
+14. **Pre-Render & Post-Render Fail-Closed Verification Protocol:** Inspect 15-frame preview grid + `2:3` crop thumbnail BEFORE full MP4 render; enforce `hyperframes check --strict --safe-zone shorts`, `<= 55 MB` MP4 cap, KinoCut dual gates (`ui-capture-dark >= 88`, `default >= 55`, `color_balance PASS`, `static_fraction <= 0.15`), audio loudness, and caption sync before uploading.
+15. **YouTube Publishing & `sardefault.jpg` CDN Parity:** Poll `processingStatus == "succeeded"` -> `thumbnails.set` -> verify `sardefault.jpg` (`HTTP 200`, `1080×1920`, `MAE <= 12`, `dhash <= 16`) -> sync `episodes` + `publishing_history` in SQLite.
+16. **Safety Boundaries & Max-2-Repair Loop:** Abort after `2` failed repair loops; zero direct `sqlite3` edits outside `db_manager.py`; zero credential logging; zero unapproved `git` mutations.
+
+*(Rewritten `docs/SETUP_AND_OPERATIONS.md`, `README.md`, cleaned `config.yaml` with single `pacing` block & `ratio: 6.5`, and pruned `pronunciations_hi.yaml` ship cleanly alongside `INSTRUCTIONS.md`.)*
+
+---
+
+## 13. End-to-End Semi-Automated Production Workflow (`30 Shorts/Month`)
+
+Designed for **`~10–12` minutes unattended compute + `~3–4` minutes human supervision per Short**, eliminating Ep 4's out-of-order JSON patching and wasted ElevenLabs re-runs:
 
 ```mermaid
 flowchart LR
-    S1["1. Auto Context & Story Brief\n(db_manager + Research)"] --> CP1{"Human Checkpoint 1\n(~1-2 min)\nTopic, Hindi Script,\nElevenLabs Est., En Meta"}
-    CP1 -- Approve / Tweak --> S2["2. Deterministic Audio\n(ElevenLabs Viraj + Cache\n+ Whisper small Align\n+ 3-Act BGM/SFX Mix)"]
-    S2 --> S3["3. Storyboard IR & Asset Stage\n(Manifest Lookup / New Props\n+ Canvas2D + Captions + Cover)"]
-    S3 --> S4["4. Preflight & 15-Frame Preview\n(hyperframes check --strict\n+ qa_grid.jpg + thumb 2:3 crop)"]
-    S4 --> CP2{"Human Checkpoint 2\n(~2 min)\nInspect qa_grid.jpg &\nthumbnail.jpg Visually"}
-    CP2 -- Tweaks --> S3
-    CP2 -- Approve --> S5["5. Full Render & QA Gate\n(HyperFrames --workers 4\n+ Look/Motion/Audio Gates)"]
-    S5 --> S6["6. Safe YouTube Publish\n(Upload MP4 -> Wait Processed\n-> thumbnails.set -> CDN sardedault Check\n-> Sync English Playlist & DB)"]
+    S1["1. Auto Context & Story Brief\ndb_manager --context -> Pre-Validated\nEpisodePlan + StoryboardIR"] --> CP1{"Human Checkpoint 1\n(~1.5 min)\nTopic, Script, <=850 Chars,\nEnglish Title & Thumb Copy"}
+    CP1 -- Approve --> S2["2. Deterministic Audio\nElevenLabs Viraj (SHA-256 Cache)\n-> 16kHz Whisper small + RMS\n-> 3-Act BGM & SFX Mix"]
+    S2 --> S3["3. Modular Scene Assembly\nstoryboard_composer + assets/fonts\n-> cover_template.html + Captions"]
+    S3 --> S4["4. Preflight & Grid Inspection\nhyperframes check --strict\n+ 15-frame qa_grid.jpg\n+ thumb & 2:3 crop"]
+    S4 --> CP2{"Human Checkpoint 2\n(~2 min)\nInspect Grid, Caption Clearance,\n& 2:3 Thumb Visually"}
+    CP2 -- Fix Plan/Runtime --> S3
+    CP2 -- Approve --> S5["5. Render & Fail-Closed QA\nHyperFrames (CRF Cap <= 55MB)\n+ KinoCut Dual Gate + ebur128"]
+    S5 --> S6["6. Safe Publish & Audit Sync\nUpload -> Wait Succeeded -> thumbnails.set\n-> CDN sardefault Verify -> DB & History"]
 ```
 
-### Automation vs Human Supervision Split
+- **Human Checkpoints vs Automation (`--auto-approve` optional toggle for unattended `private_review` batch runs):**
+  - **Checkpoint 1 (Pre-TTS):** Prevents wasted ElevenLabs credits or historical/mythological inaccuracies before calling paid APIs.
+  - **Checkpoint 2 (Pre-Full Render):** Catches floating rigs, overhanging mountain paths (like Ep 4's thumb), missing keywords, or `2:3` title clipping on `15` snapshots in ~10 seconds rather than wasting a full 1,900-frame MP4 render and YouTube upload.
 
-| Workflow Stage | Steps Included (1–19 Mapping) | Automation Mode | Purpose / Time Budget |
+---
+
+## 14. ElevenLabs Starter Optimization, Hindi Word Alignment & Audio Mixing
+
+### 14.1 Verified ElevenLabs Starter Math (`30 Shorts / Month`)
+- **Starter Plan Baseline:** **`30,000` credits/month** (`eleven_v4`, Viraj `uuyFQegRan8rpIQCGu9K`, **`1` credit = `1` character** incl. inline `[audio tags]`).
+- **Four-Episode Empirical Proof:**
+  - `Ep 1` (`1,018` text chars): `~1,075` billed · `Ep 2` (`805`): `~860` billed · `Ep 3` (`917`): `~975` billed · **`Ep 4` (`776` total billed incl. tags -> crisp `61.97s` epic!)**.
+- **Production Budget Lock:**
+  - Target **`760–840` billed chars** per episode (**hard pre-TTS cap `900` chars**).
+  - Monthly projection (`30` Shorts × `815` avg billed chars) = **`24,450` / `30,000` credits**, preserving a **`5,550`-credit (`18.5%`) buffer** (`~6` spare Shorts or `~38` single-scene tweaks) on the Starter tier alone.
+- **Per-Scene Content-Addressed Caching & Tag Preservation:**
+  - Fix `build_audio.py`'s inline tag erasure cleanly by preserving `[pause]`, `[sighs]`, and `[slowly, solemn, deep]` through `apply_pronunciations_preserving_tags` (proven in Ep 4), stripping tags strictly for display/Whisper prompts.
+  - Key cache entries by `SHA-256(tagged_text, voice_id, model_id, settings)` tracked in SQLite `audio_ledger`; re-editing 1 scene regenerates only that scene (`~100–120` credits), and visual/thumbnail tweaks spend **`0`** credits.
+
+### 14.2 Em-Dash Keyword Tokenization, `Whisper small` & Clean Single-Pass Mix (`$0` Local)
+1. **Fix Em-Dash Compound Tokenization Bug (`captions_data.js` L349, L839):**
+   - Split script display/keyword lookup on internal punctuation (`—`, `-`, `/`) or inspect individual Devanagari sub-tokens cleanly before `re.sub(r"[^\u0900-\u097Fa-zA-Z0-9]", "", token)` so `"बची—कैलाश"` preserves `"कैलाश"` (`kw: true`) and `"कहलाए—नीलकंठ!"` preserves `"नीलकंठ"` (`kw: true`).
+2. **Switch Whisper Code Actually to Locally Cached `small` (`models--Systran--faster-whisper-small`):**
+   - Fix Ep 4's docstring/code mismatch (`WhisperModel("base")` -> `WhisperModel("small", compute_type="int8", vad_filter=True, local_files_only=True)` after `16 kHz` `ffmpeg` WAV resample) paired with RMS energy valley snapping when match ratio `< 0.65`, eliminating `0.0` scene match regressions.
+3. **Single 2-Pass `loudnorm` & Frame-Accurate SFX Scheduling:**
+   - Mix clean `48 kHz` voice EQ (`highpass=75`, `180Hz +1.6dB`, `4.6kHz -1.5dB`, `9.8kHz +1.4dB`, `2.3:1` comp) + `3` distinct BGM stems (`tense_confrontation` / `dramatic_mythology` / `cosmic_mystery` / curated tracks, `ratio=6.5` sidechain ducking) + Storyboard-verified SFX aligned to peak transient (`+33ms` post-cut) -> **single** `-14.0 LUFS` / `-1.5 dBTP` master pass (removing duplicate normalization and orphaned UI pops).
+
+---
+
+## 15. Encoder Bitrate Guardrails & Fail-Closed Automated Quality Gates
+
+Fixing Ep 4's `553.76 MB` (`71.29 Mbps`) anomaly alongside legacy synthetic passes cleanly:
+
+1. **Deterministic Encode Profile & `<= 55 MB` Ceiling (`render_optimizer.py`):**
+   - **Root Cause Solved:** HyperFrames `--quality looks` combined with `1/30s` per-frame shifting full-screen `noiseCv` grain forces near-lossless intra behavior (`has_b_frames=0`, `71.29 Mbps`).
+   - **Production Fix:** Replace per-frame grain translation with subtle static or `6 fps`-quantized micro-grain (`<= 0.03` alpha) AND run a benchmark-validated Chromium encode or fast high-quality `libx264` CRF/VBV pass (`-crf 18 -maxrate 7500k -bufsize 15000k -pix_fmt yuv420p -movflags +faststart`), asserting **`file_bytes <= 57,671,680` (`55 MiB`)** in QA while preserving `1080×1920@30fps` crispness and `KinoCut >= 88`.
+2. **Real HyperFrames & Seek Determinism Gate (`hyperframes_runner.py`):**
+   - Mandatory `npx hyperframes check --strict --safe-zone shorts --json` (`ok: true`, `0` errors, `0` warnings).
+   - Ban putting UI badges/subtitles inside `<canvas data-layout-ignore="true">`; all contextual labels & captions must be observable DOM elements audited by HyperFrames.
+   - **Seek Idempotency Test:** Direct random `hf-seek(12.6s)` vs sequential frame render at `12.6s` must match within `MAE <= 0.5`.
+3. **Visual, Motion, Audio & Geometry Fail-Closed Gates (`quality_gate.py`):**
+   - **Temporal Motion & Color Gate:** Real per-scene frame diffs + KinoCut **dual-profile** enforcement (`ui-capture-dark >= 88.0 all_passed: true`, `default >= 55.0`, `color_balance PASS`, `static_fraction <= 0.15`).
+   - **Thumbnail Geometric Bounds & `2:3` Crop Gate:** Programmatic check ensuring background peak/snow polygon vertices lie cleanly inside parent ridge silhouettes AND visual `y = 150..1770` crop verification.
+   - **Audio & Sync Gate:** Real `ffmpeg ebur128` (`-14.0 ± 0.5 LUFS`, `<= -1.5 dBTP`), `silencedetect`, zero missing cue audio, caption bottom edge strictly `<= 1395px`, and per-scene Whisper match ratio reported accurately.
+
+---
+
+## 16. Thumbnail Pipeline, YouTube Hardening & Live `Ep 3`/`Ep 4` Harmonization
+
+*(Planning Spec Only — Zero Live YouTube API Mutations Executed During Planning)*
+
+### 16.1 Generalized Production Publishing Hardening
+Preserve & promote all Ep 3 / Ep 4 CDN fixes cleanly into `scripts/sutradhar/publishing/`:
+1. Render dedicated `1080×1920` English JPEG cover (`<= 2.0 MB`, `mean_stddev >= 4.0`, `fonts.css` weights `500/700/800`) + `thumbnail_2x3_crop.jpg` (`y = 150..1770`).
+2. Enforce `uploadStatus == "processed"` AND `processingDetails.processingStatus == "succeeded"` polling **before** calling `thumbnails.set`.
+3. Verify `shortsAspectRatio` (`sardefault.jpg`) live from `i.ytimg.com` (`HTTP 200`, `1080×1920`, `MAE <= 12.0`, `dhash_distance <= 16`).
+4. Enforce `defaultLanguage = "en"`, `defaultAudioLanguage = "hi"`, English `series_title`, paginated playlist resolution, and automatic transactional `publishing_history` audit writes.
+
+### 16.2 Live Channel Synchronization Plan (`Ep 3` & `Ep 4`)
+
+| Target Live Entity | Verified Current Live State | Planned Action (Post-Approval) | Hard Preservation Rule |
 | --- | --- | --- | --- |
-| **Phase I — Editorial & Script** | Topic selection, scriptural grounding, Hindi narration + vocal tags, beat/emotion map, English metadata draft (`#1–3, #17`) | AI Automated + **Checkpoint 1** (`optional fast-track for pre-approved series`) | Prevents weak stories, hallucinations, or wasting ElevenLabs credits (`<2 min` human read). |
-| **Phase II — Voice & Soundscape** | Script budget check, ElevenLabs Viraj synthesis + SHA-256 scene cache, 16kHz Whisper `small` + energy-snap alignment, kinetic caption cues, 3-act BGM + SFX mix (`#8–10, #12`) | **100% Deterministic Automated Script** | Zero manual editing; preserves inline tags and reuses cached scene WAVs cleanly on retries. |
-| **Phase III — Staging, Assets & Preview** | Scene IR authoring, asset lookup/authoring (`#4–6`), Canvas/Caption/Thumbnail composition (`#11, #13`), `hyperframes check --strict`, 15-frame storyboard preview & thumbnail export (`#7, #14`) | AI + Deterministic Script + **Checkpoint 2** | **Single highest-leverage visual checkpoint** (`qa_grid.jpg` + `thumbnail.jpg` `2:3` check catches 95% of creative bugs before expensive full 1,900-frame MP4 renders!). |
-| **Phase IV — Render, QA & Publish** | Full `1080×1920@30fps` MP4 render (`#16`), automated pixel-delta/Look/KinoCut/audio QA (`#15`), YouTube upload -> processing poll -> `thumbnails.set` -> `sardefault.jpg` CDN parity verify (`#18`), SQLite + `publishing_history` sync (`#19`) | **100% Automated Fail-Closed Execution** | Guarantees zero broken renders, zero dropped thumbnails, and accurate DB state. |
-
-*(Optional `--auto-approve` / unattended execution mode still enforces all deterministic QA & CDN verification gates while allowing single-batch operation when desired.)*
+| **Ep 3 Video (`oBcyiPy26rg`)** | English title/desc/tags, `defaultLanguage=en`, `defaultAudioLanguage=hi`, live `sardefault.jpg` (`MAE=0.24`, `dhash=0`) | **No MP4 or thumbnail mutation needed.** Read-only verify `sardefault.jpg` stays untouched. | Preserve `oBcyiPy26rg` video & verified thumbnail 100% intact. |
+| **Series 3 Playlist (`PLfT89QTc7oLs`)** | Titled `"वैदिक ब्रह्मांड और काल-रहस्य"`, `defaultLanguage: null` | **`playlists.update` -> `"Vedic Cosmos & Mysteries of Time"`** (`defaultLanguage="en"`, English description covering Kakudmi time dilation, Kalpa scales & Vedic astronomy) + verify `playlists.list` + sync `episodes.db` `series` row 3. | Leave membership & Ep 3 position intact. |
+| **Series 1 & 2 Playlists (`PLH-P2bxD4o-I`, `PLZpM1QZQbBWw`)** | Hindi titles `"शनि कथा"` & `"भारत का गुप्त इतिहास"` | *(If approved in Section 20)* Update playlist metadata to `"Shani Katha — Cosmic Justice"` and `"Hidden History of Ancient India"` + `series_title_en/hi` in `episodes.db`, keeping Ep 1 (`cd1cc1mhfwg`) & Ep 2 (`hcKmhzjQkz4`) untouched. | Zero unintended video changes. |
+| **Ep 4 Video (`7PWFV7lQG6U`)** | English metadata, live `sardefault.jpg` (`211,575 B`, `MAE=0.273`, `dhash=1`), `publishing_history` **missing**, live thumbnail has small right Kailash snow fin shard | **Always:** Backfill Ep 4 into `publishing_history` + Schema v4 `episodes` metadata cleanly. *(Optional if approved in Section 20)* Patch `drawKailashSacredPeak` & `.pill` weight `800`, regenerate Ep 4 cover only, and run **thumbnail-only** `thumbnails.set` + `sardefault.jpg` re-verification on `7PWFV7lQG6U` (MP4 & stats untouched). | Zero re-upload of Ep 4 MP4. |
 
 ---
 
-## 10. ElevenLabs Starter Optimization, Hindi Alignment & Audio Mastering
+## 17. Centralized Language Policy & Zero-Cost Tool Evaluation
 
-### 10.1 Verified ElevenLabs Starter Math (`30 Shorts / Month`)
-- **Account & Plan Parameters (Locally Verified):** ElevenLabs Starter provides **`30,000` credits/month** base allowance (unused rollover capped at `3×`), using flagship **`eleven_v4`** (`uuyFQegRan8rpIQCGu9K`, Viraj) billing **`1` credit per input character** including inline `[audio tags]`.
-- **Empirical Baseline Observed in Repo (`episodes.db` Ep 1–3):**
-  - Ep 1: `1,018` scene chars (`1,024` spaced) -> ~`1,075` billed chars with tags.
-  - Ep 2: `805` scene chars (`810` spaced) -> ~`860` billed chars with tags.
-  - Ep 3: `917` scene chars (`923` spaced) -> ~`975` billed chars with tags (`63.503s` audio).
-- **Target Optimization Strategy (Fitting Safely Under `30,000` Base Monthly Quota):**
-  1. **Tight Target Script Budget (`760–840` billed chars incl. tags; hard pre-TTS gate `900` chars):** At `~13.5–15` chars/sec speaking pace (`~145` WPM), `780–840` chars renders **punchy `48–56s` Ref-1-paced Shorts** (removing repetitive filler!).
-  2. **Monthly Consumption Projection at 30 Shorts:**
-     - `30 × 820 chars = 24,600 credits/month` -> leaves **`5,400 credits` (`18%` buffer, ~`6` full-episode or `35` single-scene regenerations)** under the `30,000` renewal limit without buying Creator or downgrading from `eleven_v4`.
-  3. **Scene-Level Content-Addressed Caching (Zero Wasted Regenerations):** Preserve `build/cache/audio/` across episodes keyed by `SHA-256(tagged_text, voice_id, model_id, settings)` plus a dedicated **per-scene cache index** (`scene_hashes`). Revising one line in Scene 4 regenerates **only Scene 4 (~`110` credits)** instead of all 7 scenes (`~820` credits)! Zero TTS calls are permitted during visual, subtitle, or camera iteration (`preview_frames.py` / `render_and_qa.py`).
-  4. **Inline Vocal Tag Preservation Fix:** Fix `build_audio.py` L825 so inline tags (`[pause]`, `[sighs]`, `[softly]`) are preserved inside phonetic text sent to ElevenLabs (stripped only from canonical word arrays for caption display + Whisper `initial_prompt`). Remove the hostile `antagonist` fallback for unmapped character dialogue emotions.
-  5. **Cleaned Phonetic Dictionary (`pronunciations_hi.yaml`):** Remove the 11 useless no-op identity entries and maintain verified Sanskrit/Devanagari conjunct tweaks (anusvara / visarga / halant spacing) only where Viraj pronunciation visibly benefits.
-
-### 10.2 Upgraded Hindi Word Alignment & Audio Mastering (`$0` Local)
-- **Root Fix for Devanagari Alignment Drift (`build_audio.py` Scene 6 `0.3` ratio):**
-  1. Resample every synthesized MP3 to **`16,000 Hz` mono WAV** via `ffmpeg` cleanly before feeding `faster-whisper` (eliminates PyAV stream decode instability).
-  2. Switch from `faster-whisper base` to **`faster-whisper small` (`device="cpu"`, `compute_type="int8"`, `vad_filter=True`)** — **verified already cached locally in HuggingFace Hub (`models--Systran--faster-whisper-small`)** at zero download/cost!
-  3. **Phonetic/ASCII Transliteration + Fuzzy Character-Window Anchor + Acoustic Envelope Refinement:** Pair `SequenceMatcher` with normalized Devanagari character equivalence (`ं`/`न्`/`म्`, nukta normalization) AND refine unmatched internal spans (`match_ratio < 0.65`) using local `numpy` **RMS speech-envelope valley/onset snapping** on the scene WAV — preventing single words from ever swallowing `5s` silences or collapsing 13 words into `0.38s`!
-- *(External Note: Research shows `WhisperX` or `stable-ts` can provide even tighter Indic phoneme-level DTW boundaries if needed later, though both require `torch` + model downloads and are **not installed** in `.venv`; our `faster-whisper small` + RMS onset snapper works 100% locally with currently installed dependencies at zero overhead.)*
-- **Non-Synthetic Soundscape Mixing (`sound_mixer.py`):** Retire `build_assets.py` raw `sine=` generators as primary tracks; wire `mix_candidate_audio.py`'s 3-act BGM crossfade + 19 bundled Pixabay SFX (`CREDITS.md` commercial-OK) + voice warmth EQ (`highpass=75`, `180Hz +1.6dB`, `4.6kHz -1.5dB`, `9.8kHz +1.4dB`, `2.3:1` compression) + `6.5:1` sidechain ducking + two-pass `loudnorm` (`-14.0 LUFS`, `-1.5 dBTP`, `48 kHz 24-bit stereo`). Schedule SFX from **actual compiled Storyboard IR + transition timings** (`+1 frame` / `+33ms` after visual hit per `sound.md`) rather than un-inferred raw manifests.
-
----
-
-## 11. Thumbnail Generation & YouTube Publishing Reliability
-
-Preserving and generalizing all fixes validated cleanly in [thumbnail_utils.py](file:///C:/Users/manis/Projects/Sutradhar/scripts/thumbnail_utils.py):
-
-1. **Dedicated Cover Artifact (`templates/thumbnail/cover_template.html.jinja2`):**
-   - Never capture a raw video frame via `ffmpeg`! Render frame `0.05s` via headless HyperFrames snapshot from a dedicated `1080×1920` (`9:16`) composition sharing `character_engine.js` & `props_library.js`, displaying English hook typography (`top >= 250px`), crisp subject/prop on deep vignette contrast, and brand signature (`bottom >= 205px`) — strictly clear of YouTube's `2:3` Shorts grid top/bottom cuts (`y = 150..1770`).
-2. **Pre-Upload Validation Gate:** Before calling `youtube.videos().insert(...)`, run `validate_local_thumbnail` verifying `JPEG`/`PNG` readability, exact `1080×1920` size, `<= 2 MiB`, `mean_stddev >= 4.0`, and matching episode `build/` directory provenance. Fail fast before burning API upload quota.
-3. **Strict Processing-Complete Sequence (`Never Pre-Process thumbnails.set`):**
-   - Upload video -> assign playlist -> poll `wait_for_video_processing` until `uploadStatus == "processed"` AND `processingDetails.processingStatus == "succeeded"` -> invoke `youtube.thumbnails().set(...)`!
-4. **Post-Upload `sardefault.jpg` CDN & Perceptual Verification:**
-   - Verify `shortsAspectRatio` exists in `thumbnails` (both `thumbnails.set` response and `videos.list` read-back).
-   - Fetch `sardefault.jpg` (`Cache-Control: no-cache`), verify `HTTP 200`, `1080×1920` dimensions, and perceptual match against local `build/thumbnail.jpg` (`MAE <= 12.0` AND `16×16` `dhash_distance <= 16`).
-   - Treat non-`403` failures, absent `shortsAspectRatio`, CDN `404`s, wrong dimensions, or image mismatches (`oar2.jpg` auto-frame fallback) as hard publishing failures (`upload_status="FAILED"`, exit `1`, full diagnostics in `publish_verification.json` & `publishing_history`).
-   - Document platform constraint clearly in `SETUP_AND_OPERATIONS.md` & `publish_verification.json`: `9:16` Shorts uploads produce blurred pillarboxes on legacy `16:9`/`4:3` containers (`maxresdefault.jpg` / `hqdefault.jpg`) due to YouTube's single-upload `thumbnails.set` limitation; authoritative Shorts verification targets `shortsAspectRatio` (`sardefault.jpg`).
-5. **Metadata & Playlist Accuracy:** Separate `defaultLanguage="en"` from `defaultAudioLanguage="hi"`, fix `config["channel"]["category_id"]` lookup, include 10–15 curated English tags, paginate `playlists.list` matching English `series_title`, and fail loudly on playlist creation/assignment failures when `episodic_series` is active.
-
----
-
-## 12. Live Episode 3 (`oBcyiPy26rg`) & Channel Metadata Harmonization Plan
-
-*(Planning Specification Only — Zero Live API Mutations Executed During Planning Phase)*
-
-### 12.1 Observed Current State (`2026-11-26` Audit)
-- **Live Video `oBcyiPy26rg` (`LIVE_OBCYI_META`):** Title (`How 1 Song in Brahmaloka Cost 27 Eras on Earth! | King Kakudmi & Vedic Time Dilation #Shorts`), 15 English tags, English description referencing `Series: Vedic Cosmos & Mysteries of Time`, `defaultLanguage: "en"`, `defaultAudioLanguage: "hi"`, custom thumbnail `sardefault.jpg` (`HTTP 200`, `MAE=0.24`, `dhash=0`) — **all verified healthy and MUST be preserved untouched.**
-- **Gap 1 — YouTube Playlist `PLfT89QTc7oLs`:** Still titled `"वैदिक ब्रह्मांड और काल-रहस्य"` (`description: "Sutradhar Series: वैदिक ब्रह्मांड और काल-रहस्य"`, `defaultLanguage: null`), inconsistent with our English metadata policy and `oBcyiPy26rg`'s own English description (*"Series: Vedic Cosmos & Mysteries of Time"*). *(Similarly `PLH-P2bxD4o-I` `"शनि कथा"` & `PLZpM1QZQbBWw` `"भारत का गुप्त इतिहास"` await optional user-approved channel-wide harmonization.)*
-- **Gap 2 — `episodes.db` Partial Alignment:** `series` row 3 still stores Hindi `series_title = "वैदिक ब्रह्मांड और काल-रहस्य"` and Hindi `series_bible_json`; `episodes` row 3 `script_json` retains legacy Hindi `story_arc` / `series_title` / `language: "hi"`; `series` row 1 (`"शनि कथा"`) still shows `completed_episodes = 0` despite published `episode_id = 1`.
-- **Gap 3 — Stale `build/` Directory:** `build/episode_plan.json` & `build/render_report.json` reflect the discarded pre-Candidate-B run.
-
-### 12.2 Safe Execution Sequence (Post-Approval Phase)
-1. Take fresh binary SQLite backup (`sqlite3.backup`) of `episodes.db`.
-2. **Preserve `oBcyiPy26rg` Media & Verified `sardefault.jpg` Thumbnail:** Do NOT re-upload MP4 or modify the thumbnail unless explicit user update is requested.
-3. **Update Live Playlist `PLfT89QTc7oLs` (`playlists.update`):** Update title to `"Vedic Cosmos & Mysteries of Time"`, English description summarizing the series (Kakudmi time dilation, Surya Siddhanta Kalpa scales, Rigvedic Nasadiya Sukta), and `defaultLanguage: "en"`, then read back `playlists.list` to verify. *(Optionally apply the same clean English playlist update to Series 1 `"Shani Katha — Stories of Cosmic Justice"` & Series 2 `"Hidden History of Ancient India"` if approved.)*
-4. **Update `oBcyiPy26rg` Video Metadata Only If Polishing Tags/Localized Info (`videos.update`):** Inspect live snippet first, preserve exact `categoryId`, `tags`, `defaultAudioLanguage="hi"`, `defaultLanguage="en"`, verify `oBcyiPy26rg` retains `sardefault.jpg` (`MAE <= 1.0`, `dhash == 0`) afterward!
-5. **Sync `episodes.db` via Schema v4 Migration:** Populate `series_title="Vedic Cosmos & Mysteries of Time"`, `series_title_hi="वैदिक ब्रह्मांड और काल-रहस्य"`, English `series_bible` summary alongside Hindi archive, update Ep 3 `video_asset_path`/`thumbnail_asset_path`/`duration_sec=63.533`/`audio_language='hi'`/`metadata_language='en'`, fix Series 1 `completed_episodes=1`, update `build/publish_result.json` & `publish_verification.json`, verify `PRAGMA integrity_check == 'ok'`.
-
----
-
-## 13. Centralized Language Policy Enforcement
-
-| Surface | Target Policy | Config / Schema Lock | Validation Gate |
+| Surface / Capability | Selected Standard | Cost / Status | Key Policy & Validation Enforcement |
 | --- | --- | --- | --- |
-| **Voiceover Audio** | Hindi (Devanagari script + Viraj v4 tags) | `channel.audio_language: "hi"` | Require Devanagari Unicode range (`\u0900-\u097F >= 70%` of spoken tokens) before TTS API call |
-| **Burned-In Captions** | Hindi (Devanagari, bottom-center `top: 1274px`) | `captions.language: "hi"` | Require exact token parity against narration script + local `Noto Sans Devanagari` `.woff2` load verify |
-| **Thumbnail Cover Art** | English hook headline + sub-pill | `thumbnail.language: "en"` | Enforce ASCII/English letters inside `thumbnail_spec` before HyperFrames snapshot |
-| **On-Screen Contextual Labels** | English or Hindi strictly by story clarity (`0` default clutter) | `contextual_text.policy: "contextual_minimal"` | Block redundant headings duplicating captions or occupying top/bottom UI bars |
-| **YouTube Metadata & Playlists** | English titles, descriptions, tags, series playlist names | `publishing.metadata_language: "en"` | Reject Devanagari strings in `youtube_title`, `youtube_tags`, `series_title_en` before API upload; `defaultLanguage="en"`, `defaultAudioLanguage="hi"` |
+| **Voiceover Audio** | Hindi (`hi`), ElevenLabs `eleven_v4` Viraj | Existing Starter (`$0` extra) | `>= 70%` Devanagari tokens; `[pause]` tags preserved; `<= 900` billed chars (`760–840` target) |
+| **Kinetic Captions** | Hindi (`hi`), bottom-center `top: 1246px, max-h: 144px` | Local `Noto Sans Devanagari` (31 `.woff2`) | Exact token parity; em-dash keyword fix; strictly `< Y = 1400` clear of UI bar |
+| **Thumbnails & YouTube Meta** | English (`en`), `1080×1920` JPEG (`2:3` safe) | HyperFrames snapshot + API v3 | Zero Devanagari leak; `sardefault.jpg` CDN parity mandatory |
+| **On-Screen Labels** | Contextual Minimal (`include_editorial=false` default) | DOM-rendered GSAP overlays | Validated by `hyperframes check --strict` (never inside `data-layout-ignore`) |
+| **Video Compiler & 2D Engine** | HyperFrames `0.9.70` + Canvas2D + GSAP `3.15.1` | `$0` (installed `package.json`) | Pure deterministic `hf-seek` + CRF/bitrate guardrail (`<= 55 MB` MP4) |
+| **Alignment, Mix & QA** | `faster-whisper small` + RMS burst + `FFmpeg 7.1` + `KinoCut 2.0.1` | `$0` (`small` cached locally; `.venv`) | Fixed docstring->code `small` aligner; `-14 LUFS`; dual KinoCut (`>= 88` dark / `>= 55` default) |
+| **Audio Assets (SFX + BGM)** | `19` bundled Pixabay SFX + distinct acoustic WAVs + CC0/Pixabay BGM | `$0` (`CREDITS.md` verified) | Zero MD5 clone aliases; peak-offset transitions; zero orphaned SFX cues |
 
 ---
 
-## 14. Technical Research & Zero-Cost Tool Evaluation
+## 18. Phased Implementation & Cleanup Roadmap (7 Phases)
 
-Every tool decision below adheres to **$0 additional spending** and distinguishes **locally verified** capabilities from external options:
+Execution order is engineered so **no existing test breaks prematurely, zero DB lineage is lost, and legacy code/assets are deleted only after verified replacements exist**:
 
-| Capability Area | Evaluated Options | Verdict & License / Cost | Rationale for Sutradhar |
+| Phase | Concrete Engineering & Cleanup Scope | Prerequisites | Exit & Acceptance Criteria |
 | --- | --- | --- | --- |
-| **Deterministic Video Compiler** | **HyperFrames `0.9.70`** (installed) vs Remotion vs raw Playwright loop | **Retain & Deepen HyperFrames** (`$0`, installed, `hf:check --strict --safe-zone shorts`, `--workers 4`, `measure look`) | Already installed, natively enforces deterministic `hf-seek`, layout/contrast/safe-zone auditing, 448 OSS registry blocks (`starfield`, `grain-overlay`, `cinematic-zoom`, `chromatic-radial-split`), and multi-worker MP4 rendering. |
-| **2D/2.5D Animation Engine** | **Canvas2D + GSAP `3.15.1` + Selective DOM Overlays** vs Pure SVG DOM vs Three.js WebGL (`V3` rejected) | **Canvas2D World + GSAP Captions DOM** (`$0`, installed `gsap 3.15.1`) | Research & V1/Cand-B telemetry confirm Canvas2D eliminates deep SVG DOM layout thrashing in headless Chromium, supports procedural multi-plane haze/god-rays/lighting seamlessly, while HTML/DOM overlays preserve crisp HarfBuzz Devanagari shaping for captions and cover typography. |
-| **Hindi Voice Synthesis** | **ElevenLabs `eleven_v4` Starter** (paid sub) vs local Kokoro | **Retain ElevenLabs `eleven_v4` Viraj (`uuyFQegRan8rpIQCGu9K`)** (already subscribed, `30k/mo`) | Best expressive Hindi acting via `[tags]`. Strict `<= 850` char cap + scene SHA-256 caching fits `30` Shorts/month safely inside Starter plan (`24,600 / 30,000` credits). |
-| **Hindi Word Alignment** | **`faster-whisper small` (`1.2.1` + cached HF weights) + `numpy` RMS Onset Snap** vs `WhisperX` vs `stable-ts` | **Upgrade to Local `faster-whisper small` + RMS Onset Snap** (`MIT`, `$0`, cached in `~/.cache/huggingface/hub`) | `small` model is **already cached locally** and handles Devanagari significantly better than `base`; `WhisperX`/`stable-ts` require `torch` + phoneme model downloads (deferred unless testing shows residual drift > 250ms). |
-| **Sound Design (SFX + BGM)** | **Bundled HyperFrames Pixabay SFX (`19` MP3s) + Curated Royalty-Free Acoustic BGM** vs `build_assets.py` synthetic tones vs HeyGen paid tracks | **Bundled Pixabay SFX (`CREDITS.md` commercial OK) + Offline Curated CC0/Pixabay BGM** (`$0`) | Bundled `whoosh-cinematic`, `impact-bass`, `sparkle`, `pop`, `chime`, `riser` transformed Candidate B audio quality at zero cost. Avoid HeyGen paid generation (`credits`). *(Curating 6–8 distinct free royalty-free Indian/cinematic BGM stems locally is a small one-time `$0` manual/script setup step.)* |
-| **FFmpeg Mastering & Media QA** | **FFmpeg `7.1`** (installed: `libx264`, `libass`, `harfbuzz`, `fribidi`, `libvmaf`, `ebur128`, `silencedetect`, `loudnorm`) + **KinoCut `2.0.1`** + **Pillow `10+`** | **Retain & Harden** (`$0`, installed) | Add real FFmpeg `ebur128`/`silencedetect` measurements & frame-diff checks alongside `hyperframes measure look` and KinoCut **dual-profile (`default` >= 55 AND `ui-capture-dark` >= 85)** rather than inflating dark renders alone. |
+| **Phase 1: Immediate Hygiene, DB Schema v4 & Live Sync** | Add `playground/` & `.secrets/` to `.gitignore`; prune orphan/3.10 `__pycache__/*.pyc` and `~100+ MB` of pure disposable playground frame/lib/font duplicates (`mp4_frames/`, `previews/`, `186` dup fonts/lib, `master_mix_ep4.wav` dup, `shared/master_mix_poc.wav` dup, raw extraction folders in `analysis/`, stale `build/composition/.hyperframes/`). Take binary `sqlite3.backup`, migrate `episodes.db` & `docs/schema.sql` to v4 (`series_title_en/hi`, `publishing_history` w/ Ep 1/2/4 backfill, `audio_ledger`, Series 1 counter `=1`, pillar rotation fix), create `sutradhar/{config,db,models}.py`, clean `config.yaml` & `pronunciations_hi.yaml`, sync `PLfT89QTc7oLs` (& optional Ep 4 thumb patch / Series 1–2 playlists). | Plan Approval + User Decisions (Sec. 20) | `PRAGMA integrity_check == 'ok'`; `publishing_history` covers Ep `1–4`; `--context` pillar rotation advances properly & stays token-lean; `.gitignore` keeps `playground/` out of staging; `PLfT89QTc7oLs` English live while `oBcyiPy26rg` `sardefault.jpg` untouched (`MAE <= 1.0`). |
+| **Phase 2: Unified Asset Hub & Modular Canvas2D Runtime (`templates/runtime/`)** | Promote single copy of `31` `.woff2` fonts + `fonts.css` to `assets/fonts/`; organize Pixabay SFX + deduplicate `assets/bgm/` (`0` duplicate MD5s) + curate free acoustic beds; modularize Ep 4 `SHARED_ILLUSTRATOR_JS` + V1 `canvas_v1.js` + Cand B `drawPalaceInterior`/props into ES modules (`character_engine.js`, `atmosphere_v1.js`, `architectural_stage.js`, `props_library.js`, `transitions.js`, `seek_runtime.js`, `captions.html.jinja2`, `cover_template.html.jinja2`) with fixed `drawKailashSacredPeak` bounds & CSS weights; author `assets/characters/*.json`, `assets/environments/*.json`, and `assets/manifest.yaml` v2. | Phase 1 | HyperFrames headless render tests verify deterministic `hf-seek(12.6s)` idempotency, fixed Kailash thumbnail curve (`2:3` safe `top >= 250 / bottom >= 205`), loaded `Noto Sans Devanagari`, and captions strictly clearing `Y = 1400`. |
+| **Phase 3: Pre-Render Storyboard Compiler, Bitrate Optimizer & Fail-Closed QA** | Implement `storyboard_composer.py`, `thumbnail_builder.py`, `hyperframes_runner.py`, `render_optimizer.py` (`<= 55 MB` cap), and `quality_gate.py`; wire `preview_frames.py` & `render_and_qa.py` to enforce `--strict --safe-zone shorts`, DOM-validated labels, real temporal motion diffs, dual KinoCut (`>= 88` dark / `>= 55` default / `color_balance PASS`), and `2:3` thumbnail crop output. Retire `qa_verifier.py` fake `dom_snapshots`. | Phase 2 | Offline re-compose + render of Ep 3 audio finishes cleanly with `MP4 <= 55 MB`, `0` `--strict` errors, `static_fraction <= 0.15`, `ui-capture-dark >= 88`, and `default >= 55`. |
+| **Phase 4: Audio Pipeline Rebuild (`build_audio.py`, `Whisper small`, Single-Pass Mix)** | Split `build_audio.py` cleanly into `elevenlabs_tts.py`, `whisper_aligner.py`, `caption_builder.py`, and `sound_mixer.py`; switch `base` -> cached `WhisperModel("small")` + RMS onset snapper; fix em-dash keyword tokenizer (`"कहलाए—नीलकंठ!"` -> `kw: true`); schedule peak-aligned SFX from live Storyboard IR (0 orphan cues); enforce single 2-pass `loudnorm` (`-14.0 LUFS` / `-1.5 dBTP`). | Phase 1 | Offline Ep 4 audio alignment exceeds baseline accuracy (`S5 > 0.70`, `"नीलकंठ"` & `"कैलाश"` highlighted `kw: true`); mixed WAV measures `-14.0 ± 0.5 LUFS`, `<= -1.5 dBTP`; budget gate aborts scripts `> 900` chars before TTS spend. |
+| **Phase 5: Publishing Consolidation & Complete Docs Rewrite** | Consolidate `publish_youtube.py` + `thumbnail_verifier.py` around `sutradhar/publishing/` (processing wait, `sardefault.jpg` CDN parity, English playlist guard, automatic `publishing_history` writes); rewrite `docs/INSTRUCTIONS.md` (16-Part Spec), `SETUP_AND_OPERATIONS.md`, `README.md`, `requirements.txt`, and `package.json`. | Phases 1–4 | Mocked & integration publishing tests pass `100%`; zero internal contradictions across docs, configs, and `--context` prompts. |
+| **Phase 6: Test Decoupling & Complete Legacy Code/Asset Removal** | Rewrite/decouple legacy v4 tests (`test_production_acceptance.py` off live `build/auditions/`, `test_render_pipeline.py` off `assets/svg/`, `test_db_manager`/`test_build_audio` off deleted `diagrams/` & `pronunciations.yaml`), replace the 9 old `scripts/engine/` tests with deep tests for `sutradhar/*`, then safely delete `scripts/engine/*`, `scripts/{build_assets,generate_composition}.py`, `templates/composition/*`, `assets/svg/*`, `assets/js/DrawSVGPlugin.min.js`, `backup/` obsolete SQL/Kokoro clutter, root `.hyperframes/`, and single-use playground runners (`replace_ep3_youtube`, `publish_ep4`, `mix_candidate_audio`, `analyze_reference`) — archiving large MP4 benchmarks per user decision. | Phases 3–5 | `pytest` passes **`100%`** in isolated temp workspaces (`0` skipped gates, `0` live `build/` mutations); repo contains clean canonical structure with zero dead compatibility shims. |
+| **Phase 7: End-to-End Blind Acceptance Short (Episode 5)** | Produce Episode 5 strictly through the 6 redesigned CLI steps + `docs/INSTRUCTIONS.md` (Checkpoint 1 `<2 min` -> Cached TTS -> Checkpoint 2 `15-frame qa_grid.jpg` & `2:3` thumb `<2 min` -> `<= 55 MB` MP4 -> Live/Private YouTube upload + CDN verify). | Phase 6 | Independently matches or exceeds Ep 4 motion/anatomy quality + Cand B grounded storytelling inside `<= 55 MB` MP4, `<= 850` ElevenLabs chars, verified `sardefault.jpg`, and synchronized English playlist metadata. |
 
 ---
 
-## 15. Automated Testing & Fail-Closed Quality Gates
+## 19. Risks, Rollback Recovery & Git/Credential Security Hygiene
 
-Replace synthetic passes with layered deterministic tests and non-bypassable visual/audio runtime assertions:
-
-1. **Runtime Contract & Determinism Tests (Chromium / HyperFrames CLI):**
-   - Zero `sweep_static`, zero `motion_frozen`, zero `text_occluded`, zero `safe_zone_violation` under `npx hyperframes check --strict --safe-zone shorts --json`.
-   - **Real Seek Idempotency Test:** Render frame at `t = 12.6s` twice (sequentially vs direct random seek `hf-seek`), verify byte-level PNG parity!
-   - **Temporal Motion Check:** Compute actual pixel delta (`MAE` across `0.5s` step windows inside each scene) proving **zero static freezes `> 3.5s`** (eliminating Scene 3/4/5 stiffness while catching broken animations).
-2. **Spatial Grounding & Safe-Zone Geometric Gate:**
-   - Storyboard IR validator rejects any standing character whose `footY` diverges from floor/terrain plane by `> 6px`, any seated character without dais/cushion/throne/mount support, any prop without grounded pedestal/desk/surface unless tagged `floating_celestial`, or any character/prop bbox intersecting caption zone (`y >= 1255`).
-3. **Typography & Caption Synchronization Tests:**
-   - Assert bundled `.woff2` fonts present in `assets/fonts/` (`31` files), `document.fonts.ready` resolved with `Noto Sans Devanagari`, `endT <= nextStart - 0.03`, cue word count `<= 4` (or calibrated <= 6 for rapid phrases), zero subtitle gaps matching audio > `1.0s` anomaly (detecting `"देवी" 5.08s` drift automatically!).
-4. **Acoustic & SFX Sanity Gate:**
-   - Assert `-14.0 LUFS ± 0.8`, `true_peak <= -1.5 dBTP`, `48,000 Hz` stereo, trailing `>= 0.7s` quiet tail, zero clipping, AND validate SFX schedule references resolved asset paths inside compiled Storyboard IR.
-5. **Thumbnail & Publishing Contract Tests (`tests/test_thumbnail_utils.py`, `tests/test_publish_youtube.py`):**
-   - Validate pre-upload checks (`1080×1920`, `<= 2 MiB`, non-blank RGB), post-processing wait ordering (`videos.list -> processingStatus=='succeeded' -> thumbnails.set`), `shortsAspectRatio` enforcement, live CDN `sardefault.jpg` `MAE <= 12.0` + `dhash <= 16` verification, fail-closed error reporting, and English metadata / `defaultAudioLanguage="hi"` invariants.
+- **Git Staging Hazard & Size Protection:** Right now, `.gitignore` does **not** ignore `playground/` (`523` files / `918.74 MiB`). Do NOT commit blindly; Phase 1 must update `.gitignore` immediately (`playground/`, `.secrets/`, `runtime_cache/`) and unstage any stray playground files cleanly **only when explicitly authorized by the user**.
+- **Credential Hygiene:** Keep `.env.local` untracked; move bare root `client_secret_*.json` (`418 B`, unused by `publish_youtube.py` which uses `.env.local`) into untracked `.secrets/` (or verify removal if redundant), and strip unused `GEMINI_API_KEY` from `.env.local.example`.
+- **SQLite & Live YouTube Rollback Plan:**
+  - Every schema migration and metadata sync begins with `sqlite3.backup()` snapshot + `PRAGMA integrity_check`; rolling back DB changes takes a single offline file swap.
+  - All Phase 1 / Section 16 YouTube updates (`playlists.update` on `PLfT89QTc7oLs` and optional `thumbnails.set` on Ep 4) store prior JSON responses in `publishing_history` and NEVER delete/re-upload video binaries.
+- **ElevenLabs Quota Burn Risk:** Pre-flight validator aborts if total billed chars `> 900`; SHA-256 scene WAV ledger ensures script tweaks to Scene `K` never re-bill Scenes `1..K-1`.
 
 ---
 
-## 16. Phased Implementation Roadmap & Acceptance Criteria
+## 20. Approval Checklist & Minimal Open Decisions
 
-Execution proceeds in **6 small, independently verifiable phases** (never breaking tests between phases):
+Before starting **Phase 1 execution**, please confirm or adjust these **4 small scope choices**:
 
-| Phase | Scope & Affected Modules | Dependencies | Acceptance Criteria |
-| --- | --- | --- | --- |
-| **Phase 1: Core Config, Schema v4 & Live Ep 3 DB/Playlist Sync** | Split language config (`config.yaml`), create `sutradhar/config.py`, `db.py` + `schema.sql` v4 (`series_title_en/hi`, `publishing_history`, `audio_ledger`, repaired pillar rotation), run DB backup & migrate `episodes.db` + fix Ep 1 counter + update `PLfT89QTc7oLs` English metadata on YouTube (`oBcyiPy26rg` media/thumb untouched). | Plan approval | `pytest`/`unittest` DB & schema migration pass `100%`; `PRAGMA integrity_check == 'ok'`; `db_manager.py --context` outputs concise token-lean English metadata context; `PLfT89QTc7oLs` reads English live while `oBcyiPy26rg` `sardefault.jpg` keeps `MAE <= 1.0`. |
-| **Phase 2: Visual Runtime Library & Asset Extraction (`V1` + `Cand B`)** | Promote 31 `.woff2` fonts to `assets/fonts/`; extract `atmosphere_v1.js`, `architectural_stage.js`, `character_engine.js`, `props_library.js`, `transitions.js`, `seek_runtime.js`, `captions.html.jinja2`, `cover_template.html.jinja2`; create `assets/characters/*.json`, `assets/environments/*.json`, and `assets/manifest.yaml` v2; import Pixabay SFX cleanly into `assets/audio/sfx/`. | None (parallel with Phase 1) | Chromium HyperFrames render test confirms `atmosphere_v1` dawn sunrise progression, Candidate B grounded character walk/poses (`MAE`/`hf-seek` idempotency), and `cover_template` passing `2:3` Shorts safe zones (`top: 255px`, `bottom: 208px`). |
-| **Phase 3: Storyboard Compiler, Preview & Visual QA Gate** | Replace `scripts/engine/{composer,puppet_rig,lipsync_engine,subtitle_engine}` with `storyboard_composer.py`, `caption_builder.py`, `hyperframes_runner.py`, `quality_gate.py`; wire `preview_frames.py` & `render_and_qa.py` to enforce `--strict --safe-zone shorts`, real DOM/Canvas checks, dual KinoCut scoring, and dedicated thumbnail generation. Retire synthetic fallback `dom_snapshots` permanently. | Phase 2 | Sample render re-targeting cached Ep 3 audio completes cleanly with `0` `hyperframes check --strict` errors, zero `sweep_static`, non-zero temporal motion delta on every scene, captions `100%` synced (`top: 1274px`), and KinoCut `ui-capture-dark >= 88.0`. |
-| **Phase 4: Audio Optimization, `faster-whisper small` Alignment & Sound Mixer** | Implement `tts_client.py` (pre-TTS budget gate `<= 900` chars, `[pause]` tag fix, per-scene SHA-256 ledger), `whisper_aligner.py` (`ffmpeg 16kHz` + `faster-whisper small` + RMS speech-burst boundary snapper), `sound_mixer.py` (declarative 3-act BGM crossfade + `+1 frame` Pixabay SFX hits + `6.5:1` sidechain), clean `pronunciations_hi.yaml`, curate distinct royalty-free BGM stems (`$0`), archive synthetic `build_assets.py`. | Phase 1 | Running offline on cached Ep 3 WAV raises alignment match ratio significantly above `0.3` with zero `>1.5s` single-word hangs; mixed WAV measures `-14.0 ± 0.5 LUFS`, `<= -1.5 dBTP`, `48kHz stereo`; unit tests verify TTS budget abort & `[pause]` preservation. |
-| **Phase 5: Publishing Hardening, `INSTRUCTIONS.md` Redesign & Legacy Cleanup** | Consolidate `publish_youtube.py` + `thumbnail_verifier.py` cleanly around `English` metadata + `Hindi` audio + playlist enforcement + CDN verification; rewrite `docs/INSTRUCTIONS.md` & `SETUP_AND_OPERATIONS.md` completely per Section 8; verify test suite coverage across all new modules; safely archive replaced `assets/svg/` legacy SVGs and retire experimental `playground/` builder clutter (preserving benchmarks per user instruction). | Phases 1–4 | Full test suite (`unittest`/`pytest`) passes `100%` with zero skipped gates; fresh blind end-to-end sample episode (Checkpoint 1 -> Cache TTS -> Checkpoint 2 -> Render -> Dry-Run/Private Review Publish) passes every acceptance criterion below. |
-| **Phase 6: Live Production Acceptance Short** | Generate one full new Episode 4 (Series 3 Episode 2 — *Surya Siddhanta Cosmic Time / Kalpa Scale* or next pillar rotation if new series) using ONLY the redesigned pipeline + `docs/INSTRUCTIONS.md`, review Checkpoints 1 & 2 with user, render final MP4, publish cleanly to YouTube, and verify live `sardefault.jpg` + English metadata + DB sync. | Phase 5 | Independently reviewed Episode 4 renders cleanly at >= Candidate B visual standard with `V1` atmospheric richness when outdoors/cosmic, verified live on YouTube with crisp English thumbnail (`MAE <= 12`, `dhash <= 16`). |
-
----
-
-## 17. Sample End-to-End Acceptance Verification Protocol
-
-Before declaring the redesigned system production-ready in Phase 6, the new pipeline must satisfy **every** quantitative and visual gate cleanly on a real rendered Short:
-
-1. **Zero Budget Overrun:** ElevenLabs character spend stays within `<= 900` billed chars (`<= 3%` of monthly `30,000` Starter quota).
-2. **HyperFrames Determinism & Strict Layout:** `npx hyperframes check --strict --safe-zone shorts --json` returns **`ok: true`, `0` errors, `0` warnings**, including random seek idempotency (`frame(12.6s) sequential == frame(12.6s) random`).
-3. **Visual Quality & Motion Telemetry:** `1080×1920 @ 30fps`, `duration 40–75s` sweet spot; KinoCut `ui-capture-dark >= 88.0`, `default >= 55.0`; `static_fraction <= 0.15` (significant motion upgrade even over Candidate B's `0.47` while maintaining crisp read holds); zero black/dead lower thirds, zero floating characters/props verified visually across a **15-frame review contact sheet**.
-4. **Audio & Caption Synchronization:** `48 kHz 24-bit stereo`, `-14.0 ± 0.5 LUFS`, `<= -1.5 dBTP`; Devanagari `Noto Sans Devanagari` captions bottom-centered cleanly at `top: 1274px` matching spoken phrases (`1–4` words, zero overlaps, zero cutoff characters).
-5. **Thumbnail & Live YouTube Compliance:** Dedicated `1080×1920` English cover verified visually in `9:16` AND `2:3` center crop; uploaded strictly after `processingStatus == "succeeded"`; live CDN `sardefault.jpg` returns `HTTP 200`, `1080×1920`, `MAE <= 12.0`, `dhash_distance <= 16`; YouTube video & series playlist hold English title/description/tags (`defaultLanguage="en"`, `defaultAudioLanguage="hi"`).
-
----
-
-## 18. Risks, Constraints & Mitigation Matrix + Open Decisions
-
-| Risk / Constraint | Impact | Concrete Mitigation Built into Design |
-| --- | --- | --- |
-| **ElevenLabs Starter `30k` credit exhaustion at `30 Shorts/mo`** | Stops monthly episode audio generation if scripts bloat or fail retries | Hard pre-TTS cap (`900` chars target `780–840`), scene-level SHA-256 WAV cache (`1` line edit = re-synth `1` scene only), mandatory pre-flight Devanagari validation before API call. |
-| **HyperFrames headless Chrome memory/CPU timeouts on Canvas + blur effects** | Slow renders or intermittent Chromium worker crash on Windows | Avoid full-frame live CSS `filter: blur()` stacks per element; perform radial glows/cloud soft-feathers cleanly in Canvas2D gradients + seeded 128px grain tile + `--workers 4` tested cleanly at `36–112 MB`. |
-| **BGM licensing / repetitive synthetic audio quality** | Viewer drop-off or copyright claims if third-party tracks aren't cleared | Audit 6–8 distinct `CC0` / Pixabay-licensed Indian classical & ambient cinematic `.mp3` beds once offline (`$0`), record source licenses in `assets/manifest.yaml` & `CREDITS.md` (mirroring bundled HyperFrames SFX). |
-| **Shorts UI cropping vs legacy `16:9` pillarboxes** | Cropped headline or blurry preview cards | Keep dedicated `1080×1920` design safe inside central `1080×1620` (`2:3`), validate both locally pre-upload, and verify `sardefault.jpg` pixel match post-upload. |
-| **AI agent falling back to rushed templates without checking frames** | Re-emergence of subtle visual defects (`hovering feet`, `clipping`) | Human Checkpoint 2 (`15-frame qa_grid.jpg` + `thumbnail.jpg`), fail-closed `hyperframes check --strict`, and rewritten `docs/INSTRUCTIONS.md` specifying concrete visual inspection checks & explicit rejection criteria. |
-
-### Minimal Decisions Needed Before Phase 1 Execution
-1. **YouTube Series 1 & 2 Playlists (`PLH-P2bxD4o-I` `"शनि कथा"` & `PLZpM1QZQbBWw` `"भारत का गुप्त इतिहास"`):** Series 3 (`PLfT89QTc7oLs`) definitely updates to English (`"Vedic Cosmos & Mysteries of Time"`) to match Episode 3 (`oBcyiPy26rg`). *Recommended default:* also translate Series 1 & 2 playlist titles/descriptions in YouTube & `episodes.db` to English (`"Shani Katha — Cosmic Justice"` & `"Hidden History of Ancient India"`) while leaving Ep 1 & Ep 2 videos untouched, so the entire channel satisfies the English playlist policy consistently.
-2. **Episode 1 & Episode 2 Custom Shorts Thumbnails (`cd1cc1mhfwg`, `hcKmhzjQkz4`):** Live channel inspection showed Ep 1 & Ep 2 suffer the exact same missing `shortsAspectRatio` (`sardefault.jpg = 404`) bug from the old upload timing. *Recommended default:* leave Ep 1 & Ep 2 as-is unless you want us to also generate/apply verified `1080×1920` English thumbnails for those two earlier episodes cleanly without touching their videos.
-3. **Human Checkpoints Mode:** *Recommended default:* keep the two lightweight human review stops (`Checkpoint 1`: Script/Title approval before ElevenLabs spend; `Checkpoint 2`: `qa_grid.jpg` + `thumbnail.jpg` approval before full Chromium render & public upload), with an explicit config toggle for unattended `private_review` batch runs if ever needed.
+1. **YouTube Series 1 & 2 Playlist English Sync (`PLH-P2bxD4o-I` `"शनि कथा"` & `PLZpM1QZQbBWw` `"भारत का गुप्त इतिहास"`):**
+   - *Definitely:* Update Series 3 (`PLfT89QTc7oLs`) to `"Vedic Cosmos & Mysteries of Time"` matching Ep 3 (`oBcyiPy26rg`).
+   - *Recommended Default:* Also translate Series 1 (`"Shani Katha — Cosmic Justice"`) & Series 2 (`"Hidden History of Ancient India"`) playlists and DB titles while leaving Ep 1 & Ep 2 videos untouched, unifying English playlist policy across the entire channel.
+2. **Episode 4 (`7PWFV7lQG6U`) Live Thumbnail Kailash Fin Fix (Thumbnail-Only Refresh):**
+   - *Observation:* Live Ep 4 `sardefault.jpg` displays a minor protruding white-edged rock/snow fin beside Shiva's crescent moon caused by `drawKailashSacredPeak` gully bounds (`[122, -208, 62, 38]`).
+   - *Recommended Default:* After fixing `drawKailashSacredPeak` & `.pill` font weight `800` in Phase 2, perform a quick **thumbnail-only** `thumbnails.set` + `sardefault.jpg` CDN re-verification on `7PWFV7lQG6U` (leaving the video MP4 and stats 100% untouched).
+3. **Playground Binary MP4 Retention (`v1_dawn_ridge.mp4` `112.8 MB`, `candidate_b_ref1_cinematic.mp4` `36.9 MB`, `ep4_neelakantha_shiva.mp4` `553.8 MB`):**
+   - *Recommended Default:* In Phase 1, delete the `~130+ MB` of pure frame dumps (`mp4_frames/`/`previews/`/`186` duplicate fonts/lib/duplicate WAVs) immediately, keep the `3` milestone MP4s temporarily inside git-ignored `playground/` as local references during Phases 1–6, and archive/remove them (or keep compressed copies outside repo) once Phase 7 passes Ep 5 acceptance.
+4. **Ep 1 (`cd1cc1mhfwg`) & Ep 2 (`hcKmhzjQkz4`) Legacy `sardefault.jpg` (`404`):**
+   - *Recommended Default:* Leave Ep 1 & Ep 2 untouched as historical baseline records while enforcing `100%` CDN thumbnail parity from Ep 3 (`oBcyiPy26rg`), Ep 4 (`7PWFV7lQG6U`), and all Episode 5+ outputs forward.
