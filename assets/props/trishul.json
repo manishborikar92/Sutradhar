@@ -1,0 +1,8 @@
+{
+  "id": "trishul",
+  "name": "Grounded Sacred Trishul & Damaru",
+  "category": "sacred_weapon",
+  "renderer": "drawGroundedTrishul",
+  "default_mount": "floor",
+  "description": "Golden trident planted firmly into a carved stone plinth with tied crimson-ochre damaru drum."
+}

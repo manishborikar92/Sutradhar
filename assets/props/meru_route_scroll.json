@@ -1,0 +1,8 @@
+{
+  "id": "meru_route_scroll",
+  "name": "Royal Mt. Meru Trajectory Scroll",
+  "category": "archival_prop",
+  "renderer": "drawMeruRouteScroll",
+  "default_mount": "table",
+  "description": "Unfurling parchment map on carved dark oak desk showing Dwaraka to Brahmaloka flight path."
+}

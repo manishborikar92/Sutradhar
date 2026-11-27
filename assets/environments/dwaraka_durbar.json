@@ -1,0 +1,18 @@
+{
+  "id": "dwaraka_durbar",
+  "name": "Dwaraka Royal Durbar Hall",
+  "atmosphere_mode": "palace_court",
+  "horizon_y": 1142,
+  "palette": {
+    "wall_top": "#3B162C",
+    "wall_bot": "#5E233A",
+    "dado_top": "#3D1824",
+    "floor_a": "#7C4C30",
+    "floor_b": "#4A2B1C",
+    "curtain": "#8E1A2D",
+    "carpet": "rgba(148, 22, 42, 0.85)"
+  },
+  "has_diyas": true,
+  "include_curtains": true,
+  "motes_color": "#FFD68A"
+}

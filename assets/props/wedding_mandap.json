@@ -1,0 +1,8 @@
+{
+  "id": "wedding_mandap",
+  "name": "Ceremonial Wedding Mandap & Agni Kalash",
+  "category": "architectural_prop",
+  "renderer": "drawWeddingMandap",
+  "default_mount": "floor",
+  "description": "Floor-grounded golden mandap pillars, overhead torana beam, marigold swags, and sacred Agni urn."
+}

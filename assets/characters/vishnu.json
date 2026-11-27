@@ -1,0 +1,36 @@
+{
+  "id": "vishnu",
+  "name": "Lord Vishnu (Narayana)",
+  "category": "deity",
+  "archetype": "Cosmic Preserver",
+  "rig_role": "deva",
+  "palette": {
+    "skin": "#7EB8F0",
+    "skinDark": "#4A82C4",
+    "dhotiA": "#F6C453",
+    "dhotiB": "#C47D18",
+    "sash": "#D62839",
+    "trim": "#FFE680",
+    "hair": "#1A1220",
+    "lip": "#743E4E",
+    "iris": "#26334D"
+  },
+  "proportions": {
+    "upperW": 16.5,
+    "elbowW": 12.0,
+    "wristW": 8.2,
+    "defaultScale": 0.88
+  },
+  "features": {
+    "headgear": "kirita_mukuta",
+    "tilak": "urdhva_pundra",
+    "adornment": "kaustubha_vaijayanti",
+    "garment": "royal_dhoti",
+    "beard": false,
+    "extraArms": true,
+    "threeHeads": false,
+    "tigerSeatDefault": false
+  },
+  "supported_poses": ["neutral", "gesture", "namaskar", "bless"],
+  "supported_expressions": ["serene", "smile", "compassionate", "determined"]
+}

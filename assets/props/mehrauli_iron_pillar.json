@@ -1,0 +1,9 @@
+{
+  "id": "mehrauli_iron_pillar",
+  "name": "Mehrauli Gupta Iron Pillar",
+  "category": "architectural_monument",
+  "renderer": "drawIronPillar",
+  "default_mount": "floor",
+  "legacy_svg_path": "assets/svg/backdrops/mehrauli_iron_pillar.svg",
+  "description": "Rustless Chandragupta II iron pillar mounted on a stepped stone plinth with lotus bell capital."
+}

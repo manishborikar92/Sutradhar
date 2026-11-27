@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="{{ lang | default('en') }}">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ page_title | default('Sutradhar Cover Thumbnail') }}</title>
+  <link rel="stylesheet" href="{{ fonts_css | default('fonts/fonts.css') }}">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 1080px; height: 1920px; overflow: hidden; background: #0A102C; }
+    #thumb-stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: #0A102C; }
+    #thumb-canvas { position: absolute; inset: 0; width: 1080px; height: 1920px; display: block; z-index: 1; }
+    .badge {
+      position: absolute; left: 96px; right: 96px; top: {{ badge_top_px | default(255) }}px; z-index: 10;
+      display: flex; flex-direction: column; align-items: center; text-align: center;
+    }
+    .pill {
+      padding: 12px 34px; border-radius: 40px; background: {{ pill_bg | default('#F6C453') }}; color: {{ pill_color | default('#14172E') }};
+      font-family: "Inter", sans-serif; font-size: 31px; font-weight: 800; letter-spacing: 0.14em;
+      margin-bottom: 16px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.48);
+    }
+    .h1 {
+      font-family: "Cinzel", serif; font-size: {{ h1_size_px | default(98) }}px; font-weight: 800; line-height: 1.02;
+      color: #FFFFFF; text-shadow: 0 6px 24px rgba(0, 0, 0, 0.88);
+    }
+    .h2 {
+      font-family: "Cinzel", serif; font-size: {{ h2_size_px | default(106) }}px; font-weight: 800; color: #FFD750;
+      line-height: 1.04; text-shadow: 0 6px 28px rgba(0, 0, 0, 0.92); margin-top: 4px;
+    }
+    .sub-pill {
+      margin-top: 18px; padding: 12px 34px; border-radius: 18px; background: rgba(12, 18, 38, 0.90);
+      border: 2px solid rgba(92, 225, 255, 0.72); color: #DDF8FF; font-family: "Inter", sans-serif;
+      font-size: 29px; font-weight: 800; letter-spacing: 0.10em;
+    }
+    .foot {
+      position: absolute; left: 120px; right: 120px; bottom: {{ foot_bottom_px | default(208) }}px; z-index: 10;
+      text-align: center; font-family: "Cinzel", serif; font-size: 33px; font-weight: 800; letter-spacing: 0.16em;
+      color: #FFD978; text-shadow: 0 4px 18px rgba(0, 0, 0, 0.95);
+    }
+  </style>
+</head>
+<body>
+  <div id="thumb-stage"
+       data-composition-id="thumb"
+       data-start="0"
+       data-duration="1"
+       data-width="1080"
+       data-height="1920">
+    <canvas id="thumb-canvas" width="1080" height="1920" data-layout-ignore="true"></canvas>
+    <div class="badge">
+      {% if pill_text %}<div class="pill">{{ pill_text }}</div>{% endif %}
+      {% if headline_1 %}<div class="h1">{{ headline_1 }}</div>{% endif %}
+      {% if headline_2 %}<div class="h2">{{ headline_2 }}</div>{% endif %}
+      {% if sub_pill %}<div class="sub-pill">{{ sub_pill }}</div>{% endif %}
+    </div>
+    {% if footer_text %}<div class="foot">{{ footer_text }}</div>{% endif %}
+  </div>
+
+  {% if gsap_src %}
+  <script src="{{ gsap_src }}"></script>
+  {% endif %}
+  <script type="module">
+    import { renderCoverComposition } from "{{ runtime_base | default('./runtime') }}/core/scene_director.js";
+
+    const COVER = {{ cover_config_json | default('{}') | safe }};
+    const canvas = document.getElementById("thumb-canvas");
+    const draw = () => renderCoverComposition(canvas, COVER);
+    draw();
+
+    if (window.gsap) {
+      const proxy = { t: 0 };
+      const tl = window.gsap.timeline({ paused: true });
+      tl.to(proxy, { t: 1, duration: 1, ease: "none", onUpdate: draw });
+      window.__timelines = window.__timelines || {};
+      window.__timelines["thumb"] = tl;
+    }
+
+    if (document.fonts && document.fonts.ready) {
+      window.__sutradharFontsReady = document.fonts.ready.then(() => {
+        draw();
+        return true;
+      });
+    } else {
+      window.__sutradharFontsReady = Promise.resolve(true);
+    }
+  </script>
+</body>
+</html>

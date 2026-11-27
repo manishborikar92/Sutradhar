@@ -1,0 +1,36 @@
+{
+  "id": "balarama",
+  "name": "Lord Balarama",
+  "category": "hero",
+  "archetype": "Halayudha / Elder Yadava Hero",
+  "rig_role": "king",
+  "palette": {
+    "skin": "#6EB3F5",
+    "skinDark": "#4584C4",
+    "dhotiA": "#F4C23D",
+    "dhotiB": "#BA7A14",
+    "sash": "#2766B8",
+    "trim": "#FFE57F",
+    "hair": "#1E1218",
+    "lip": "#6E4B68",
+    "iris": "#26334D"
+  },
+  "proportions": {
+    "upperW": 17.5,
+    "elbowW": 12.8,
+    "wristW": 8.6,
+    "defaultScale": 0.94
+  },
+  "features": {
+    "headgear": "winged_royal_crown",
+    "tilak": "urdhva_pundra",
+    "adornment": "gold_kanthihara",
+    "garment": "royal_dhoti",
+    "beard": false,
+    "extraArms": false,
+    "threeHeads": false,
+    "tigerSeatDefault": false
+  },
+  "supported_poses": ["neutral", "gesture", "clasp", "namaskar"],
+  "supported_expressions": ["serene", "smile", "determined"]
+}

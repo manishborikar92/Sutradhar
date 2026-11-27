@@ -1,0 +1,8 @@
+{
+  "id": "magnifying_sector_lens",
+  "name": "27-Sector Brass Magnifying Lens",
+  "category": "explainer_prop",
+  "renderer": "drawMagnifyingSectorLens",
+  "default_mount": "sky",
+  "description": "Brass magnifying glass revealing progressive 27-sector Chatur-Yuga count animation."
+}

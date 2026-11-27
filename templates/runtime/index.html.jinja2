@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="{{ lang | default('hi') }}">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ title | default('Sutradhar Episode') }}</title>
+  <link rel="stylesheet" href="{{ fonts_css | default('fonts/fonts.css') }}">
+  <link rel="stylesheet" href="{{ styles_css | default('styles.css') }}">
+</head>
+<body>
+  <div id="stage"
+       data-composition-id="{{ composition_id | default('main') }}"
+       data-start="0"
+       data-duration="{{ duration_sec | default(60.0) }}"
+       data-width="1080"
+       data-height="1920">
+    {% if audio_src %}
+    <audio id="master-audio" class="clip" src="{{ audio_src }}" data-start="0" data-duration="{{ duration_sec | default(60.0) }}"></audio>
+    {% endif %}
+
+    <canvas id="world-canvas" width="1080" height="1920" data-layout-ignore="true"></canvas>
+
+    <div id="contextual-overlay">
+      <div class="ctx-pill">
+        <span id="ctx-kicker" class="ctx-kicker"></span>
+        <span id="ctx-title" class="ctx-title"></span>
+      </div>
+    </div>
+
+    {% if include_captions | default(true) %}
+    <div id="captions"
+         class="clip"
+         data-include="{{ captions_src | default('captions/captions.html') }}"
+         data-start="0"
+         data-duration="{{ duration_sec | default(60.0) }}"></div>
+    {% endif %}
+  </div>
+
+  <script src="{{ gsap_src | default('lib/gsap.min.js') }}"></script>
+  {% if captions_data_js %}
+  <script src="{{ captions_data_js }}"></script>
+  {% endif %}
+
+  <script type="module">
+    import { createEpisodeDirector } from "{{ runtime_base | default('./runtime') }}/core/scene_director.js";
+
+    const EPISODE_PLAN = {{ episode_runtime_json | default('{"duration_sec":60,"scenes":[]}') | safe }};
+    const tl = createEpisodeDirector({
+      canvas: document.getElementById("world-canvas"),
+      episodePlan: EPISODE_PLAN,
+      compositionId: "{{ composition_id | default('main') }}",
+    });
+
+    window.__timelines = window.__timelines || {};
+    window.__timelines["{{ composition_id | default('main') }}"] = tl;
+  </script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+{
+  "id": "brahma",
+  "name": "Lord Brahma",
+  "category": "deity",
+  "archetype": "Cosmic Creator / Chaturmukha",
+  "rig_role": "brahma",
+  "palette": {
+    "skin": "#F4C294",
+    "skinDark": "#D69464",
+    "dhotiA": "#F5C453",
+    "dhotiB": "#C27C1E",
+    "sash": "#FCE8C8",
+    "trim": "#FFD365",
+    "hair": "#ECE6DF",
+    "lip": "#8F423B",
+    "iris": "#3E2216"
+  },
+  "proportions": {
+    "upperW": 16.0,
+    "elbowW": 11.8,
+    "wristW": 8.0,
+    "defaultScale": 0.80
+  },
+  "features": {
+    "headgear": "chaturmukha_kirita",
+    "tilak": "urdhva_pundra",
+    "adornment": "gold_kanthihara",
+    "garment": "royal_dhoti",
+    "beard": true,
+    "extraArms": true,
+    "threeHeads": true,
+    "tigerSeatDefault": false
+  },
+  "supported_poses": ["neutral", "gesture", "namaskar", "bless"],
+  "supported_expressions": ["serene", "smile", "compassionate"]
+}

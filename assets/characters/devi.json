@@ -1,0 +1,36 @@
+{
+  "id": "devi",
+  "name": "Devi Parvati / Bhavani",
+  "category": "deity",
+  "archetype": "Shakti / Compassionate Mother",
+  "rig_role": "devi",
+  "palette": {
+    "skin": "#F5C298",
+    "skinDark": "#CC865A",
+    "dhotiA": "#C92448",
+    "dhotiB": "#7A1028",
+    "sash": "#FFB248",
+    "trim": "#FFE282",
+    "hair": "#1B1018",
+    "lip": "#B83546",
+    "iris": "#3E2216"
+  },
+  "proportions": {
+    "upperW": 13.0,
+    "elbowW": 10.0,
+    "wristW": 7.2,
+    "defaultScale": 0.86
+  },
+  "features": {
+    "headgear": "karanda_mukuta_odhani",
+    "tilak": "kumkum_bindi",
+    "adornment": "gold_temple_necklace",
+    "garment": "zari_saree",
+    "beard": false,
+    "extraArms": false,
+    "threeHeads": false,
+    "tigerSeatDefault": false
+  },
+  "supported_poses": ["neutral", "namaskar", "gesture", "throat_reach", "clasp"],
+  "supported_expressions": ["serene", "smile", "compassionate", "fear"]
+}

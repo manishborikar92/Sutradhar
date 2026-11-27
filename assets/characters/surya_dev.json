@@ -1,0 +1,36 @@
+{
+  "id": "surya_dev",
+  "name": "Surya Dev",
+  "category": "deity",
+  "archetype": "Solar Illuminator",
+  "rig_role": "deva",
+  "palette": {
+    "skin": "#F6B97A",
+    "skinDark": "#CE8444",
+    "dhotiA": "#E88224",
+    "dhotiB": "#A83E10",
+    "sash": "#C41E3A",
+    "trim": "#FFE875",
+    "hair": "#201214",
+    "lip": "#984438",
+    "iris": "#3E2216"
+  },
+  "proportions": {
+    "upperW": 16.5,
+    "elbowW": 12.0,
+    "wristW": 8.2,
+    "defaultScale": 0.88
+  },
+  "features": {
+    "headgear": "kirita_mukuta_solar",
+    "tilak": "surya_tilak",
+    "adornment": "solar_prabhavali",
+    "garment": "royal_dhoti",
+    "beard": false,
+    "extraArms": false,
+    "threeHeads": false,
+    "tigerSeatDefault": false
+  },
+  "supported_poses": ["neutral", "gesture", "bless", "namaskar"],
+  "supported_expressions": ["serene", "smile", "determined"]
+}

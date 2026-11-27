@@ -1,0 +1,18 @@
+{
+  "id": "nalanda_archival",
+  "name": "Nalanda Sandstone Courtyard & Archive",
+  "atmosphere_mode": "archival",
+  "horizon_y": 1142,
+  "palette": {
+    "wall_top": "#2D1814",
+    "wall_bot": "#5E2F1E",
+    "dado_top": "#3B1D14",
+    "floor_a": "#72492F",
+    "floor_b": "#3A2216",
+    "curtain": null,
+    "carpet": null
+  },
+  "has_diyas": true,
+  "include_curtains": false,
+  "motes_color": "#FFE0A8"
+}

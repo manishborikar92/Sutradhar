@@ -1,0 +1,9 @@
+{
+  "id": "shani_drishti_mandala",
+  "name": "Shani Drishti Karmic Astrological Mandala",
+  "category": "cosmic_mandala",
+  "renderer": "drawKalachakra",
+  "default_mount": "sky",
+  "legacy_svg_path": "assets/svg/diagrams/shani_drishti_mandala.svg",
+  "description": "12-house Vedic karmic alignment chakra visualizing planetary aspects and Shani's gaze."
+}

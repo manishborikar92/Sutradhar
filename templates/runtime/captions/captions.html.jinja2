@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="{{ lang | default('hi') }}">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ title | default('Sutradhar Captions') }}</title>
+  <link rel="stylesheet" href="{{ fonts_css | default('../fonts/fonts.css') }}">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: transparent;
+    }
+    #caption-root {
+      position: relative;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .caption-group {
+      position: absolute;
+      left: 52px;
+      right: 204px;
+      top: 1246px;
+      max-height: 144px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: flex-start;
+      gap: 6px;
+      overflow: hidden;
+      z-index: 25;
+    }
+    .caption-line {
+      font-family: "Noto Sans Devanagari", "Inter", sans-serif;
+      font-size: {{ caption_font_size_px | default(46) }}px;
+      font-weight: 800;
+      line-height: 1.24;
+      color: #F8F4EC;
+      text-shadow: 0 3px 14px rgba(3, 4, 12, 0.94), 0 0 3px rgba(3, 4, 12, 0.96);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 4px 10px;
+    }
+    .cap-word {
+      display: inline-block;
+      transform-origin: center bottom;
+      color: rgba(232, 228, 222, 0.56);
+    }
+    .cap-word.spoken {
+      color: #F6EFE2;
+    }
+    .cap-word.active {
+      color: #FFD666;
+      transform: translateY(-2px) scale(1.04);
+      text-shadow: 0 0 18px rgba(255, 214, 102, 0.46), 0 3px 14px rgba(3, 4, 12, 0.95);
+    }
+    .caption-gloss {
+      font-family: "Inter", sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      color: rgba(214, 232, 255, 0.90);
+      background: rgba(8, 12, 28, 0.66);
+      padding: 4px 12px;
+      border-radius: 8px;
+      border-left: 3px solid #FFD666;
+      text-shadow: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="caption-root"
+       data-composition-id="{{ composition_id | default('captions') }}"
+       data-start="0"
+       data-duration="{{ duration_sec | default(60.0) }}"
+       data-width="1080"
+       data-height="1920">
+    <div id="caption-group" class="caption-group" data-layout-allow-safe-zone="true">
+      <div id="caption-line" class="caption-line"></div>
+      <div id="caption-gloss" class="caption-gloss" style="display:none;"></div>
+    </div>
+  </div>
+
+  <script src="{{ gsap_src | default('../lib/gsap.min.js') }}"></script>
+  {% if captions_data_js %}
+  <script src="{{ captions_data_js }}"></script>
+  {% endif %}
+  <script>
+    (function () {
+      const DURATION = {{ duration_sec | default(60.0) }};
+      const MAX_WINDOW_WORDS = {{ max_window_words | default(5) }};
+      const INLINE_DATA = {{ captions_data_json | default('null') | safe }};
+      const CUES = Array.isArray(window.CAPTIONS_DATA)
+        ? window.CAPTIONS_DATA
+        : (Array.isArray(INLINE_DATA) ? INLINE_DATA : []);
+
+      const lineEl = document.getElementById("caption-line");
+      const glossEl = document.getElementById("caption-gloss");
+      const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
+
+      // Normalize cues into uniform phrases: { start, end, gloss, words: [{ word, start, end }] }
+      const PHRASES = CUES.map((cue) => {
+        const words = Array.isArray(cue.words) && cue.words.length > 0
+          ? cue.words
+          : String(cue.text || "")
+              .trim()
+              .split(/\s+/)
+              .filter(Boolean)
+              .map((w, idx, arr) => {
+                const span = Math.max(0.1, (Number(cue.end) || 0) - (Number(cue.start) || 0));
+                const wDur = span / Math.max(1, arr.length);
+                return {
+                  word: w,
+                  start: (Number(cue.start) || 0) + idx * wDur,
+                  end: (Number(cue.start) || 0) + (idx + 1) * wDur,
+                };
+              });
+        return {
+          start: Number(cue.start ?? (words[0] ? words[0].start : 0)),
+          end: Number(cue.end ?? (words[words.length - 1] ? words[words.length - 1].end : 0)),
+          gloss: cue.gloss ? String(cue.gloss) : "",
+          words,
+        };
+      });
+
+      let lastRenderKey = "";
+
+      function renderCaptionsAt(rawT) {
+        const t = clamp(Number(rawT) || 0, 0, DURATION);
+        let activePhrase = null;
+        for (let i = 0; i < PHRASES.length; i++) {
+          const p = PHRASES[i];
+          if (t >= p.start && t <= p.end) {
+            activePhrase = p;
+            break;
+          }
+        }
+        if (!activePhrase) {
+          if (lastRenderKey !== "empty") {
+            lineEl.innerHTML = "";
+            glossEl.style.display = "none";
+            lastRenderKey = "empty";
+          }
+          return;
+        }
+
+        const words = activePhrase.words;
+        let activeIdx = 0;
+        for (let i = 0; i < words.length; i++) {
+          if (t >= words[i].start) activeIdx = i;
+        }
+
+        // Slide cleanly in 5-word windows so line fits inside max-height: 144px
+        const page = Math.floor(activeIdx / MAX_WINDOW_WORDS);
+        const startIdx = page * MAX_WINDOW_WORDS;
+        const endIdx = Math.min(words.length, startIdx + MAX_WINDOW_WORDS);
+        const key = `${activePhrase.start.toFixed(3)}:${page}:${activeIdx}`;
+        if (key === lastRenderKey) return;
+        lastRenderKey = key;
+
+        const frag = document.createDocumentFragment();
+        for (let i = startIdx; i < endIdx; i++) {
+          const w = words[i];
+          const span = document.createElement("span");
+          span.className = "cap-word";
+          if (i === activeIdx && t <= w.end + 0.08) {
+            span.classList.add("active");
+          } else if (t >= w.start) {
+            span.classList.add("spoken");
+          }
+          span.textContent = w.word;
+          frag.appendChild(span);
+        }
+        lineEl.innerHTML = "";
+        lineEl.appendChild(frag);
+
+        if (activePhrase.gloss) {
+          glossEl.textContent = activePhrase.gloss;
+          glossEl.style.display = "block";
+        } else {
+          glossEl.style.display = "none";
+        }
+      }
+
+      if (window.gsap) {
+        const proxy = { t: 0 };
+        const tl = window.gsap.timeline({ paused: true });
+        tl.fromTo(
+          proxy,
+          { t: 0 },
+          { t: DURATION, duration: DURATION, ease: "none", onUpdate: () => renderCaptionsAt(proxy.t) },
+          0
+        );
+        window.__timelines = window.__timelines || {};
+        window.__timelines["{{ composition_id | default('captions') }}"] = tl;
+      }
+
+      window.addEventListener("hf-seek", (evt) => {
+        const target = evt && evt.detail ? evt.detail.time : undefined;
+        if (typeof target === "number" && Number.isFinite(target)) {
+          renderCaptionsAt(target);
+        }
+      });
+
+      window.renderCaptionsAt = renderCaptionsAt;
+      renderCaptionsAt(0);
+
+      if (document.fonts && document.fonts.ready) {
+        window.__sutradharFontsReady = document.fonts.ready.then(() => {
+          lastRenderKey = "";
+          renderCaptionsAt(0);
+          return true;
+        });
+      } else {
+        window.__sutradharFontsReady = Promise.resolve(true);
+      }
+    })();
+  </script>
+</body>
+</html>

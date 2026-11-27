@@ -1,0 +1,36 @@
+{
+  "id": "shiva",
+  "name": "Lord Shiva (Mahadeva)",
+  "category": "deity",
+  "archetype": "Ascetic / Cosmic Destroyer",
+  "rig_role": "shiva",
+  "palette": {
+    "skin": "#DCE6F4",
+    "skinDark": "#94A8C8",
+    "dhotiA": "#D97A28",
+    "dhotiB": "#7C3914",
+    "sash": "#233C70",
+    "trim": "#F6C453",
+    "hair": "#201522",
+    "lip": "#7D4450",
+    "iris": "#26334D"
+  },
+  "proportions": {
+    "upperW": 16.5,
+    "elbowW": 12.0,
+    "wristW": 8.2,
+    "defaultScale": 0.90
+  },
+  "features": {
+    "headgear": "jatamukuta_chandrama",
+    "tilak": "tripundra_trinetra",
+    "adornment": "rudraksha_serpent",
+    "garment": "tiger_dhoti",
+    "beard": false,
+    "extraArms": false,
+    "threeHeads": false,
+    "tigerSeatDefault": true
+  },
+  "supported_poses": ["neutral", "namaskar", "gesture", "palm_cup", "drink", "shield", "pull"],
+  "supported_expressions": ["serene", "smile", "determined", "compassionate", "fear"]
+}

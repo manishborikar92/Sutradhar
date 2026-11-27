@@ -1,0 +1,8 @@
+{
+  "id": "hourglass_stand",
+  "name": "Pedestal Sand Hourglass",
+  "category": "explainer_prop",
+  "renderer": "drawGroundedHourglassStand",
+  "default_mount": "floor",
+  "description": "Floor-grounded turned golden pedestal table supporting a trickling sand hourglass."
+}

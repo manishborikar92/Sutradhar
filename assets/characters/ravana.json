@@ -1,0 +1,36 @@
+{
+  "id": "ravana",
+  "name": "Ravana (King of Lanka)",
+  "category": "antagonist",
+  "archetype": "Scholar-Warrior / Asura Emperor",
+  "rig_role": "asura",
+  "palette": {
+    "skin": "#B87C64",
+    "skinDark": "#7D4838",
+    "dhotiA": "#681930",
+    "dhotiB": "#360A18",
+    "sash": "#B83B28",
+    "trim": "#D49B35",
+    "hair": "#180D14",
+    "lip": "#78302E",
+    "iris": "#6E1D1A"
+  },
+  "proportions": {
+    "upperW": 17.5,
+    "elbowW": 13.0,
+    "wristW": 8.8,
+    "defaultScale": 0.92
+  },
+  "features": {
+    "headgear": "asura_horned_kirita",
+    "tilak": "asura_flame_mark",
+    "adornment": "gold_kanthihara",
+    "garment": "royal_dhoti",
+    "beard": false,
+    "extraArms": false,
+    "threeHeads": false,
+    "tigerSeatDefault": false
+  },
+  "supported_poses": ["neutral", "gesture", "shield", "pull", "awed"],
+  "supported_expressions": ["determined", "fear", "smile"]
+}

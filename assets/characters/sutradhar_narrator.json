@@ -1,0 +1,36 @@
+{
+  "id": "sutradhar_narrator",
+  "name": "Sutradhar (Cosmic Narrator)",
+  "category": "narrator",
+  "archetype": "Sage / Cosmic Storyteller",
+  "rig_role": "sage",
+  "palette": {
+    "skin": "#E6AF84",
+    "skinDark": "#BE8058",
+    "dhotiA": "#D97B2A",
+    "dhotiB": "#8C3D12",
+    "sash": "#FAF0DC",
+    "trim": "#F6C453",
+    "hair": "#2A1E24",
+    "lip": "#8C463E",
+    "iris": "#3E2216"
+  },
+  "proportions": {
+    "upperW": 15.5,
+    "elbowW": 11.5,
+    "wristW": 8.0,
+    "defaultScale": 0.85
+  },
+  "features": {
+    "headgear": "sage_jataknot",
+    "tilak": "tripundra_chandan",
+    "adornment": "rudraksha_mala",
+    "garment": "sage_dhoti",
+    "beard": true,
+    "extraArms": false,
+    "threeHeads": false,
+    "tigerSeatDefault": false
+  },
+  "supported_poses": ["neutral", "gesture", "namaskar", "bless"],
+  "supported_expressions": ["serene", "smile", "compassionate"]
+}

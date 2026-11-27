@@ -1,0 +1,8 @@
+{
+  "id": "halahala_orb",
+  "name": "Emerald Halahala Poison Orb",
+  "category": "vfx_prop",
+  "renderer": "drawHalahalaOrb",
+  "default_mount": "sky",
+  "description": "Swirling luminous emerald Kalakuta poison sphere with spiraling energy arcs."
+}

@@ -1,0 +1,36 @@
+{
+  "id": "revati",
+  "name": "Princess Revati",
+  "category": "royal",
+  "archetype": "Daughter of Kakudmi",
+  "rig_role": "princess",
+  "palette": {
+    "skin": "#F0BC92",
+    "skinDark": "#C88860",
+    "dhotiA": "#E95A7E",
+    "dhotiB": "#A22449",
+    "sash": "#FFCC92",
+    "trim": "#FFE282",
+    "hair": "#1B1018",
+    "lip": "#B83546",
+    "iris": "#3E2216"
+  },
+  "proportions": {
+    "upperW": 13.0,
+    "elbowW": 10.0,
+    "wristW": 7.2,
+    "defaultScale": 0.83
+  },
+  "features": {
+    "headgear": "gajara_bun_tiara",
+    "tilak": "kumkum_bindi",
+    "adornment": "gold_kanthihara",
+    "garment": "pleated_lehenga",
+    "beard": false,
+    "extraArms": false,
+    "threeHeads": false,
+    "tigerSeatDefault": false
+  },
+  "supported_poses": ["neutral", "namaskar", "gesture", "clasp"],
+  "supported_expressions": ["serene", "smile", "compassionate", "fear"]
+}

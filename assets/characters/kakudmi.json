@@ -1,0 +1,36 @@
+{
+  "id": "kakudmi",
+  "name": "King Kakudmi",
+  "category": "royal",
+  "archetype": "Surya-Vanshi Monarch / Seeker",
+  "rig_role": "king",
+  "palette": {
+    "skin": "#E8B186",
+    "skinDark": "#C88A62",
+    "dhotiA": "#E88B2C",
+    "dhotiB": "#B5481A",
+    "sash": "#A61D33",
+    "trim": "#FFD365",
+    "hair": "#1E1218",
+    "lip": "#8F423B",
+    "iris": "#3E2216"
+  },
+  "proportions": {
+    "upperW": 16.5,
+    "elbowW": 12.2,
+    "wristW": 8.4,
+    "defaultScale": 0.86
+  },
+  "features": {
+    "headgear": "winged_royal_crown",
+    "tilak": "urdhva_pundra",
+    "adornment": "emerald_kanthihara",
+    "garment": "royal_dhoti",
+    "beard": false,
+    "extraArms": false,
+    "threeHeads": false,
+    "tigerSeatDefault": false
+  },
+  "supported_poses": ["neutral", "awed", "namaskar", "gesture", "clasp"],
+  "supported_expressions": ["serene", "smile", "fear", "determined"]
+}

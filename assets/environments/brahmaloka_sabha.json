@@ -1,0 +1,18 @@
+{
+  "id": "brahmaloka_sabha",
+  "name": "Brahmaloka Celestial Assembly Hall",
+  "atmosphere_mode": "palace_court",
+  "horizon_y": 1142,
+  "palette": {
+    "wall_top": "#3B144A",
+    "wall_bot": "#7A2D66",
+    "dado_top": "#3E1938",
+    "floor_a": "#6C3B34",
+    "floor_b": "#36181A",
+    "curtain": "#881D3A",
+    "carpet": null
+  },
+  "has_diyas": false,
+  "include_curtains": false,
+  "motes_color": "#FFDA80"
+}

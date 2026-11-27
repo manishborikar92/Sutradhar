@@ -1,0 +1,84 @@
+/* Sutradhar v2 Runtime Stage Stylesheet (1080x1920 Vertical 9:16) */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 1080px;
+  height: 1920px;
+  overflow: hidden;
+  background: #060814;
+  font-family: "Inter", "Noto Sans Devanagari", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+#stage {
+  position: relative;
+  width: 1080px;
+  height: 1920px;
+  overflow: hidden;
+  background: #060814;
+}
+
+#world-canvas {
+  position: absolute;
+  inset: 0;
+  width: 1080px;
+  height: 1920px;
+  display: block;
+  z-index: 1;
+}
+
+/* Optional scene-contextual DOM pill kept strictly inside YouTube Shorts clear band:
+   x in [48..888], y in [288..1248]. Hidden when empty. */
+#contextual-overlay {
+  position: absolute;
+  left: 56px;
+  top: 296px;
+  max-width: 780px;
+  z-index: 18;
+  pointer-events: none;
+  opacity: 0;
+  transition: none;
+}
+
+.ctx-pill {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 22px;
+  border-radius: 16px;
+  background: rgba(10, 14, 34, 0.80);
+  border: 1.5px solid rgba(246, 196, 83, 0.56);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.48);
+  backdrop-filter: blur(8px);
+}
+
+.ctx-kicker {
+  font-family: "Cinzel", "Inter", sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #FFD750;
+}
+
+.ctx-title {
+  font-family: "Inter", "Noto Sans Devanagari", sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #F8F4EC;
+}
+
+#captions {
+  position: absolute;
+  inset: 0;
+  width: 1080px;
+  height: 1920px;
+  z-index: 25;
+  pointer-events: none;
+}

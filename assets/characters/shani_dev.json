@@ -1,0 +1,36 @@
+{
+  "id": "shani_dev",
+  "name": "Shani Dev",
+  "category": "deity",
+  "archetype": "Lord of Karma & Justice",
+  "rig_role": "deva",
+  "palette": {
+    "skin": "#56638A",
+    "skinDark": "#303956",
+    "dhotiA": "#263159",
+    "dhotiB": "#131830",
+    "sash": "#D49B35",
+    "trim": "#F6C453",
+    "hair": "#140D18",
+    "lip": "#4C3240",
+    "iris": "#1D2640"
+  },
+  "proportions": {
+    "upperW": 16.5,
+    "elbowW": 12.2,
+    "wristW": 8.4,
+    "defaultScale": 0.88
+  },
+  "features": {
+    "headgear": "kirita_mukuta",
+    "tilak": "tripundra_gold",
+    "adornment": "iron_gold_kanthihara",
+    "garment": "royal_dhoti",
+    "beard": false,
+    "extraArms": false,
+    "threeHeads": false,
+    "tigerSeatDefault": false
+  },
+  "supported_poses": ["neutral", "gesture", "shield", "bless"],
+  "supported_expressions": ["serene", "determined", "compassionate"]
+}

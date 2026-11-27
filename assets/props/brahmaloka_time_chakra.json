@@ -1,0 +1,9 @@
+{
+  "id": "brahmaloka_time_chakra",
+  "name": "Brahmaloka Kalachakra Relativistic Time Wheel",
+  "category": "cosmic_mandala",
+  "renderer": "drawKalachakra",
+  "default_mount": "sky",
+  "legacy_svg_path": "assets/svg/backdrops/brahmaloka_time_chakra.svg",
+  "description": "Rotating golden 12-spoke Kalachakra mandala with lotus inner wheel and time hand."
+}

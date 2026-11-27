@@ -1,0 +1,8 @@
+{
+  "id": "mount_mandara",
+  "name": "Mount Mandara Churning Rod",
+  "category": "mythic_landmark",
+  "renderer": "drawMountMandara",
+  "default_mount": "terrain",
+  "description": "Stratified cosmic mountain with shadow facets and rushing waterfall ribbons."
+}

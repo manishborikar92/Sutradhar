@@ -1,0 +1,8 @@
+{
+  "id": "kurma_avatar",
+  "name": "Vishnu Kurma Tortoise Carapace",
+  "category": "divine_avatar",
+  "renderer": "drawKurmaAvatar",
+  "default_mount": "terrain",
+  "description": "Golden-bronze hexagonal scute carapace and flippers steadying Mount Mandara beneath Kshira Sagara waves."
+}

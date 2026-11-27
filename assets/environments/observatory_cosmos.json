@@ -1,0 +1,18 @@
+{
+  "id": "observatory_cosmos",
+  "name": "Deep Space Observatory & Kalachakra Grid",
+  "atmosphere_mode": "cosmic_explainer",
+  "horizon_y": 1142,
+  "sky": {
+    "top": "#05091D",
+    "mid": "#0D152E",
+    "bot": "#070C1B"
+  },
+  "grid": {
+    "enabled": true,
+    "spacing_px": 60,
+    "color": "rgba(92, 182, 255, 0.08)"
+  },
+  "stars_alpha": 0.92,
+  "motes_color": "#76D4FF"
+}

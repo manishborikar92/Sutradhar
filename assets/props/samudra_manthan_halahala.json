@@ -1,0 +1,9 @@
+{
+  "id": "samudra_manthan_halahala",
+  "name": "Samudra Manthan & Halahala Eruption Ensemble",
+  "category": "mythic_ensemble",
+  "renderer": "drawHalahalaOrb + drawVasukiSerpent + drawKurmaAvatar + drawMountMandara",
+  "default_mount": "terrain",
+  "legacy_svg_path": "assets/svg/backdrops/samudra_manthan_halahala.svg",
+  "description": "Animated emerald Halahala eruption plumes, Vasuki coiled around Mandara over Kurma, and lotus-palm Halahala orb."
+}

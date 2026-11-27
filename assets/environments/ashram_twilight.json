@@ -1,0 +1,27 @@
+{
+  "id": "ashram_twilight",
+  "name": "Himalayan Forest Ashram at Dusk",
+  "atmosphere_mode": "dawn_epic",
+  "horizon_y": 1142,
+  "sky": {
+    "top": "#0B2420",
+    "mid": "#1A4A3E",
+    "bot": "#8A5638"
+  },
+  "sun": {
+    "x": 540,
+    "y": 820,
+    "radius": 780,
+    "intensity": 0.72,
+    "ray_strength": 0.045,
+    "ray_count": 8
+  },
+  "terrain": {
+    "type": "ridges_and_flora",
+    "floor_top": "#233228",
+    "floor_bot": "#101915",
+    "has_diyas": true
+  },
+  "motes_color": "#FFE2A4",
+  "bird_flock": true
+}

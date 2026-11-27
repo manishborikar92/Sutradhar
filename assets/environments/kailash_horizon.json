@@ -1,0 +1,34 @@
+{
+  "id": "kailash_horizon",
+  "name": "Mount Kailash Sacred Horizon",
+  "atmosphere_mode": "dawn_epic",
+  "horizon_y": 1142,
+  "sky": {
+    "top": "#101642",
+    "mid": "#3E2D6E",
+    "bot": "#985D82",
+    "dawn_top": "#283E88",
+    "dawn_mid": "#E08488",
+    "dawn_bot": "#FFD086"
+  },
+  "sun": {
+    "x": 540,
+    "y": 750,
+    "radius": 900,
+    "intensity": 0.85,
+    "ray_strength": 0.055,
+    "ray_count": 10
+  },
+  "terrain": {
+    "type": "kailash_peak_and_ridges",
+    "peak_scale": 1.24,
+    "snow_tint": "rgba(235, 242, 255, 0.78)",
+    "shadow_tint": "#1E224A",
+    "gold_rim": 0.65,
+    "floor_top": "#2D2E52",
+    "floor_bot": "#171834",
+    "has_diyas": true
+  },
+  "motes_color": "#FFE4B8",
+  "bird_flock": true
+}

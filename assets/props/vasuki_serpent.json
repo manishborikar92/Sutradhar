@@ -1,0 +1,8 @@
+{
+  "id": "vasuki_serpent",
+  "name": "Vasuki Pancha-Phana Serpent",
+  "category": "mythic_creature",
+  "renderer": "drawVasukiSerpent",
+  "default_mount": "terrain",
+  "description": "Continuous scaled spline serpent wrapping 360 degrees around Mandara with towering 5-headed cobra hood."
+}

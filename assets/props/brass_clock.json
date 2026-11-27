@@ -1,0 +1,8 @@
+{
+  "id": "brass_clock",
+  "name": "Ornate Brass Timepiece",
+  "category": "explainer_prop",
+  "renderer": "drawBrassClock",
+  "default_mount": "pedestal",
+  "description": "High-contrast brass clock with rotating hour/minute hands and velocity smear arc."
+}

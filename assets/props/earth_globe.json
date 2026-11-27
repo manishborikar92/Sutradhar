@@ -1,0 +1,8 @@
+{
+  "id": "earth_globe",
+  "name": "Rotating Vector Earth & Orbital Satellites",
+  "category": "explainer_prop",
+  "renderer": "drawVectorEarthGlobe",
+  "default_mount": "sky",
+  "description": "Clipped rotating Earth globe with elliptical solar/lunar orbital track."
+}

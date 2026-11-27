@@ -1,720 +1,580 @@
-# Sutradhar Unified Asset Manifest & Technical Specification
-# Schema Version: 1.0.0
-# Authoritative Machine-Readable Catalog for Video Composition & Asset Reuse.
-#
-# INSTRUCTIONS FOR AI AGENTS:
-# 1. Single Source of Truth: This file is the canonical registry for all reusable assets.
-# 2. Reusing Assets: Before creating a new character, backdrop, diagram, SFX, or BGM,
-#    inspect this manifest to reuse existing assets whenever suitable.
-# 3. Registering New Assets: Whenever you create, add, or permanently modify a reusable
-#    asset under the assets/ directory, you MUST register it here immediately under the
-#    appropriate category with full metadata (id, file, role, joints, framing, etc.).
-# 4. Scope Restriction: ONLY register permanent, reusable assets stored under assets/.
-#    Do NOT register ephemeral, temporary, or disposable build files (e.g., build/*.wav,
-#    build/*.jpg, build/*.mp4, or cached scratch files).
-
-version: "1.0.0"
-updated_at: "2026-11-24"
-
-# ==============================================================================
-# AUDIO ASSET LIBRARY
-# ==============================================================================
-audio:
-  specs:
-    master_loudness_target_lufs: -14.0
-    master_loudness_tolerance_lufs: 0.5
-    true_peak_max_dbfs: -1.5
-    master_sample_rate_hz: 48000
-    bit_depth: 24
-    channels: 2  # Stereo 2.0
-    bgm_ducking_ratio: "8:1"
-    bgm_ducking_threshold_db: -30.0
-    bgm_attack_ms: 20
-    bgm_release_ms: 500
-    bgm_fade_out_sec: 1.20
-    procedural_fallback_enabled: true
-
-  # Background Music Tracks (48kHz Stereo Master Beds, 165s Loop-Free)
-  bgm:
-    - id: theatrical_narrative
-      file: assets/bgm/theatrical_narrative.mp3
-      title: "Theatrical Narrative"
-      editorial_pillar: "Ancient Epics & Lore"
-      mood: "theatrical_narrative"
-      tempo_bpm: 88
-      duration_sec: 165.14
-      sample_rate_hz: 48000
-      channels: 2
-      key: "D minor / Raag Bhairav"
-      instrumentation: "Rudra Veena, Pakhawaj, Sitar, low cinematic drones"
-      usage_context: "Sovereign defiance, royal court decrees, epic expositions, mythical grandeur."
-      ducking_level_db: -18.0
-
-    - id: tense_confrontation
-      file: assets/bgm/tense_confrontation.mp3
-      title: "Tense Confrontation"
-      editorial_pillar: "Ancient Epics & Lore"
-      mood: "tense_confrontation"
-      tempo_bpm: 132
-      duration_sec: 165.14
-      sample_rate_hz: 48000
-      channels: 2
-      key: "E minor / High-Tension Drone"
-      instrumentation: "Aggressive Nagara, distorted acoustic resonance, rapid bronze hits"
-      usage_context: "Direct character confrontation, aggressive pride, climactic challenges, impending clash."
-      ducking_level_db: -16.0
-
-    - id: divine_cosmic
-      file: assets/bgm/divine_cosmic.mp3
-      title: "Divine Cosmic"
-      editorial_pillar: "Cosmic & Scientific Paradoxes"
-      mood: "divine_cosmic"
-      tempo_bpm: 65
-      duration_sec: 165.14
-      sample_rate_hz: 48000
-      channels: 2
-      key: "G minor / Ambient Drone"
-      instrumentation: "Analog synth drones, tanpura overtone beds, bowed glass, celestial pulses"
-      usage_context: "Event horizons, cosmic geometry, time dilation, Vedic astronomy, profound paradoxes."
-      ducking_level_db: -20.0
-
-    - id: melancholy_tragedy
-      file: assets/bgm/melancholy_tragedy.mp3
-      title: "Melancholy Tragedy"
-      editorial_pillar: "Ancient Epics & Lore"
-      mood: "melancholy_tragedy"
-      tempo_bpm: 52
-      duration_sec: 165.14
-      sample_rate_hz: 48000
-      channels: 2
-      key: "A minor / Raag Shivaranjani"
-      instrumentation: "Melancholic Sarangi, slow bowing cello, emotive flute, delicate drone"
-      usage_context: "Tragic realizations, karmic retribution, sacrifices, noble downfalls, melancholy reflections."
-      ducking_level_db: -20.0
-
-    - id: dramatic_mythology
-      file: assets/bgm/dramatic_mythology.mp3
-      title: "Dramatic Mythology"
-      editorial_pillar: "Ancient Epics & Lore"
-      mood: "dramatic"
-      tempo_bpm: 88
-      duration_sec: 165.14
-      sample_rate_hz: 48000
-      channels: 2
-      key: "D minor / Raag Bhairav"
-      instrumentation: "Rudra Veena, Pakhawaj, Sitar, low cinematic drones"
-      usage_context: "Sovereign defiance, divine confrontation, mythical grandeur, climactic revelations."
-      ducking_level_db: -18.0
-      sourcing_keywords: ["Indian cinematic", "Epic Sitar", "Veena drone", "Pakhawaj battle", "Ancient temple ambient"]
-
-    - id: epic_history
-      file: assets/bgm/epic_history.mp3
-      title: "Epic History"
-      editorial_pillar: "Hidden History"
-      mood: "epic"
-      tempo_bpm: 104
-      key: "C minor / Raag Darbari"
-      instrumentation: "Nagara war drums, Bansuri, ancient bronze gongs, low cello strings"
-      usage_context: "Lost civilizations, archaeological discoveries, tactical warfare, historical investigations."
-      ducking_level_db: -18.0
-      sourcing_keywords: ["Historical drama", "War drums tribal", "Ancient empire", "Battle of Ten Kings", "Caravan mystery"]
-
-    - id: cosmic_mystery
-      file: assets/bgm/cosmic_mystery.mp3
-      title: "Cosmic Mystery"
-      editorial_pillar: "Cosmic & Scientific Paradoxes"
-      mood: "mystic"
-      tempo_bpm: 65
-      key: "G minor / Ambient Drone"
-      instrumentation: "Analog synth drones, tanpura overtone beds, bowed glass, celestial pulses"
-      usage_context: "Event horizons, cosmic geometry, time dilation, Vedic astronomy, profound paradoxes."
-      ducking_level_db: -20.0
-      sourcing_keywords: ["Cosmic drone", "Space ambient", "Deep abyss synth", "Quantum dark", "Astronomical void"]
-
-    - id: wrath_confrontation
-      file: assets/bgm/wrath_confrontation.mp3
-      title: "Wrath & Confrontation"
-      editorial_pillar: "Ancient Epics & Lore"
-      mood: "wrath"
-      tempo_bpm: 132
-      key: "E minor / High-Tension Drone"
-      instrumentation: "Aggressive Nagara, distorted acoustic resonance, rapid bronze hits"
-      usage_context: "Direct character confrontation, aggressive pride, climactic challenges, impending clash."
-      ducking_level_db: -16.0
-      sourcing_keywords: ["Aggressive battle drums", "Dark confrontation", "Wrath epic", "Cinematic war"]
-
-    - id: sorrow_tragedy
-      file: assets/bgm/sorrow_tragedy.mp3
-      title: "Sorrow & Tragedy"
-      editorial_pillar: "Ancient Epics & Lore"
-      mood: "sorrow"
-      tempo_bpm: 52
-      key: "A minor / Raag Shivaranjani"
-      instrumentation: "Melancholic Sarangi, slow bowing cello, emotive flute, delicate drone"
-      usage_context: "Tragic realizations, sacrifices, noble downfalls, melancholy reflections."
-      ducking_level_db: -20.0
-      sourcing_keywords: ["Emotional sorrow", "Melancholy sitar", "Tragic cinematic", "Sad cello drone"]
-
-    - id: serene_blessing
-      file: assets/bgm/serene_blessing.mp3
-      title: "Serene Blessing"
-      editorial_pillar: "Ancient Epics & Lore"
-      mood: "serene"
-      tempo_bpm: 60
-      key: "C major / Raag Yaman"
-      instrumentation: "Meditative Tanpura, bamboo flute harmonics, gentle celestial chimes"
-      usage_context: "Divine appearances, boons, philosophical enlightenment, resolution, transcendence."
-      ducking_level_db: -22.0
-      sourcing_keywords: ["Devotional ambient", "Flute meditation", "Divine peace", "Temple morning drone"]
-
-  # Sound Effects (SFX)
-  sfx:
-    - id: whoosh_soft
-      file: assets/sfx/whoosh_soft.wav
-      category: "transition"
-      duration_sec: 0.75
-      usage_cue: "Standard scene cuts, whip pans, slide transitions."
-      recommended_volume_db: -12.0
-
-    - id: curtain_whoosh
-      file: assets/sfx/curtain_whoosh.wav
-      category: "transition"
-      duration_sec: 1.60
-      usage_cue: "Theatrical velvet curtain reveal at video start (Scene 1) and close (outro)."
-      recommended_volume_db: -10.0
-
-    - id: sub_hit
-      file: assets/sfx/sub_hit.wav
-      category: "impact"
-      duration_sec: 1.50
-      usage_cue: "Cosmic revelation, heavy impact, climax turning point, paradigm shift."
-      recommended_volume_db: -6.0
-
-    - id: tension_swell
-      file: assets/sfx/tension_swell.wav
-      category: "riser"
-      duration_sec: 3.20
-      usage_cue: "Building tension preceding a major dialogue shout or narrative confrontation."
-      recommended_volume_db: -14.0
-
-    - id: laser_strike
-      file: assets/sfx/laser_strike.wav
-      category: "vfx"
-      duration_sec: 1.20
-      usage_cue: "Celestial energy beam, Sudarshana chakra flight, divine ray."
-      recommended_volume_db: -8.0
-
-    - id: crystal_shatter
-      file: assets/sfx/crystal_shatter.wav
-      category: "vfx"
-      duration_sec: 1.60
-      usage_cue: "Barrier collapse, dimensional fracture, dramatic screen shatter effect."
-      recommended_volume_db: -7.0
-
-    - id: thunder_rumble
-      file: assets/sfx/thunder_rumble.wav
-      category: "atmosphere"
-      duration_sec: 3.50
-      usage_cue: "Divine rage, stormy sky, darkening mood, wrath emotion trigger."
-      recommended_volume_db: -9.0
-
-    - id: conch_blast
-      file: assets/sfx/conch_blast.wav
-      category: "proclamation"
-      duration_sec: 2.80
-      usage_cue: "Sacred Shankha proclamation, battle initiation, auspicious conclusion."
-      recommended_volume_db: -6.0
-
-    - id: sword_clash
-      file: assets/sfx/sword_clash.wav
-      category: "duel"
-      duration_sec: 1.40
-      usage_cue: "Weapon collision, martial arts strike, warrior confrontation impact."
-      recommended_volume_db: -8.0
-
-    - id: magma_crack
-      file: assets/sfx/magma_crack.wav
-      category: "geological"
-      duration_sec: 2.50
-      usage_cue: "Tectonic shifts, subterranean fissure opening, volcanic rupture."
-      recommended_volume_db: -8.0
-
-    - id: cosmic_chime
-      file: assets/sfx/cosmic_chime.wav
-      category: "celestial"
-      duration_sec: 2.60
-      usage_cue: "Sunburst flare, stellar reveal, cosmic geometry alignment."
-      recommended_volume_db: -12.0
-
-    - id: footstep_heavy
-      file: assets/sfx/footstep_heavy.wav
-      category: "kinetic"
-      duration_sec: 1.10
-      usage_cue: "Imposing character footsteps, colossus arrival (e.g., Ravana, Shiva)."
-      recommended_volume_db: -10.0
-
-    - id: energy_hum
-      file: assets/sfx/energy_hum.wav
-      category: "aura"
-      duration_sec: 3.00
-      usage_cue: "Lingering divine Prabhavali aura, cosmic meditation energy bed."
-      recommended_volume_db: -16.0
-
-    # Phase 3 Authentic 48kHz Master Foley SFX
-    - id: metal_clang
-      file: assets/sfx/metal_clang.wav
-      category: "impact"
-      sample_rate_hz: 48000
-      channels: 2
-      duration_sec: 1.50
-      usage_cue: "Subjugation boot iron clashing, armor impact, heavy metal resonance."
-      recommended_volume_db: -8.0
-
-    - id: foot_thud
-      file: assets/sfx/foot_thud.wav
-      category: "kinetic"
-      sample_rate_hz: 48000
-      channels: 2
-      duration_sec: 1.20
-      usage_cue: "Ravana ascending planetary staircase, crushing boot stomp shockwave."
-      recommended_volume_db: -7.0
-
-    - id: chain_rattle
-      file: assets/sfx/chain_rattle.wav
-      category: "kinetic"
-      sample_rate_hz: 48000
-      channels: 2
-      duration_sec: 2.00
-      usage_cue: "Bound planets in 11th house, celestial chains, puppet string tension."
-      recommended_volume_db: -12.0
-
-    - id: fire_crackle
-      file: assets/sfx/fire_crackle.wav
-      category: "atmosphere"
-      sample_rate_hz: 48000
-      channels: 2
-      duration_sec: 3.00
-      usage_cue: "Temple fire brazier, havan kund flame ignition, embers crackling."
-      recommended_volume_db: -14.0
-
-# ==============================================================================
-# VISUAL ASSET LIBRARY
-# ==============================================================================
-visual:
-  canvas:
+schema_version: 2.0.0
+updated_at: '2026-11-27'
+composition_defaults:
+  width: 1080
+  height: 1920
+  fps: 30
+  horizon_y: 1142
+  safe_zones:
+    top_px: 288
+    bottom_px: 520
+    right_px: 192
+    left_px: 48
+    clear_band_xyxy:
+    - 48
+    - 288
+    - 888
+    - 1248
+    caption_band_xyxy:
+    - 52
+    - 1246
+    - 876
+    - 1390
+  thumbnail_2x3_crop:
+    x: 0
+    y: 150
     width: 1080
-    height: 1920
-    aspect_ratio: "9:16"
-    fps: 60
-    safe_zones:
-      top_px: 288       # YouTube Shorts header, search, audio bar
-      bottom_px: 520    # Title, channel name, subscribe pill, engagement icons
-      right_px: 192     # Like, dislike, comments, share, remix icons
-      left_px: 48       # Margin clearance
-
-  # Art Style Standards
-  style:
-    name: "Kathputli-Rajasthani Puppet Folk Theater"
-    aesthetic_rules:
-      - "Articulated puppet limbs joined with visible brass rivets."
-      - "Organic micro-pendulum idle sway on suspended string joints."
-      - "Layered 2.5D parallax depth (Background, Midground characters, Foreground proscenium arch)."
-      - "Theatrical lighting with warm amber rim-lights and jewel-toned palettes."
-
-  # Character Puppet Rigs (assets/svg/characters/)
-  characters:
-    - id: sutradhar_narrator
-      file: assets/svg/characters/sutradhar_narrator.svg
-      name: "Sutradhar (Cosmic Narrator)"
-      role: "Narrator"
-      archetype: "Sage / Cosmic Storyteller"
-      viewBox: "0 0 800 1200"
-      joints:
-        neck_pin: [400, 460]
-        left_shoulder: [290, 520]
-        right_shoulder: [510, 520]
-      expression_layers:
-        - mouth_calm
-        - mouth_talk
-        - eyes_sutra
-      key_props:
-        - "Pothi (palm-leaf manuscript) in left hand"
-        - "Chin-Mudra teaching gesture in right hand"
-        - "Kalgi turban with peacock feather"
-      recommended_framing:
-        close_up: { scale: 0.95, y_offset_px: 260, height_pct: "65%" }
-        medium: { scale: 0.75, y_offset_px: 420, height_pct: "50%" }
-
-    - id: ravana
-      file: assets/svg/characters/ravana.svg
-      name: "Ravana (King of Lanka)"
-      role: "Antagonist / Tragic King"
-      archetype: "Scholar-Warrior / Asura Emperor"
-      viewBox: "0 0 800 1200"
-      joints:
-        neck_pin: [400, 470]
-        left_shoulder: [270, 530]
-        right_shoulder: [530, 530]
-      expression_layers:
-        - mouth_arrogant
-        - mouth_wrath
-        - eyes_flaming
-      key_props:
-        - "Ten-headed silhouette aura"
-        - "Chandrahas divine sword"
-        - "Golden crown with ruby crest"
-      recommended_framing:
-        close_up: { scale: 1.05, y_offset_px: 240, height_pct: "70%" }
-        medium: { scale: 0.85, y_offset_px: 380, height_pct: "55%" }
-
-    - id: shiva
-      file: assets/svg/characters/shiva.svg
-      name: "Lord Shiva (Mahadeva)"
-      role: "Cosmic Deity"
-      archetype: "Ascetic / Cosmic Destroyer"
-      viewBox: "0 0 800 1200"
-      joints:
-        neck_pin: [400, 450]
-        left_shoulder: [280, 510]
-        right_shoulder: [520, 510]
-      expression_layers:
-        - eyes_trance
-        - eyes_third_eye
-        - mouth_serene
-      key_props:
-        - "Trishul (Trident) and Damru"
-        - "Crescent Moon (Chandra) in Jata"
-        - "Vasuki serpent necklace"
-      recommended_framing:
-        medium: { scale: 0.80, y_offset_px: 400, height_pct: "52%" }
-        wide: { scale: 0.55, y_offset_px: 580, height_pct: "35%" }
-
-    - id: hanuman
-      file: assets/svg/characters/hanuman.svg
-      name: "Hanuman"
-      role: "Devotee Hero"
-      archetype: "Vanara Warrior / Chiranjeevi"
-      viewBox: "0 0 800 1200"
-      joints:
-        neck_pin: [400, 460]
-        left_shoulder: [280, 520]
-        right_shoulder: [520, 520]
-      expression_layers:
-        - mouth_devoted
-        - mouth_roar
-      key_props:
-        - "Golden Gada (Mace)"
-        - "Kundal earrings"
-      recommended_framing:
-        medium: { scale: 0.80, y_offset_px: 400, height_pct: "52%" }
-
-    - id: narad_muni
-      file: assets/svg/characters/narad_muni.svg
-      name: "Narad Muni"
-      role: "Divine Messenger"
-      archetype: "Cosmic Wanderer / Sage"
-      viewBox: "0 0 800 1200"
-      joints:
-        neck_pin: [400, 450]
-        left_shoulder: [300, 510]
-        right_shoulder: [500, 510]
-      expression_layers:
-        - mouth_smiling
-        - mouth_narrating
-      key_props:
-        - "Tambura (Veena)"
-        - "Khadtal cymbals"
-      recommended_framing:
-        medium: { scale: 0.72, y_offset_px: 430, height_pct: "48%" }
-
-    - id: mandodari
-      file: assets/svg/characters/mandodari.svg
-      name: "Mandodari"
-      role: "Queen Consort"
-      archetype: "Pativrata / Moral Conscience"
-      viewBox: "0 0 800 1200"
-      joints:
-        neck_pin: [400, 460]
-      expression_layers:
-        - mouth_grief
-        - mouth_warning
-      key_props:
-        - "Golden Odhani veil"
-        - "Intricate royal jewelry"
-      recommended_framing:
-        medium: { scale: 0.75, y_offset_px: 420, height_pct: "50%" }
-
-    - id: indra_dev
-      file: assets/svg/characters/indra_dev.svg
-      name: "Indra Dev"
-      role: "King of the Devas"
-      archetype: "Ruler of Svarga / Sky Lord"
-      viewBox: "0 0 800 1200"
-      joints:
-        neck_pin: [400, 460]
-      expression_layers:
-        - mouth_haughty
-        - mouth_awed
-      key_props:
-        - "Vajra (Thunderbolt)"
-        - "Airavata crest"
-      recommended_framing:
-        medium: { scale: 0.78, y_offset_px: 410, height_pct: "50%" }
-
-    - id: shani_dev
-      file: assets/svg/characters/shani_dev.svg
-      name: "Shani Dev"
-      role: "Lord of Karma"
-      archetype: "Stern Judge / Planetary Power"
-      viewBox: "0 0 800 1200"
-      joints:
-        neck_pin: [400, 460]
-      expression_layers:
-        - eyes_drishti
-        - mouth_stern
-      key_props:
-        - "Iron Bow & Arrow"
-        - "Dark Raven aura"
-      recommended_framing:
-        medium: { scale: 0.80, y_offset_px: 400, height_pct: "52%" }
-
-    - id: surya_dev
-      file: assets/svg/characters/surya_dev.svg
-      name: "Surya Dev"
-      role: "Solar Deity"
-      archetype: "Cosmic Illuminator"
-      viewBox: "0 0 800 1200"
-      joints:
-        neck_pin: [400, 450]
-      expression_layers:
-        - mouth_radiant
-      key_props:
-        - "Seven-horse solar chariot crest"
-        - "Golden Prabhavali halo"
-      recommended_framing:
-        medium: { scale: 0.82, y_offset_px: 390, height_pct: "53%" }
-
-    - id: ancient_scholar
-      file: assets/svg/characters/ancient_scholar.svg
-      name: "Ancient Scholar"
-      role: "Philosopher / Astronomer"
-      archetype: "Nalanda Acharya / Historian"
-      viewBox: "0 0 800 1200"
-      joints:
-        neck_pin: [400, 460]
-      expression_layers:
-        - mouth_contemplative
-      key_props:
-        - "Astrolabe scroll"
-        - "Rudraksha mala"
-      recommended_framing:
-        medium: { scale: 0.74, y_offset_px: 420, height_pct: "48%" }
-
-  # Theatrical Backdrops (assets/svg/backdrops/)
-  backdrops:
-    - id: mount_kailash
-      file: assets/svg/backdrops/mount_kailash.svg
-      setting: "Himalayan Sacred Peak"
-      narrative_theme: "Sacred axis mundi, Shiva's abode, cosmic stillness"
-      dominant_colors: ["#0f172a", "#38bdf8", "#f8fafc"]
-
-    - id: kailash_tectonic_fracture
-      file: assets/svg/backdrops/kailash_tectonic_fracture.svg
-      setting: "Kailash Rift & Tectonic Underbelly"
-      narrative_theme: "Ravana lifting the mountain, subterranean stress, earth tremors"
-      dominant_colors: ["#450a0a", "#ea580c", "#1c1917"]
-
-    - id: kailash_subterranean_core
-      file: assets/svg/backdrops/kailash_subterranean_core.svg
-      setting: "Deep Mountain Core"
-      narrative_theme: "Crystalline core, Shiva's toe pressing down, crushing weight"
-      dominant_colors: ["#1e1b4b", "#6366f1", "#0284c7"]
-
-    - id: granite_underside
-      file: assets/svg/backdrops/granite_underside.svg
-      setting: "Beneath the Mountain Rock"
-      narrative_theme: "Ravana trapped under granite, agonizing devotion"
-      dominant_colors: ["#292524", "#78716c", "#b91c1c"]
-
-    - id: crushed_atmosphere
-      file: assets/svg/backdrops/crushed_atmosphere.svg
-      setting: "Atmospheric Void / Heavy Pressure"
-      narrative_theme: "Cosmic gravitational weight, breath of defiance"
-      dominant_colors: ["#18181b", "#71717a", "#dc2626"]
-
-    - id: golden_lanka_citadel
-      file: assets/svg/backdrops/golden_lanka_citadel.svg
-      setting: "Lanka Royal Palace"
-      narrative_theme: "Wealth, opulence, hubris, golden architecture"
-      dominant_colors: ["#78350f", "#f59e0b", "#fef08a"]
-
-    - id: lanka_sandstone_throne
-      file: assets/svg/backdrops/lanka_sandstone_throne.svg
-      setting: "Ravana's Throne Room"
-      narrative_theme: "Asura assembly, imperial declarations, defiance"
-      dominant_colors: ["#451a03", "#b45309", "#991b1b"]
-
-    - id: ancient_nalanda_courtyard
-      file: assets/svg/backdrops/ancient_nalanda_courtyard.svg
-      setting: "Nalanda Mahavihara University"
-      narrative_theme: "Ancient astronomy, scholarly debates, palm manuscripts"
-      dominant_colors: ["#7c2d12", "#fb923c", "#fef3c7"]
-
-    - id: ancient_temple_ruins
-      file: assets/svg/backdrops/ancient_temple_ruins.svg
-      setting: "Archaeological Stone Ruins"
-      narrative_theme: "Hidden history, lost wisdom, ancient carvings"
-      dominant_colors: ["#1c1917", "#57534e", "#a8a29e"]
-
-    - id: forest_ashram_twilight
-      file: assets/svg/backdrops/forest_ashram_twilight.svg
-      setting: "Hermitage Forest"
-      narrative_theme: "Penance, tapasya, twilight contemplation"
-      dominant_colors: ["#064e3b", "#059669", "#f59e0b"]
-
-    - id: celestial_cosmos_court
-      file: assets/svg/backdrops/celestial_cosmos_court.svg
-      setting: "Deva Assembly Court in Space"
-      narrative_theme: "Divine politics, planetary alignment, cosmic council"
-      dominant_colors: ["#312e81", "#818cf8", "#fef08a"]
-
-    - id: deep_cosmos_nebula
-      file: assets/svg/backdrops/deep_cosmos_nebula.svg
-      setting: "Interstellar Nebula / Cosmic Abyss"
-      narrative_theme: "Scientific paradoxes, time dilation, black holes, infinite void"
-      dominant_colors: ["#020617", "#4338ca", "#ec4899"]
-
-    - id: ocean_sky_horizon
-      file: assets/svg/backdrops/ocean_sky_horizon.svg
-      setting: "Vast Ocean Horizon"
-      narrative_theme: "Bridge building, expeditions, voyages into the unknown"
-      dominant_colors: ["#0c4a6e", "#0284c7", "#38bdf8"]
-
-    - id: mehrauli_iron_pillar
-      file: assets/svg/backdrops/mehrauli_iron_pillar.svg
-      setting: "Mehrauli Gupta Courtyard & Rustless Iron Pillar"
-      narrative_theme: "Hidden history, ancient Indian metallurgy, Chandragupta II inscription, protective misawite shield"
-      dominant_colors: ["#0f172a", "#7c2d12", "#f59e0b"]
-
-    - id: brahmaloka_time_chakra
-      file: assets/svg/backdrops/brahmaloka_time_chakra.svg
-      setting: "Brahmaloka Celestial Court & Relativistic Kalachakra Mandala"
-      narrative_theme: "Cosmic & Scientific Paradoxes, Vedic time dilation, King Kakudmi & Revati, 27 Chatur-Yuga wheel"
-      dominant_colors: ["#020617", "#1e1b4b", "#fbbf24"]
-
-  # Dynamic Mythological Storytelling Props (assets/svg/props/)
-  props:
-    - id: vedic_kundali
-      file: assets/svg/props/vedic_kundali.svg
-      type: "mandala"
-      description: "12-house Vedic birth chart mandala with 4-quadrant fracture capability."
-      base_width: 520
-      base_height: 520
-      recommended_motion: "kundali_shatter"
-
-    - id: planetary_staircase
-      file: assets/svg/props/planetary_staircase.svg
-      type: "stepped_platform"
-      description: "9 stacked planetary deities as stepped throne platforms for Ravana's ascent."
-      base_width: 680
-      base_height: 660
-      recommended_motion: "staircase_climb"
-
-    - id: subjugation_boot
-      file: assets/svg/props/subjugation_boot.svg
-      type: "imperial_armor"
-      description: "Giant ornate conqueror boot with crushing ground shockwave."
-      base_width: 440
-      base_height: 440
-      recommended_motion: "boot_stomp"
-
-    - id: thought_bubble_infant
-      file: assets/svg/props/thought_bubble_infant.svg
-      type: "theatrical_callout"
-      description: "Theatrical thought cloud framing infant Meghnada in divine cradle."
-      base_width: 440
-      base_height: 440
-      recommended_motion: "bubble_float"
-
-    - id: thought_bubble_chest_vs_back
-      file: assets/svg/props/thought_bubble_chest_vs_back.svg
-      type: "theatrical_callout"
-      description: "Astrological visual metaphor: Front chest vs. bowed spine karmic aspect."
-      base_width: 480
-      base_height: 440
-      recommended_motion: "medallion_pulse"
-
-    - id: cosmic_eye_beams
-      file: assets/svg/props/cosmic_eye_beams.svg
-      type: "energy_clash"
-      description: "Clashing divine third eyes and high-energy radiating gaze beams."
-      base_width: 540
-      base_height: 720
-      recommended_motion: "eye_beam_clash"
-
-    - id: fire_brazier
-      file: assets/svg/props/fire_brazier.svg
-      type: "ritual_flame"
-      description: "Indian royal havan kund with multi-layer animated flames and embers."
-      base_width: 320
-      base_height: 480
-      recommended_motion: "brazier_flicker"
-
-  # Theatrical Infographics & Callout Cards (assets/svg/infographics/)
-  infographics:
-    - id: comparison_card
-      file: assets/svg/infographics/comparison_card.svg
-      type: "side_by_side"
-      description: "Split card comparing mythic verses with modern scientific discoveries."
-
-    - id: outro_marquee
-      file: assets/svg/infographics/outro_marquee.svg
-      type: "call_to_action"
-      description: "Kathputli proscenium outro with channel subscribe and next episode teaser."
-
-    - id: symbol_infinity
-      file: assets/svg/infographics/symbol_infinity.svg
-      type: "icon"
-      description: "Golden Ananta infinity symbol for cyclical time and cosmic paradoxes."
-
-    - id: symbol_scales
-      file: assets/svg/infographics/symbol_scales.svg
-      type: "icon"
-      description: "Bronze scales of Dharma and Karmic equilibrium."
-
-    - id: thought_bubble
-      file: assets/svg/infographics/thought_bubble.svg
-      type: "callout"
-      description: "Theatrical thought cloud for character inner monologue or doubt."
-
-  # Visual Effects (VFX) Overlays (assets/svg/vfx/)
-  vfx:
-    - id: fracture_cracks
-      file: assets/svg/vfx/fracture_cracks.svg
-      type: "screen_overlay"
-      description: "Tectonic surface fissures propagating across screen."
-      trigger_sfx: "magma_crack"
-
-    - id: laser_beam
-      file: assets/svg/vfx/laser_beam.svg
-      type: "energy_strike"
-      description: "Piercing celestial laser or divine chakra beam."
-      trigger_sfx: "laser_strike"
-
-    - id: screen_shatter
-      file: assets/svg/vfx/screen_shatter.svg
-      type: "screen_transition"
-      description: "Crystalline glass fracture shattering outward."
-      trigger_sfx: "crystal_shatter"
-
-    - id: sound_ripple
-      file: assets/svg/vfx/sound_ripple.svg
-      type: "concentric_rings"
-      description: "Acoustic shockwaves from Shankha blast or battle shout."
-      trigger_sfx: "conch_blast"
-
-    - id: sunburst
-      file: assets/svg/vfx/sunburst.svg
-      type: "radial_flare"
-      description: "Divine enlightenment flare or solar burst."
-      trigger_sfx: "cosmic_chime"
+    height: 1620
+    badge_top_px: 255
+    foot_bottom_px: 208
+fonts:
+  stylesheet: assets/fonts/fonts.css
+  woff2_count: 31
+  families:
+  - family: Cinzel
+    weights:
+    - 600
+    - 800
+    role: English title headers & chapter labels
+  - family: Cormorant Garamond
+    weights:
+    - 500
+    - 700
+    styles:
+    - normal
+    - italic
+    role: Classical serif subheads & accents
+  - family: Inter
+    weights:
+    - 500
+    - 700
+    - 800
+    role: UI pills, metadata, sans labels (no 900 font file)
+  - family: Noto Sans Devanagari
+    weights:
+    - 500
+    - 700
+    - 800
+    role: Primary kinetic Shorts captions
+  - family: Tiro Devanagari Hindi
+    weights:
+    - 400
+    styles:
+    - normal
+    - italic
+    role: Editorial Hindi quotes
+  - family: Rozha One
+    weights:
+    - 400
+    role: Hindi display accents
+audio:
+  bgm_dir: assets/audio/bgm
+  sfx_dir: assets/audio/sfx
+  bgm:
+    cosmic_mystery:
+      file: assets/audio/bgm/cosmic_mystery.mp3
+      duration_sec: 165.34
+      sample_rate: 48000
+      channels: 2
+      bytes: 3968684
+      md5: 2ad448da0b960d821fdf6303f9842a22
+      author: Sutradhar Repo (`scripts/build_assets.py`)
+      license: Project Internal (MIT/Repo)
+      source: Internal (`assets/bgm/cosmic_mystery.mp3`)
+      mood_tags:
+      - cosmic_mystery
+      - divine_cosmic
+      - serene_blessing
+      - epic_cosmos
+    dramatic_mythology:
+      file: assets/audio/bgm/dramatic_mythology.mp3
+      duration_sec: 165.14
+      sample_rate: 48000
+      channels: 2
+      bytes: 3964076
+      md5: 13fd74c89eb4deb5ba605e64620ddc2f
+      author: Sutradhar Repo (`scripts/build_assets.py`)
+      license: Project Internal (MIT/Repo)
+      source: Internal (`assets/bgm/dramatic_mythology.mp3`)
+      mood_tags:
+      - dramatic_mythology
+      - epic_history
+      - theatrical_narrative
+    sorrow_tragedy:
+      file: assets/audio/bgm/sorrow_tragedy.mp3
+      duration_sec: 165.24
+      sample_rate: 48000
+      channels: 2
+      bytes: 3966380
+      md5: 02d8b2c568e84725ae44a3884554d000
+      author: Sutradhar Repo (`scripts/build_assets.py`)
+      license: Project Internal (MIT/Repo)
+      source: Internal (`assets/bgm/sorrow_tragedy.mp3`)
+      mood_tags:
+      - sorrow_tragedy
+      - melancholy_tragedy
+    tense_confrontation:
+      file: assets/audio/bgm/tense_confrontation.mp3
+      duration_sec: 165.19
+      sample_rate: 48000
+      channels: 2
+      bytes: 3965228
+      md5: 6de030fe30225ee69e1c461d230ae5ba
+      author: Sutradhar Repo (`scripts/build_assets.py`)
+      license: Project Internal (MIT/Repo)
+      source: Internal (`assets/bgm/tense_confrontation.mp3`)
+      mood_tags:
+      - tense_confrontation
+      - wrath_confrontation
+    veena_devotional_serene:
+      file: assets/audio/bgm/veena_devotional_serene.mp3
+      duration_sec: 165.02
+      sample_rate: 48000
+      channels: 2
+      bytes: 3961196
+      md5: 57fb32e37cacc564311e89b1b183ba89
+      author: L Ramakrishnan
+      license: CC0 1.0 Universal (Public Domain Dedication)
+      source: https://commons.wikimedia.org/wiki/File:Shri_Nilotpala_Nayike,_rendered_on_the_Veena_by_L_Ramakishnan.ogg
+      mood_tags:
+      - devotional
+      - serene
+      - ashram_calm
+      - bhakti
+    veena_viriboni_royal:
+      file: assets/audio/bgm/veena_viriboni_royal.mp3
+      duration_sec: 165.02
+      sample_rate: 48000
+      channels: 2
+      bytes: 3961196
+      md5: 2ee29f9c5a194dac896610c64cb750e2
+      author: Smt. Pushpa Srivatsan
+      license: CC0 1.0 Universal (Public Domain Dedication)
+      source: https://commons.wikimedia.org/wiki/File:Viriboni,_rendered_on_the_Veena.ogg
+      mood_tags:
+      - royal_durbar
+      - classical_courtyard
+      - majestic
+    raga_kiravani_meditative:
+      file: assets/audio/bgm/raga_kiravani_meditative.mp3
+      duration_sec: 165.02
+      sample_rate: 48000
+      channels: 2
+      bytes: 3961196
+      md5: 79b8ea5d8bfae764a1fd78aba0a0c548
+      author: L Ramakrishnan
+      license: CC0 1.0 Universal (Public Domain Dedication)
+      source: https://commons.wikimedia.org/wiki/File:Kiravani-L_Ramakrishnan.ogg
+      mood_tags:
+      - meditative
+      - philosophical
+      - time_mystery
+    cosmic_synth_pad:
+      file: assets/audio/bgm/cosmic_synth_pad.mp3
+      duration_sec: 165.02
+      sample_rate: 48000
+      channels: 2
+      bytes: 3961196
+      md5: 7c11e05902c272af2f558b4526791193
+      author: Wilfredor
+      license: CC0 1.0 Universal (Public Domain Dedication)
+      source: https://commons.wikimedia.org/wiki/File:Ambient_music_test,_Yamaha_CK61.flac
+      mood_tags:
+      - ambient_cosmos
+      - stellar_scale
+      - observatory
+    orchestral_sarabande_strings:
+      file: assets/audio/bgm/orchestral_sarabande_strings.mp3
+      duration_sec: 165.02
+      sample_rate: 48000
+      channels: 2
+      bytes: 3961702
+      md5: 10b131dc8b0863b75ffec0b4fec626d6
+      author: Edvard Grieg (perf. United States Marine Band Chamber Orchestra)
+      license: Public Domain (US Government Work / Pre-1929 Composition)
+      source: https://commons.wikimedia.org/wiki/File:Grieg%27s_Suite_for_Strings,_Op._40,_%22From_Holberg%E2%80%99s_Time%22_-_II._Sarabande_-_Chamber_Orchestra_-_United_States_Marine_Band.mp3
+      mood_tags:
+      - solemn_drama
+      - emotional_climax
+      - grave_reveal
+  sfx:
+    pixabay:
+      chime:
+        file: assets/audio/sfx/chime.mp3
+        bytes: 27309
+        md5: e466b99ab7e28be6035a7755c45986c0
+      click-soft:
+        file: assets/audio/sfx/click-soft.mp3
+        bytes: 11702
+        md5: 7f90c47fcc5f15e0c0e94b3bfb6467f7
+      click:
+        file: assets/audio/sfx/click.mp3
+        bytes: 11702
+        md5: 7f90c47fcc5f15e0c0e94b3bfb6467f7
+      error:
+        file: assets/audio/sfx/error.mp3
+        bytes: 51827
+        md5: e77530478844f5163034f37ec0df559f
+      glitch-1:
+        file: assets/audio/sfx/glitch-1.mp3
+        bytes: 84427
+        md5: efc6377036b966277abe5969d718415f
+      glitch-2:
+        file: assets/audio/sfx/glitch-2.mp3
+        bytes: 112128
+        md5: c1fd5c1d66134ebf06265d80c8b2ccd2
+      glitch-3:
+        file: assets/audio/sfx/glitch-3.mp3
+        bytes: 99072
+        md5: d8bb50944a0bb1e09b781a1876708f64
+      impact-bass-1:
+        file: assets/audio/sfx/impact-bass-1.mp3
+        bytes: 67709
+        md5: 2ede2174d78ffd20cb4a2e526e5f1535
+      impact-bass-2:
+        file: assets/audio/sfx/impact-bass-2.mp3
+        bytes: 82944
+        md5: db82ef8ce4c5f350ca9cd7dc50be1d08
+      key-press:
+        file: assets/audio/sfx/key-press.mp3
+        bytes: 3909
+        md5: 55e2b9bd93f20d3378dd5a78bb6782ec
+      notification:
+        file: assets/audio/sfx/notification.mp3
+        bytes: 78576
+        md5: 02dfd453e36c5478c1449413f0e97876
+      ping:
+        file: assets/audio/sfx/ping.mp3
+        bytes: 26400
+        md5: 7f9c4eebbd788db39983eb557cedd658
+      pop:
+        file: assets/audio/sfx/pop.mp3
+        bytes: 23040
+        md5: f7573505e51e4db50ba516a03844ef55
+      riser:
+        file: assets/audio/sfx/riser.mp3
+        bytes: 321024
+        md5: 70640c1caa0dc736ab2ea72fad017eda
+      sparkle:
+        file: assets/audio/sfx/sparkle.mp3
+        bytes: 57678
+        md5: 2581ca6b0e0c006bb0b670f9a861503c
+      typing:
+        file: assets/audio/sfx/typing.mp3
+        bytes: 26852
+        md5: 47534526463f9241ad1a9215465f345e
+      whoosh-cinematic:
+        file: assets/audio/sfx/whoosh-cinematic.mp3
+        bytes: 177408
+        md5: b88d7ac2c94867f9674961084298afbe
+      whoosh-short:
+        file: assets/audio/sfx/whoosh-short.mp3
+        bytes: 18390
+        md5: e7e7597bde6612d2ac1a24d5b5590b18
+      whoosh:
+        file: assets/audio/sfx/whoosh.mp3
+        bytes: 18390
+        md5: e7e7597bde6612d2ac1a24d5b5590b18
+    repo:
+      chain_rattle:
+        file: assets/audio/sfx/chain_rattle.wav
+        bytes: 547302
+        md5: 25dd8e2c1aad37ea64497cfdf7380aa0
+      conch_blast:
+        file: assets/audio/sfx/conch_blast.wav
+        bytes: 921702
+        md5: c7860b2a68fbae99b960cc1a538c502d
+      cosmic_chime:
+        file: assets/audio/sfx/cosmic_chime.wav
+        bytes: 458684
+        md5: d9a9ca8d03794fb72909df9a2bb59237
+      crystal_shatter:
+        file: assets/audio/sfx/crystal_shatter.wav
+        bytes: 282284
+        md5: 68e3e4bff5e7b3f2d52eb70a765446a9
+      curtain_whoosh:
+        file: assets/audio/sfx/curtain_whoosh.wav
+        bytes: 282284
+        md5: 17c13430fc86b65acd495eca4fa968fc
+      energy_hum:
+        file: assets/audio/sfx/energy_hum.wav
+        bytes: 529244
+        md5: f3d0c4fcbc8107e26ccfff53d63c9df3
+      fire_crackle:
+        file: assets/audio/sfx/fire_crackle.wav
+        bytes: 720102
+        md5: 9017c4a9b6a072a33ad697a9bfe46289
+      foot_thud:
+        file: assets/audio/sfx/foot_thud.wav
+        bytes: 276582
+        md5: a720e2acb0d264acf11a3cd69da791ed
+      footstep_heavy:
+        file: assets/audio/sfx/footstep_heavy.wav
+        bytes: 194084
+        md5: c64d2df944fde7deb6db85102b4f5cc3
+      laser_strike:
+        file: assets/audio/sfx/laser_strike.wav
+        bytes: 211724
+        md5: e0919633dadae798d4825990b25504f9
+      magma_crack:
+        file: assets/audio/sfx/magma_crack.wav
+        bytes: 441044
+        md5: fa9b8f0a04a42aee377b0e6d427df2f8
+      metal_clang:
+        file: assets/audio/sfx/metal_clang.wav
+        bytes: 455142
+        md5: 8251113004c1c9d2d94e6ffabf4f2d71
+      sub_hit:
+        file: assets/audio/sfx/sub_hit.wav
+        bytes: 229364
+        md5: f0bfd43cd044c339a6f227a2a3c328dd
+      sword_clash:
+        file: assets/audio/sfx/sword_clash.wav
+        bytes: 247000
+        md5: 7680dfca02e7192690a67ba927f7892f
+      tension_swell:
+        file: assets/audio/sfx/tension_swell.wav
+        bytes: 282284
+        md5: db6f35aa17b5e25344d60e67c0be5130
+      thunder_rumble:
+        file: assets/audio/sfx/thunder_rumble.wav
+        bytes: 617444
+        md5: 81ad9b0c19afcb4d65847354309505fc
+      whoosh_soft:
+        file: assets/audio/sfx/whoosh_soft.wav
+        bytes: 149984
+        md5: 2dcd643ebd0718da9394f4fa9914fb9a
+characters:
+  ancient_scholar:
+    name: Ancient Scholar (Acharya)
+    category: historical
+    archetype: Nalanda Acharya / Vedic Astronomer
+    rig_role: scholar
+    file: assets/characters/ancient_scholar.json
+  balarama:
+    name: Lord Balarama
+    category: hero
+    archetype: Halayudha / Elder Yadava Hero
+    rig_role: king
+    file: assets/characters/balarama.json
+  brahma:
+    name: Lord Brahma
+    category: deity
+    archetype: Cosmic Creator / Chaturmukha
+    rig_role: brahma
+    file: assets/characters/brahma.json
+  devi:
+    name: Devi Parvati / Bhavani
+    category: deity
+    archetype: Shakti / Compassionate Mother
+    rig_role: devi
+    file: assets/characters/devi.json
+  kakudmi:
+    name: King Kakudmi
+    category: royal
+    archetype: Surya-Vanshi Monarch / Seeker
+    rig_role: king
+    file: assets/characters/kakudmi.json
+  ravana:
+    name: Ravana (King of Lanka)
+    category: antagonist
+    archetype: Scholar-Warrior / Asura Emperor
+    rig_role: asura
+    file: assets/characters/ravana.json
+  revati:
+    name: Princess Revati
+    category: royal
+    archetype: Daughter of Kakudmi
+    rig_role: princess
+    file: assets/characters/revati.json
+  shani_dev:
+    name: Shani Dev
+    category: deity
+    archetype: Lord of Karma & Justice
+    rig_role: deva
+    file: assets/characters/shani_dev.json
+  shiva:
+    name: Lord Shiva (Mahadeva)
+    category: deity
+    archetype: Ascetic / Cosmic Destroyer
+    rig_role: shiva
+    file: assets/characters/shiva.json
+  surya_dev:
+    name: Surya Dev
+    category: deity
+    archetype: Solar Illuminator
+    rig_role: deva
+    file: assets/characters/surya_dev.json
+  sutradhar_narrator:
+    name: Sutradhar (Cosmic Narrator)
+    category: narrator
+    archetype: Sage / Cosmic Storyteller
+    rig_role: sage
+    file: assets/characters/sutradhar_narrator.json
+  vishnu:
+    name: Lord Vishnu (Narayana)
+    category: deity
+    archetype: Cosmic Preserver
+    rig_role: deva
+    file: assets/characters/vishnu.json
+environments:
+  ashram_twilight:
+    name: Himalayan Forest Ashram at Dusk
+    atmosphere_mode: dawn_epic
+    horizon_y: 1142
+    file: assets/environments/ashram_twilight.json
+  brahmaloka_sabha:
+    name: Brahmaloka Celestial Assembly Hall
+    atmosphere_mode: palace_court
+    horizon_y: 1142
+    file: assets/environments/brahmaloka_sabha.json
+  cosmic_ocean_manthan:
+    name: Kshira Sagara — Samudra Manthan Ocean
+    atmosphere_mode: dawn_epic
+    horizon_y: 1142
+    file: assets/environments/cosmic_ocean_manthan.json
+  dwaraka_durbar:
+    name: Dwaraka Royal Durbar Hall
+    atmosphere_mode: palace_court
+    horizon_y: 1142
+    file: assets/environments/dwaraka_durbar.json
+  kailash_horizon:
+    name: Mount Kailash Sacred Horizon
+    atmosphere_mode: dawn_epic
+    horizon_y: 1142
+    file: assets/environments/kailash_horizon.json
+  lanka_citadel:
+    name: Golden Lanka Sandstone Throne Hall
+    atmosphere_mode: palace_court
+    horizon_y: 1142
+    file: assets/environments/lanka_citadel.json
+  nalanda_archival:
+    name: Nalanda Sandstone Courtyard & Archive
+    atmosphere_mode: archival
+    horizon_y: 1142
+    file: assets/environments/nalanda_archival.json
+  observatory_cosmos:
+    name: Deep Space Observatory & Kalachakra Grid
+    atmosphere_mode: cosmic_explainer
+    horizon_y: 1142
+    file: assets/environments/observatory_cosmos.json
+props:
+  amrita_kalash:
+    name: Golden Amrita Kalash on Plinth
+    category: sacred_vessel
+    renderer: drawAmritaKalash
+    default_mount: pedestal
+    file: assets/props/amrita_kalash.json
+  brahmaloka_time_chakra:
+    name: Brahmaloka Kalachakra Relativistic Time Wheel
+    category: cosmic_mandala
+    renderer: drawKalachakra
+    default_mount: sky
+    file: assets/props/brahmaloka_time_chakra.json
+    legacy_svg_path: assets/svg/backdrops/brahmaloka_time_chakra.svg
+  brass_clock:
+    name: Ornate Brass Timepiece
+    category: explainer_prop
+    renderer: drawBrassClock
+    default_mount: pedestal
+    file: assets/props/brass_clock.json
+  earth_globe:
+    name: Rotating Vector Earth & Orbital Satellites
+    category: explainer_prop
+    renderer: drawVectorEarthGlobe
+    default_mount: sky
+    file: assets/props/earth_globe.json
+  halahala_orb:
+    name: Emerald Halahala Poison Orb
+    category: vfx_prop
+    renderer: drawHalahalaOrb
+    default_mount: sky
+    file: assets/props/halahala_orb.json
+  hourglass_stand:
+    name: Pedestal Sand Hourglass
+    category: explainer_prop
+    renderer: drawGroundedHourglassStand
+    default_mount: floor
+    file: assets/props/hourglass_stand.json
+  kurma_avatar:
+    name: Vishnu Kurma Tortoise Carapace
+    category: divine_avatar
+    renderer: drawKurmaAvatar
+    default_mount: terrain
+    file: assets/props/kurma_avatar.json
+  magnifying_sector_lens:
+    name: 27-Sector Brass Magnifying Lens
+    category: explainer_prop
+    renderer: drawMagnifyingSectorLens
+    default_mount: sky
+    file: assets/props/magnifying_sector_lens.json
+  mehrauli_iron_pillar:
+    name: Mehrauli Gupta Iron Pillar
+    category: architectural_monument
+    renderer: drawIronPillar
+    default_mount: floor
+    file: assets/props/mehrauli_iron_pillar.json
+    legacy_svg_path: assets/svg/backdrops/mehrauli_iron_pillar.svg
+  meru_route_scroll:
+    name: Royal Mt. Meru Trajectory Scroll
+    category: archival_prop
+    renderer: drawMeruRouteScroll
+    default_mount: table
+    file: assets/props/meru_route_scroll.json
+  mount_mandara:
+    name: Mount Mandara Churning Rod
+    category: mythic_landmark
+    renderer: drawMountMandara
+    default_mount: terrain
+    file: assets/props/mount_mandara.json
+  samudra_manthan_halahala:
+    name: Samudra Manthan & Halahala Eruption Ensemble
+    category: mythic_ensemble
+    renderer: drawHalahalaOrb + drawVasukiSerpent + drawKurmaAvatar + drawMountMandara
+    default_mount: terrain
+    file: assets/props/samudra_manthan_halahala.json
+    legacy_svg_path: assets/svg/backdrops/samudra_manthan_halahala.svg
+  shani_drishti_mandala:
+    name: Shani Drishti Karmic Astrological Mandala
+    category: cosmic_mandala
+    renderer: drawKalachakra
+    default_mount: sky
+    file: assets/props/shani_drishti_mandala.json
+    legacy_svg_path: assets/svg/diagrams/shani_drishti_mandala.svg
+  spacetime_comparator:
+    name: Relativity & Surya Siddhanta Comparator
+    category: explainer_prop
+    renderer: drawSpacetimeComparator
+    default_mount: sky
+    file: assets/props/spacetime_comparator.json
+  trishul:
+    name: Grounded Sacred Trishul & Damaru
+    category: sacred_weapon
+    renderer: drawGroundedTrishul
+    default_mount: floor
+    file: assets/props/trishul.json
+  vasuki_serpent:
+    name: Vasuki Pancha-Phana Serpent
+    category: mythic_creature
+    renderer: drawVasukiSerpent
+    default_mount: terrain
+    file: assets/props/vasuki_serpent.json
+  wedding_mandap:
+    name: Ceremonial Wedding Mandap & Agni Kalash
+    category: architectural_prop
+    renderer: drawWeddingMandap
+    default_mount: floor
+    file: assets/props/wedding_mandap.json
+runtime:
+  shell_template: templates/runtime/index.html.jinja2
+  stylesheet: templates/runtime/styles.css
+  captions_template: templates/runtime/captions/captions.html.jinja2
+  thumbnail_template: templates/thumbnail/cover_template.html.jinja2
+  modules:
+  - templates/runtime/core/seek_runtime.js
+  - templates/runtime/core/scene_director.js
+  - templates/runtime/backdrops/atmosphere_v1.js
+  - templates/runtime/backdrops/architectural_stage.js
+  - templates/runtime/rigs/character_engine.js
+  - templates/runtime/props/props_library.js
+  - templates/runtime/fx/transitions.js

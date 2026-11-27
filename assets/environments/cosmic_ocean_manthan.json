@@ -1,0 +1,30 @@
+{
+  "id": "cosmic_ocean_manthan",
+  "name": "Kshira Sagara — Samudra Manthan Ocean",
+  "atmosphere_mode": "dawn_epic",
+  "horizon_y": 1142,
+  "sky": {
+    "top": "#060B22",
+    "mid": "#112256",
+    "bot": "#284B78",
+    "erupt_top": "#071C18",
+    "erupt_mid": "#123D34",
+    "erupt_bot": "#195944"
+  },
+  "sun": {
+    "x": 540,
+    "y": 740,
+    "radius": 820,
+    "intensity": 0.62,
+    "ray_strength": 0.04,
+    "ray_count": 10
+  },
+  "terrain": {
+    "type": "churning_ocean_waves",
+    "wave_layers": 4,
+    "wave_colors_calm": ["#265E94", "#1B4678", "#112D54", "#081430"],
+    "wave_colors_erupt": ["#124B44", "#0E3D3A", "#092B34", "#061624"]
+  },
+  "motes_color": "#B4E2FF",
+  "bird_flock": false
+}

@@ -1,0 +1,8 @@
+{
+  "id": "spacetime_comparator",
+  "name": "Relativity & Surya Siddhanta Comparator",
+  "category": "explainer_prop",
+  "renderer": "drawSpacetimeComparator",
+  "default_mount": "sky",
+  "description": "Dual comparison panels contrasting curved spacetime gravity wells with Vedic orbital mechanics."
+}

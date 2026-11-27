@@ -1,0 +1,8 @@
+{
+  "id": "amrita_kalash",
+  "name": "Golden Amrita Kalash on Plinth",
+  "category": "sacred_vessel",
+  "renderer": "drawAmritaKalash",
+  "default_mount": "pedestal",
+  "description": "Sacred golden nectar vessel crowned with mango leaves and coconut atop a stone altar plinth."
+}
