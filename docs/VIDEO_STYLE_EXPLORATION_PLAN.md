@@ -1,7 +1,7 @@
 # Sutradhar Video Style Exploration & Redesign Context
 
-> **Status:** Style Exploration Completed -> Superseded for Architecture Planning by [VIDEO_PRODUCTION_REDESIGN_PLAN.md](file:///C:/Users/manis/Projects/Sutradhar/docs/VIDEO_PRODUCTION_REDESIGN_PLAN.md)
-> **Rule of Thumb (Planning Phase):** Keep this document preserved as the permanent historical exploration record. Do **NOT** modify production code, assets, config, DB schema, or live YouTube metadata until the user approves the full redesign plan in `docs/VIDEO_PRODUCTION_REDESIGN_PLAN.md`.
+> **Status:** Style Exploration Finalized (Tri-Milestone Synthesis & User Decisions Locked) -> Superseded for System Architecture & Implementation by [VIDEO_PRODUCTION_REDESIGN_PLAN.md](file:///C:/Users/manis/Projects/Sutradhar/docs/VIDEO_PRODUCTION_REDESIGN_PLAN.md)
+> **Rule of Thumb (Planning Phase):** Keep this document preserved as the chronological visual exploration, Episode 3 replacement, and Episode 4 evaluation record. Do **NOT** modify production code, assets, config, DB schema, or live YouTube metadata until explicit Phase 1 implementation approval.
 
 ---
 
@@ -31,14 +31,14 @@ Build a highly automated, reliable, professional-quality **2D/2.5D animated YouT
 
 - **Plan limits (verified on account):** `30,000` credits/month base renewal (unused credits roll over up to `3×`). Live snapshot at audit start: `used = 2,155`, `limit = 37,188`, `remaining = 35,033`.
 - **Voice & model (`config.yaml`):** `eleven_v4` with Viraj (`uuyFQegRan8rpIQCGu9K`), billing **`1` credit per character** including inline v4 expression tags (e.g., `[slow]`, `[thoughtful]`, `[reverent]`).
-- **Observed Episode 1–3 script lengths (`episodes.db`):** `1,018`, `805`, and `917` raw Devanagari characters (average `~913` raw chars; `~960–1,050` billed chars once inline tags are included).
+- **Observed Episode 1–4 script lengths (`episodes.db` & `ep4`):** Episodes 1–3 (`1,018`, `805`, and `917` raw Devanagari characters; `~860–1,075` billed chars incl. inline tags), plus Episode 4 (`776` total billed characters incl. tags for a full `61.97s` animated Short — proving the `<= 850` billed-char budget empirically).
 - **30-Short Monthly Projection:**
   - At `~950–1,050` billed chars/Short and zero retries (`1.0×`), consumption is **`28,500–31,500` credits/month** — sitting right on or slightly above the `30,000` base renewal.
   - A modest `15%` regeneration/retry rate pushes usage to **`~32,800–36,200` credits/month**, exhausting the monthly base allowance.
-- **Required Zero-Spend Mitigations (Target Design):**
-  1. Strict pre-TTS Hindi script budget (`<= 850–900` billed chars including tags -> `~25,500–27,000` credits/month for 30 Shorts, leaving ~10–15% buffer).
+- **Required Zero-Spend Mitigations (Locked in Redesign Plan):**
+  1. Strict pre-TTS Hindi script budget (`760–840` target, `<= 900` billed chars hard cap incl. tags -> `~24,450` credits/month for 30 Shorts, leaving `~18.5%` buffer).
   2. Strict pre-flight Devanagari + tag syntax validation before calling the ElevenLabs API.
-  3. Zero automatic blind TTS retry loops; immutable SHA-256 content-addressed WAV/manifest caching per episode/scene.
+  3. Zero automatic blind TTS retry loops; immutable per-scene SHA-256 WAV/manifest caching.
   4. Zero paid TTS calls during visual experimentation/POC iterations (reuse cached Episode 3 narration `build/audio/narration_full.wav`).
 
 ---
@@ -48,12 +48,12 @@ Build a highly automated, reliable, professional-quality **2D/2.5D animated YouT
 | Surface | Required Language | Notes |
 | --- | --- | --- |
 | **Voiceover / Narration** | Hindi (Devanagari source text) | Viraj (`eleven_v4`) |
-| **Burned-In Kinetic Captions** | Hindi (Devanagari) | Centered bottom-center inside Shorts safe zone, accurately word/phrase-synced |
-| **Contextual On-Screen Text** | Minimal Hindi / English where genuinely helpful | Strictly essential context only, **top-center** aligned, zero clutter/redundant headers |
-| **Thumbnail Text** | English | Dedicated high-contrast thumbnail composition (`1080×1920` or channel standard), NOT a raw video frame grab |
+| **Burned-In Kinetic Captions** | Hindi (Devanagari) | Centered bottom-center inside Shorts safe zone (`y <= 1395px`), accurately word/phrase-synced |
+| **Contextual On-Screen Text** | Minimal Hindi / English where genuinely helpful | **Disabled by default** (`0` permanent progress bars or episode counters); opt-in DOM-validated overlays only inside safe zones when narrative clarity requires it |
+| **Thumbnail Text** | English | Dedicated high-contrast `1080×1920` (`2:3` safe) thumbnail composition, NOT a raw video frame grab |
 | **YouTube Metadata (Title, Description, Tags, Playlists)** | English | `defaultAudioLanguage: hi`, `defaultLanguage: en` |
 
-> **Note:** Several existing production files conflict on captioning and metadata language (`docs/INSTRUCTIONS.md` line 24 vs line 35 vs line 165, `README.md`, `db_manager.py`, `publish_youtube.py`). Those conflicts remain documented for the eventual production implementation phase and must NOT be modified yet.
+> **Note:** Several existing legacy files conflict on captioning and metadata language (`docs/INSTRUCTIONS.md` line 24 vs line 35 vs line 165, `README.md`, `db_manager.py`, legacy `publish_youtube.py`). Episodes 3 & 4 applied the English metadata + Hindi audio policy directly; resolving remaining repo conflicts and legacy playlists happens in Phases 1–5 per `VIDEO_PRODUCTION_REDESIGN_PLAN.md`.
 
 ---
 
@@ -80,7 +80,7 @@ All Round 1 POCs used cached Episode 3 narration (`63.503s`, `0` ElevenLabs cred
 
 | Version | Direction | Status | Measured Metrics & User Verdict |
 | --- | --- | --- | --- |
-| **V1 — Dawn Ridge** | Painterly atmospheric 2.5D layered SVG/Canvas cosmic + mythological landscapes with cleaned top-center text & bottom-center Hindi kinetic captions | **PROVISIONALLY APPROVED (Benchmark Only — NOT Final Choice)** | `v1_dawn_ridge.mp4` (`107.58 MB`, `63.503s`, `1080×1920`, `30fps`, `-14.0 LUFS`). HyperFrames Strict Check **7/7 `ok: true` (`0` errors, `0` warnings)**. KinoCut default `57.0` (`y_avg=73.8`, `contrast=32.8`, `sat=8.9%`, `temporal_motion=96.3` / `4%` static); KinoCut dark `88.8`. Preserved intact in `playground/v1_dawn_ridge_benchmark/` and `%LOCALAPPDATA%\Temp\sutradhar_poc\v1_dawn_ridge*`. |
+| **V1 — Dawn Ridge** | Painterly atmospheric 2.5D layered SVG/Canvas cosmic + mythological landscapes with cleaned top-center text & bottom-center Hindi kinetic captions | **PROVISIONALLY APPROVED (Benchmark Only — NOT Final Choice)** | `v1_dawn_ridge.mp4` (`112.81 MB` / `107.58 MiB`, `63.503s`, `1080×1920`, `30fps`, `-14.0 LUFS`). HyperFrames Strict Check **7/7 `ok: true` (`0` errors, `0` warnings)**. KinoCut default `57.0` (`y_avg=73.8`, `contrast=32.8`, `sat=8.9%`, `temporal_motion=96.3` / `3.68%` static); KinoCut dark `88.8`. Preserved in `playground/v1_dawn_ridge_benchmark/` until Phase 7 acceptance. |
 | **V2 — Illuminated Paper-Cut Diorama** | Multi-layer parchment & paper-cut craft diorama | **COMPLETELY REJECTED** | Rejected by user. Do not pursue or reuse this visual direction. |
 | **V3 — WebGL 3D Cosmic Cinema** | WebGL / Three.js 3D volumetric cosmic scene | **COMPLETELY REJECTED** | Rejected by user. Do not pursue or reuse this visual direction. |
 
@@ -92,20 +92,22 @@ All Round 1 POCs used cached Episode 3 narration (`63.503s`, `0` ElevenLabs cred
 
 ### Cleanup & Status Decisions
 
-- **Retained Provisional Benchmark (Unchanged):** [`V1 — Dawn Ridge`](file:///C:/Users/manis/Projects/Sutradhar/playground/v1_dawn_ridge_benchmark/v1_dawn_ridge.mp4) (`107.58 MB`, `63.503s`, `1080×1920@30fps`) remains preserved intact inside `playground/v1_dawn_ridge_benchmark/`.
+- **Retained Provisional Benchmark (Unchanged):** [`V1 — Dawn Ridge`](file:///C:/Users/manis/Projects/Sutradhar/playground/v1_dawn_ridge_benchmark/v1_dawn_ridge.mp4) (`112.81 MB` / `107.58 MiB`, `63.503s`, `1080×1920@30fps`) remains preserved intact inside `playground/v1_dawn_ridge_benchmark/`.
 - **Rejected Directions (Removed from Active Development):** `V2` (Paper-Cut Diorama), `V3` (WebGL 3D), Reference 2 (`XPWJGGvpA28`), Reference 3 (`UWjpa9rpkwk`), Round-2 drafts `exp_ref1..3`, and **Candidate A — Refined Dawn Ridge** (`candidate_a_dawn_ridge/`, `build_candidate_a.py`, `mix_candidate_a.wav`, `two_candidate_comparison.json` deleted cleanly while keeping shared assets intact).
-- **Retained Under Active Refinement (`Candidate B`):** Reference-1 (`inbAAQMK8vs`) inspired story-vector short in [`playground/candidate_b_ref1_cinematic/`](file:///C:/Users/manis/Projects/Sutradhar/playground/candidate_b_ref1_cinematic/candidate_b_ref1_cinematic.mp4) (neither V1 nor Candidate B is final yet — awaiting final selection after comparing updated Candidate B against V1).
+- **Round 2 Outcome -> Superseded by Tri-Milestone Synthesis:** [`Candidate B — Ref-1 Cinema`](file:///C:/Users/manis/Projects/Sutradhar/playground/candidate_b_ref1_cinematic/candidate_b_ref1_cinematic.mp4) (`36.92 MB`) progressed from Round-2 refinement into Episode 3's live replacement (Section 11), which then evolved into Episode 4 (Section 12) and the unified production standard locked in Section 13.
 
 ### Clean Experimental Workspace (`playground/`)
 
-All exploration materials live exclusively inside `playground/` (leaving every production file untouched):
+Exploration artifacts, pre-redesign DB snapshots, and benchmark renders live inside `playground/` (subject to Phase 1 `.gitignore` isolation and duplicate/cache pruning, keeping core production `scripts/engine/`, `templates/`, `assets/`, `tests/`, `docs/` untouched until Phase 1 starts):
 
 - `playground/references/` — Reference 1 (`ref1_inbAAQMK8vs`) study video & metadata JSON (zero Ref-1 copyrighted assets reused)
-- `playground/analysis/` — `ref1_analysis.md`, `ep3_script_timeline.txt`, `candidates_shot_plan.md`, `v1_timeline_sheet.jpg`, `tool_research.md`, `hf_catalog.json`
-- `playground/shared/` — Cached Episode 3 narration-derived master audio (`master_mix_poc.wav`, custom `mix_candidate_b.wav` with **0** ElevenLabs credits spent), aligned Hindi captions (`captions_data.js`), local SIL OFL fonts, local GSAP
-- `playground/v1_dawn_ridge_benchmark/` — Preserved untouched original V1 benchmark MP4, English thumbnail, grid, and report
-- `playground/scripts/` — Shared shell generator (`poc_shared_composer.py`), audio mixer (`mix_candidate_audio.py`), check/preview/render runner (`poc_runner.py`), `build_candidate_b.py`
-- `playground/candidate_b_ref1_cinematic/` — Corrected **Candidate B** MP4, English thumbnail, 15-frame preview & MP4 contact sheets, quality report, and sources
+- `playground/analysis/` — `ref1_analysis.md`, `ep3_script_timeline.txt`, `candidates_shot_plan.md`, `v1_timeline_sheet.jpg`, `tool_research.md`, `hf_catalog.json` (plus raw frame extraction scratch slated for Phase 1 cleanup)
+- `playground/shared/` — Cached Episode 3 master audio, aligned Hindi captions (`captions_data.js`), local SIL OFL fonts (`31` `.woff2` files), local GSAP
+- `playground/backups/` — Pre-Ep3-replacement SQLite backup (`episodes_db_pre_ep3_replace_20261126T165040Z.sqlite`)
+- `playground/v1_dawn_ridge_benchmark/` — Untouched original V1 benchmark MP4 (`112.81 MB`), English thumbnail, grid, and report
+- `playground/scripts/` — Shared shell generator (`poc_shared_composer.py`), audio mixer (`mix_candidate_audio.py`), check/preview/render runner (`poc_runner.py`), `build_candidate_b.py`, `replace_ep3_youtube.py`
+- `playground/candidate_b_ref1_cinematic/` — Corrected **Candidate B** MP4 (`36.92 MB`, Ep 3 `oBcyiPy26rg` source), English thumbnail (`240,181 B`), `verified_live_sardefault.jpg`, contact sheets, and quality/publish reports
+- `playground/ep4_neelakantha_shiva/` — Latest **Episode 4** MP4 (`553.76 MB`, `7PWFV7lQG6U` source), scripts (`build_ep4_*.py`, `mix_ep4_audio.py`, `run_ep4.py`, `publish_ep4.py`), thumbnail + `2:3` crop, contact sheets, audio, and quality/publish reports
 
 ---
 
@@ -127,7 +129,7 @@ After inspecting the previous rendered Candidate B MP4 and acting on user review
 ## 9. Production Codebase Immutability Boundary
 
 Throughout visual exploration, Episode 3 replacement, Episode 4 playground prototyping, and architecture re-planning, core production modules, templates, legacy vector assets, tests, configs, and manuals remain untouched:
-`scripts/` (except extracted shared [`thumbnail_utils.py`](file:///C:/Users/manis/Projects/Sutradhar/scripts/thumbnail_utils.py) and `sardefault.jpg` CDN hardening in [`publish_youtube.py`](file:///C:/Users/manis/Projects/Sutradhar/scripts/publish_youtube.py) authorized during Episode 3 thumbnail remediation), `templates/`, `assets/`, `tests/`, `config.yaml`, `requirements.txt`, `package.json`, `package-lock.json`, `docs/INSTRUCTIONS.md`, `docs/schema.sql`, `docs/SETUP_AND_OPERATIONS.md`, `README.md`, and `.venv/`. (`episodes.db`, `build/publish_result.json`, and `build/publish_verification.json` record live YouTube state for published Episodes 1–4.) No code edits or cleanup deletions will execute until the revalidated redesign plan is approved.
+`scripts/` (except extracted shared [`thumbnail_utils.py`](file:///C:/Users/manis/Projects/Sutradhar/scripts/thumbnail_utils.py) and `sardefault.jpg` CDN hardening in [`publish_youtube.py`](file:///C:/Users/manis/Projects/Sutradhar/scripts/publish_youtube.py) authorized during Episode 3 thumbnail remediation), `templates/`, `assets/`, `tests/`, `config.yaml`, `requirements.txt`, `package.json`, `package-lock.json`, `docs/INSTRUCTIONS.md`, `docs/schema.sql`, `docs/SETUP_AND_OPERATIONS.md`, `README.md`, and `.venv/`. (`episodes.db`, `build/publish_result.json`, and `build/publish_verification.json` record live YouTube state for published Episodes 1–4.) No code edits, asset deletions, DB migrations, or YouTube updates will execute until your explicit authorization to start Phase 1.
 
 ---
 
@@ -175,9 +177,14 @@ Episode 4 (*"Why Lord Shiva Drank Poison Before the Gods Got Nectar #Shorts"*, [
 
 ---
 
-## 13. Unified Visual Direction Selection & Link to Full Production Redesign Plan
+## 13. Unified Visual Direction, Locked Scope Decisions & Master Plan Link
 
-- **Selected Visual Standard ("Sutradhar Kinetic Storycraft" — Tri-Milestone Synthesis):** Combine **Corrected Candidate B's** architectural wall-floor `HORIZON_Y` grounding, props/infographics, unobstructed stage margins, bottom-center Hindi kinetic captions, and `2:3`-safe English thumbnails; **Original V1 — Dawn Ridge's** multi-plane sunrise skies, horizon mist, god-rays, and bird/flora atmosphere; and **Episode 4's** upgraded `SHARED_ILLUSTRATOR_JS` anatomical limbs (`traceCapsule`), sculpted hands, `2.5D` head turns, active group choreography, `<= 1%` static motion fluidity, and balanced RGB contrast — while fixing Ep 4's `553 MB` encode bloat, post-render JSON inversion, caption tokenization bug, and monolithic string generation.
-- **Next Stage Document:** The revalidated codebase re-architecture, Ep 4 forensic delta, complete folder-by-folder legacy/compatibility/dependency cleanup matrix, schema v4 + Ep 3/Ep 4 DB synchronization plan, redesigned `docs/INSTRUCTIONS.md` blueprint, ElevenLabs Starter (`30 Shorts/month`) economics, and 7-phase implementation roadmap are detailed in **[VIDEO_PRODUCTION_REDESIGN_PLAN.md](file:///C:/Users/manis/Projects/Sutradhar/docs/VIDEO_PRODUCTION_REDESIGN_PLAN.md)** (awaiting user approval before execution begins).
+- **Selected Visual Standard ("Sutradhar Kinetic Storycraft v2" — Tri-Milestone Synthesis):** Combine **Corrected Candidate B's** architectural wall-floor `HORIZON_Y` grounding, props/infographics, unobstructed stage margins, bottom-center Hindi kinetic captions (`y <= 1395px`), and `2:3`-safe English thumbnails; **Original V1 — Dawn Ridge's** multi-plane sunrise skies, horizon mist, god-rays, and bird/flora atmosphere; and **Episode 4's** upgraded `SHARED_ILLUSTRATOR_JS` anatomical limbs (`traceCapsule`), sculpted hands, `2.5D` head turns, active group choreography, `<= 1%` static motion fluidity, and balanced RGB contrast — while fixing Ep 4's `553.76 MB` encode bloat, Kailash thumbnail snow fin, post-render JSON inversion, caption tokenization bug, and monolithic Python string templates.
+- **Locked User Decisions Guiding Execution (Confirmed 2026-11-27):**
+  1. **Series 1–3 Playlist English Sync (Phase 1):** Translate Series 1 (`PLH-P2bxD4o-I`) and Series 2 (`PLZpM1QZQbBWw`) playlists alongside Series 3 (`PLfT89QTc7oLs`) on YouTube & in `episodes.db` (`series_title_en/hi`), leaving **Episodes 1–3 videos and Ep 3's `sardefault.jpg` untouched**.
+  2. **Episode 4 Thumbnail-Only Polish (Phase 2):** Fix `drawKailashSacredPeak` ridge bounds and `.pill` font weight `800`, regenerate `ep4_thumbnail.jpg`, and perform a **thumbnail-only** `thumbnails.set` + live `sardefault.jpg` re-verification on `7PWFV7lQG6U`, leaving Ep 4's approved MP4 untouched.
+  3. **Playground Binary Retention & Clutter Cleanup:** Keep the three milestone MP4s (`v1_dawn_ridge.mp4`, `candidate_b_ref1_cinematic.mp4`, `ep4_neelakantha_shiva.mp4`) in git-ignored `playground/` until Phase 7 acceptance passes, while cleaning duplicate fonts/libs, frame dumps, duplicate WAVs, and scratch extraction folders in Phase 1.
+  4. **Episode 1 & 2 Historical Baselines:** Leave Ep 1 (`cd1cc1mhfwg`) and Ep 2 (`hcKmhzjQkz4`) videos and legacy thumbnails untouched, enforcing strict `sardefault.jpg` verification from Episode 3 onward.
+- **Next Stage Document:** The revalidated codebase re-architecture, Ep 4 forensic delta, complete folder-by-folder legacy/compatibility/dependency cleanup matrix, schema v4 + Ep 1–4 DB reconciliation, redesigned `docs/INSTRUCTIONS.md` blueprint, ElevenLabs Starter (`30 Shorts/month`) economics, and acyclic 7-phase implementation roadmap live in **[VIDEO_PRODUCTION_REDESIGN_PLAN.md](file:///C:/Users/manis/Projects/Sutradhar/docs/VIDEO_PRODUCTION_REDESIGN_PLAN.md)** (ready for Phase 1 kickoff upon final user approval).
 
 
