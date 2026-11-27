@@ -48,6 +48,21 @@ from db_manager import get_project_root, load_config  # noqa: E402
 from scripts.engine.composer import compose_episode  # noqa: E402
 from scripts.engine.foley_scheduler import PROP_SFX_MAP  # noqa: E402
 from scripts.engine.qa_verifier import run_triple_gate_qa  # noqa: E402
+from sutradhar.qa.quality_gate import QualityGateError, run_v2_quality_gate  # noqa: E402
+from sutradhar.qa.render_optimizer import (  # noqa: E402
+    DEFAULT_MAX_FILE_BYTES,
+    RenderOptimizeError,
+    probe_media as _shared_probe_media,
+    render_episode_mp4,
+)
+from sutradhar.visual.storyboard_composer import (  # noqa: E402
+    CompositionError,
+    compose_storyboard,
+    detect_v2_storyboard_run,
+    parse_manifest_js as _shared_parse_manifest_js,
+    resolve_v2_episode_inputs,
+)
+from sutradhar.visual.thumbnail_builder import ThumbnailBuildError, build_thumbnail  # noqa: E402
 from thumbnail_utils import ThumbnailValidationError, validate_local_thumbnail  # noqa: E402
 
 
@@ -56,36 +71,19 @@ class RenderPipelineError(RuntimeError):
 
 
 def parse_manifest_js(manifest_path: Path) -> dict[str, Any]:
-    if not manifest_path.is_file():
-        raise RenderPipelineError(f"Missing manifest file at '{manifest_path}'. Run build_audio.py first.")
-    content = manifest_path.read_text(encoding="utf-8")
-    match = re.search(r"window\.EPISODE_MANIFEST\s*=\s*(\{.*?\});\s*$", content, re.DOTALL)
-    if not match:
-        raise RenderPipelineError(f"Failed to parse window.EPISODE_MANIFEST from '{manifest_path}'.")
+    """Parse episode manifest JS using shared sutradhar.visual helper."""
     try:
-        return json.loads(match.group(1))
-    except json.JSONDecodeError as exc:
-        raise RenderPipelineError(f"Invalid JSON in '{manifest_path}': {exc}") from exc
+        return _shared_parse_manifest_js(manifest_path)
+    except CompositionError as exc:
+        raise RenderPipelineError(str(exc)) from exc
 
 
 def probe_media(file_path: Path) -> dict[str, Any]:
-    cmd = [
-        "ffprobe",
-        "-v",
-        "error",
-        "-show_entries",
-        "format=duration:stream=width,height,r_frame_rate,codec_type,codec_name,sample_rate,channels",
-        "-of",
-        "json",
-        str(file_path),
-    ]
-    proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
-    if proc.returncode != 0:
-        raise RenderPipelineError(f"ffprobe failed on '{file_path}': {proc.stderr.strip()}")
+    """Delegate ffprobe inspection to shared sutradhar.qa.render_optimizer."""
     try:
-        return json.loads(proc.stdout)
-    except json.JSONDecodeError as exc:
-        raise RenderPipelineError(f"Invalid ffprobe JSON for '{file_path}': {exc}") from exc
+        return _shared_probe_media(file_path)
+    except RenderOptimizeError as exc:
+        raise RenderPipelineError(str(exc)) from exc
 
 
 VFX_SFX_MAP: dict[str, str] = {
@@ -572,25 +570,90 @@ def generate_episode_thumbnail(
     return output_thumbnail_path
 
 
-def sync_index_html_duration(root: Path, duration_sec: float) -> None:
-    index_file = root / "build" / "composition" / "index.html"
-    if not index_file.is_file():
-        return
-    content = index_file.read_text(encoding="utf-8")
-    dur_str = f"{duration_sec:.2f}"
-    new_content = re.sub(
-        r'data-duration="[^"]*"',
-        f'data-duration="{dur_str}"',
-        content,
-        count=1,
-    )
-    if new_content != content:
-        index_file.write_text(new_content, encoding="utf-8")
-        print(f"[INFO] Synced build/composition/index.html data-duration to {dur_str}s", file=sys.stderr)
+def _run_v2_render_and_qa_pipeline(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
+    build_dir = (root / cfg["paths"]["build_dir"]).resolve()
+    try:
+        plan_data, audio_manifest = resolve_v2_episode_inputs(root, cfg)
+        thumb_spec = plan_data.get("thumbnail_spec")
+        if not thumb_spec:
+            raise RenderPipelineError("v2 episode_plan.json is missing required 'thumbnail_spec'.")
+
+        comp = compose_storyboard(
+            root,
+            plan_data,
+            audio_manifest=audio_manifest,
+            output_dir=build_dir / "composition",
+            mix_audio=True,
+            cfg=cfg,
+        )
+
+        final_short = build_dir / "final_short.mp4"
+        final_qa_grid = build_dir / "final_qa_grid.jpg"
+        final_qa_grid_safezones = build_dir / "final_qa_grid_safezones.jpg"
+        thumbnail_path = build_dir / "thumbnail.jpg"
+        crop_path = build_dir / "thumbnail_2x3_crop.jpg"
+        qa_report_path = build_dir / "qa_report.json"
+
+        thumb_res = build_thumbnail(
+            root,
+            thumb_spec,
+            thumbnail_path,
+            crop_output_jpg=crop_path,
+        )
+
+        max_file_bytes = int((cfg.get("video") or {}).get("max_file_bytes", DEFAULT_MAX_FILE_BYTES))
+        render_metrics = render_episode_mp4(
+            root,
+            comp.output_dir,
+            final_short,
+            duration_sec=comp.duration_sec,
+            max_file_bytes=max_file_bytes,
+        )
+
+        qa_report = run_v2_quality_gate(
+            root,
+            composition_dir=comp.output_dir,
+            mp4_path=final_short,
+            thumbnail_jpg=thumbnail_path,
+            crop_2x3_jpg=crop_path,
+            master_wav_path=comp.master_wav,
+            report_output_path=qa_report_path,
+            final_qa_grid_path=final_qa_grid,
+            final_qa_grid_safezones_path=final_qa_grid_safezones,
+            cfg=cfg,
+            max_file_bytes=max_file_bytes,
+        )
+    except (CompositionError, ThumbnailBuildError, RenderOptimizeError, QualityGateError) as exc:
+        raise RenderPipelineError(str(exc)) from exc
+
+    report = {
+        "status": "ok",
+        "action": "render_and_qa",
+        "runtime_version": "v2_storycraft",
+        "final_short": "build/final_short.mp4",
+        "final_qa_grid_jpg": "build/final_qa_grid.jpg",
+        "final_qa_grid_safezones_jpg": "build/final_qa_grid_safezones.jpg",
+        "thumbnail_jpg": "build/thumbnail.jpg",
+        "thumbnail_2x3_crop_jpg": "build/thumbnail_2x3_crop.jpg",
+        "file_bytes": render_metrics["file_bytes"],
+        "file_mib": render_metrics["file_mib"],
+        "width": render_metrics["width"],
+        "height": render_metrics["height"],
+        "duration_sec": render_metrics["duration_sec"],
+        "kinocut_dark_score": qa_report.motion_and_look_gate["kinocut"]["dark_score"],
+        "kinocut_default_score": qa_report.motion_and_look_gate["kinocut"]["default_score"],
+        "thumbnail_bytes": thumb_res.file_bytes,
+        "v2_quality_gate": qa_report.to_dict(),
+    }
+    (build_dir / "render_report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+    return report
 
 
 def run_render_and_qa_pipeline(root: Path) -> dict[str, Any]:
     cfg = load_config(root)
+    if detect_v2_storyboard_run(root, cfg):
+        return _run_v2_render_and_qa_pipeline(root, cfg)
+
     build_dir = (root / cfg["paths"]["build_dir"]).resolve()
     manifest_path = build_dir / "manifest.js"
     manifest = parse_manifest_js(manifest_path)

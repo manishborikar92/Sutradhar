@@ -21,15 +21,12 @@ Writes (atomically):
 from __future__ import annotations
 
 import json
-import os
 import re
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Optional
-
-from PIL import Image, ImageDraw, ImageFont
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent
@@ -40,6 +37,21 @@ if str(SCRIPT_DIR) not in sys.path:
 
 from db_manager import get_project_root, load_config  # noqa: E402
 from scripts.engine.composer import compose_episode  # noqa: E402
+from sutradhar.qa.hyperframes_runner import (  # noqa: E402
+    HyperFramesError,
+    generate_storyboard_preview_sheet,
+    run_chromium_runtime_probe,
+    run_hf_check,
+    run_hf_lint,
+    stitch_contact_sheet as _shared_stitch_contact_sheet,
+)
+from sutradhar.visual.storyboard_composer import (  # noqa: E402
+    CompositionError,
+    compose_storyboard,
+    detect_v2_storyboard_run,
+    parse_manifest_js as _shared_parse_manifest_js,
+    resolve_v2_episode_inputs,
+)
 
 
 class PreviewPipelineError(RuntimeError):
@@ -47,16 +59,11 @@ class PreviewPipelineError(RuntimeError):
 
 
 def parse_manifest_js(manifest_path: Path) -> dict[str, Any]:
-    if not manifest_path.is_file():
-        raise PreviewPipelineError(f"Missing manifest file at '{manifest_path}'. Run build_audio.py first.")
-    content = manifest_path.read_text(encoding="utf-8")
-    match = re.search(r"window\.EPISODE_MANIFEST\s*=\s*(\{.*?\});\s*$", content, re.DOTALL)
-    if not match:
-        raise PreviewPipelineError(f"Failed to parse window.EPISODE_MANIFEST from '{manifest_path}'.")
+    """Parse episode manifest JS using shared sutradhar.visual helper."""
     try:
-        return json.loads(match.group(1))
-    except json.JSONDecodeError as exc:
-        raise PreviewPipelineError(f"Invalid JSON in '{manifest_path}': {exc}") from exc
+        return _shared_parse_manifest_js(manifest_path)
+    except CompositionError as exc:
+        raise PreviewPipelineError(str(exc)) from exc
 
 
 def stitch_contact_sheet(
@@ -69,89 +76,84 @@ def stitch_contact_sheet(
     overlay_safe_zones: bool = False,
     safe_zones: Optional[dict[str, int]] = None,
 ) -> None:
-    n = len(image_paths)
-    if n == 0:
-        raise PreviewPipelineError("No snapshot images provided to stitch.")
-    rows = (n + cols - 1) // cols
-    sheet_w = cols * thumb_w
-    sheet_h = rows * thumb_h
-
-    sheet = Image.new("RGB", (sheet_w, sheet_h), color=(10, 10, 15))
-    draw = ImageDraw.Draw(sheet)
-
-    # Scale factors for safe-zone overlay on thumbnail (native is 1080x1920)
-    sx = thumb_w / 1080.0
-    sy = thumb_h / 1920.0
-
-    for idx, (img_p, label) in enumerate(zip(image_paths, scene_labels)):
-        col = idx % cols
-        row = idx // cols
-        x_off = col * thumb_w
-        y_off = row * thumb_h
-
-        if img_p.is_file():
-            with Image.open(img_p) as im:
-                thumb = im.convert("RGB").resize((thumb_w, thumb_h), Image.Resampling.LANCZOS)
-                sheet.paste(thumb, (x_off, y_off))
-        else:
-            draw.rectangle([x_off, y_off, x_off + thumb_w, y_off + thumb_h], fill=(40, 20, 20))
-            draw.text((x_off + 20, y_off + thumb_h // 2), f"Missing: {img_p.name}", fill=(255, 100, 100))
-
-        # Draw Safe-Zone Guide Overlay if requested
-        if overlay_safe_zones and safe_zones:
-            top_px = int(safe_zones.get("top_clear_px", 288) * sy)
-            bot_px = int(thumb_h - (safe_zones.get("bottom_clear_px", 520) * sy))
-            right_px = int(thumb_w - (safe_zones.get("right_clear_px", 192) * sx))
-            left_px = int(safe_zones.get("left_clear_px", 48) * sx)
-
-            # Shaded danger zones (translucent red)
-            overlay = Image.new("RGBA", (thumb_w, thumb_h), (0, 0, 0, 0))
-            ov_draw = ImageDraw.Draw(overlay)
-            # Top blocked area
-            ov_draw.rectangle([0, 0, thumb_w, top_px], fill=(255, 0, 0, 45))
-            # Bottom blocked area
-            ov_draw.rectangle([0, bot_px, thumb_w, thumb_h], fill=(255, 0, 0, 60))
-            # Right blocked area
-            ov_draw.rectangle([right_px, top_px, thumb_w, bot_px], fill=(255, 0, 0, 45))
-
-            # Safe area outline (bright cyan)
-            ov_draw.rectangle([left_px, top_px, right_px, bot_px], outline=(0, 255, 255, 180), width=2)
-
-            sheet.paste(overlay, (x_off, y_off), mask=overlay)
-
-        # Label Banner at bottom of thumbnail
-        banner_h = 32
-        draw.rectangle([x_off, y_off + thumb_h - banner_h, x_off + thumb_w, y_off + thumb_h], fill=(0, 0, 0, 220))
-        draw.text((x_off + 8, y_off + thumb_h - banner_h + 8), label, fill=(255, 215, 0))
-
-        # Cell border
-        draw.rectangle([x_off, y_off, x_off + thumb_w, y_off + thumb_h], outline=(60, 60, 70), width=1)
-
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    tmp_path = output_path.with_suffix(".tmp.jpg")
-    sheet.save(tmp_path, "JPEG", quality=90)
-    os.replace(tmp_path, output_path)
+    """Delegate contact-sheet rendering to shared sutradhar.qa helper."""
+    try:
+        _shared_stitch_contact_sheet(
+            image_paths,
+            scene_labels,
+            output_path,
+            cols=cols,
+            thumb_w=thumb_w,
+            thumb_h=thumb_h,
+            overlay_safe_zones=overlay_safe_zones,
+            safe_zones=safe_zones,
+        )
+    except HyperFramesError as exc:
+        raise PreviewPipelineError(str(exc)) from exc
 
 
-def sync_index_html_duration(root: Path, duration_sec: float) -> None:
-    index_file = root / "build" / "composition" / "index.html"
-    if not index_file.is_file():
-        return
-    content = index_file.read_text(encoding="utf-8")
-    dur_str = f"{duration_sec:.2f}"
-    new_content = re.sub(
-        r'data-duration="[^"]*"',
-        f'data-duration="{dur_str}"',
-        content,
-        count=1,
+def _run_v2_preview_pipeline(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
+    build_dir = (root / cfg["paths"]["build_dir"]).resolve()
+    plan_data, audio_manifest = resolve_v2_episode_inputs(root, cfg)
+    comp = compose_storyboard(
+        root,
+        plan_data,
+        audio_manifest=audio_manifest,
+        output_dir=build_dir / "composition",
+        mix_audio=True,
+        cfg=cfg,
     )
-    if new_content != content:
-        index_file.write_text(new_content, encoding="utf-8")
-        print(f"[INFO] Synced build/composition/index.html data-duration to {dur_str}s", file=sys.stderr)
+    lint_res = run_hf_lint(root, comp.output_dir)
+    check_res = run_hf_check(root, comp.output_dir, safe_zone="shorts", strict=True)
+    probe_res = run_chromium_runtime_probe(root, comp.index_html, duration_sec=comp.duration_sec)
+    if probe_res["console_errors"] or probe_res["page_errors"] or probe_res["failed_requests"]:
+        raise PreviewPipelineError(
+            f"Chromium runtime errors during preview: {probe_res['console_errors']} {probe_res['page_errors']}"
+        )
+    if not probe_res["idempotency_passed"]:
+        raise PreviewPipelineError(
+            f"hf-seek({probe_res['idempotency_time_sec']}s) pixel-parity MAE={probe_res['idempotency_mae']} > 0.5"
+        )
+    if not check_res.get("ok"):
+        raise PreviewPipelineError(
+            f"hyperframes check --strict --safe-zone shorts failed: {check_res.get('errors')} {check_res.get('warnings')}"
+        )
+
+    scene_ranges = [(float(sc["s0"]), float(sc["s1"])) for sc in comp.episode_runtime["scenes"]]
+    qa_grid_jpg = build_dir / "qa_grid.jpg"
+    qa_grid_safezones_jpg = build_dir / "qa_grid_safezones.jpg"
+    sheet_info = generate_storyboard_preview_sheet(
+        root,
+        comp.output_dir,
+        comp.duration_sec,
+        qa_grid_jpg,
+        scene_ranges=scene_ranges,
+        safe_zone_jpg=qa_grid_safezones_jpg,
+        count=15,
+    )
+
+    qa_report = {
+        "status": "ok",
+        "action": "preview_frames",
+        "runtime_version": "v2_storycraft",
+        "scene_count": comp.scene_count,
+        "duration_sec": comp.duration_sec,
+        "qa_grid_jpg": "build/qa_grid.jpg",
+        "qa_grid_safezones_jpg": "build/qa_grid_safezones.jpg",
+        "lint_clean": lint_res.get("ok", lint_res.get("exit_code") == 0),
+        "hyperframes_check": check_res,
+        "chromium_probe": probe_res,
+        "preview_sheet": sheet_info,
+    }
+    (build_dir / "qa_report.json").write_text(json.dumps(qa_report, indent=2), encoding="utf-8")
+    return qa_report
 
 
 def run_preview_pipeline(root: Path) -> dict[str, Any]:
     cfg = load_config(root)
+    if detect_v2_storyboard_run(root, cfg):
+        return _run_v2_preview_pipeline(root, cfg)
+
     build_dir = (root / cfg["paths"]["build_dir"]).resolve()
     manifest_path = build_dir / "manifest.js"
     manifest = parse_manifest_js(manifest_path)

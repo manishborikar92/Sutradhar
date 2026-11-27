@@ -1,0 +1,61 @@
+"""HyperFrames execution, <= 55 MiB render optimization, and fail-closed QA gate."""
+
+from sutradhar.qa.hyperframes_runner import (
+    HyperFramesError,
+    capture_hf_snapshots,
+    find_chromium_executable,
+    find_hyperframes_cli,
+    generate_storyboard_preview_sheet,
+    run_chromium_runtime_probe,
+    run_hf_check,
+    run_hf_lint,
+    run_hf_measure_look,
+    run_node_puppeteer,
+    select_storyboard_timestamps,
+    serve_directory,
+    stitch_contact_sheet,
+)
+from sutradhar.qa.quality_gate import (
+    QualityGateError,
+    QualityGateReport,
+    reject_synthetic_dom_snapshots,
+    run_v2_quality_gate,
+    verify_per_scene_motion_and_grid,
+)
+from sutradhar.qa.render_optimizer import (
+    DEFAULT_MAX_FILE_BYTES,
+    RenderOptimizeError,
+    compute_target_bitrate_kbps,
+    optimize_mp4_bitrate,
+    probe_media,
+    render_episode_mp4,
+    validate_mp4_contract,
+)
+
+__all__ = [
+    "DEFAULT_MAX_FILE_BYTES",
+    "HyperFramesError",
+    "QualityGateError",
+    "QualityGateReport",
+    "RenderOptimizeError",
+    "capture_hf_snapshots",
+    "compute_target_bitrate_kbps",
+    "find_chromium_executable",
+    "find_hyperframes_cli",
+    "generate_storyboard_preview_sheet",
+    "optimize_mp4_bitrate",
+    "probe_media",
+    "reject_synthetic_dom_snapshots",
+    "render_episode_mp4",
+    "run_chromium_runtime_probe",
+    "run_hf_check",
+    "run_hf_lint",
+    "run_hf_measure_look",
+    "run_node_puppeteer",
+    "run_v2_quality_gate",
+    "select_storyboard_timestamps",
+    "serve_directory",
+    "stitch_contact_sheet",
+    "validate_mp4_contract",
+    "verify_per_scene_motion_and_grid",
+]
