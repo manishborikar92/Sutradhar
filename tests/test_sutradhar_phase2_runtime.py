@@ -84,35 +84,33 @@ def _stage_sample_composition(stage_dir: Path) -> None:
         {
             "start": 0.4,
             "end": 4.5,
-            "gloss": "Mount Kailash rises in stillness",
             "words": [
-                {"word": "कैलाश", "start": 0.4, "end": 1.1},
-                {"word": "पर्वत", "start": 1.1, "end": 1.9},
-                {"word": "शांत", "start": 1.9, "end": 2.8},
-                {"word": "खड़ा", "start": 2.8, "end": 3.6},
-                {"word": "था", "start": 3.6, "end": 4.4},
+                {"word": "कैलाश", "start": 0.4, "end": 1.1, "kw": True},
+                {"word": "पर्वत", "start": 1.1, "end": 1.9, "kw": False},
+                {"word": "शांत", "start": 1.9, "end": 2.8, "kw": True},
+                {"word": "खड़ा", "start": 2.8, "end": 3.6, "kw": False},
+                {"word": "था", "start": 3.6, "end": 4.4, "kw": False},
             ],
         },
         {
             "start": 5.5,
             "end": 9.5,
-            "gloss": "Time bent inside Brahmaloka",
             "words": [
-                {"word": "ब्रह्मलोक", "start": 5.5, "end": 6.6},
-                {"word": "में", "start": 6.6, "end": 7.2},
-                {"word": "समय", "start": 7.2, "end": 8.3},
-                {"word": "मुड़ा", "start": 8.3, "end": 9.4},
+                {"word": "ब्रह्मलोक", "start": 5.5, "end": 6.6, "kw": True},
+                {"word": "में", "start": 6.6, "end": 7.2, "kw": False},
+                {"word": "समय", "start": 7.2, "end": 8.3, "kw": True},
+                {"word": "मुड़ा", "start": 8.3, "end": 9.4, "kw": False},
             ],
         },
         {
             "start": 10.4,
             "end": 14.5,
-            "gloss": "Cosmic ocean churned Halahala",
             "words": [
-                {"word": "समुद्र", "start": 10.4, "end": 11.4},
-                {"word": "मंथन", "start": 11.4, "end": 12.5},
-                {"word": "शुरू", "start": 12.5, "end": 13.5},
-                {"word": "हुआ", "start": 13.5, "end": 14.5},
+                {"word": "समुद्र", "start": 10.4, "end": 11.4, "kw": True},
+                {"word": "मंथन", "start": 11.4, "end": 12.4, "kw": True},
+                {"word": "से", "start": 12.4, "end": 12.9, "kw": False},
+                {"word": "हलाहल", "start": 12.9, "end": 13.7, "kw": True},
+                {"word": "निकला", "start": 13.7, "end": 14.5, "kw": False},
             ],
         },
     ]
@@ -133,7 +131,7 @@ def _stage_sample_composition(stage_dir: Path) -> None:
                 "pill_kicker": "SACRED PEAK",
                 "pill_title": "Kailash Horizon & Shiva",
                 "environment": {
-                    "atmosphere_mode": "kailash_twilight",
+                    "atmosphere_mode": "dawn_epic",
                     "horizon_y": 1142,
                     "has_kailash": True,
                     "kailash_scale": 1.24,
@@ -163,7 +161,7 @@ def _stage_sample_composition(stage_dir: Path) -> None:
                 "pill_kicker": "BRAHMALOKA SABHA",
                 "pill_title": "King Kakudmi & Revati",
                 "environment": {
-                    "atmosphere_mode": "palace_interior",
+                    "atmosphere_mode": "palace_court",
                     "horizon_y": 1142,
                     "has_diyas": True,
                 },
@@ -186,7 +184,7 @@ def _stage_sample_composition(stage_dir: Path) -> None:
                 "transition_type": "whip",
                 "transition_duration_sec": 0.36,
                 "environment": {
-                    "atmosphere_mode": "cosmic_manthan",
+                    "atmosphere_mode": "cosmic_explainer",
                     "horizon_y": 1142,
                     "ridge_set": "cosmos",
                     "flora": False,
@@ -195,9 +193,9 @@ def _stage_sample_composition(stage_dir: Path) -> None:
                 "props": [
                     {"id": "kalachakra", "x": 540, "y": 640, "r": 210},
                     {"id": "kurma_avatar", "x": 540, "y": 1180, "scale": 0.9},
-                    {"id": "mount_mandara", "x": 540, "y": 1120, "erupt": 0.3, "scale": 0.9},
+                    {"id": "mount_mandara", "x": 540, "y": 1005, "erupt": 0.3, "scale": 0.9},
                     {"id": "cosmic_ocean", "erupt": 0.3, "baseStartY": 1140},
-                    {"id": "vasuki_serpent", "erupt": 0.3, "churnOsc": 0.25, "layer": "front"},
+                    {"id": "vasuki_serpent", "x": 540, "y": 1005, "scale": 0.9, "erupt": 0.3, "churnOsc": 0.25},
                     {"id": "amrita_kalash", "x": 220, "y": 1142, "scale": 0.95},
                     {"id": "iron_pillar", "x": 870, "y": 1142, "height": 420},
                 ],
@@ -230,6 +228,28 @@ def _stage_sample_composition(stage_dir: Path) -> None:
             }
         ],
     }
+
+    # Copy canonical character, environment, and prop JSON registries for runtime validation inside Chromium
+    for folder in ("characters", "environments", "props"):
+        shutil.copytree(REPO_ROOT / "assets" / folder, stage_dir / "assets" / folder, dirs_exist_ok=True)
+    registry_payload = {
+        "characters": [
+            json.loads(p.read_text(encoding="utf-8"))
+            for p in sorted((REPO_ROOT / "assets" / "characters").glob("*.json"))
+        ],
+        "environments": [
+            json.loads(p.read_text(encoding="utf-8"))
+            for p in sorted((REPO_ROOT / "assets" / "environments").glob("*.json"))
+        ],
+        "props": [
+            json.loads(p.read_text(encoding="utf-8"))
+            for p in sorted((REPO_ROOT / "assets" / "props").glob("*.json"))
+        ],
+    }
+    (stage_dir / "registry_payload.json").write_text(
+        json.dumps(registry_payload, ensure_ascii=False),
+        encoding="utf-8",
+    )
 
     jenv_rt = Environment(loader=FileSystemLoader(str(REPO_ROOT / "templates" / "runtime")))
     (stage_dir / "index.html").write_text(
@@ -416,19 +436,154 @@ const puppeteer = require(path.join(process.env.REPO_ROOT, "node_modules", "pupp
       return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, opacity: Number(getComputedStyle(el).opacity) };
     });
 
-    // Deterministic hf-seek test: jump direct to 7.5s, then scrub forward/backward back to 7.5s
+    // Deterministic hf-seek test: jump direct to 12.6s & 7.5s, then scrub 0 -> 2.5 -> 5.0 -> 7.5 -> 12.6s
     const capturePng = async (t) => {
       return await page.evaluate((sec) => {
         window.dispatchEvent(new CustomEvent("hf-seek", { detail: { time: sec } }));
         return document.getElementById("world-canvas").toDataURL("image/png");
       }, t);
     };
-    const seek2_5 = await capturePng(2.5);
+    const seek12_6_direct = await capturePng(12.6);
     const seek7_5_direct = await capturePng(7.5);
-    await capturePng(12.6);
     await capturePng(0.0);
+    const seek2_5 = await capturePng(2.5);
+    await capturePng(5.0);
     const seek7_5_after_scrub = await capturePng(7.5);
-    const seek12_6 = await capturePng(12.6);
+    const seek12_6_after_scrub = await capturePng(12.6);
+
+    // Module-level checks: all 17 manifest props, all 12 character JSONs, veena_play, Vasuki/Kurma visibility,
+    // all 8 environment JSONs & 0-bird checks for palace_court, archival, cosmic_explainer, cosmic_ocean_manthan
+    const moduleTelemetry = await page.evaluate(async () => {
+      const regRes = await fetch(window.location.origin + "/registry_payload.json");
+      const registry = await regRes.json();
+      const propsMod = await import(window.location.origin + "/runtime/props/props_library.js");
+      const charMod = await import(window.location.origin + "/runtime/rigs/character_engine.js");
+      const dirMod = await import(window.location.origin + "/runtime/core/scene_director.js");
+
+      const countNonZeroAlpha = (ctx, x0 = 0, y0 = 0, w = 1080, h = 1920) => {
+        const d = ctx.getImageData(x0, y0, w, h).data;
+        let cnt = 0;
+        for (let i = 3; i < d.length; i += 4) {
+          if (d[i] > 0) cnt++;
+        }
+        return cnt;
+      };
+
+      const countDiffPixels = (ctxA, ctxB, x0 = 0, y0 = 0, w = 1080, h = 1920) => {
+        const a = ctxA.getImageData(x0, y0, w, h).data;
+        const b = ctxB.getImageData(x0, y0, w, h).data;
+        let diff = 0;
+        for (let i = 0; i < a.length; i += 4) {
+          if (
+            Math.abs(a[i] - b[i]) +
+            Math.abs(a[i + 1] - b[i + 1]) +
+            Math.abs(a[i + 2] - b[i + 2]) +
+            Math.abs(a[i + 3] - b[i + 3]) > 24
+          ) {
+            diff++;
+          }
+        }
+        return diff;
+      };
+
+      const makeCanvas = () => {
+        const cv = document.createElement("canvas");
+        cv.width = 1080;
+        cv.height = 1920;
+        return [cv, cv.getContext("2d")];
+      };
+
+      // 1. All 17 manifest props draw visibly via drawRegisteredProp + default vasuki_serpent is on-screen
+      const propPixels = {};
+      for (const pSpec of registry.props) {
+        const [, pCtx] = makeCanvas();
+        propsMod.drawRegisteredProp(pCtx, { id: pSpec.id }, 1.2, 1.2);
+        propPixels[pSpec.id] = countNonZeroAlpha(pCtx);
+      }
+
+      // 2. Scene 3 Vasuki + Kurma ocean interleaving visibility check (with vs without each prop)
+      const baseProps = [
+        { id: "kurma_avatar", x: 540, y: 1180, scale: 0.9 },
+        { id: "mount_mandara", x: 540, y: 1005, erupt: 0.3, scale: 0.9 },
+        { id: "cosmic_ocean", erupt: 0.3, baseStartY: 1140 },
+        { id: "vasuki_serpent", x: 540, y: 1005, scale: 0.9, erupt: 0.3, churnOsc: 0.25 },
+      ];
+      const [, cAll] = makeCanvas();
+      propsMod.drawPropList(cAll, baseProps, 12.6, 2.6);
+      const [, cNoVasuki] = makeCanvas();
+      propsMod.drawPropList(cNoVasuki, baseProps.filter((x) => x.id !== "vasuki_serpent"), 12.6, 2.6);
+      const [, cNoKurma] = makeCanvas();
+      propsMod.drawPropList(cNoKurma, baseProps.filter((x) => x.id !== "kurma_avatar"), 12.6, 2.6);
+      const vasukiSceneDiff = countDiffPixels(cAll, cNoVasuki, 0, 500, 1080, 620);
+      const kurmaSceneDiff = countDiffPixels(cAll, cNoKurma, 250, 1080, 580, 150);
+
+      // 3. veena_play pose vs neutral pose pixel diff on Revati
+      const [, cVeena] = makeCanvas();
+      charMod.drawMythCharacter(cVeena, { x: 540, y: 1142, scale: 1.0, role: "revati", pose: "veena_play", expr: "serene", t: 7.5 });
+      const [, cNeutral] = makeCanvas();
+      charMod.drawMythCharacter(cNeutral, { x: 540, y: 1142, scale: 1.0, role: "revati", pose: "neutral", expr: "serene", t: 7.5 });
+      const veenaPoseDiff = countDiffPixels(cVeena, cNeutral);
+
+      // 4. All 12 character JSONs match preset defaultScale/headgear/tilak and render non-empty
+      const charResults = {};
+      for (const ch of registry.characters) {
+        const preset = charMod.CHARACTER_PRESETS[ch.id] || {};
+        const [, chCtx] = makeCanvas();
+        charMod.drawMythCharacter(chCtx, {
+          x: 540,
+          y: 1142,
+          id: ch.id,
+          role: ch.rig_role,
+          pose: ch.supported_poses[0],
+          expr: ch.supported_expressions[0],
+          t: 2.0,
+        });
+        charResults[ch.id] = {
+          pixels: countNonZeroAlpha(chCtx),
+          scaleMatch: preset.defaultScale === ch.proportions.defaultScale,
+          headgearMatch: preset.headgear === ch.features.headgear,
+          tilakMatch: preset.tilak === ch.features.tilak,
+          adornmentMatch: preset.adornment === ch.features.adornment,
+        };
+      }
+
+      // 5. All 8 environment JSONs render cleanly & bird presence matches atmosphere_mode/bird_flock
+      const envResults = {};
+      for (const env of registry.environments) {
+        const [eCv, eCtx] = makeCanvas();
+        const planA = {
+          duration_sec: 5.0,
+          enable_contextual_pills: false,
+          vignette_strength: 0,
+          grain_alpha: 0,
+          scenes: [{ s0: 0, s1: 5.0, environment: env, props: [], characters: [] }],
+        };
+        const [noBirdCv] = makeCanvas();
+        const planNoBird = {
+          ...planA,
+          scenes: [{ s0: 0, s1: 5.0, environment: { ...env, bird_flock: false }, props: [], characters: [] }],
+        };
+        const [yesBirdCv] = makeCanvas();
+        const planYesBird = {
+          ...planA,
+          scenes: [{ s0: 0, s1: 5.0, environment: { ...env, bird_flock: true }, props: [], characters: [] }],
+        };
+        dirMod.createEpisodeDirector({ canvas: eCv, episodePlan: planA, compositionId: "env_a_" + env.id });
+        dirMod.createEpisodeDirector({ canvas: noBirdCv, episodePlan: planNoBird, compositionId: "env_nb_" + env.id });
+        dirMod.createEpisodeDirector({ canvas: yesBirdCv, episodePlan: planYesBird, compositionId: "env_yb_" + env.id });
+        window.dispatchEvent(new CustomEvent("hf-seek", { detail: { time: 2.2 } }));
+        const diffNoBird = countDiffPixels(eCtx, noBirdCv.getContext("2d"));
+        const diffYesBird = countDiffPixels(eCtx, yesBirdCv.getContext("2d"));
+        envResults[env.id] = {
+          mode: env.atmosphere_mode,
+          pixels: countNonZeroAlpha(eCtx),
+          diffNoBird,
+          diffYesBird,
+        };
+      }
+
+      return { propPixels, vasukiSceneDiff, kurmaSceneDiff, veenaPoseDiff, charResults, envResults };
+    });
 
     // Check Kailash snow peak clipping bounds directly inside module context:
     // 1) All snow fills (goldRim=0, bright pixels b > 130) lie 100% inside the un-stroked silhouette fill
@@ -483,9 +638,34 @@ const puppeteer = require(path.join(process.env.REPO_ROOT, "node_modules", "pupp
       return { drawn, leakedOuter, leakedSnow };
     });
 
-    // Check captions composition
+    // Check captions composition on a fresh page with hf-seek(12.6) triggered on DOMContentLoaded
+    // BEFORE document.fonts.ready resolves, proving __sutradharFontsReady retains currentT (no clobber to 0)
+    const capPage = await browser.newPage();
+    await capPage.setViewport({ width: 1080, height: 1920, deviceScaleFactor: 1 });
+    capPage.on("pageerror", (err) => errors.push("capPage pageerror: " + err.message));
+    capPage.on("console", (msg) => {
+      if (msg.type() === "error") errors.push("capPage console.error: " + msg.text());
+    });
+    await capPage.evaluateOnNewDocument(() => {
+      window.__capSeekFired = false;
+      document.addEventListener("DOMContentLoaded", () => {
+        window.__capSeekFired = true;
+        window.dispatchEvent(new CustomEvent("hf-seek", { detail: { time: 12.6 } }));
+      });
+    });
+    await capPage.goto(baseUrl + "/captions/captions.html", { waitUntil: "load" });
+    await capPage.evaluate(() => window.__sutradharFontsReady);
+    const afterFonts126 = await capPage.evaluate(() => ({
+      seekFired: window.__capSeekFired,
+      lineText: document.getElementById("caption-line").textContent,
+      glossExists: document.getElementById("caption-gloss") !== null || document.querySelector(".caption-gloss") !== null,
+      kwTexts: [...document.querySelectorAll(".cap-word.kw")].map((el) => el.textContent),
+    }));
+    await capPage.close();
+
     await page.goto(baseUrl + "/captions/captions.html", { waitUntil: "networkidle0" });
     await page.evaluate(() => window.__sutradharFontsReady);
+
     const captionCheck = await page.evaluate(async () => {
       window.dispatchEvent(new CustomEvent("hf-seek", { detail: { time: 2.3 } }));
       await document.fonts.ready;
@@ -494,6 +674,10 @@ const puppeteer = require(path.join(process.env.REPO_ROOT, "node_modules", "pupp
       );
       const g = document.getElementById("caption-group").getBoundingClientRect();
       const active = document.querySelector(".cap-word.active");
+      window.dispatchEvent(new CustomEvent("hf-seek", { detail: { time: 0.7 } }));
+      const kwActiveEl = document.querySelector(".cap-word.kw.active");
+      const kwActiveColor = kwActiveEl ? getComputedStyle(kwActiveEl).color : null;
+      const kwActiveWeight = kwActiveEl ? getComputedStyle(kwActiveEl).fontWeight : null;
       const at0 = (() => {
         window.dispatchEvent(new CustomEvent("hf-seek", { detail: { time: 0.0 } }));
         return document.getElementById("caption-line").textContent;
@@ -504,6 +688,9 @@ const puppeteer = require(path.join(process.env.REPO_ROOT, "node_modules", "pupp
         left: g.left, top: g.top, right: g.right, bottom: g.bottom,
         loadedDeva,
         activeWord: active ? active.textContent : null,
+        kwActiveWord: kwActiveEl ? kwActiveEl.textContent : null,
+        kwActiveColor,
+        kwActiveWeight,
         at0, at23,
       };
     });
@@ -526,11 +713,14 @@ const puppeteer = require(path.join(process.env.REPO_ROOT, "node_modules", "pupp
       fontStatus,
       pillRect,
       kailashBounds,
+      moduleTelemetry,
+      afterFonts126,
       captionCheck,
       thumbFontCheck,
-      seekExactParity: seek7_5_direct === seek7_5_after_scrub,
+      seekExactParity7_5: seek7_5_direct === seek7_5_after_scrub,
+      seekExactParity12_6: seek12_6_direct === seek12_6_after_scrub,
       seekDistinct25vs75: seek2_5 !== seek7_5_direct,
-      seekDistinct75vs126: seek7_5_direct !== seek12_6,
+      seekDistinct75vs126: seek7_5_direct !== seek12_6_direct,
     }));
   } finally {
     await browser.close();
@@ -575,6 +765,46 @@ const puppeteer = require(path.join(process.env.REPO_ROOT, "node_modules", "pupp
                     f"Kailash bright snow pixels leaked past polygon fill: {telemetry['kailashBounds']}",
                 )
 
+                mt = telemetry["moduleTelemetry"]
+                # All 17 manifest props render non-empty
+                self.assertEqual(len(mt["propPixels"]), 17)
+                for prop_id, px in mt["propPixels"].items():
+                    self.assertGreater(px, 500, f"Prop '{prop_id}' rendered insufficient pixels: {px}")
+
+                # Scene 3 Samudra Manthan: Vasuki & Kurma visibly contribute on-screen
+                self.assertGreater(mt["vasukiSceneDiff"], 8000, f"vasuki_serpent missing/off-screen: {mt['vasukiSceneDiff']}")
+                self.assertGreater(mt["kurmaSceneDiff"], 4000, f"kurma_avatar occluded beneath ocean: {mt['kurmaSceneDiff']}")
+
+                # Revati veena_play pose draws distinct instrument + strum posture
+                self.assertGreater(mt["veenaPoseDiff"], 2000, f"veena_play pose did not alter character render: {mt['veenaPoseDiff']}")
+
+                # All 12 character JSONs match preset properties & render cleanly
+                self.assertEqual(len(mt["charResults"]), 12)
+                for char_id, cres in mt["charResults"].items():
+                    self.assertGreater(cres["pixels"], 5000, f"Character '{char_id}' rendered empty")
+                    self.assertTrue(cres["scaleMatch"], f"{char_id} defaultScale mismatch")
+                    self.assertTrue(cres["headgearMatch"], f"{char_id} headgear mismatch")
+                    self.assertTrue(cres["tilakMatch"], f"{char_id} tilak mismatch")
+                    self.assertTrue(cres["adornmentMatch"], f"{char_id} adornment mismatch")
+
+                # All 8 environment JSONs render cleanly & 0 birds in palace_court, archival, cosmic_explainer, cosmic_ocean_manthan
+                self.assertEqual(len(mt["envResults"]), 8)
+                for env_id, eres in mt["envResults"].items():
+                    self.assertGreater(eres["pixels"], 500000, f"Environment '{env_id}' rendered blank")
+                    if eres["mode"] in ("palace_court", "archival", "cosmic_explainer") or env_id == "cosmic_ocean_manthan":
+                        self.assertEqual(eres["diffNoBird"], 0, f"Unexpected birds drawn in {env_id} ({eres['mode']})")
+                    if eres["mode"] == "cosmic_explainer" or env_id == "cosmic_ocean_manthan":
+                        self.assertGreater(eres["diffYesBird"], 50, f"Sanity check failed for {env_id}")
+                    if env_id in ("kailash_horizon", "ashram_twilight"):
+                        self.assertGreater(eres["diffNoBird"], 50, f"Expected birds in {env_id}")
+
+                af126 = telemetry["afterFonts126"]
+                self.assertTrue(af126["seekFired"], "DOMContentLoaded hf-seek did not fire")
+                self.assertFalse(af126["glossExists"], "English .caption-gloss element must be removed")
+                self.assertIn("समुद्र", af126["lineText"])
+                self.assertIn("मंथन", af126["lineText"])
+                self.assertEqual(af126["kwTexts"], ["समुद्र", "मंथन", "हलाहल"])
+
                 cap = telemetry["captionCheck"]
                 self.assertGreaterEqual(cap["left"], 48)
                 self.assertLessEqual(cap["right"], 888)
@@ -582,13 +812,17 @@ const puppeteer = require(path.join(process.env.REPO_ROOT, "node_modules", "pupp
                 self.assertLessEqual(cap["bottom"], 1390)
                 self.assertTrue(cap["loadedDeva"], "Noto Sans Devanagari 800 font failed to load in captions")
                 self.assertEqual(cap["activeWord"], "शांत")
+                self.assertEqual(cap["kwActiveWord"], "कैलाश")
+                self.assertEqual(cap["kwActiveColor"], "rgb(255, 244, 179)")
+                self.assertEqual(cap["kwActiveWeight"], "800")
                 self.assertEqual(cap["at0"], "")
 
                 self.assertEqual(telemetry["thumbFontCheck"]["pillWeight"], "800")
                 self.assertTrue(telemetry["thumbFontCheck"]["inter800"])
                 self.assertTrue(telemetry["thumbFontCheck"]["cinzel800"])
 
-                self.assertTrue(telemetry["seekExactParity"], "hf-seek parity failed after scrub")
+                self.assertTrue(telemetry["seekExactParity7_5"], "hf-seek(7.5s) parity failed after scrub")
+                self.assertTrue(telemetry["seekExactParity12_6"], "hf-seek(12.6s) parity failed after scrub")
                 self.assertTrue(telemetry["seekDistinct25vs75"])
                 self.assertTrue(telemetry["seekDistinct75vs126"])
             finally:

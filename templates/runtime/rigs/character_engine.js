@@ -5,105 +5,133 @@
  * interpolation with Candidate B's hero, royal, sage, and musician presets.
  */
 
-import { clamp, drawGlow, lerp } from "../core/seek_runtime.js";
+import { clamp, drawGlow, drawHalahalaOrb, lerp } from "../core/seek_runtime.js";
 
 export const CHARACTER_PRESETS = {
   shiva: {
     skin: "#DCE6F4", skinDark: "#94A8C8", dhotiA: "#D97A28", dhotiB: "#7C3914",
     sash: "#233C70", trim: "#F6C453", hair: "#201522", lip: "#7D4450", iris: "#26334D",
-    role: "shiva", upperW: 16.5, elbowW: 12.0, wristW: 8.2,
+    role: "shiva", upperW: 16.5, elbowW: 12.0, wristW: 8.2, defaultScale: 0.9,
     headgear: "jatamukuta_chandrama", tilak: "tripundra_trinetra",
+    adornment: "rudraksha_serpent", garment: "tiger_dhoti", tigerSeatDefault: true,
   },
   devi: {
     skin: "#F5C298", skinDark: "#CC865A", dhotiA: "#C92448", dhotiB: "#7A1028",
     sash: "#FFB248", trim: "#FFE282", hair: "#1B1018", lip: "#B83546", iris: "#3E2216",
-    role: "devi", upperW: 13.0, elbowW: 10.0, wristW: 7.2,
+    role: "devi", upperW: 13.0, elbowW: 10.0, wristW: 7.2, defaultScale: 0.86,
     headgear: "karanda_mukuta_odhani", tilak: "kumkum_bindi",
+    adornment: "gold_temple_necklace", garment: "zari_saree", tigerSeatDefault: false,
   },
   brahma: {
     skin: "#F4C294", skinDark: "#D69464", dhotiA: "#F5C453", dhotiB: "#C27C1E",
     sash: "#FCE8C8", trim: "#FFD365", hair: "#ECE6DF", lip: "#8F423B", iris: "#3E2216",
-    role: "brahma", upperW: 16.0, elbowW: 11.8, wristW: 8.0,
+    role: "brahma", upperW: 16.0, elbowW: 11.8, wristW: 8.0, defaultScale: 0.8,
     beard: true, extraArms: true, threeHeads: true,
-    headgear: "kirita_mukuta", tilak: "urdhva_pundra",
+    headgear: "chaturmukha_kirita", tilak: "urdhva_pundra",
+    adornment: "gold_kanthihara", garment: "royal_dhoti", tigerSeatDefault: false,
   },
   vishnu: {
     skin: "#7EB8F0", skinDark: "#4A82C4", dhotiA: "#F6C453", dhotiB: "#C47D18",
     sash: "#D62839", trim: "#FFE680", hair: "#1A1220", lip: "#743E4E", iris: "#26334D",
-    role: "deva", upperW: 16.5, elbowW: 12.0, wristW: 8.2, extraArms: true,
+    role: "deva", upperW: 16.5, elbowW: 12.0, wristW: 8.2, defaultScale: 0.88,
+    extraArms: true,
     headgear: "kirita_mukuta", tilak: "urdhva_pundra",
+    adornment: "kaustubha_vaijayanti", garment: "royal_dhoti", tigerSeatDefault: false,
   },
   shani_dev: {
     skin: "#56638A", skinDark: "#303956", dhotiA: "#263159", dhotiB: "#131830",
     sash: "#D49B35", trim: "#F6C453", hair: "#140D18", lip: "#4C3240", iris: "#1D2640",
-    role: "deva", upperW: 16.5, elbowW: 12.2, wristW: 8.4,
+    role: "deva", upperW: 16.5, elbowW: 12.2, wristW: 8.4, defaultScale: 0.88,
     headgear: "kirita_mukuta", tilak: "tripundra_gold",
+    adornment: "iron_gold_kanthihara", garment: "royal_dhoti", tigerSeatDefault: false,
   },
   surya_dev: {
     skin: "#F6B97A", skinDark: "#CE8444", dhotiA: "#E88224", dhotiB: "#A83E10",
     sash: "#C41E3A", trim: "#FFE875", hair: "#201214", lip: "#984438", iris: "#3E2216",
-    role: "deva", upperW: 16.5, elbowW: 12.0, wristW: 8.2,
-    headgear: "kirita_mukuta", tilak: "surya_tilak",
+    role: "deva", upperW: 16.5, elbowW: 12.0, wristW: 8.2, defaultScale: 0.88,
+    headgear: "kirita_mukuta_solar", tilak: "surya_tilak",
+    adornment: "solar_prabhavali", garment: "royal_dhoti", tigerSeatDefault: false,
   },
   ravana: {
     skin: "#B87C64", skinDark: "#7D4838", dhotiA: "#681930", dhotiB: "#360A18",
     sash: "#B83B28", trim: "#D49B35", hair: "#180D14", lip: "#78302E", iris: "#6E1D1A",
-    role: "asura", upperW: 17.5, elbowW: 13.0, wristW: 8.8,
+    role: "asura", upperW: 17.5, elbowW: 13.0, wristW: 8.8, defaultScale: 0.92,
     headgear: "asura_horned_kirita", tilak: "asura_flame_mark",
+    adornment: "gold_kanthihara", garment: "royal_dhoti", tigerSeatDefault: false,
   },
   kakudmi: {
     skin: "#E8B186", skinDark: "#C88A62", dhotiA: "#E88B2C", dhotiB: "#B5481A",
     sash: "#A61D33", trim: "#FFD365", hair: "#1E1218", lip: "#8F423B", iris: "#3E2216",
-    role: "king", upperW: 16.5, elbowW: 12.2, wristW: 8.4,
+    role: "king", upperW: 16.5, elbowW: 12.2, wristW: 8.4, defaultScale: 0.86,
     headgear: "winged_royal_crown", tilak: "urdhva_pundra",
+    adornment: "emerald_kanthihara", garment: "royal_dhoti", tigerSeatDefault: false,
   },
   balarama: {
     skin: "#6EB3F5", skinDark: "#4584C4", dhotiA: "#F4C23D", dhotiB: "#BA7A14",
     sash: "#2766B8", trim: "#FFE57F", hair: "#1E1218", lip: "#6E4B68", iris: "#26334D",
-    role: "king", upperW: 17.5, elbowW: 12.8, wristW: 8.6,
+    role: "king", upperW: 17.5, elbowW: 12.8, wristW: 8.6, defaultScale: 0.94,
     headgear: "winged_royal_crown", tilak: "urdhva_pundra",
+    adornment: "gold_kanthihara", garment: "royal_dhoti", tigerSeatDefault: false,
   },
   revati: {
     skin: "#F0BC92", skinDark: "#C88860", dhotiA: "#E95A7E", dhotiB: "#A22449",
     sash: "#FFCC92", trim: "#FFE282", hair: "#1B1018", lip: "#B83546", iris: "#3E2216",
-    role: "princess", upperW: 13.0, elbowW: 10.0, wristW: 7.2,
+    role: "princess", upperW: 13.0, elbowW: 10.0, wristW: 7.2, defaultScale: 0.83,
     headgear: "gajara_bun_tiara", tilak: "kumkum_bindi",
+    adornment: "gold_kanthihara", garment: "pleated_lehenga", tigerSeatDefault: false,
   },
   sutradhar_narrator: {
     skin: "#E6AF84", skinDark: "#BE8058", dhotiA: "#D97B2A", dhotiB: "#8C3D12",
     sash: "#FAF0DC", trim: "#F6C453", hair: "#2A1E24", lip: "#8C463E", iris: "#3E2216",
-    role: "sage", upperW: 15.5, elbowW: 11.5, wristW: 8.0, beard: true,
-    headgear: "sage_jataknot", tilak: "tripundra_gold",
+    role: "sage", upperW: 15.5, elbowW: 11.5, wristW: 8.0, defaultScale: 0.85,
+    beard: true,
+    headgear: "sage_jataknot", tilak: "tripundra_chandan",
+    adornment: "rudraksha_mala", garment: "sage_dhoti", tigerSeatDefault: false,
   },
   ancient_scholar: {
     skin: "#E2AA7E", skinDark: "#B67950", dhotiA: "#B65428", dhotiB: "#6E2B14",
     sash: "#F2DFC0", trim: "#E6B245", hair: "#E4DDD4", lip: "#8A463C", iris: "#3E2216",
-    role: "scholar", upperW: 15.2, elbowW: 11.2, wristW: 7.8, beard: true,
+    role: "scholar", upperW: 15.2, elbowW: 11.2, wristW: 7.8, defaultScale: 0.84,
+    beard: true,
     headgear: "sage_jataknot", tilak: "chandan_bindu",
+    adornment: "rudraksha_mala", garment: "sage_dhoti", tigerSeatDefault: false,
   },
   deva: {
     skin: "#EFC396", skinDark: "#C48858", dhotiA: "#E89B2D", dhotiB: "#984216",
     sash: "#9C1C34", trim: "#FFD464", hair: "#1E1218", lip: "#8F423B", iris: "#3E2216",
-    role: "deva", upperW: 16.5, elbowW: 12.0, wristW: 8.2,
+    role: "deva", upperW: 16.5, elbowW: 12.0, wristW: 8.2, defaultScale: 0.9,
     headgear: "kirita_mukuta", tilak: "urdhva_pundra",
+    adornment: "gold_kanthihara", garment: "royal_dhoti", tigerSeatDefault: false,
   },
   asura: {
     skin: "#B87C64", skinDark: "#7D4838", dhotiA: "#681930", dhotiB: "#360A18",
     sash: "#B83B28", trim: "#D49B35", hair: "#180D14", lip: "#78302E", iris: "#6E1D1A",
-    role: "asura", upperW: 16.5, elbowW: 12.2, wristW: 8.4,
+    role: "asura", upperW: 16.5, elbowW: 12.2, wristW: 8.4, defaultScale: 0.9,
     headgear: "asura_horned_kirita", tilak: "asura_flame_mark",
+    adornment: "gold_kanthihara", garment: "royal_dhoti", tigerSeatDefault: false,
   },
   gandharva: {
     skin: "#F0B98C", skinDark: "#C88A62", dhotiA: "#45C4B0", dhotiB: "#187E74",
     sash: "#E68A2E", trim: "#FFD365", hair: "#1E1218", lip: "#8F423B", iris: "#3E2216",
-    role: "deva", upperW: 15.5, elbowW: 11.5, wristW: 8.0,
+    role: "deva", upperW: 15.5, elbowW: 11.5, wristW: 8.0, defaultScale: 0.85,
     headgear: "winged_royal_crown", tilak: "chandan_bindu",
+    adornment: "gold_kanthihara", garment: "royal_dhoti", tigerSeatDefault: false,
   },
 };
 
 export function resolveCharacterPreset(roleOrId = "deva", overrides = {}) {
-  const base = CHARACTER_PRESETS[roleOrId] || CHARACTER_PRESETS.deva;
-  return { ...base, ...overrides };
+  const key = typeof roleOrId === "object" && roleOrId !== null ? roleOrId.id || roleOrId.rig_role || "deva" : roleOrId;
+  const base = CHARACTER_PRESETS[key] || CHARACTER_PRESETS.deva;
+  const spec = typeof roleOrId === "object" && roleOrId !== null ? roleOrId : null;
+  const flatSpec = spec
+    ? {
+        ...(spec.rig_role ? { role: spec.rig_role } : {}),
+        ...(spec.palette || {}),
+        ...(spec.proportions || {}),
+        ...(spec.features || {}),
+      }
+    : {};
+  return { ...base, ...flatSpec, ...overrides };
 }
 
 export function traceCapsule(ctx, x0, y0, r0, x1, y1, r1, skipStartCap = false) {
@@ -372,6 +400,26 @@ export function drawMythFace(ctx, opts) {
     }
   }
 
+  // Solar Prabhavali halo behind Surya Dev's head
+  if (pal.adornment === "solar_prabhavali") {
+    ctx.save();
+    ctx.translate(0, -214);
+    drawGlow(ctx, 0, 0, 26, 108, "rgba(255, 206, 86, 0.56)");
+    ctx.strokeStyle = "rgba(255, 224, 118, 0.72)";
+    ctx.lineWidth = 3.0;
+    ctx.beginPath();
+    ctx.arc(0, 0, 74, 0, Math.PI * 2);
+    ctx.stroke();
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * 76, Math.sin(a) * 76);
+      ctx.lineTo(Math.cos(a) * 94, Math.sin(a) * 94);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   // Back long hair layer
   ctx.fillStyle = pal.hair;
   ctx.strokeStyle = "#120A12";
@@ -498,11 +546,16 @@ export function drawMythFace(ctx, opts) {
     ctx.stroke();
   }
 
-  // Tilak / Tripundra / Trinetra / Bindi
+  // Tilak / Tripundra / Trinetra / Surya Tilak / Bindi
   const fx = shX * 0.92;
   const tilakType = pal.tilak || (effectiveRole === "shiva" ? "tripundra_trinetra" : isFeminine ? "kumkum_bindi" : "urdhva_pundra");
-  if (tilakType === "tripundra_trinetra" || tilakType === "tripundra_gold") {
-    ctx.strokeStyle = tilakType === "tripundra_gold" ? pal.trim : "#FFFFFF";
+  if (tilakType === "tripundra_trinetra" || tilakType === "tripundra_gold" || tilakType === "tripundra_chandan") {
+    ctx.strokeStyle =
+      tilakType === "tripundra_gold"
+        ? pal.trim
+        : tilakType === "tripundra_chandan"
+          ? "#F8DF9C"
+          : "#FFFFFF";
     ctx.lineWidth = 2.6;
     ctx.lineCap = "round";
     for (const ty of [-248, -242.5, -237]) {
@@ -511,13 +564,35 @@ export function drawMythFace(ctx, opts) {
       ctx.quadraticCurveTo(fx, ty - 1.5, fx + 15, ty);
       ctx.stroke();
     }
-    ctx.fillStyle = "#E63946";
+    ctx.fillStyle = tilakType === "tripundra_chandan" ? "#D63638" : "#E63946";
     ctx.strokeStyle = "#5A1216";
     ctx.lineWidth = 1.2;
     ctx.beginPath();
-    ctx.ellipse(fx, -242.5, 3.3, 6.2, 0, 0, Math.PI * 2);
+    if (tilakType === "tripundra_trinetra") {
+      ctx.ellipse(fx, -242.5, 3.3, 6.2, 0, 0, Math.PI * 2);
+    } else {
+      ctx.arc(fx, -242.5, 3.6, 0, Math.PI * 2);
+    }
     ctx.fill();
     ctx.stroke();
+  } else if (tilakType === "surya_tilak") {
+    ctx.strokeStyle = "#FFE67E";
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.moveTo(fx, -254);
+    ctx.lineTo(fx, -234);
+    ctx.stroke();
+    ctx.fillStyle = "#FFB703";
+    ctx.strokeStyle = "#8C2D0C";
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.arc(fx, -242, 6.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#E63946";
+    ctx.beginPath();
+    ctx.arc(fx, -242, 2.8, 0, Math.PI * 2);
+    ctx.fill();
   } else if (tilakType === "kumkum_bindi" || tilakType === "chandan_bindu") {
     ctx.fillStyle = tilakType === "kumkum_bindi" ? "#E62442" : "#F6C453";
     ctx.beginPath();
@@ -723,7 +798,48 @@ export function drawMythFace(ctx, opts) {
     ctx.moveTo(4, -310);
     ctx.quadraticCurveTo(18, -322, 24, -304);
     ctx.stroke();
-  } else if (hg === "karanda_mukuta_odhani" || hg === "gajara_bun_tiara") {
+  } else if (hg === "gajara_bun_tiara") {
+    ctx.fillStyle = pal.hair;
+    ctx.strokeStyle = "#140A12";
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.ellipse(0, -274, 24, 18, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    // Delicate jasmine gajara floral arc around top bun
+    for (let g = -3; g <= 3; g++) {
+      const ga = g * 0.34 - Math.PI * 0.5;
+      const gx = Math.cos(ga) * 23;
+      const gy = -274 + Math.sin(ga) * 18;
+      ctx.fillStyle = "#FFF8E8";
+      ctx.strokeStyle = "#D49B35";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(gx, gy, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+    // Slender royal tiara
+    const tg = ctx.createLinearGradient(0, -304, 0, -256);
+    tg.addColorStop(0, "#FFF2A6");
+    tg.addColorStop(1, "#C98520");
+    ctx.fillStyle = tg;
+    ctx.strokeStyle = "#3B1E10";
+    ctx.lineWidth = 2.1;
+    ctx.beginPath();
+    ctx.moveTo(-25, -257);
+    ctx.lineTo(-14, -278);
+    ctx.lineTo(0, -296);
+    ctx.lineTo(14, -278);
+    ctx.lineTo(25, -257);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#E62442";
+    ctx.beginPath();
+    ctx.arc(0, -270, 4.0, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (hg === "karanda_mukuta_odhani") {
     ctx.fillStyle = pal.hair;
     ctx.beginPath();
     ctx.moveTo(-36, -246);
@@ -773,12 +889,27 @@ export function drawMythFace(ctx, opts) {
   } else {
     const isAsura = hg === "asura_horned_kirita" || effectiveRole === "asura";
     const isWinged = hg === "winged_royal_crown";
+    const isSolar = hg === "kirita_mukuta_solar";
+    const isChaturmukha = hg === "chaturmukha_kirita";
     const cg = ctx.createLinearGradient(-30, -352, 30, -256);
     cg.addColorStop(0, isAsura ? "#B87A32" : "#FFF2A2");
     cg.addColorStop(1, isAsura ? "#5A3018" : "#C47D18");
     ctx.fillStyle = cg;
     ctx.strokeStyle = "#3B1E10";
     ctx.lineWidth = 2.4;
+    if (isSolar) {
+      ctx.save();
+      ctx.strokeStyle = "#FFE066";
+      ctx.lineWidth = 2.6;
+      for (let i = -3; i <= 3; i++) {
+        const a = -Math.PI * 0.5 + i * 0.24;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * 34, -278 + Math.sin(a) * 34);
+        ctx.lineTo(Math.cos(a) * 62, -278 + Math.sin(a) * 62);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
     if (isWinged) {
       for (const s of [-1, 1]) {
         ctx.beginPath();
@@ -794,7 +925,7 @@ export function drawMythFace(ctx, opts) {
     ctx.moveTo(-37, -254);
     ctx.lineTo(-28, -290);
     ctx.lineTo(-17, -320);
-    ctx.lineTo(0, -354);
+    ctx.lineTo(0, isChaturmukha ? -364 : -354);
     ctx.lineTo(17, -320);
     ctx.lineTo(28, -290);
     ctx.lineTo(37, -254);
@@ -802,13 +933,30 @@ export function drawMythFace(ctx, opts) {
     ctx.fill();
     ctx.stroke();
 
+    if (isChaturmukha) {
+      // Tiered Brahma lotus crown bands
+      ctx.strokeStyle = "#FFF7CC";
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(-22, -296);
+      ctx.lineTo(22, -296);
+      ctx.stroke();
+      ctx.fillStyle = "#FF9EBB";
+      ctx.strokeStyle = "#3B1E10";
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.ellipse(0, -365, 8, 5.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+
     ctx.strokeStyle = "#FFF7CC";
     ctx.lineWidth = 2.2;
     ctx.beginPath();
     ctx.moveTo(-28, -272);
     ctx.lineTo(28, -272);
     ctx.stroke();
-    ctx.fillStyle = isAsura ? "#E63946" : "#22D3EE";
+    ctx.fillStyle = isAsura || isSolar ? "#E63946" : "#22D3EE";
     ctx.beginPath();
     ctx.arc(0, -285, 5.2, 0, Math.PI * 2);
     ctx.fill();
@@ -829,6 +977,72 @@ export function drawMythFace(ctx, opts) {
     }
   }
   ctx.restore();
+}
+
+function drawRudrakshaBeads(ctx, ink) {
+  for (let b = -6; b <= 6; b++) {
+    const ang = b * 0.16 + Math.PI * 0.5;
+    const bx = Math.cos(ang) * 44;
+    const by = -126 + Math.sin(ang) * 40;
+    ctx.fillStyle = "#7D4018";
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.arc(bx, by, 5.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+}
+
+function drawStringedInstrument(ctx, kind, t, armCfg) {
+  const isVeena = kind === "veena";
+  drawAnatomicalArm(ctx, -68, -134, -104, -84, -76, -102, { ...armCfg, palmPose: "grip" });
+  ctx.save();
+  ctx.strokeStyle = "#4A2210";
+  ctx.lineWidth = isVeena ? 11 : 10;
+  ctx.beginPath();
+  ctx.moveTo(46, -4);
+  ctx.lineTo(-86, -112);
+  ctx.stroke();
+  if (isVeena) {
+    // Upper Saraswati Veena resonator gourd + curved yali finial
+    ctx.fillStyle = "#B86622";
+    ctx.strokeStyle = "#3B1E12";
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.arc(-56, -86, 14, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = "#F6C453";
+    ctx.lineWidth = 4.0;
+    ctx.beginPath();
+    ctx.moveTo(-86, -112);
+    ctx.quadraticCurveTo(-102, -132, -88, -142);
+    ctx.stroke();
+  }
+  ctx.strokeStyle = "#F6C453";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(42, -8);
+  ctx.lineTo(-82, -108);
+  ctx.stroke();
+  ctx.fillStyle = isVeena ? "#D6822E" : "#C47528";
+  ctx.strokeStyle = "#3B1E12";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(46, -4, isVeena ? 28 : 26, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  if (isVeena) {
+    ctx.strokeStyle = "#FFE58F";
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.arc(46, -4, 15, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
+  const st = Math.sin(t * 7.2) * 10;
+  drawAnatomicalArm(ctx, 68, -134, 96, -64, 26, -24 + st, { ...armCfg, palmPose: "relax" });
 }
 
 export function drawMythCharacter(ctx, opts) {
@@ -857,6 +1071,7 @@ export function drawMythCharacter(ctx, opts) {
   const pal = resolveCharacterPreset(id || role, opts.paletteOverrides || {});
   const effectiveRole = pal.role || role;
   const charScale = scale ?? pal.defaultScale ?? 0.9;
+  const resolvedTigerSeat = opts.tigerSeat !== undefined ? Boolean(opts.tigerSeat) : Boolean(pal.tigerSeatDefault);
   const ink = "#261214";
   const breath = Math.sin(t * 2.1 + x * 0.01) * 2.8;
   const blink = ((t * 0.48 + x * 0.002) % 3.7) > 3.55;
@@ -878,7 +1093,7 @@ export function drawMythCharacter(ctx, opts) {
 
   ctx.scale(dir * charScale, charScale);
 
-  if (seated && tigerSeat) {
+  if (seated && resolvedTigerSeat) {
     ctx.save();
     ctx.fillStyle = "#D47C26";
     ctx.strokeStyle = "#2E1512";
@@ -975,6 +1190,7 @@ export function drawMythCharacter(ctx, opts) {
       ctx.stroke();
     }
     if (isFeminine) {
+      const isLehenga = pal.garment === "pleated_lehenga";
       ctx.fillStyle = gSkirt;
       ctx.beginPath();
       ctx.moveTo(-54, hipY);
@@ -984,9 +1200,10 @@ export function drawMythCharacter(ctx, opts) {
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
-      ctx.strokeStyle = "rgba(58, 6, 18, 0.45)";
-      ctx.lineWidth = 2.4;
-      for (const px of [-24, -8, 10, 28]) {
+      ctx.strokeStyle = isLehenga ? "rgba(255, 226, 130, 0.42)" : "rgba(58, 6, 18, 0.45)";
+      ctx.lineWidth = isLehenga ? 2.6 : 2.4;
+      const pleatXs = isLehenga ? [-68, -42, -16, 14, 42, 68] : [-24, -8, 10, 28];
+      for (const px of pleatXs) {
         ctx.beginPath();
         ctx.moveTo(px * 0.4, hipY + 12);
         ctx.quadraticCurveTo(px * 0.9, -150, px, -24);
@@ -1156,8 +1373,9 @@ export function drawMythCharacter(ctx, opts) {
     }
   }
 
-  // Necklaces & Shiva shoulder serpent
-  if (effectiveRole === "shiva") {
+  // Necklaces, Rudraksha mala, Vaijayanti garland & Shiva shoulder serpent
+  const adornment = pal.adornment || (effectiveRole === "shiva" ? "rudraksha_serpent" : "gold_kanthihara");
+  if (adornment === "rudraksha_serpent") {
     ctx.strokeStyle = ink;
     ctx.lineWidth = 11;
     ctx.lineCap = "round";
@@ -1183,25 +1401,43 @@ export function drawMythCharacter(ctx, opts) {
     ctx.arc(64, -152, 2.0, 0, Math.PI * 2);
     ctx.fill();
 
-    for (let b = -6; b <= 6; b++) {
-      const ang = b * 0.16 + Math.PI * 0.5;
-      const bx = Math.cos(ang) * 44;
-      const by = -126 + Math.sin(ang) * 40;
-      ctx.fillStyle = "#7D4018";
-      ctx.strokeStyle = "#261214";
-      ctx.lineWidth = 1.6;
+    drawRudrakshaBeads(ctx, ink);
+  } else if (adornment === "rudraksha_mala") {
+    drawRudrakshaBeads(ctx, ink);
+  } else {
+    if (adornment === "kaustubha_vaijayanti") {
+      // Flowing Vaijayanti garland across chest
+      ctx.strokeStyle = "#FFF0A8";
+      ctx.lineWidth = 7.5;
       ctx.beginPath();
-      ctx.arc(bx, by, 5.2, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.moveTo(-46, -144);
+      ctx.quadraticCurveTo(0, -14, 46, -144);
+      ctx.stroke();
+      ctx.strokeStyle = "#D62839";
+      ctx.lineWidth = 3.2;
+      ctx.beginPath();
+      ctx.moveTo(-40, -144);
+      ctx.quadraticCurveTo(0, -26, 40, -144);
       ctx.stroke();
     }
-  } else {
-    ctx.strokeStyle = pal.trim;
-    ctx.lineWidth = 6.5;
+    ctx.strokeStyle = adornment === "iron_gold_kanthihara" ? "#434E72" : pal.trim;
+    ctx.lineWidth = adornment === "gold_temple_necklace" ? 8.0 : 6.5;
     ctx.beginPath();
     ctx.arc(0, -148, 42, 0.24, Math.PI - 0.24);
     ctx.stroke();
-    ctx.fillStyle = "#D62839";
+    if (adornment === "gold_temple_necklace" || adornment === "iron_gold_kanthihara") {
+      ctx.strokeStyle = pal.trim;
+      ctx.lineWidth = 3.0;
+      ctx.beginPath();
+      ctx.arc(0, -144, 52, 0.3, Math.PI - 0.3);
+      ctx.stroke();
+    }
+    ctx.fillStyle =
+      adornment === "emerald_kanthihara"
+        ? "#16CE82"
+        : adornment === "iron_gold_kanthihara"
+          ? "#3B82F6"
+          : "#D62839";
     ctx.beginPath();
     ctx.arc(0, -104, 5.5, 0, Math.PI * 2);
     ctx.fill();
@@ -1225,31 +1461,9 @@ export function drawMythCharacter(ctx, opts) {
   }
 
   let palmGlowPos = null;
-  if (instrument === "sitar") {
-    drawAnatomicalArm(ctx, -68, -134, -104, -84, -76, -102, { ...armCfg, palmPose: "grip" });
-    ctx.save();
-    ctx.strokeStyle = "#4A2210";
-    ctx.lineWidth = 10;
-    ctx.beginPath();
-    ctx.moveTo(46, -4);
-    ctx.lineTo(-86, -112);
-    ctx.stroke();
-    ctx.strokeStyle = "#F6C453";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(42, -8);
-    ctx.lineTo(-82, -108);
-    ctx.stroke();
-    ctx.fillStyle = "#C47528";
-    ctx.strokeStyle = "#3B1E12";
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(46, -4, 26, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.restore();
-    const st = Math.sin(t * 7.2) * 10;
-    drawAnatomicalArm(ctx, 68, -134, 96, -64, 26, -24 + st, { ...armCfg, palmPose: "relax" });
+  if (instrument === "sitar" || instrument === "veena" || pose === "veena_play" || pose === "strum") {
+    const instKind = instrument === "sitar" ? "sitar" : "veena";
+    drawStringedInstrument(ctx, instKind, t, armCfg);
   } else if (pose === "namaskar") {
     drawAnatomicalArm(ctx, -68, -134, -84, -74, -14, -92, { ...armCfg, palmPose: "namaskar", handAng: 0.15 });
     drawAnatomicalArm(ctx, 68, -134, 84, -74, 14, -92, { ...armCfg, palmPose: "namaskar", handAng: -0.15 });
@@ -1289,22 +1503,15 @@ export function drawMythCharacter(ctx, opts) {
 
   // Halahala Orb in palm (emerald by default)
   if (palmGlowPos && halahalaInHand > 0.02) {
-    const orbR = 30 * clamp(halahalaInHand, 0.25, 1.15);
-    const glowCol = halahalaColor === "sapphire" ? `rgba(42, 195, 255, ${(0.65 * halahalaInHand).toFixed(3)})` : `rgba(18, 240, 140, ${(0.65 * halahalaInHand).toFixed(3)})`;
-    drawGlow(ctx, palmGlowPos.x, palmGlowPos.y, 4, orbR * 3.6, glowCol);
-    const og = ctx.createRadialGradient(palmGlowPos.x - 7, palmGlowPos.y - 7, 2, palmGlowPos.x, palmGlowPos.y, orbR);
-    og.addColorStop(0, "#D8FFEC");
-    og.addColorStop(0.45, halahalaColor === "sapphire" ? "#1E9BFF" : "#16CE82");
-    og.addColorStop(1, "#0A3A2C");
-    ctx.fillStyle = og;
-    ctx.beginPath();
-    ctx.arc(palmGlowPos.x, palmGlowPos.y, orbR, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "rgba(180, 255, 224, 0.72)";
-    ctx.lineWidth = 2.0;
-    ctx.beginPath();
-    ctx.arc(palmGlowPos.x, palmGlowPos.y, orbR * 0.72, t * 3.5, t * 3.5 + Math.PI * 1.1);
-    ctx.stroke();
+    drawHalahalaOrb(
+      ctx,
+      palmGlowPos.x,
+      palmGlowPos.y,
+      30 * clamp(halahalaInHand, 0.25, 1.15),
+      t,
+      clamp(halahalaInHand, 0, 1),
+      halahalaColor
+    );
   }
 
   // Neck & Sapphire Neelakantha glow

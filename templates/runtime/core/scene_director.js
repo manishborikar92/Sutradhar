@@ -20,6 +20,7 @@ import {
   createAtmosphericPools,
   drawBirdFlock,
   drawClouds,
+  drawCosmicGrid,
   drawFloraSway,
   drawKailashSacredPeak,
   drawMilkyWayBand,
@@ -39,7 +40,7 @@ import {
   drawSteppedDais,
 } from "../backdrops/architectural_stage.js";
 import { drawMythCharacter } from "../rigs/character_engine.js";
-import { drawRegisteredProp } from "../props/props_library.js";
+import { drawOceanWaves, drawPropList } from "../props/props_library.js";
 import {
   createFilmGrainPattern,
   drawAlphaCrossfade,
@@ -66,6 +67,25 @@ function computeSpeechMouthOpen(t) {
   return 0;
 }
 
+function blendSkySpec(skySpec, targetPrefix, blendAmt, fallback) {
+  const baseTop = skySpec.top || fallback.top;
+  const baseMid = skySpec.mid || fallback.mid;
+  const baseBot = skySpec.bot || fallback.bot;
+  if (!(blendAmt > 0.005)) {
+    return [parseHexColor(baseTop), parseHexColor(baseMid), parseHexColor(baseBot)];
+  }
+  const tKey = `${targetPrefix}_top`;
+  const mKey = `${targetPrefix}_mid`;
+  const bKey = `${targetPrefix}_bot`;
+  const k = clamp(blendAmt, 0, 1);
+  const mixHex = (aHex, bHex) => {
+    const a = parseHexColor(aHex);
+    const b = parseHexColor(bHex || aHex);
+    return a.map((v, i) => v + (b[i] - v) * k);
+  };
+  return [mixHex(baseTop, skySpec[tKey]), mixHex(baseMid, skySpec[mKey]), mixHex(baseBot, skySpec[bKey])];
+}
+
 function drawSingleScene(targetCtx, sc, t, localT, atmoPools) {
   const env = sc.environment || {};
   const horizonY = Number(env.horizon_y ?? DEFAULT_HORIZON_Y);
@@ -81,27 +101,54 @@ function drawSingleScene(targetCtx, sc, t, localT, atmoPools) {
     panAmpX,
   });
 
-  const mode = env.atmosphere_mode || "kailash_twilight";
-  if (mode === "palace_interior" || mode === "durbar") {
+  const rawMode = env.atmosphere_mode || "dawn_epic";
+  const isPalaceOrArchival =
+    rawMode === "palace_court" ||
+    rawMode === "archival" ||
+    rawMode === "palace_interior" ||
+    rawMode === "durbar";
+  const isCosmic = rawMode === "cosmic_explainer" || rawMode === "cosmic_manthan";
+
+  if (isPalaceOrArchival) {
     drawPalaceInterior(targetCtx, {
       ...(env.palette || {}),
       panOffsetX: camPanX,
       t,
       hasDiyas: env.has_diyas ?? true,
+      includeCurtains: env.include_curtains,
+      archivalMode: rawMode === "archival",
       horizonY,
     });
-  } else {
-    const sky = env.sky || { top: "#0B112B", mid: "#1F2654", bot: "#6E304B" };
-    drawSky(targetCtx, parseHexColor(sky.top), parseHexColor(sky.mid), parseHexColor(sky.bot), CANVAS_WIDTH, CANVAS_HEIGHT);
-    drawMilkyWayBand(targetCtx, env.milky_way ?? 0.35, ox, oy, CANVAS_WIDTH);
-    drawStars(targetCtx, atmoPools.stars, t, env.star_alpha ?? 0.75, ox, oy);
-    if (env.sun !== null) {
-      const sun = env.sun || {};
+  } else if (isCosmic) {
+    const sky = env.sky || { top: "#05091D", mid: "#0D152E", bot: "#070C1B" };
+    drawSky(
+      targetCtx,
+      parseHexColor(sky.top),
+      parseHexColor(sky.mid),
+      parseHexColor(sky.bot),
+      CANVAS_WIDTH,
+      CANVAS_HEIGHT
+    );
+    drawMilkyWayBand(targetCtx, env.milky_way ?? 0.42, ox, oy, CANVAS_WIDTH);
+    drawStars(targetCtx, atmoPools.stars, t, env.stars_alpha ?? env.star_alpha ?? 0.92, ox, oy);
+
+    if (env.grid && env.grid.enabled !== false) {
+      drawCosmicGrid(
+        targetCtx,
+        env.grid.spacing_px ?? 60,
+        env.grid.color || "rgba(92, 182, 255, 0.08)",
+        CANVAS_WIDTH,
+        CANVAS_HEIGHT
+      );
+    }
+
+    if (env.sun && typeof env.sun === "object") {
+      const sun = env.sun;
       drawSunOrAura(
         targetCtx,
         sun.x ?? 540,
         sun.y ?? 740,
-        sun.r ?? 360,
+        sun.radius ?? sun.r ?? 360,
         sun.intensity ?? sun.glow ?? 0.75,
         sun.ray_strength ?? 0.14,
         sun.ray_count ?? 14,
@@ -111,34 +158,177 @@ function drawSingleScene(targetCtx, sc, t, localT, atmoPools) {
         parseHexColor(sun.mid_col || "#C95E7A")
       );
     }
-    drawClouds(targetCtx, atmoPools.clouds, t, ox, oy, parseHexColor(env.cloud_color || "#FFD6AA"), env.cloud_alpha ?? 0.20, CANVAS_WIDTH);
-    drawRidges(
-      targetCtx,
-      env.ridge_set === "cosmos" ? atmoPools.ridgesCosmos : atmoPools.ridgesKailash,
-      ox,
-      oy,
-      env.warmth ?? 0.35,
-      parseHexColor(env.haze_color || "#8E5E7C"),
-      CANVAS_HEIGHT
-    );
-    if (env.has_kailash) {
-      drawKailashSacredPeak(targetCtx, 540 + ox(0.24), horizonY + 12, env.kailash_scale ?? 1.24);
+
+    if (env.has_clouds === true || (env.cloud_alpha !== undefined && env.cloud_alpha > 0)) {
+      drawClouds(
+        targetCtx,
+        atmoPools.clouds,
+        t,
+        ox,
+        oy,
+        parseHexColor(env.cloud_color || "#FFD6AA"),
+        env.cloud_alpha ?? 0.2,
+        CANVAS_WIDTH
+      );
     }
-    if (env.snow_boulders !== false) {
-      drawSnowyBoulders(targetCtx, env.ground_top || "#27223B", env.ground_bot || "#141022", horizonY, camPanX, t, Boolean(env.has_diyas), CANVAS_WIDTH, CANVAS_HEIGHT);
-    } else {
+
+    if (env.ridge_set || env.has_ridges === true) {
+      drawRidges(
+        targetCtx,
+        env.ridge_set === "kailash" ? atmoPools.ridgesKailash : atmoPools.ridgesCosmos,
+        ox,
+        oy,
+        env.warmth ?? 0.35,
+        parseHexColor(env.haze_color || "#8E5E7C"),
+        CANVAS_HEIGHT
+      );
+    }
+
+    if (env.snow_boulders === true) {
+      drawSnowyBoulders(
+        targetCtx,
+        env.ground_top || "#27223B",
+        env.ground_bot || "#141022",
+        horizonY,
+        camPanX,
+        t,
+        Boolean(env.has_diyas),
+        CANVAS_WIDTH,
+        CANVAS_HEIGHT
+      );
+    } else if (env.ground_top || env.ground_bot || rawMode === "cosmic_manthan") {
       const flGrad = targetCtx.createLinearGradient(0, horizonY, 0, CANVAS_HEIGHT);
-      flGrad.addColorStop(0, env.ground_top || "#27223B");
-      flGrad.addColorStop(1, env.ground_bot || "#141022");
+      flGrad.addColorStop(0, env.ground_top || "#101630");
+      flGrad.addColorStop(1, env.ground_bot || "#060814");
       targetCtx.fillStyle = flGrad;
       targetCtx.fillRect(-160, horizonY, CANVAS_WIDTH + 320, CANVAS_HEIGHT - horizonY + 140);
     }
-    if (env.flora !== false) {
+
+    if (env.flora === true) {
       drawPine(targetCtx, 128 + ox(0.55), horizonY + 4, 240, t, "#151C28");
       drawPine(targetCtx, 956 + ox(0.55), horizonY + 4, 220, t, "#151C28");
       drawFloraSway(targetCtx, 0, CANVAS_WIDTH, horizonY + 4, t, "#1D243C", 18);
     }
-    drawBirdFlock(targetCtx, t, ox, oy, env.bird_color || "rgba(42, 24, 52, 0.72)", CANVAS_WIDTH);
+    if (env.bird_flock === true) {
+      drawBirdFlock(targetCtx, t, ox, oy, env.bird_color || "rgba(42, 24, 52, 0.72)", CANVAS_WIDTH);
+    }
+  } else {
+    const terrain = env.terrain || {};
+    const terrainType = terrain.type || (env.has_kailash ? "kailash_peak_and_ridges" : "ridges_and_flora");
+    const rawSky = env.sky || { top: "#0B112B", mid: "#1F2654", bot: "#6E304B" };
+    const eruptAmt = Number(sc.erupt ?? env.erupt ?? 0);
+    const dawnAmt = Number(sc.dawn ?? env.dawn ?? 0);
+    const [cTop, cMid, cBot] =
+      rawSky.erupt_top && eruptAmt > 0
+        ? blendSkySpec(rawSky, "erupt", eruptAmt, rawSky)
+        : rawSky.dawn_top && dawnAmt > 0
+          ? blendSkySpec(rawSky, "dawn", dawnAmt, rawSky)
+          : [parseHexColor(rawSky.top), parseHexColor(rawSky.mid), parseHexColor(rawSky.bot)];
+    drawSky(targetCtx, cTop, cMid, cBot, CANVAS_WIDTH, CANVAS_HEIGHT);
+    drawMilkyWayBand(targetCtx, env.milky_way ?? 0.35, ox, oy, CANVAS_WIDTH);
+    drawStars(targetCtx, atmoPools.stars, t, env.stars_alpha ?? env.star_alpha ?? 0.75, ox, oy);
+    if (env.sun !== null) {
+      const sun = env.sun || {};
+      drawSunOrAura(
+        targetCtx,
+        sun.x ?? 540,
+        sun.y ?? 740,
+        sun.radius ?? sun.r ?? 360,
+        sun.intensity ?? sun.glow ?? 0.75,
+        sun.ray_strength ?? 0.14,
+        sun.ray_count ?? 14,
+        t,
+        parseHexColor(sun.core_col || "#FFF3D6"),
+        parseHexColor(sun.halo_col || "#FFB866"),
+        parseHexColor(sun.mid_col || "#C95E7A")
+      );
+    }
+    drawClouds(
+      targetCtx,
+      atmoPools.clouds,
+      t,
+      ox,
+      oy,
+      parseHexColor(env.cloud_color || "#FFD6AA"),
+      env.cloud_alpha ?? 0.2,
+      CANVAS_WIDTH
+    );
+    if (terrainType !== "churning_ocean_waves" && env.ridge_set !== false) {
+      drawRidges(
+        targetCtx,
+        env.ridge_set === "cosmos" ? atmoPools.ridgesCosmos : atmoPools.ridgesKailash,
+        ox,
+        oy,
+        env.warmth ?? 0.35,
+        parseHexColor(env.haze_color || "#8E5E7C"),
+        CANVAS_HEIGHT
+      );
+    }
+    if (env.has_kailash || terrainType === "kailash_peak_and_ridges") {
+      drawKailashSacredPeak(
+        targetCtx,
+        540 + ox(0.24),
+        horizonY + 12,
+        terrain.peak_scale ?? env.kailash_scale ?? 1.24,
+        terrain.snow_tint || "rgba(235, 242, 255, 0.78)",
+        terrain.shadow_tint || "#1E224A",
+        terrain.gold_rim ?? 0.65
+      );
+    }
+
+    const floorTop = terrain.floor_top || env.ground_top || "#27223B";
+    const floorBot = terrain.floor_bot || env.ground_bot || "#141022";
+    const hasDiyas = Boolean(terrain.has_diyas ?? env.has_diyas);
+    const hasOceanProp = (sc.props || []).some(
+      (p) => p && (p.id === "cosmic_ocean" || p.id === "samudra_manthan_halahala")
+    );
+
+    if (terrainType === "churning_ocean_waves") {
+      if (!hasOceanProp) {
+        const waveCols =
+          eruptAmt > 0.5 ? terrain.wave_colors_erupt || null : terrain.wave_colors_calm || null;
+        drawOceanWaves(targetCtx, t, eruptAmt, horizonY - 100, null, CANVAS_WIDTH, CANVAS_HEIGHT, waveCols);
+      } else {
+        const seaBg = targetCtx.createLinearGradient(0, horizonY - 40, 0, CANVAS_HEIGHT);
+        seaBg.addColorStop(0, "#0D2448");
+        seaBg.addColorStop(1, "#061022");
+        targetCtx.fillStyle = seaBg;
+        targetCtx.fillRect(-160, horizonY - 40, CANVAS_WIDTH + 320, CANVAS_HEIGHT - horizonY + 180);
+      }
+    } else if (
+      env.snow_boulders === true ||
+      (terrainType === "kailash_peak_and_ridges" && env.snow_boulders !== false)
+    ) {
+      drawSnowyBoulders(
+        targetCtx,
+        floorTop,
+        floorBot,
+        horizonY,
+        camPanX,
+        t,
+        hasDiyas,
+        CANVAS_WIDTH,
+        CANVAS_HEIGHT
+      );
+    } else {
+      const flGrad = targetCtx.createLinearGradient(0, horizonY, 0, CANVAS_HEIGHT);
+      flGrad.addColorStop(0, floorTop);
+      flGrad.addColorStop(1, floorBot);
+      targetCtx.fillStyle = flGrad;
+      targetCtx.fillRect(-160, horizonY, CANVAS_WIDTH + 320, CANVAS_HEIGHT - horizonY + 140);
+    }
+
+    const showFlora = env.flora !== undefined ? Boolean(env.flora) : terrainType !== "churning_ocean_waves";
+    if (showFlora) {
+      drawPine(targetCtx, 128 + ox(0.55), horizonY + 4, 240, t, "#151C28");
+      drawPine(targetCtx, 956 + ox(0.55), horizonY + 4, 220, t, "#151C28");
+      drawFloraSway(targetCtx, 0, CANVAS_WIDTH, horizonY + 4, t, "#1D243C", 18);
+    }
+    const showBirds =
+      env.bird_flock !== undefined ? Boolean(env.bird_flock) : terrainType !== "churning_ocean_waves";
+    if (showBirds) {
+      drawBirdFlock(targetCtx, t, ox, oy, env.bird_color || "rgba(42, 24, 52, 0.72)", CANVAS_WIDTH);
+    }
   }
 
   for (const st of sc.stage_elements || []) {
@@ -148,9 +338,7 @@ function drawSingleScene(targetCtx, sc, t, localT, atmoPools) {
     else if (st.type === "royal_music_stage") drawRoyalMusicStage(targetCtx, st.x ?? 540, st.daisBot ?? 1218, t);
   }
 
-  for (const prop of sc.props || []) {
-    drawRegisteredProp(targetCtx, prop, t, localT);
-  }
+  drawPropList(targetCtx, sc.props || [], t, localT);
 
   if (sc.focus_rack > 0) {
     applyFocusRack(targetCtx, sc.focus_rack);
@@ -165,7 +353,17 @@ function drawSingleScene(targetCtx, sc, t, localT, atmoPools) {
     });
   }
 
-  drawMotes(targetCtx, atmoPools.motes, t, parseHexColor(sc.mote_color || "#FFE8B0"), sc.mote_alpha ?? 0.45, ox, oy, CANVAS_WIDTH, CANVAS_HEIGHT);
+  drawMotes(
+    targetCtx,
+    atmoPools.motes,
+    t,
+    parseHexColor(sc.mote_color || env.motes_color || env.mote_color || "#FFE8B0"),
+    sc.mote_alpha ?? 0.45,
+    ox,
+    oy,
+    CANVAS_WIDTH,
+    CANVAS_HEIGHT
+  );
   targetCtx.restore();
 }
 
@@ -255,11 +453,13 @@ export function renderCoverComposition(canvas, coverConfig = {}) {
   const horizonY = Number(coverConfig.horizon_y ?? 1445);
   const backdrop = coverConfig.backdrop || "cosmic_dawn";
 
-  if (backdrop === "palace_interior") {
+  if (backdrop === "palace_interior" || backdrop === "palace_court" || backdrop === "archival") {
     drawPalaceInterior(ctx, {
       ...(coverConfig.palette || {}),
       t: Number(coverConfig.t ?? 1.0),
       hasDiyas: coverConfig.has_diyas ?? true,
+      includeCurtains: coverConfig.include_curtains,
+      archivalMode: backdrop === "archival",
       horizonY,
     });
   } else {
@@ -317,9 +517,7 @@ export function renderCoverComposition(canvas, coverConfig = {}) {
     }
   }
 
-  for (const prop of coverConfig.props || []) {
-    drawRegisteredProp(ctx, prop, Number(coverConfig.t ?? 1.0), 1.0);
-  }
+  drawPropList(ctx, coverConfig.props || [], Number(coverConfig.t ?? 1.0), 1.0);
   for (const ch of coverConfig.characters || []) {
     drawMythCharacter(ctx, { t: Number(coverConfig.t ?? 1.0), ...ch });
   }

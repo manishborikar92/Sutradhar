@@ -48,27 +48,27 @@
     .cap-word {
       display: inline-block;
       transform-origin: center bottom;
-      color: rgba(232, 228, 222, 0.56);
+      color: rgba(232, 228, 222, 0.62);
+    }
+    .cap-word.kw {
+      font-weight: 800;
+      color: rgba(255, 244, 179, 0.88);
     }
     .cap-word.spoken {
       color: #F6EFE2;
     }
+    .cap-word.kw.spoken {
+      color: #FFF4B3;
+    }
     .cap-word.active {
-      color: #FFD666;
+      color: #FFD750;
       transform: translateY(-2px) scale(1.04);
       text-shadow: 0 0 18px rgba(255, 214, 102, 0.46), 0 3px 14px rgba(3, 4, 12, 0.95);
     }
-    .caption-gloss {
-      font-family: "Inter", sans-serif;
-      font-size: 24px;
-      font-weight: 700;
-      letter-spacing: 0.03em;
-      color: rgba(214, 232, 255, 0.90);
-      background: rgba(8, 12, 28, 0.66);
-      padding: 4px 12px;
-      border-radius: 8px;
-      border-left: 3px solid #FFD666;
-      text-shadow: none;
+    .cap-word.kw.active {
+      color: #FFF4B3;
+      transform: translateY(-2px) scale(1.08);
+      text-shadow: 0 0 22px rgba(255, 244, 179, 0.68), 0 3px 14px rgba(3, 4, 12, 0.95);
     }
   </style>
 </head>
@@ -81,7 +81,6 @@
        data-height="1920">
     <div id="caption-group" class="caption-group" data-layout-allow-safe-zone="true">
       <div id="caption-line" class="caption-line"></div>
-      <div id="caption-gloss" class="caption-gloss" style="display:none;"></div>
     </div>
   </div>
 
@@ -99,13 +98,17 @@
         : (Array.isArray(INLINE_DATA) ? INLINE_DATA : []);
 
       const lineEl = document.getElementById("caption-line");
-      const glossEl = document.getElementById("caption-gloss");
       const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
 
-      // Normalize cues into uniform phrases: { start, end, gloss, words: [{ word, start, end }] }
+      // Normalize cues into uniform Hindi phrases: { start, end, words: [{ word, start, end, kw }] }
       const PHRASES = CUES.map((cue) => {
         const words = Array.isArray(cue.words) && cue.words.length > 0
-          ? cue.words
+          ? cue.words.map((w) => ({
+              word: String(w.word ?? w.text ?? ""),
+              start: Number(w.start || 0),
+              end: Number(w.end || 0),
+              kw: Boolean(w.kw),
+            }))
           : String(cue.text || "")
               .trim()
               .split(/\s+/)
@@ -117,20 +120,23 @@
                   word: w,
                   start: (Number(cue.start) || 0) + idx * wDur,
                   end: (Number(cue.start) || 0) + (idx + 1) * wDur,
+                  kw: false,
                 };
               });
         return {
           start: Number(cue.start ?? (words[0] ? words[0].start : 0)),
           end: Number(cue.end ?? (words[words.length - 1] ? words[words.length - 1].end : 0)),
-          gloss: cue.gloss ? String(cue.gloss) : "",
           words,
         };
       });
 
       let lastRenderKey = "";
+      let currentT = 0;
+      let timelineProxy = null;
 
       function renderCaptionsAt(rawT) {
         const t = clamp(Number(rawT) || 0, 0, DURATION);
+        currentT = t;
         let activePhrase = null;
         for (let i = 0; i < PHRASES.length; i++) {
           const p = PHRASES[i];
@@ -142,7 +148,6 @@
         if (!activePhrase) {
           if (lastRenderKey !== "empty") {
             lineEl.innerHTML = "";
-            glossEl.style.display = "none";
             lastRenderKey = "empty";
           }
           return;
@@ -154,7 +159,7 @@
           if (t >= words[i].start) activeIdx = i;
         }
 
-        // Slide cleanly in 5-word windows so line fits inside max-height: 144px
+        // Slide cleanly in 5-word windows so two-line Devanagari cues stay strictly within max-height: 144px
         const page = Math.floor(activeIdx / MAX_WINDOW_WORDS);
         const startIdx = page * MAX_WINDOW_WORDS;
         const endIdx = Math.min(words.length, startIdx + MAX_WINDOW_WORDS);
@@ -166,7 +171,7 @@
         for (let i = startIdx; i < endIdx; i++) {
           const w = words[i];
           const span = document.createElement("span");
-          span.className = "cap-word";
+          span.className = "cap-word" + (w.kw ? " kw" : "");
           if (i === activeIdx && t <= w.end + 0.08) {
             span.classList.add("active");
           } else if (t >= w.start) {
@@ -177,32 +182,36 @@
         }
         lineEl.innerHTML = "";
         lineEl.appendChild(frag);
-
-        if (activePhrase.gloss) {
-          glossEl.textContent = activePhrase.gloss;
-          glossEl.style.display = "block";
-        } else {
-          glossEl.style.display = "none";
-        }
       }
 
+      let timelineRef = null;
       if (window.gsap) {
-        const proxy = { t: 0 };
-        const tl = window.gsap.timeline({ paused: true });
-        tl.fromTo(
-          proxy,
+        timelineProxy = { t: 0 };
+        timelineRef = window.gsap.timeline({ paused: true });
+        timelineRef.fromTo(
+          timelineProxy,
           { t: 0 },
-          { t: DURATION, duration: DURATION, ease: "none", onUpdate: () => renderCaptionsAt(proxy.t) },
+          {
+            t: DURATION,
+            duration: DURATION,
+            ease: "none",
+            immediateRender: false,
+            lazy: false,
+            onUpdate: () => renderCaptionsAt(timelineProxy.t),
+          },
           0
         );
         window.__timelines = window.__timelines || {};
-        window.__timelines["{{ composition_id | default('captions') }}"] = tl;
+        window.__timelines["{{ composition_id | default('captions') }}"] = timelineRef;
       }
 
       window.addEventListener("hf-seek", (evt) => {
         const target = evt && evt.detail ? evt.detail.time : undefined;
         if (typeof target === "number" && Number.isFinite(target)) {
-          renderCaptionsAt(target);
+          const clamped = clamp(target, 0, DURATION);
+          if (timelineRef) timelineRef.time(clamped, true);
+          if (timelineProxy) timelineProxy.t = clamped;
+          renderCaptionsAt(clamped);
         }
       });
 
@@ -210,11 +219,19 @@
       renderCaptionsAt(0);
 
       if (document.fonts && document.fonts.ready) {
-        window.__sutradharFontsReady = document.fonts.ready.then(() => {
-          lastRenderKey = "";
-          renderCaptionsAt(0);
-          return true;
-        });
+        const preloadDeva = typeof document.fonts.load === "function"
+          ? Promise.all([
+              document.fonts.load('700 46px "Noto Sans Devanagari"', "क").catch(() => []),
+              document.fonts.load('800 46px "Noto Sans Devanagari"', "क").catch(() => []),
+            ])
+          : Promise.resolve([]);
+        window.__sutradharFontsReady = preloadDeva
+          .then(() => document.fonts.ready)
+          .then(() => {
+            lastRenderKey = "";
+            renderCaptionsAt(currentT);
+            return true;
+          });
       } else {
         window.__sutradharFontsReady = Promise.resolve(true);
       }

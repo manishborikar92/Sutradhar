@@ -31,6 +31,6 @@
     "threeHeads": false,
     "tigerSeatDefault": false
   },
-  "supported_poses": ["neutral", "gesture", "namaskar", "bless"],
+  "supported_poses": ["neutral", "gesture", "namaskar", "bless", "pull"],
   "supported_expressions": ["serene", "smile", "compassionate", "determined"]
 }

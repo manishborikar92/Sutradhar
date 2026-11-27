@@ -8,26 +8,52 @@ import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
   DEFAULT_HORIZON_Y,
+  drawDiya,
   drawGlow,
   lerp,
 } from "../core/seek_runtime.js";
 
+/**
+ * Normalize snake_case environment JSON palettes and camelCase JS overrides uniformly.
+ */
+export function normalizePalacePalette(opts = {}) {
+  const includeCurtains = opts.includeCurtains ?? opts.include_curtains;
+  const rawCurtain = opts.curtainCol ?? opts.curtain ?? null;
+  return {
+    wallTop: opts.wallTop ?? opts.wall_top ?? "#3B162C",
+    wallBot: opts.wallBot ?? opts.wall_bot ?? "#5E233A",
+    dadoTop: opts.dadoTop ?? opts.dado_top ?? "#3D1824",
+    floorColA: opts.floorColA ?? opts.floor_a ?? opts.floorCol ?? "#7C4C30",
+    floorColB: opts.floorColB ?? opts.floor_b ?? "#4A2B1C",
+    curtainCol: includeCurtains === false ? null : rawCurtain,
+    carpetCol: opts.carpetCol ?? opts.carpet ?? null,
+    panOffsetX: Number(opts.panOffsetX ?? 0),
+    t: Number(opts.t ?? 0),
+    hasDiyas: opts.hasDiyas ?? opts.has_diyas ?? true,
+    archivalMode: Boolean(opts.archivalMode ?? opts.archival_mode),
+    horizonY: Number(opts.horizonY ?? opts.horizon_y ?? DEFAULT_HORIZON_Y),
+    width: Number(opts.width ?? CANVAS_WIDTH),
+    height: Number(opts.height ?? CANVAS_HEIGHT),
+  };
+}
+
 export function drawPalaceInterior(ctx, opts = {}) {
   const {
-    wallTop = "#3B162C",
-    wallBot = "#5E233A",
-    dadoTop = "#3D1824",
-    floorColA = "#7C4C30",
-    floorColB = "#4A2B1C",
-    curtainCol = null,
-    carpetCol = null,
-    panOffsetX = 0,
-    t = 0,
-    hasDiyas = true,
-    horizonY = DEFAULT_HORIZON_Y,
-    width = CANVAS_WIDTH,
-    height = CANVAS_HEIGHT,
-  } = opts;
+    wallTop,
+    wallBot,
+    dadoTop,
+    floorColA,
+    floorColB,
+    curtainCol,
+    carpetCol,
+    panOffsetX,
+    t,
+    hasDiyas,
+    archivalMode,
+    horizonY,
+    width,
+    height,
+  } = normalizePalacePalette(opts);
 
   const sky = ctx.createLinearGradient(0, 0, 0, horizonY);
   sky.addColorStop(0, wallTop);
@@ -55,6 +81,27 @@ export function drawPalaceInterior(ctx, opts = {}) {
     ctx.strokeRect(x + 34, dadoY + 36, 152, 174);
   }
 
+  if (archivalMode) {
+    // Arched sandstone library alcoves & manuscript shelves for Nalanda archival mode
+    for (let ax = -180; ax < width + 780; ax += 360) {
+      ctx.fillStyle = "rgba(18, 10, 8, 0.42)";
+      ctx.strokeStyle = "rgba(230, 178, 69, 0.34)";
+      ctx.lineWidth = 2.6;
+      ctx.beginPath();
+      ctx.moveTo(ax, dadoY);
+      ctx.lineTo(ax, dadoY - 340);
+      ctx.arc(ax + 110, dadoY - 340, 110, Math.PI, 0, false);
+      ctx.lineTo(ax + 220, dadoY);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      for (const sy of [dadoY - 95, dadoY - 195, dadoY - 295]) {
+        ctx.fillStyle = "rgba(164, 102, 48, 0.48)";
+        ctx.fillRect(ax + 18, sy, 184, 10);
+      }
+    }
+  }
+
   for (let px = -120; px <= width + 980; px += 460) {
     const pg = ctx.createLinearGradient(px, 0, px + 68, 0);
     pg.addColorStop(0, "rgba(255, 212, 128, 0.22)");
@@ -71,17 +118,17 @@ export function drawPalaceInterior(ctx, opts = {}) {
 
   if (hasDiyas) {
     for (let dx = -180; dx <= width + 860; dx += 145) {
-      const dy = dadoY - 6;
-      const fl = 0.82 + Math.sin(t * 9.2 + dx) * 0.16;
-      drawGlow(ctx, dx, dy - 16, 4, 46 * fl, "rgba(255, 220, 120, 0.70)");
-      ctx.fillStyle = "#B64A26";
-      ctx.beginPath();
-      ctx.ellipse(dx, dy, 20, 8, 0, 0, Math.PI);
-      ctx.fill();
-      ctx.fillStyle = "#FFE67E";
-      ctx.beginPath();
-      ctx.ellipse(dx, dy - 14 * fl, 6, 11 * fl, 0, 0, Math.PI * 2);
-      ctx.fill();
+      drawDiya(ctx, dx, dadoY - 6, t, {
+        phase: dx,
+        radiusW: 20,
+        radiusH: 8,
+        flameW: 6,
+        flameH: 11,
+        glowR: 46,
+        glowAlpha: 0.7,
+        flickerSpeed: 9.2,
+        flickerAmp: 0.16,
+      });
     }
   }
   ctx.restore();

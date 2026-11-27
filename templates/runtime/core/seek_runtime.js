@@ -61,6 +61,62 @@ export function drawGlow(ctx, x, y, rIn, rOut, colIn, colOut = "rgba(0, 0, 0, 0)
 }
 
 /**
+ * Shared earthen diya lamp with soft radial glow and deterministic flickering flame.
+ */
+export function drawDiya(ctx, x, y, t = 0, opts = {}) {
+  const {
+    phase = x,
+    radiusW = 18,
+    radiusH = 7.5,
+    flameW = 5.8,
+    flameH = 10.5,
+    glowR = 47,
+    glowAlpha = 0.7,
+    flickerSpeed = 9.0,
+    flickerAmp = 0.15,
+  } = opts;
+  const fl = (1 - flickerAmp) + Math.sin(t * flickerSpeed + phase) * flickerAmp;
+  drawGlow(ctx, x, y - flameH * 1.4, 4, glowR * fl, `rgba(255, 216, 120, ${clamp(glowAlpha, 0, 1).toFixed(3)})`);
+  ctx.fillStyle = "#B64A26";
+  ctx.beginPath();
+  ctx.ellipse(x, y, radiusW, radiusH, 0, 0, Math.PI);
+  ctx.fill();
+  ctx.fillStyle = "#FFE67E";
+  ctx.beginPath();
+  ctx.ellipse(x, y - (flameH + 2) * fl, flameW, flameH * fl, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+/**
+ * Shared glowing Halahala orb (emerald or sapphire) with rotating spiral arc.
+ */
+export function drawHalahalaOrb(ctx, x, y, r = 30, t = 0, alpha = 1.0, color = "emerald") {
+  if (alpha <= 0.02) return;
+  const a = clamp(alpha, 0, 1);
+  const isSapphire = color === "sapphire";
+  const glowCol = isSapphire
+    ? `rgba(42, 195, 255, ${(0.65 * a).toFixed(3)})`
+    : `rgba(18, 240, 140, ${(0.65 * a).toFixed(3)})`;
+  ctx.save();
+  ctx.globalAlpha = a;
+  drawGlow(ctx, x, y, 4, r * 3.6, glowCol);
+  const og = ctx.createRadialGradient(x - r * 0.23, y - r * 0.23, 2, x, y, safeR(r));
+  og.addColorStop(0, "#D8FFEC");
+  og.addColorStop(0.45, isSapphire ? "#1E9BFF" : "#16CE82");
+  og.addColorStop(1, isSapphire ? "#0A224A" : "#0A3A2C");
+  ctx.fillStyle = og;
+  ctx.beginPath();
+  ctx.arc(x, y, safeR(r), 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = isSapphire ? "rgba(180, 232, 255, 0.72)" : "rgba(180, 255, 224, 0.72)";
+  ctx.lineWidth = 2.0;
+  ctx.beginPath();
+  ctx.arc(x, y, safeR(r * 0.72), t * 3.5, t * 3.5 + Math.PI * 1.1);
+  ctx.stroke();
+  ctx.restore();
+}
+
+/**
  * Compute parallax offset helpers for depth factors in [0.03 .. 1.0].
  */
 export function createParallaxOffsets(panX = 0, panY = 0) {
@@ -152,6 +208,8 @@ export function mountDeterministicRuntime({ compositionId, duration, renderWorld
       t: duration,
       duration,
       ease: "none",
+      immediateRender: false,
+      lazy: false,
       onUpdate: () => renderAt(proxy.t),
     },
     0
@@ -160,8 +218,10 @@ export function mountDeterministicRuntime({ compositionId, duration, renderWorld
   window.addEventListener("hf-seek", (evt) => {
     const targetTime = evt && evt.detail ? evt.detail.time : undefined;
     if (typeof targetTime === "number" && Number.isFinite(targetTime)) {
-      proxy.t = clamp(targetTime, 0, duration);
-      renderAt(proxy.t);
+      const clamped = clamp(targetTime, 0, duration);
+      tl.time(clamped, true);
+      proxy.t = clamped;
+      renderAt(clamped);
     }
   });
 

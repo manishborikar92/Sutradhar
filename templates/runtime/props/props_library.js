@@ -10,6 +10,7 @@ import {
   CANVAS_WIDTH,
   clamp,
   drawGlow,
+  drawHalahalaOrb,
   easeOutBack,
   easeOutCubic,
   lerp,
@@ -19,6 +20,8 @@ import {
   safeR,
   smooth,
 } from "../core/seek_runtime.js";
+
+export { drawHalahalaOrb };
 
 export function drawGroundedTrishul(ctx, x, floorY, h = 430) {
   ctx.save();
@@ -271,11 +274,11 @@ export function drawVasukiSerpent(ctx, t, erupt, churnOsc, layer = "front") {
     { ry: -60, rw: 194 },
   ];
 
-  if (layer === "back") {
+  if (layer === "back" || layer === "both") {
     for (const { ry, rw } of coilSpec) {
       drawContinuousRibbon(sampleQuad(-rw, ry - 4, 0, ry - 42, rw, ry - 4, 18), 18, 18);
     }
-    return;
+    if (layer === "back") return;
   }
 
   for (const ring of [0, 2]) {
@@ -367,8 +370,22 @@ export function drawVasukiSerpent(ctx, t, erupt, churnOsc, layer = "front") {
   ctx.restore();
 }
 
-export function drawOceanWaves(ctx, t, erupt = 0, baseStartY = 1042, drawMidBackHook = null, width = CANVAS_WIDTH, height = CANVAS_HEIGHT) {
-  const waveCols = erupt > 0.5 ? ["#124B44", "#0E3D3A", "#092B34", "#061624"] : ["#265E94", "#1B4678", "#112D54", "#081430"];
+export function drawOceanWaves(
+  ctx,
+  t,
+  erupt = 0,
+  baseStartY = 1042,
+  drawMidBackHook = null,
+  width = CANVAS_WIDTH,
+  height = CANVAS_HEIGHT,
+  waveColorsOverride = null
+) {
+  const waveCols =
+    Array.isArray(waveColorsOverride) && waveColorsOverride.length >= 4
+      ? waveColorsOverride
+      : erupt > 0.5
+        ? ["#124B44", "#0E3D3A", "#092B34", "#061624"]
+        : ["#265E94", "#1B4678", "#112D54", "#081430"];
   for (let w = 0; w < 4; w++) {
     if (w === 1 && typeof drawMidBackHook === "function") {
       drawMidBackHook();
@@ -388,27 +405,6 @@ export function drawOceanWaves(ctx, t, erupt = 0, baseStartY = 1042, drawMidBack
     ctx.lineWidth = 3.2;
     ctx.stroke();
   }
-}
-
-export function drawHalahalaOrb(ctx, x, y, r = 30, t = 0, alpha = 1.0) {
-  if (alpha <= 0.02) return;
-  ctx.save();
-  ctx.globalAlpha = clamp(alpha, 0, 1);
-  drawGlow(ctx, x, y, 4, r * 3.6, "rgba(18, 240, 140, 0.65)");
-  const og = ctx.createRadialGradient(x - r * 0.23, y - r * 0.23, 2, x, y, r);
-  og.addColorStop(0, "#D8FFEC");
-  og.addColorStop(0.45, "#16CE82");
-  og.addColorStop(1, "#0A3A2C");
-  ctx.fillStyle = og;
-  ctx.beginPath();
-  ctx.arc(x, y, safeR(r), 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = "rgba(180, 255, 224, 0.72)";
-  ctx.lineWidth = 2.0;
-  ctx.beginPath();
-  ctx.arc(x, y, safeR(r * 0.72), t * 3.5, t * 3.5 + Math.PI * 1.1);
-  ctx.stroke();
-  ctx.restore();
 }
 
 export function drawAmritaKalash(ctx, x, floorY, scale = 1.0) {
@@ -1028,9 +1024,105 @@ export function drawIronPillar(ctx, x, floorY, height = 560) {
 }
 
 const KALACHAKRA_DEFAULT_TINT = parseHexColor("#FFD480");
+const SHANI_MANDALA_TINT = parseHexColor("#7EB8FF");
+
+export function drawShaniDrishtiMandala(
+  ctx,
+  cx,
+  cy,
+  r = 220,
+  t = 0,
+  speed = 1.0,
+  opacity = 0.92,
+  tint = SHANI_MANDALA_TINT
+) {
+  if (opacity <= 0.01) return;
+  drawKalachakra(ctx, cx, cy, r, t, speed, opacity, tint);
+
+  // Overlay Shani's 3rd, 7th, and 10th house Vedic Drishti karmic aspect rays + Saturn ring hub
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.globalCompositeOperation = "lighter";
+  for (const houseOffset of [2, 6, 9]) {
+    const ang = (houseOffset / 12) * Math.PI * 2 + t * 0.14 * speed - Math.PI * 0.5;
+    ctx.strokeStyle = `rgba(255, 118, 86, ${(0.55 * opacity).toFixed(3)})`;
+    ctx.lineWidth = 2.6;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(Math.cos(ang) * r * 0.94, Math.sin(ang) * r * 0.94);
+    ctx.stroke();
+
+    ctx.fillStyle = `rgba(255, 198, 102, ${(0.82 * opacity).toFixed(3)})`;
+    ctx.beginPath();
+    ctx.arc(Math.cos(ang) * r * 0.94, Math.sin(ang) * r * 0.94, 7.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.strokeStyle = `rgba(180, 218, 255, ${(0.85 * opacity).toFixed(3)})`;
+  ctx.lineWidth = 2.8;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, r * 0.24, r * 0.085, -0.32, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+export function drawSamudraManthanEnsemble(ctx, p = {}, t = 0) {
+  const px = Number(p.x ?? 540);
+  const py = Number(p.y ?? 980);
+  const sc = Number(p.scale ?? 1.0);
+  const erupt = Number(p.erupt ?? 0.45);
+  const churnOsc = p.churnOsc ?? Math.sin(t * 3.8) * 18;
+  const shiftX = px + churnOsc * 0.25;
+
+  ctx.save();
+  ctx.translate(shiftX, py);
+  if (sc !== 1.0) ctx.scale(sc, sc);
+  drawVasukiSerpent(ctx, t, erupt, churnOsc, "back");
+  drawMountMandara(ctx, 0, 0, erupt, 1.0);
+  drawVasukiSerpent(ctx, t, erupt, churnOsc, "front");
+  ctx.restore();
+
+  const kurmaY = Number(p.kurmaY ?? py + 132 * sc);
+  const waveStartY = Number(p.baseStartY ?? py + 62 * sc);
+  drawOceanWaves(
+    ctx,
+    t,
+    erupt,
+    waveStartY,
+    () => drawKurmaAvatar(ctx, shiftX, kurmaY, sc),
+    CANVAS_WIDTH,
+    CANVAS_HEIGHT,
+    p.waveColors ?? null
+  );
+
+  drawHalahalaOrb(
+    ctx,
+    px,
+    py - 240 * sc,
+    Number(p.orbRadius ?? 42) * sc,
+    t,
+    clamp(0.45 + erupt * 0.55, 0.45, 1.0),
+    p.halahalaColor ?? "emerald"
+  );
+}
+
+const drawKalachakraProp = (c, p, t) =>
+  drawKalachakra(
+    c,
+    p.x ?? 540,
+    p.y ?? 820,
+    p.r ?? 220,
+    p.t ?? t,
+    p.speed ?? 1.0,
+    p.opacity ?? 0.9,
+    p.tint ? parseHexColor(p.tint) : KALACHAKRA_DEFAULT_TINT
+  );
+
+const drawIronPillarProp = (c, p) => drawIronPillar(c, p.x ?? 540, p.y ?? 1142, p.height ?? 560);
 
 /**
  * Shared declarative prop dispatch table used by both video scenes and cover thumbnails.
+ * Covers all 17 canonical IDs in assets/manifest.yaml plus runtime scene aliases.
  */
 export const PROP_DRAWERS = {
   trishul: (c, p) => {
@@ -1045,11 +1137,30 @@ export const PROP_DRAWERS = {
     drawGroundedTrishul(c, 0, 0, Number(p.h ?? 452));
     c.restore();
   },
-  kurma_avatar: (c, p) => drawKurmaAvatar(c, p.x ?? 540, p.y ?? 1210, p.scale ?? 1.0),
-  mount_mandara: (c, p) => drawMountMandara(c, p.x ?? 540, p.y ?? 1160, p.erupt ?? 0.1, p.scale ?? 1.0),
-  vasuki_serpent: (c, p, t) => drawVasukiSerpent(c, t, p.erupt ?? 0.25, p.churnOsc ?? Math.sin(t * 2.2), p.layer ?? "front"),
-  cosmic_ocean: (c, p, t) => drawOceanWaves(c, t, p.erupt ?? 0.2, p.baseStartY ?? 1042),
-  halahala_orb: (c, p, t) => drawHalahalaOrb(c, p.x ?? 540, p.y ?? 860, p.r ?? 44, t, p.alpha ?? 1.0),
+  kurma_avatar: (c, p) => drawKurmaAvatar(c, p.x ?? 540, p.y ?? 1112, p.scale ?? 1.0),
+  mount_mandara: (c, p) => drawMountMandara(c, p.x ?? 540, p.y ?? 980, p.erupt ?? 0.1, p.scale ?? 1.0),
+  vasuki_serpent: (c, p, t) => {
+    const sc = Number(p.scale ?? 1.0);
+    c.save();
+    c.translate(p.x ?? 540, p.y ?? 980);
+    if (sc !== 1.0) c.scale(sc, sc);
+    drawVasukiSerpent(c, t, p.erupt ?? 0.25, p.churnOsc ?? Math.sin(t * 2.2), p.layer ?? "both");
+    c.restore();
+  },
+  cosmic_ocean: (c, p, t) =>
+    drawOceanWaves(
+      c,
+      t,
+      p.erupt ?? 0.2,
+      p.baseStartY ?? 1042,
+      p.drawMidBackHook ?? null,
+      CANVAS_WIDTH,
+      CANVAS_HEIGHT,
+      p.waveColors ?? null
+    ),
+  samudra_manthan_halahala: (c, p, t) => drawSamudraManthanEnsemble(c, p, t),
+  halahala_orb: (c, p, t) =>
+    drawHalahalaOrb(c, p.x ?? 540, p.y ?? 860, p.r ?? 44, t, p.alpha ?? 1.0, p.color ?? "emerald"),
   amrita_kalash: (c, p) => drawAmritaKalash(c, p.x ?? 540, p.y ?? 1142, p.scale ?? 1.0),
   brass_clock: (c, p, t) =>
     drawBrassClock(
@@ -1079,21 +1190,98 @@ export const PROP_DRAWERS = {
   spacetime_comparator: (c, p, t) =>
     drawSpacetimeComparator(c, p.t ?? t, p.leftTitle ?? "RELATIVITY", p.rightTitle ?? "SURYA SIDDHANTA"),
   wedding_mandap: (c, p, t) => drawWeddingMandap(c, p.floorY ?? 1230, p.t ?? t),
-  kalachakra: (c, p, t) =>
-    drawKalachakra(
+  kalachakra: drawKalachakraProp,
+  brahmaloka_time_chakra: drawKalachakraProp,
+  shani_drishti_mandala: (c, p, t) =>
+    drawShaniDrishtiMandala(
       c,
       p.x ?? 540,
-      p.y ?? 820,
+      p.y ?? 760,
       p.r ?? 220,
       p.t ?? t,
       p.speed ?? 1.0,
-      p.opacity ?? 0.9,
-      p.tint ? parseHexColor(p.tint) : KALACHAKRA_DEFAULT_TINT
+      p.opacity ?? 0.92,
+      p.tint ? parseHexColor(p.tint) : SHANI_MANDALA_TINT
     ),
-  iron_pillar: (c, p) => drawIronPillar(c, p.x ?? 540, p.y ?? 1142, p.height ?? 560),
+  iron_pillar: drawIronPillarProp,
+  mehrauli_iron_pillar: drawIronPillarProp,
 };
 
+function resolvePropKey(prop) {
+  if (!prop) return null;
+  if (prop.id && PROP_DRAWERS[prop.id]) return prop.id;
+  if (prop.kind && PROP_DRAWERS[prop.kind]) return prop.kind;
+  return null;
+}
+
 export function drawRegisteredProp(ctx, prop, t = 0, localT = 0) {
-  const fn = PROP_DRAWERS[prop.id];
-  if (fn) fn(ctx, prop, t, localT);
+  const key = resolvePropKey(prop);
+  if (key) PROP_DRAWERS[key](ctx, prop, t, localT);
+}
+
+/**
+ * Declarative scene prop list renderer handling Kurma-in-ocean wave interleaving
+ * and Vasuki-around-Mandara back/front wrapping automatically.
+ */
+export function drawPropList(ctx, props = [], t = 0, localT = 0) {
+  if (!Array.isArray(props) || props.length === 0) return;
+
+  const keyed = props.map((p) => ({ prop: p, key: resolvePropKey(p) }));
+  const kurmaProps = keyed.filter((item) => item.key === "kurma_avatar").map((item) => item.prop);
+  const hasOcean = keyed.some((item) => item.key === "cosmic_ocean");
+  const hasMandara = keyed.some((item) => item.key === "mount_mandara");
+  const vasukiProps = keyed.filter((item) => item.key === "vasuki_serpent").map((item) => item.prop);
+  const hasExplicitVasukiBack = vasukiProps.some((v) => v.layer === "back");
+
+  const deferredVasuki = [];
+  let backVasukiDrawn = false;
+
+  for (const { prop, key } of keyed) {
+    if (!key) continue;
+
+    if (hasOcean && key === "kurma_avatar") {
+      // Drawn via cosmic_ocean mid-back wave hook so Kurma emerges cleanly between wave planes
+      continue;
+    }
+
+    if (key === "cosmic_ocean") {
+      const hook =
+        kurmaProps.length > 0
+          ? () => {
+              for (const kp of kurmaProps) {
+                PROP_DRAWERS.kurma_avatar(ctx, kp, t, localT);
+              }
+            }
+          : prop.drawMidBackHook ?? null;
+      PROP_DRAWERS.cosmic_ocean(ctx, { ...prop, drawMidBackHook: hook }, t, localT);
+      continue;
+    }
+
+    if (hasMandara && vasukiProps.length > 0 && !hasExplicitVasukiBack) {
+      if (key === "vasuki_serpent") {
+        deferredVasuki.push(prop);
+        continue;
+      }
+      if (key === "mount_mandara") {
+        if (!backVasukiDrawn) {
+          for (const vp of vasukiProps) {
+            PROP_DRAWERS.vasuki_serpent(ctx, { ...vp, layer: "back" }, t, localT);
+          }
+          backVasukiDrawn = true;
+        }
+        PROP_DRAWERS.mount_mandara(ctx, prop, t, localT);
+        for (const vp of deferredVasuki) {
+          PROP_DRAWERS.vasuki_serpent(ctx, { ...vp, layer: "front" }, t, localT);
+        }
+        deferredVasuki.length = 0;
+        continue;
+      }
+    }
+
+    PROP_DRAWERS[key](ctx, prop, t, localT);
+  }
+
+  for (const vp of deferredVasuki) {
+    PROP_DRAWERS.vasuki_serpent(ctx, { ...vp, layer: "front" }, t, localT);
+  }
 }

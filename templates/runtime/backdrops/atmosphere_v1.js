@@ -9,6 +9,7 @@ import {
   CANVAS_WIDTH,
   DEFAULT_HORIZON_Y,
   clamp,
+  drawDiya,
   drawGlow,
   mixColor,
   mulberry32,
@@ -321,17 +322,17 @@ export function drawSnowyBoulders(ctx, floorTopCol, floorBotCol, horizonY = DEFA
 
   if (hasDiyas) {
     for (const dx of [185, 895]) {
-      const dy = horizonY + 14;
-      const fl = 0.85 + Math.sin(t * 8.6 + dx) * 0.15;
-      drawGlow(ctx, dx, dy - 14, 4, 48 * fl, "rgba(255, 212, 118, 0.72)");
-      ctx.fillStyle = "#B64A26";
-      ctx.beginPath();
-      ctx.ellipse(dx, dy, 16, 7, 0, 0, Math.PI);
-      ctx.fill();
-      ctx.fillStyle = "#FFE67E";
-      ctx.beginPath();
-      ctx.ellipse(dx, dy - 12 * fl, 5.5, 10 * fl, 0, 0, Math.PI * 2);
-      ctx.fill();
+      drawDiya(ctx, dx, horizonY + 14, t, {
+        phase: dx,
+        radiusW: 16,
+        radiusH: 7,
+        flameW: 5.5,
+        flameH: 10,
+        glowR: 48,
+        glowAlpha: 0.72,
+        flickerSpeed: 8.6,
+        flickerAmp: 0.15,
+      });
     }
   }
 }
@@ -499,4 +500,39 @@ export function drawKailashSacredPeak(
   }
 
   targetCtx.restore();
+}
+
+/**
+ * Draw subtle celestial blueprint grid for `cosmic_explainer` / `observatory_cosmos` scenes.
+ */
+export function drawCosmicGrid(
+  ctx,
+  spacing = 60,
+  color = "rgba(92, 182, 255, 0.08)",
+  width = CANVAS_WIDTH,
+  height = CANVAS_HEIGHT
+) {
+  const step = Math.max(24, Number(spacing) || 60);
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.2;
+  for (let x = 0; x <= width; x += step) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, height);
+    ctx.stroke();
+  }
+  for (let y = 0; y <= height; y += step) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(width, y);
+    ctx.stroke();
+  }
+  // Subtle observatory celestial rings centered in clear visual stage
+  for (const r of [240, 400, 560]) {
+    ctx.beginPath();
+    ctx.arc(width * 0.5, 680, r, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
 }
