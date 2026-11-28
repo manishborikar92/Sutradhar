@@ -1,244 +1,160 @@
 # Sutradhar (सूत्रधार)
 
-> **Autonomous Master-Grade Indian Mythological & Historical YouTube Shorts Engine**  
-> *Blending Rajasthani Kathputli Folk Theater with Neural Voice Synthesis and Automated YouTube Publishing.*
+> **Autonomous Indian Mythological, Historical & Cosmic YouTube Shorts Engine**  
+> *Sutradhar Kinetic Storycraft v2 — Modular `Canvas2D + DOM` Animation via HyperFrames, ElevenLabs v4 Hindi Narration, `48 kHz` Multi-Act Audio Mastering, and Hardened YouTube Data API v3 Publishing.*
 
 ---
 
 ## 1. Project Overview
 
-**Sutradhar** is an end-to-end autonomous content creation pipeline engineered to produce cinematic, highly engaging YouTube Shorts in pure Hindi. Drawing inspiration from classical Indian folk puppetry (*Kathputli*) and temple iconography, Sutradhar dramatizes ancient epics (*Puranas*, *Itihasas*), hidden archaeological history, and cosmic-philosophical paradoxes.
+**Sutradhar** produces self-contained, story-driven `9:16` (`1080x1920 @ 30fps`) YouTube Shorts rooted in Puranic/Itihasic literature, ancient Indian epigraphy & metallurgy, and Vedic astronomical texts (*Surya Siddhanta*, *Aryabhatiya*).
 
 ### Core Architectural Pillars
-
-- **Pure Hindi Storytelling (`hi`):** All narration, character dialogues, titles, and descriptions are composed in culturally rich, natural Hindi (Devanagari script).
-- **Single Master Storyteller Paradigm:** Voiced exclusively by **Viraj** (`uuyFQegRan8rpIQCGu9K`) via **ElevenLabs v4** (`eleven_v4`) at 44.1 kHz. Viraj performs all narrative roles, deities, and antagonists through inline emotional and cadence steering tags (`[...]`).
-- **Kathputli 2.5D Theatrical Puppetry:** Modular SVG character rigs with articulated limbs connected by visible brass rivet joints, animated with organic string-suspended micro-pendulum sway via HyperFrames.
-- **Clean-Canvas Aesthetic:** Zero burned-in captions, subtitles, or distracting UI badges on video frames. Rely natively on YouTube's automated closed captions to maintain pure theatrical immersion.
-- **Broadcast 48kHz Stereo Audio Pipeline & Mastering:** Automated broadcast audio engineering adhering strictly to **48,000 Hz, 24-bit stereo**, **-14.0 LUFS** (EBU R128 `loudnorm=I=-14:TP=-1.5:LRA=11`), **True Peak $\le -1.5$ dBTP**, dynamic sidechain BGM ducking (8:1 ratio, 20ms attack, 500ms release, threshold 0.03), and FFmpeg volume protection (`normalize=0`).
-- **Autonomous Lifecycle & State Management:** Robust SQLite database (`episodes.db`) maintaining series universes, standalone stories, source research citations, thematic pillar rotation, and publishing records.
-- **YouTube Data API v3 Integration:** Direct automated upload supporting public releases, scheduled publication, automated series playlist curation, custom thumbnails, and live API read-back verification.
+- **Bilingual Platform Policy:** Pure **Hindi (`hi`)** narration and synchronized bottom-center kinetic captions (`Noto Sans Devanagari`, strictly `< Y = 1400px`) paired with pure **English (`en`)** `1080x1920` cover thumbnails (`2:3` Shorts shelf safe), YouTube titles (`#Shorts`), descriptions with scriptural citations, `10–15` tags, and English playlists.
+- **Single Master Storyteller (`eleven_v4`):** Voiced exclusively by **Viraj** (`uuyFQegRan8rpIQCGu9K`) via ElevenLabs v4 (`44.1 kHz` synthesis mastered to `48,000 Hz` 24-bit stereo WAV), keeping scripts within `760–840` billed chars (`<= 900` hard cap) to fit **30 Shorts/month** inside the **30,000-credit ElevenLabs Starter plan**.
+- **Modular `Canvas2D + DOM` Runtime (`templates/runtime/`):** Deterministic `hf-seek` ES modules (`seek_runtime.js`, `scene_director.js`, `atmosphere_v1.js`, `architectural_stage.js`, `character_engine.js`, `props_library.js`, `transitions.js`, and `#captions` sub-composition) featuring `traceCapsule` anatomy, 5-finger sculpted hands, `2.5D` head turns, and `HORIZON_Y = 1142` spatial grounding.
+- **`48 kHz` Broadcast Audio Pipeline:** Local `16 kHz` **`faster-whisper small`** + RMS speech-burst alignment, em-dash-safe keyword highlighting, 3-act BGM (`0` MD5 clones, `allow_synth_fallback: false`), `+33ms` peak-aligned SFX, **`6.5:1` (`ratio=6.5`)** sidechain ducking, and single 2-pass `loudnorm` (**`-14.0 ± 0.5 LUFS`**, **`<= -1.5 dBTP`**).
+- **Fail-Closed QA & Bitrate Guardrails:** `hyperframes check --strict --safe-zone shorts --json`, `<= 55 MiB` (`57,671,680 B`) H.264 MP4 ceiling, dual KinoCut profiles (`ui-capture-dark >= 88.0`, `default >= 55.0`, `color_balance PASS`, `static_fraction <= 0.15`), and `thumbnail_2x3_crop.jpg` (`y=150..1770`) verification.
+- **Atomic SQLite v4 & YouTube CDN Verification:** Schema v4 (`series`, `episodes`, `publishing_history`, `audio_ledger`), post-processing `thumbnails.set` gating (`processingStatus == "succeeded"`), live `sardefault.jpg` CDN parity (`MAE <= 12.0`, `dhash <= 16`), and atomic DB commit.
 
 ---
 
 ## 2. System Architecture
 
 ```mermaid
-flowchart TD
-    subgraph Planning ["1. Autonomous Planning & Research"]
-        A["db_manager.py --context"] --> B["Topic Selection & Purana Research"]
-        B --> C["episode_plan.json (Hindi Script & Shots)"]
-    end
-
-    subgraph AudioEngine ["2. Speech Synthesis & Audio Engineering"]
-        C --> D["build_audio.py (ElevenLabs eleven_v4)"]
-        D --> E["Single Narrator (Viraj) + Inline Tags"]
-        E --> F["faster-whisper Forced Alignment"]
-        F --> G["build/manifest.js & audio_manifest.json"]
-    end
-
-    subgraph VisualEngine ["3. Kathputli Visual Directing"]
-        G --> H["preview_frames.py (HyperFrames Engine)"]
-        H --> I["Visual Pre-Render QA Gate (qa_grid.jpg)"]
-        I --> J["render_and_qa.py (1080x1920 @ 30fps)"]
-        J --> K["Sidechain Ducking & KinoCut Gate (Score >= 80)"]
-        K --> L["Thumbnail Extractor (thumbnail.jpg <= 2MB)"]
-    end
-
-    subgraph Publishing ["4. YouTube Distribution & Persistence"]
-        L --> M["publish_youtube.py (YouTube Data API v3)"]
-        M --> N["Upload MP4 + Custom Thumbnail + Playlist"]
-        N --> O["Live API Read-Back Verification"]
-        O --> P["db_manager.py --record-published"]
-        P --> Q[("episodes.db (SQLite v3.0)")]
-    end
+flowchart LR
+    A["1. Context & Plan\ndb_manager --context ->\nEpisodePlanV2 + StoryboardIR"] --> B["2. Audio & Captions\nbuild_audio.py ->\nElevenLabs Cache + Whisper small"]
+    B --> C["3. Preflight Grid\npreview_frames.py ->\nStrict Shorts Check + 15-Frame Grid"]
+    C --> D["4. Render & QA\nrender_and_qa.py ->\n<=55 MiB MP4 + 48 kHz Mix + KinoCut"]
+    D --> E["5. Atomic Publish\npublish_youtube.py ->\nUpload + sardefault CDN + SQLite v4"]
 ```
 
 ---
 
 ## 3. Repository Structure
 
-```
+```text
 Sutradhar/
-├── assets/                          # Canonical Asset Library
-│   ├── bgm/                         # 6 Mood-tailored BGM tracks (MP3)
-│   ├── manifest.yaml                # Unified machine-readable asset catalog
-│   ├── sfx/                         # 13 Event-mapped SFX tracks (WAV)
-│   └── svg/                         # Modular vector art library
-│       ├── backdrops/               # 13 Theatrical folk-art backdrops
-│       ├── characters/              # 10 Articulated Kathputli puppet rigs
-│       ├── props/                   # 7 Dynamic mythological storytelling props (Kundali, staircase, boot, etc.)
-│       ├── infographics/            # 5 Theatrical callouts & symbol cards
-│       └── vfx/                     # 5 Visual effect overlays
-├── build/                           # Ephemeral build artifacts (ignored by Git)
-├── docs/                            # Production documentation & specifications
-│   ├── INSTRUCTIONS.md              # Authoritative AI agent production guide
-│   ├── SETUP_AND_OPERATIONS.md      # Installation, credentials & operations runbook
-│   └── schema.sql                   # SQLite schema definition (Version 3.0.0)
-├── scripts/                         # Production pipeline CLI tools
-│   ├── engine/                      # Modular Video Engine Core (v4.0)
-│   │   ├── config.py                # Framing, 9:16 Golden Zone & joint limits
-│   │   ├── beat_planner.py          # Micro-beat decomposer (1.8-3.5s) & ASL calculator
-│   │   ├── cinematography.py        # Shot scale hierarchy (EWS-ECU), two-shot staging & eyelines
-│   │   ├── puppet_rig.py            # Standardized 480x960 puppet rig & ContinuousLifeEngine
-│   │   ├── lipsync_engine.py        # Devanagari Akshara phonetic viseme parser
-│   │   ├── subtitle_engine.py       # Word-by-word kinetic Hindi subtitles with active scaling & keywords
-│   │   ├── prop_manager.py          # Dynamic storytelling props system & Golden Zone solver
-│   │   ├── foley_scheduler.py       # Multi-track BGM taxonomy & keyframe Foley scheduler
-│   │   ├── composer.py              # Modular Jinja2 composition assembler
-│   │   └── qa_verifier.py           # Automated Triple-Gate QA suite (cinematography, geometry, 48kHz audio)
-│   ├── audition_voices.py           # ElevenLabs voice audition utility
-│   ├── build_assets.py              # 48kHz BGM beds & acoustic SFX generator
-│   ├── build_audio.py               # ElevenLabs TTS & Whisper forced alignment
-│   ├── db_manager.py                # Database migrations, context & state manager
-│   ├── elevenlabs_engine.py         # ElevenLabs API client & audio decoder
-│   ├── generate_composition.py      # Composition engine CLI bridge
-│   ├── preview_frames.py            # Pre-render snapshot & safe-zone validator
-│   ├── publish_youtube.py           # YouTube Data API v3 uploader & verifier
-│   └── render_and_qa.py             # Video renderer, 48kHz audio mastering & KinoCut QA
-├── templates/                       # Jinja2 Composition Templates
-│   └── composition/                 # Self-contained composition templates (index, styles, engine)
-├── tests/                           # Comprehensive automated pytest suite
-├── config.yaml                      # Global channel configuration & thresholds
-├── package.json                     # Node.js dependencies & scripts
-├── pronunciations_hi.yaml           # Hindi Devanagari pronunciation overrides
-└── requirements.txt                 # Python dependencies
+├── assets/
+│   ├── manifest.yaml                # Schema v2.0.0 catalog (fonts, audio, characters, environments, props)
+│   ├── fonts/                       # Canonical 31 SIL OFL .woff2 files + fonts.css
+│   ├── characters/                  # Parametric JSON hero/deity/sage rig configs (12 presets)
+│   ├── environments/                # Parametric palace, dawn, archival & cosmos presets (8 presets)
+│   ├── props/                       # Declarative story prop & diagram descriptors (17 presets)
+│   └── audio/
+│       ├── bgm/                     # Distinct royalty-free/repo BGM stems + CREDITS.md (0 dup MD5s)
+│       └── sfx/                     # Bundled Pixabay + repo acoustic SFX cues + CREDITS.md
+├── templates/
+│   ├── runtime/                     # Modular HyperFrames Canvas2D + DOM ES runtime
+│   │   ├── index.html.jinja2        # Composition shell + #captions sub-composition
+│   │   ├── styles.css               # Safe-zone calibrated stage & opt-in .ctx-pill styles
+│   │   ├── core/                    # seek_runtime.js, scene_director.js
+│   │   ├── backdrops/               # atmosphere_v1.js, architectural_stage.js
+│   │   ├── rigs/                    # character_engine.js (traceCapsule, 2.5D head turn)
+│   │   ├── props/                   # props_library.js
+│   │   ├── fx/                      # transitions.js
+│   │   └── captions/                # captions.html.jinja2 (<= Y=1395px, Noto Sans Devanagari)
+│   └── thumbnail/
+│       └── cover_template.html.jinja2 # Shared 1080x1920 English cover (2:3 crop safe)
+├── scripts/
+│   ├── sutradhar/
+│   │   ├── config.py, db.py, models.py
+│   │   ├── audio/                   # elevenlabs_tts.py, whisper_aligner.py, caption_builder.py, sound_mixer.py
+│   │   ├── visual/                  # storyboard_composer.py, thumbnail_builder.py
+│   │   ├── qa/                      # hyperframes_runner.py, render_optimizer.py, quality_gate.py
+│   │   └── publishing/              # thumbnail_verifier.py, metadata_policy.py, youtube_client.py
+│   ├── db_manager.py                # --init, --context, --create-series, --record-published, --repair
+│   ├── build_audio.py               # Audio synthesis, Whisper small alignment & captions facade
+│   ├── preview_frames.py            # Preflight strict Shorts check & 15-frame qa_grid.jpg facade
+│   ├── render_and_qa.py             # <=55 MiB render, 48 kHz mix, KinoCut & thumbnail facade
+│   ├── publish_youtube.py           # --publish, --update-playlists, --update-thumbnail, --verify-only
+│   ├── thumbnail_utils.py           # Re-export facade for sutradhar.publishing.thumbnail_verifier
+│   └── audition_voices.py           # Standalone voice audition utility (build/auditions/)
+├── docs/                            # INSTRUCTIONS.md, SETUP_AND_OPERATIONS.md, schema.sql & plans
+├── tests/                           # Pytest unit, contract & Chromium/pipeline verification suites
+├── build/                           # Ephemeral build artifacts (git-ignored)
+├── config.yaml                      # Single source of truth for pacing, audio, safe zones & publishing
+├── pronunciations_hi.yaml           # Authentic Devanagari phonetic overrides
+├── package.json                     # HyperFrames ^0.9.70 & GSAP ^3.15.1
+└── requirements.txt                 # Python 3.12+ dependencies
 ```
 
 ---
 
-## 4. Prerequisites & Requirements
-
-- **Operating System:** Windows 10/11, macOS, or Linux.
-- **Python:** Python 3.12+ (managed in a project-local virtual environment `.venv`).
-- **Node.js:** Node.js 18+ (Node 20 LTS recommended) & `npm`.
-- **FFmpeg:** FFmpeg 6.0+ with `ffprobe` installed and available on system `PATH`.
-- **ElevenLabs Account:** Active Starter subscription or higher with community voice access to **Viraj** (`uuyFQegRan8rpIQCGu9K`).
-- **Google Cloud Console:** Project with YouTube Data API v3 enabled and OAuth2 desktop client credentials.
-
----
-
-## 5. Quickstart & Installation
-
-### Step 1: Clone Repository & Create Virtual Environment
+## 4. Quickstart & Installation
 
 ```powershell
-git clone <repository-url> Sutradhar
-cd Sutradhar
-
-# Create Python 3.12 virtual environment
+# 1. Create Python 3.12+ virtual environment and install packages
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-
-# Install Python dependencies
 pip install --upgrade pip
 pip install -r requirements.txt
-```
 
-### Step 2: Install Node.js Dependencies
-
-```powershell
+# 2. Install Node.js (22+) dependencies and HyperFrames browser
 npm install
-```
+npx hyperframes browser ensure
 
-### Step 3: Configure Environment Variables
+# 3. Configure .env.local (ELEVENLABS_API_KEY, YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET, YOUTUBE_REFRESH_TOKEN)
+# See docs/SETUP_AND_OPERATIONS.md for credential setup details
 
-Create `.env.local` in the project root:
-
-```env
-# ElevenLabs API Configuration
-ELEVENLABS_API_KEY="your_elevenlabs_api_key_here"
-
-# YouTube OAuth2 Credentials (see docs/SETUP_AND_OPERATIONS.md for generation steps)
-YOUTUBE_CLIENT_ID="your_google_client_id.apps.googleusercontent.com"
-YOUTUBE_CLIENT_SECRET="your_google_client_secret"
-YOUTUBE_REFRESH_TOKEN="your_oauth2_refresh_token"
-```
-
-### Step 4: Initialize SQLite Database
-
-```powershell
+# 4. Initialize Schema v4 SQLite database
 .\.venv\Scripts\python.exe scripts/db_manager.py --init
 ```
 
 ---
 
-## 6. Daily Production Workflow (7-Command Whitelist)
+## 5. Daily 6-Command Production Runbook
 
-In daily production, the pipeline executes 7 static commands sequentially with zero dynamic arguments:
+| Step | Command | Purpose |
+| --- | --- | --- |
+| **1. Context** | `.\.venv\Scripts\python.exe scripts/db_manager.py --context` | Inspect pillar rotation, `audio_ledger` credit budget, active series & topic history. |
+| **2. Series Init** | `.\.venv\Scripts\python.exe scripts/db_manager.py --create-series` | *(Optional)* Initialize a new English-titled series from `build/new_series_plan.json`. |
+| **3. Audio Build** | `.\.venv\Scripts\python.exe scripts/build_audio.py` | Validate `<= 900` billed chars, synthesize via Viraj (`SHA-256` cache), align with `faster-whisper small` + RMS & build captions. |
+| **4. Preview QA** | `.\.venv\Scripts\python.exe scripts/preview_frames.py` | Compile `StoryboardIR`, run `hyperframes check --strict --safe-zone shorts`, probe DOM & stitch 15-frame `build/qa_grid.jpg`. |
+| **5. Render & QA** | `.\.venv\Scripts\python.exe scripts/render_and_qa.py` | Render `<= 55 MiB` `1080x1920@30fps` MP4, master `48 kHz` audio (`-14 LUFS`), build `1080x1920` cover + `2:3` crop & run KinoCut dual gate. |
+| **6. Publish** | `.\.venv\Scripts\python.exe scripts/publish_youtube.py` | Upload MP4, assign English playlist, poll processing, `thumbnails.set`, verify live `sardefault.jpg` CDN parity & commit SQLite atomically. |
 
-| Step | Command | Description |
-| :--- | :--- | :--- |
-| **1. Context** | `.\.venv\Scripts\python.exe scripts/db_manager.py --context` | Inspects channel configuration, active series, topic history, and pillar rotation. |
-| **2. Series Init** | `.\.venv\Scripts\python.exe scripts/db_manager.py --create-series` | Initializes a new series universe and YouTube playlist (when starting a new series). |
-| **3. Audio Build** | `.\.venv\Scripts\python.exe scripts/build_audio.py` | Synthesizes Hindi narration via ElevenLabs Viraj and generates forced-alignment timestamps. |
-| **4. Preview QA** | `.\.venv\Scripts\python.exe scripts/preview_frames.py` | Validates HyperFrames composition, safe zones, and generates pre-render QA snapshot grid. |
-| **5. Render & QA** | `.\.venv\Scripts\python.exe scripts/render_and_qa.py` | Encodes 1080x1920 MP4, masters audio with sidechain ducking (-14 LUFS), extracts thumbnail. |
-| **6. Publish** | `.\.venv\Scripts\python.exe scripts/publish_youtube.py` | Uploads video and custom thumbnail to YouTube, verifies live API read-back. |
-| **7. Persist** | `.\.venv\Scripts\python.exe scripts/db_manager.py --record-published` | Records published video ID in `episodes.db` and updates series completion status. |
-
----
-
-## 7. Quality Assurance & KinoCut Standards
-
-Every generated episode must pass strict automated production gates before being uploaded:
-
-- **Audio Loudness:** Broadcast 48kHz stereo master normalized to **-14.0 LUFS ± 1.0** with True Peak $\le -1.5$ dBTP.
-- **Dialogue Separation:** Background music sidechain-ducked by **8:1 ratio** (fast 20ms attack, 500ms release).
-- **Audio Tail:** Smooth exponential fade-out over **1.20s** at conclusion (zero abrupt cutoffs).
-- **Visual Composition:** 1080×1920 vertical canvas adhering to YouTube Shorts safe-zone clearances (Top: 288px, Bottom: 500px, Right: 192px, Left: 48px).
-- **Subtitles:** Word-by-word kinetic Hindi subtitles centered at bottom ($Y \ge 1400\text{px}$) with zero facial occlusion ($Y_{\text{head}} \le 800\text{px}$).
-- **KinoCut Gate:** Automated release checkpoint score $\ge 80.0 / 100$ and 13/13 Triple-Gate QA verification pass.
+Read-only verification & recovery:
+- `.\.venv\Scripts\python.exe scripts/publish_youtube.py --verify-only` (read-only live audit of Ep 1–4, Series 1–3 playlists, CDN & DB parity)
+- `.\.venv\Scripts\python.exe scripts/db_manager.py --record-published` / `--repair` (manual DB recovery & integrity repair)
 
 ---
 
-## 8. Automated Testing
-
-Run the test suite to verify system integrity:
+## 6. Automated Testing
 
 ```powershell
 # Run full Python test suite
 .\.venv\Scripts\python.exe -m pytest -q
 
-# Run HyperFrames animation runtime checks
+# Fast non-render test suite (skips full Chromium/MP4 render tests)
+.\.venv\Scripts\python.exe -m pytest -q --ignore=tests/test_sutradhar_phase2_runtime.py --ignore=tests/test_sutradhar_phase4_pipeline.py
+
+# Run HyperFrames strict Shorts safe-zone check
 npm run hf:check
 ```
 
 ---
 
-## 9. Documentation Directory
+## 7. Documentation Index
 
-- [INSTRUCTIONS.md](./docs/INSTRUCTIONS.md): Authoritative agent instruction guide for daily video production.
-- [SETUP_AND_OPERATIONS.md](./docs/SETUP_AND_OPERATIONS.md): Comprehensive setup, credentials configuration, and operational runbook.
-- [schema.sql](./docs/schema.sql): SQLite database schema v3.0.0.
-- [manifest.yaml](./assets/manifest.yaml): Complete asset catalog of characters, backdrops, BGM, SFX, and diagrams.
-
----
-
-## 10. AI Agent Operating Guidelines
-
-To ensure optimal execution and avoid unnecessary context overhead, AI agents operating in this repository must follow these rules:
-
-- **Mandatory for Video Creation & Production:**
-  When assigned a task to create, script, animate, render, quality-check, or publish a video (or to execute the daily production pipeline), reading and strictly following [`docs/INSTRUCTIONS.md`](./docs/INSTRUCTIONS.md) is **MANDATORY**. It contains non-negotiable rules for Hindi storytelling, Viraj voice steering, Kathputli puppet directing, safe zones, KinoCut gates, and physical artifact verification.
-
-- **Optional for General Engineering & Maintenance:**
-  When assigned general engineering tasks—such as bug fixing, database migrations, unit testing, refactoring scripts, environment troubleshooting, or updating configuration files—reading `docs/INSTRUCTIONS.md` is **OPTIONAL**. Such tasks do not invoke the video production workflow and can proceed directly from code, tests, and documentation.
+- [INSTRUCTIONS.md](./docs/INSTRUCTIONS.md) — 16-Part Authoritative Directing & Production Spec (mandatory reading for video production runs).
+- [SETUP_AND_OPERATIONS.md](./docs/SETUP_AND_OPERATIONS.md) — Prerequisites, ElevenLabs Starter math, OAuth setup, and daily 6-command runbook.
+- [schema.sql](./docs/schema.sql) — Canonical SQLite Schema v4 (`series`, `episodes`, `publishing_history`, `audio_ledger`).
+- [manifest.yaml](./assets/manifest.yaml) — Schema v2.0.0 asset catalog (`fonts`, `audio`, `characters`, `environments`, `props`, `runtime`).
+- [VIDEO_PRODUCTION_REDESIGN_PLAN.md](./docs/VIDEO_PRODUCTION_REDESIGN_PLAN.md) — Master architecture redesign & 7-phase roadmap.
+- [VIDEO_STYLE_EXPLORATION_PLAN.md](./docs/VIDEO_STYLE_EXPLORATION_PLAN.md) — Chronological Round 1–2 POCs, Ep 3 replacement (`oBcyiPy26rg`), and Ep 4 (`7PWFV7lQG6U`) forensic record.
 
 ---
 
-## 11. Standard Daily Video-Creation Prompt
-
-To initiate a video production run, use the standard prompt below. It allows full autonomous execution while providing clean, optional override slots:
+## 8. Standard Daily Video-Creation Prompt
 
 ```text
 Read and follow docs/INSTRUCTIONS.md to produce today's video.
 
-[Optional Overrides — leave blank for 100% autonomous operation]:
-- Topic: 
-- Script: 
-- Playlist: 
-- Format (standalone / episodic_series): 
+[Optional Overrides — leave blank for autonomous operation]:
+- Topic:
+- Script:
+- Playlist:
+- Format (standalone / episodic_series):
 - Special Instructions:
 ```
-

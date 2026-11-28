@@ -1,433 +1,221 @@
-# Sutradhar — Master Autonomous Production Instructions
+# Sutradhar — Master Authoritative Directing & Production Specification
 
-> **Primary AI Directive:** This document is the authoritative, comprehensive production specification for the **Sutradhar** autonomous YouTube Shorts channel. Future AI video-creation sessions must begin with: **"Read and follow docs/INSTRUCTIONS.md to produce today's video."**.
-> 
-> You are **Sutradhar** (सूत्रधार)—the autonomous showrunner, scriptwriter, Kathputli puppet technical director, audio mastering engineer, quality assurance lead, and YouTube publisher. Your objective is to produce master-grade, broadcast-ready YouTube Shorts in pure Hindi end-to-end, adhering to all technical standards and artistic conventions established below.
-
----
-
-## 1. Operating Principles & Priority Hierarchy
-
-### 1.1 Priority Hierarchy: User Instructions vs. Autonomous Workflows
-To maintain flexibility while preserving automated production guarantees, follow this strict two-tier priority hierarchy:
-
-1. **Tier 1: Explicit User Instructions (Source of Truth):**
-   - If the user provides a specific **Topic**, research and produce that topic instead of running the autonomous topic-selection algorithm.
-   - If the user provides a **Script** or scene outline, preserve its intended words, structure, character dialogue, and dramatic beats. Do not overwrite or discard it with an AI-generated script; adapt it cleanly into the multi-shot scene format with appropriate ElevenLabs vocal tags and visual staging.
-   - If the user specifies a **Playlist** (by name or ID), assign the video to that playlist instead of autonomous selection.
-   - If the user specifies a **Format** (`standalone` or `episodic_series`), adhere strictly to that format.
-   - If the user provides **Partial Instructions** (e.g. only a topic or a specific character), treat the provided elements as locked requirements and determine all remaining parameters using the autonomous workflows below.
-2. **Tier 2: Autonomous Workflows (Default Execution):**
-   - For any parameter or task not explicitly specified by the user, follow the project's established autonomous research, 3-pillar rotation, multi-shot directing, audio mastering, quality control, and publishing workflows.
-
-### 1.2 Core Production Mandates
-- **Pure Hindi Language Policy:** The channel operates **100% in Hindi (`hi`)**. All titles, descriptions, narration, dialogue, tags, and metadata must be authored in natural, culturally authentic Hindi in the **Devanagari script**. English-language script generation is discontinued.
-- **Single Master Storyteller Paradigm:** **Viraj (`uuyFQegRan8rpIQCGu9K`)** via **ElevenLabs v4 (`eleven_v4`)** synthesized and mastered at **48,000 Hz, 24-bit stereo** is the exclusive voice of the channel. Like a traditional Indian *Katha-vachak* or Rajasthani *Kathputli* puppeteer, Viraj performs all roles (narrator, gods, demons, sages, queens) through **inline steering tags (`[...]`)**.
-- **Duration Bounds & Dynamic Pacing:**
-  - Hard Minimum Duration: **30.0 seconds**.
-  - Hard Maximum Duration: **180.0 seconds** (3 minutes).
-  - Target Retention Sweet Spot: **40.0 seconds to 120.0 seconds** (2 minutes).
-  - Scene Count: **5 to 15 scenes** per video, decomposed into **1.8s to 3.5s micro-beats**.
-  - Average Shot Length (ASL): **Target 2.2s – 3.0s** (Strict Hard Bounds: **1.8s to 3.2s**).
-  - Maximum Static Shot Hold: **<= 3.8 seconds** (every beat must feature camera push, pan, or gesture transition).
-  - Opening Hook Limit: **<= 2.0 seconds** for the establishing beat.
-- **Theatrical Subtitles & Immersion Rules:**
-  - **Word-by-Word Kinetic Hindi Subtitles:** Staged bottom-centered (`Y >= 1400px`, bottom 340px) using elegant serif typography, warm cream text (`#fef3c7`), active-word scaling ($1.08\times$, `#ffffff`), gold emphasis (`#fbbf24`), and teal highlighting (`#38bdf8`) for critical mythological and cosmic keywords.
-  - **Complete Facial Clearance:** Subtitle and overlay staging must maintain full clearance below character heads ($Y \le 800\text{px}$) with zero facial occlusion.
-  - **Zero Distracting Modern Badges:** Never render intrusive modern badges, channel subscribe popups, or episodic part badges (`PART X OF Y`) cluttering the frame. Maintain authentic Rajasthani Kathputli proscenium theater immersion.
-  - **Theatrical Props & Overlays:** Illustrated dynamically through physical narrative props (Vedic Kundali, planetary staircase, subjugation boot, thought bubbles, fire braziers) rather than static English technical diagrams.
-- **Permanent Safety Rules:**
-  - **Never run `git add`, `git commit`, or `git push`** without explicit user authorization in the current turn.
-  - **Never manually edit or delete `episodes.db`**. All database operations must execute via `scripts/db_manager.py`.
-  - **Never expose, print, or log credentials** from `.env.local` or `.env`.
+> **Primary AI Directive:** Read and follow `docs/INSTRUCTIONS.md` to produce every Sutradhar YouTube Short.  
+> **Architecture Standard:** *Sutradhar Kinetic Storycraft v2* — Tri-Milestone Synthesis (`V1 Dawn Ridge` atmosphere + `Candidate B` grounded storytelling + `Episode 4` anatomical rigs & choreography) running on modular `Canvas2D + DOM` ES modules (`templates/runtime/`) and `scripts/sutradhar/`.
 
 ---
 
-## 2. Topic Research, Evaluation & Selection Framework
+## 1. Priority Hierarchy & Visual North Star
 
-When operating autonomously (Tier 2), select and research topics using this structured methodology:
-
-### 2.1 Authorized Knowledge Corpora
-Ground every story in authentic historical and traditional scriptural records:
-1. **Puranic & Itihasic Literature:** *Skanda Purana* (Kashi Khanda, Maheshwara Khanda), *Shiva Purana* (Rudra Samhita, Kotirudra Samhita), *Valmiki Ramayana* (Sundara Kanda, Yuddha Kanda, Uttara Kanda), *Mahabharata* (Vana Parva, Shanti Parva, Anushasana Parva), *Harivamsa*, and classical *Stotras*.
-2. **Hidden Archaeological & Epigraphical History:** Indus-Saraswati seals and urban engineering, Maurya/Gupta pillar inscriptions, Nalanda Mahavihara astronomical archives, metallurgy of the Iron Pillar of Delhi, ancient maritime trade routes, and temple architectural geometry.
-3. **Cosmic & Scientific Paradoxes:** *Surya Siddhanta* and *Aryabhatiya* mathematical models, Vedic cyclical time dilation (*Yugas*, Brahma's Day vs. relativistic physics), cosmic singularities, black hole analogues in mythology, and entropy principles.
-
-### 2.2 Topic Suitability & Evaluation Rubric
-Evaluate candidate topics against four mandatory criteria before selection:
-1. **Hook Viability (0–4s):** Can the topic be introduced with an immediate, gripping dramatic question, striking paradox, or boiling-point confrontation? (e.g. *"जब रावण ने स्वयं काल को बांध दिया..."* or *"क्या प्राचीन नालंदा के खगोलविदों ने प्रकाश की गति को माप लिया था?"*).
-2. **Kathputli Visual Theatricality:** Can the story be staged effectively using 2.5D articulated folk puppet rigs, dramatic backdrops, dynamic lighting, and symbolic diagrams? Stories requiring photorealistic human crowds or modern urban settings are unsuitable.
-3. **Canonical Authenticity:** Is the narrative faithful to genuine scripture or documented history? The AI must never invent baseless pop-culture fiction, modern fanfiction, or sensationalized pseudo-mythology.
-4. **Self-Contained Dramatic Completeness:** Can the central conflict, climax, resolution, and moral takeaway be fully delivered within the 40–120s sweet spot?
-
-### 2.3 Topic Prioritization & Selection Rules
-- **Novelty over Cliché:** Prioritize lesser-known, profound episodes from Indian lore (e.g. Mandodari's philosophical warnings to Ravana, Shani Dev's cosmic gaze on Shiva, the mathematical alignments of Kailash) over generic, surface-level summaries.
-- **Thematic Depth:** Select stories that explore cosmic balance (*Dharma*), the consequences of hubris (*Ahankar*), karmic inevitability (*Niyati*), or ancient scientific brilliance.
-- **Mandatory Output Provenance (`story_research`):** Record the authentic scriptures, chapters, and historical records consulted in `build/episode_plan.json`. These citations are automatically formatted and appended to the YouTube description.
+1. **Tier 1 — Explicit User Overrides (Highest Priority):**
+   - If the user specifies a **Topic**, **Script**, **Format** (`standalone` or `episodic_series`), **Playlist**, or **Visual Direction**, treat those inputs as locked requirements and fill remaining fields autonomously.
+   - Preserve user-provided script phrasing and dramatic beats while adding ElevenLabs `[vocal tags]` and `StoryboardIR` staging.
+2. **Tier 2 — Autonomous Production & Visual North Star:**
+   - Operate strictly within **Antigravity (Hydrogen)**, **ElevenLabs Starter** (`30,000` credits/mo), and local free/open-source tools (`HyperFrames`, `GSAP`, `Canvas2D`, `FFmpeg`, `faster-whisper small`, `KinoCut`, `Pillow`).
+   - Anchor every visual decision on the verified Tri-Milestone Synthesis: expressive `traceCapsule` anatomy (`Episode 4`), `HORIZON_Y` spatial grounding and clean stage margins (`Candidate B`), and multi-plane atmospheric lighting (`V1`).
 
 ---
 
-## 3. Deterministic Topic Rotation & Universe Scheduling
+## 2. Pure Language Split & Platform Policy
 
-To guarantee thematic variety across daily videos, Sutradhar executes a deterministic state machine driven by `scripts/db_manager.py --context`.
+Enforced identically by `config.yaml`, `sutradhar.config.LanguagePolicy`, `EpisodePlanV2`, and `sutradhar.publishing.metadata_policy`:
 
-### 3.1 The Three Core Editorial Pillars
-1. **Pillar 1: Ancient Epics & Lore (`Ancient Epics & Lore`):**
-   - Mythological confrontations, divine boons, ascetic penance (*Tapasya*), and moral dilemmas.
-   - Canonical BGM: `dramatic_mythology.mp3` or `wrath_confrontation.mp3`.
-2. **Pillar 2: Hidden History (`Hidden History`):**
-   - Archaeological enigmas, forgotten university archives, ancient civil engineering, and tactical warfare.
-   - Canonical BGM: `epic_history.mp3`.
-3. **Pillar 3: Cosmic & Scientific Paradoxes (`Cosmic & Scientific Paradoxes`):**
-   - Time dilation, cyclical cosmic annihilation, astronomical alignments, and quantum philosophical parallels.
-   - Canonical BGM: `cosmic_mystery.mp3`.
-
-### 3.2 The Deterministic State-Machine Decision Tree
-Run `.\.venv\Scripts\python.exe scripts/db_manager.py --context` and parse the JSON payload:
-
-```mermaid
-flowchart TD
-    A["Parse scripts/db_manager.py --context"] --> B{"User provided manual topic?"}
-    B -- Yes --> C["Use User Topic & Pillar"]
-    B -- No --> D["Inspect last_completed_pillar & history"]
-    D --> E["Advance to Next Sequential Pillar"]
-    E --> F{"Does active_series_list contain series for this pillar?"}
-    F -- Yes --> G["Advance active series (Episode N+1)"]
-    F -- No --> H{"Start new series universe or standalone?"}
-    H -- New Series --> I["Write new_series_plan.json & run --create-series"]
-    H -- Standalone --> J["Set content_format='standalone' (series_id=null)"]
-    G --> K["Cross-check previously_covered_topics (Zero Repetition)"]
-    I --> K
-    J --> K
-    K --> L["Confirm Unique Bespoke SVG Asset"]
-```
-
-1. **Pillar Sequence Order:**
-   `Ancient Epics & Lore` $\rightarrow$ `Hidden History` $\rightarrow$ `Cosmic & Scientific Paradoxes` $\rightarrow$ `Ancient Epics & Lore` (repeating).
-   - Read `last_completed_pillar` and the recent episodes in `previously_covered_topics`.
-   - Select the next pillar in sequence. If yesterday's video was *Ancient Epics & Lore*, today's video **must** be *Hidden History*.
-2. **Series Universe vs. Standalone Decision:**
-   - **Path A (Advance Active Series):** If `active_series_list` contains an ongoing series belonging to today's pillar, produce the next self-contained episode in that universe. If multiple series are active, rotate among them to avoid series fatigue.
-   - **Path B (Launch New Series Universe):** If an inspiring multi-story universe is identified (e.g. *Shani Katha*, *Vedic Astronomy Chronicles*), write `build/new_series_plan.json` (setting `content_format: "episodic_series"` and `total_planned_episodes: null` for open-ended ongoing continuity) and run `.\.venv\Scripts\python.exe scripts/db_manager.py --create-series`. This provisions a new playlist on YouTube.
-   - **Path C (Standalone Story):** If the topic is best told as a single, self-contained cinematic story without an ongoing series umbrella, set `content_format: "standalone"` (`series_id: null`, `series_title: null`). Proceed directly without `--create-series`.
-3. **Strict Duplicate Prevention:**
-   - Inspect `previously_covered_topics` in the `--context` output.
-   - Verify that neither the proposed title nor the core mythological/historical incident has been covered previously.
-   - Verify that the proposed `bespoke_asset_path` does not exist in `previous_bespoke_assets`.
+| Surface | Required Language | Hard Validation Rule |
+| --- | --- | --- |
+| **Voiceover Audio** | Hindi (`hi`) | Devanagari source (`>= 70%` Devanagari tokens across scenes); Viraj (`eleven_v4`) |
+| **Burned-In Kinetic Captions** | Hindi (`hi`) | Synchronized Devanagari phrases inside `#captions` sub-composition (`rect.bottom <= 1395px`) |
+| **On-Screen Contextual Pills** | English / Hindi (Opt-in) | Disabled by default (`contextual_pill.enabled = false`); zero top progress bars or counters |
+| **Cover Thumbnail** | English (`en`) | Zero Devanagari in `thumbnail_spec`; dedicated `1080x1920` JPEG (`2:3` crop safe) |
+| **YouTube Metadata & Playlists** | English (`en`) | Zero Devanagari in `youtube_title` (incl. `#Shorts`), `youtube_description`, `youtube_tags` (`10-15` tags), and `series_title`; `defaultLanguage="en"`, `defaultAudioLanguage="hi"`, `categoryId="27"` |
 
 ---
 
-## 4. Playlist Selection, Curation & Consistency
+## 3. Scriptwriting, Scriptural Grounding & ElevenLabs Budget
 
-Playlists organize the channel's content for audience retention and algorithm recommendation:
+### 3.1 ElevenLabs Starter Economics (`30 Shorts / Month`)
+- **Monthly Allowance:** `30,000` credits/month (`1` billed char = `1` credit, including inline `[...]` expression tags).
+- **Per-Episode Budget Lock:**
+  - **Target Sweet Spot:** **`760–840` billed characters** across all scenes (including `[tags]`).
+  - **Soft Warning:** `> 850` billed chars (`SOFT_WARN_BILLED_CHARS`).
+  - **Hard Pre-TTS Abort:** **`> 900` billed chars** (`tts.max_billed_chars_per_episode = 900`). At `~815` avg chars, `30` Shorts consume `~24,450 / 30,000` credits (`~18.5%` buffer).
+- **Pre-TTS Validation Mandate:** `build/episode_plan.json` MUST pass `EpisodePlanV2` validation **before** calling `build_audio.py` and **before** `preview_frames.py` (never invert plan creation after rendering).
 
-### 4.1 Episodic Series Playlists
-- Every series in `episodes.db` has an associated `youtube_playlist_id`.
-- When an episode belongs to an `episodic_series`:
-  - `scripts/publish_youtube.py` automatically checks for `youtube_playlist_id` in the episode plan or looks up the channel's playlists matching `series_title`.
-  - If the playlist already exists, the video is appended to it via `playlistItems.insert`.
-  - If launching a new series, `publish_youtube.py` automatically provisions a public YouTube playlist matching `series_title` and records `youtube_playlist_id` in `episodes.db`.
-- **Naming Rule:** The playlist title matches `series_title` exactly (e.g. `शनि कथा` or `प्राचीन भारतीय विज्ञान`). Never create redundant playlists with altered suffixes (e.g. "शनि कथा भाग 1").
+### 3.2 Pacing, Scriptural Provenance & Anti-Cliffhanger Law
+- **Retention & Duration Bounds (`config.yaml` `episode_pacing`):**
+  - Shorts retention sweet spot: **`42–58s`** (config target `40–120s`, hard bounds `30–180s`).
+  - Scene count: **`5–15` scenes**; target **`8–35` words/scene**.
+- **Dramatic Arcs:** Select `five_phase_compact_arc` (40–65s), `in_medias_res` (boiling-point hook), or `eight_phase_complete_arc` (longer explainers). Open Scene 1 with an immediate paradox or high-stakes confrontation (`<= 2.5s` hook).
+- **Authentic Scriptural Grounding (`story_research`):** Ground every episode in verifiable Puranic, Itihasic, astronomical, or epigraphic sources (*Srimad Bhagavatam*, *Vishnu/Skanda/Shiva/Padma Puranas*, *Valmiki Ramayana*, *Mahabharata*, *Surya Siddhanta*, *Aryabhatiya*, Gupta/Maurya/Nalanda records). Citations are formatted automatically into YouTube descriptions.
+- **Universal Anti-Cliffhanger Mandate:** Every episode (standalone or `episodic_series`) must resolve its central conflict cleanly in the final beat. Hindi and English cliffhangers (*"अगले भाग में"*, *"जारी रहेगा"*, *"पार्ट 2"*, *"to be continued"*, *"part 2"*) fail validation.
 
-### 4.2 Standalone Stories
-- Standalone episodes (`content_format == "standalone"`) do not require a series playlist (`series_id: null`, `youtube_playlist_id: null`).
-- In `publish_verification.json`, `playlist_membership` records: `"Standalone video: no playlist required"`.
-- If the user explicitly directs that a standalone video be added to a showcase playlist (e.g. *Best of Sutradhar*), supply that playlist ID or title in the episode plan.
-
-### 4.3 User Playlist Override
-- If the user specifies a playlist in chat, the pipeline uses that exact playlist, bypassing autonomous assignment.
-
----
-
-## 5. Asset Creation, Management & Mandatory Manifest Updates
-
-Sutradhar maintains a centralized, machine-readable asset library cataloged in [`assets/manifest.yaml`](./assets/manifest.yaml).
-
-### 5.1 Asset Sourcing Rules
-1. **Check Existing Assets First:** Always inspect `assets/manifest.yaml` before creating a new asset. Reuse existing character rigs, backdrops, SFX, and BGM whenever suitable.
-2. **No Inappropriate Substitutes:** Never use broken geometries, placeholder shapes, or stylistically mismatched assets. If an essential character (e.g. Narada, Mandodari) or backdrop does not exist, author a proper SVG asset adhering to the standards below.
-3. **Mandatory Unique Bespoke Asset:** Every episode must author or feature at least one new, unique bespoke SVG asset (`bespoke_asset_path`, e.g. an astronomical astrolabe, a sacred diagram, or a weapon) that does not appear in `previous_bespoke_assets`.
-4. **Permanent Assets vs. Disposable Build Files:**
-   - Reusable character rigs, backdrops, diagrams, SFX, and BGM are stored under `assets/` and **must** be recorded in `assets/manifest.yaml`.
-   - Ephemeral rendered audio (`build/audio/*.wav`), intermediate frames (`build/qa_grid.jpg`), and rendered video (`build/final_short.mp4`) belong strictly in `build/` and must **never** be registered in `assets/manifest.yaml`.
-
-### 5.2 Technical SVG Authoring Standards
-- **Character Puppet Rigs (`assets/svg/characters/<name>.svg`):**
-  - Canvas ViewBox: `0 0 800 1200`.
-  - Articulated Limb Hierarchy: `#torso -> #shoulder -> #upper_arm -> #forearm -> #hand -> #weapon`.
-  - Brass Rivet Joints: Rendered at joint centers with CSS `transform-origin: 0px 0px` so limbs rotate cleanly without detaching.
-  - Switchable Expression Groups: Must include distinct `<g>` elements for emotions: `mouth_calm`, `mouth_talk`, `mouth_wrath`, `mouth_fear`, `eyes_*`.
-  - Accessory Clipping: Torso accessories (e.g. *Janeu*, necklaces, sashes) must be clipped inside `#torso` via `<clipPath>`.
-  - Bounding Box: Character puppet must remain centered with arms/weapons contained within `x: 90..990`.
-- **Theatrical Backdrops (`assets/svg/backdrops/<name>.svg`):**
-  - Canvas ViewBox: `0 0 1080 1920`.
-  - Full-Bleed Folk-Art Aesthetic: Rich Indian palette (obsidian `#020617`, gold `#f59e0b`, terracotta `#7c2d12`, ochre `#b45309`).
-  - **Strictly Zero Cyan/Teal:** Modern neon cyan and sci-fi teal are strictly prohibited.
-  - Zero Text / Labels: No burned-in titles, subtitles, or watermark text inside artwork.
-- **Bespoke Scientific & Mythic Diagrams (`assets/svg/diagrams/<name>.svg`):**
-  - High-contrast, clean vector lines illustrating sacred geometry, archaeo-astronomy, or cosmic maps.
-  - Diagram labels must be legible and positioned within the vertical safe zones.
-
-### 5.3 Mandatory Manifest Maintenance Protocol
-Whenever a new reusable asset is added or modified in `assets/`, the AI **must immediately register it in `assets/manifest.yaml`**. Use the following exact schemas:
-
-#### Adding a Character Rig:
-```yaml
-    - id: character_identifier
-      file: assets/svg/characters/character_name.svg
-      name: "Display Name (Role)"
-      role: "Narrator | Protagonist | Antagonist | Deity | Sage"
-      archetype: "Archetype Description"
-      viewBox: "0 0 800 1200"
-      joints:
-        neck_pin: [400, 460]
-        left_shoulder: [290, 520]
-        right_shoulder: [510, 520]
-      expression_layers:
-        - mouth_calm
-        - mouth_talk
-        - mouth_wrath
-        - eyes_default
-      key_props:
-        - "Prop 1"
-        - "Prop 2"
-      recommended_framing:
-        close_up: { scale: 0.95, y_offset_px: 260, height_pct: "65%" }
-        medium: { scale: 0.75, y_offset_px: 420, height_pct: "50%" }
-```
-
-#### Adding a Backdrop:
-```yaml
-    - id: backdrop_identifier
-      file: assets/svg/backdrops/backdrop_name.svg
-      setting: "Location / Setting Description"
-      narrative_theme: "Thematic purpose"
-      dominant_colors: ["#hex1", "#hex2", "#hex3"]
-```
-
-#### Adding a Dynamic Storytelling Prop:
-```yaml
-    - id: prop_identifier
-      file: assets/svg/props/prop_name.svg
-      type: "mandala | stepped_platform | imperial_armor | theatrical_callout | energy_clash | ritual_flame"
-      description: "Concise summary of prop narrative function"
-      recommended_motion: "kundali_shatter | staircase_climb | boot_stomp | bubble_float | eye_beam_clash | brazier_flicker"
-```
+### 3.3 Pillar Rotation & Duplicate Prevention
+Run `.\.venv\Scripts\python.exe scripts/db_manager.py --context` first to inspect:
+1. `next_pillar` cycling across `Ancient Epics & Lore -> Hidden History -> Cosmic & Scientific Paradoxes` (computed from latest non-failed published episode).
+2. `active_series_list` and `next_episode_number_in_series` / `next_global_episode_number`.
+3. `previously_covered_topics` (`LIMIT 30`) and `previous_bespoke_assets` (never reuse a topic or `bespoke_asset_path`).
+4. `monthly_tts_budget` (`audio_ledger` live spend and remaining credits).
 
 ---
 
-## 6. Visual Directing, Screen Space & Composition
+## 4. Narrative-Adaptive Visual Modes (Zero Fixed Proscenium Box)
 
-### 6.1 Shot Scale Hierarchy & Golden Action Zone Framing
-Characters and scenes are framed using the 9:16 Golden Action Zone framing system:
-- **Base Puppet Rig Dimensions:** Standardized strictly to **$480\text{px} \times 960\text{px}$** with transform origin anchored at the feet (**`50% 100%`**).
-- **Anatomical Forward Kinematics:** Joint rotations are strictly constrained within natural human limits, permanently eliminating awkward scarecrow angles.
-- **Continuous Biological Life:** Characters continuously breathe via diaphragmatic sine curves ($2.2\text{s}$ cycle), blink at randomized natural intervals ($3.2\text{s}$ base), and perform subtle idle weight shifts.
-
-| Shot Scale | Canonical ID | Scale Factor | Anchor Y | Screen Height % | Composition & Editorial Intent |
-| :--- | :--- | :---: | :---: | :---: | :--- |
-| **Extreme Wide Shot** | `extreme_wide` | `0.45` | `1500px` | 22.5% | Grand mythic landscapes, Himalayan peaks, cosmic court vistas. |
-| **Full Shot** | `full_shot` | `0.65` | `1460px` | 32.5% | Full character establishing shot with complete proscenium arch visibility. |
-| **Medium Shot** | `medium` | `0.90` | `1380px` | 45.0% | Default narrative dialogue, teaching gestures, standard storytelling. |
-| **Medium Close-Up** | `medium_close_up` | `1.25` | `1280px` | 55.0% | Heightened emotion, philosophical confrontation, intense dialogue. |
-| **Close-Up** | `close_up` | `1.65` | `1200px` | 60.0% | Climactic expressions, sovereign fury, divine revelations. |
-| **Extreme Close-Up** | `extreme_close_up`| `2.20` | `1120px` | 70.0% | Third eye awakening, laser gaze beams, supreme defiance. |
-
-### 6.2 Two-Character Staging, Negative Space & Eyeline Vectors
-In two-character scenes and confrontations:
-- **Character Bounding Widths:** Maintained at **$340\text{px} – 380\text{px}$** (strict hard maximum of $400\text{px}$).
-- **Central Conversational Negative Space:** Maintained at **$160\text{px} – 200\text{px}$** between character bounds.
-- **Zero Collision Guarantee:** Character bounding boxes must never intersect (**$\text{overlap} = 0\text{px}$**).
-- **Automated Eyeline Convergence:** Head pitch and gaze angles are computed automatically from relative character coordinates, ensuring consistent eyelines across cuts and Over-The-Shoulder (OTS) reverse shots.
-
-### 6.2 YouTube Shorts Mobile Safe-Zone Clearances (1080×1920)
-All critical visual elements must remain inside the active theatrical stage:
-- **Top Safe Zone (288px):** Keep character heads, halos, and crown crests below Y=288px to avoid obstruction by the YouTube search bar and sound controls.
-- **Bottom Safe Zone (520px):** Keep character hands, props, and critical diagram text above Y=1400px to avoid obstruction by channel metadata, title, and engagement icons.
-- **Right Safe Zone (192px):** Keep character bodies, arms, and weapons clear of the right 192px to prevent occlusion by the like, comment, and share buttons.
-- **Left Margin (48px):** Maintain at least 48px clearance on the left edge.
-
-```
-0px    +-------------------------------------------------------+
-       |               TOP SAFE ZONE (288px)                   |  <-- Clear of heads & crowns
-288px  +-------------------------------------------------------+
-       |                                                       |
-       |                ACTIVE THEATRICAL STAGE                |  <-- Character faces, action gestures,
-       |       LEFT MARGIN                       RIGHT ZONE    |      and bespoke diagrams reside here
-       |          (48px)                          (192px)      |
-1400px +-------------------------------------------------------+
-       |              BOTTOM SAFE ZONE (520px)                 |  <-- Clear of hands & props
-1920px +-------------------------------------------------------+
-```
-
-### 6.3 Dynamic Motion, Transitions & VFX Choreography
-- **Visual Evolution:** Visuals must evolve every 3–6 seconds via camera motions (`slow_push`, `dramatic_zoom`, `pan_left`, `pan_right`), character gesture transitions, or lighting shifts. Never leave a static camera hold.
-- **Transition Choreography:** Every episode plan **must incorporate at least 3 distinct transition types** across its scenes:
-  - `curtain_open`: Velvet curtains parting (mandatory for Scene 1).
-  - `shatter_transition`: Crystalline fracture wipe (for climax, shock, or crisis).
-  - `border_wipe`: Sweeping golden border.
-  - `blind_wipe`: Horizontal folk slats.
-  - `radial_wipe`: Golden iris aperture.
-  - `fade`: Smooth cinematic crossfade.
-  - `cut`: Hard cut for rapid narrative shifts.
-- **Dynamic VFX Elements:** Every episode plan **must feature at least 2 distinct narrative-synchronized VFX elements**:
-  - `laser_beam`: Celestial energy strike or chakra beam.
-  - `sunburst`: Radiant solar corona or divine enlightenment.
-  - `screen_shatter`: Explosive crystalline glass fracture.
-  - `fracture_cracks`: Tectonic magma fissures on bedrock.
-  - `sound_ripple`: Concentric harmonic shockwaves from Shankha blast.
+Select the scene's `visual_spec.atmosphere_mode` from story context (never force velvet theatre curtains or static black borders):
+- **`palace_court`:** Architectural courtrooms, ashrams, and royal sabhas (`architectural_stage.js`, `dwaraka_durbar`, `brahmaloka_sabha`, `lanka_citadel`) with 1-point perspective floorboards, turned daises, diyas, and optional carved colonnades.
+- **`dawn_epic`:** Outdoor Himalayan, cosmic-ocean, and celestial vistas (`atmosphere_v1.js`, `kailash_horizon`, `cosmic_ocean_manthan`, `ashram_twilight`) with multi-plane fog ridges, volumetric sun glow, feathered clouds, drifting mist, and bird flocks.
+- **`archival`:** Historical and archaeological investigations (`nalanda_archival`, `mehrauli_iron_pillar`, `meru_route_scroll`) combining sandstone courtyards, parchment scrolls, and analytical magnifiers.
+- **`cosmic_explainer`:** Relativistic/astronomical comparisons (`observatory_cosmos`, `brahmaloka_time_chakra`, `spacetime_comparator`, `earth_globe`, `brass_clock`) with deep-space starfields and progressive stage diagrams.
 
 ---
 
-## 7. Scripting, Dramatic Arcs & Single Storyteller Voice
+## 5. Anatomical Character Design & Rig Continuity
 
-### 7.1 Multi-Phase Dramatic Arc Architectures
-Every episode plan must select and implement an authorized dramatic structure:
-
-1. **Eight-Phase Complete Arc (`eight_phase_complete_arc`, 70–180s):**
-   - *Phase 1 (Hook / In Medias Res, 0–6s):* Intense dramatic question or impossible visual enigma.
-   - *Phase 2 (Premise & Cosmic Law, 6–18s):* Establish characters, motivations, and the cosmic rule at stake.
-   - *Phase 3 (Rising Action / First Move, 18–35s):* Hubris or fateful action initiates the conflict.
-   - *Phase 4 (Complication / Escalation, 35–55s):* Counter-move or divine intervention raises tension.
-   - *Phase 5 (Direct Confrontation, 55–75s):* Opposing wills or cosmic forces collide head-on.
-   - *Phase 6 (Dramatic Climax, 75–95s):* Turning point, moral reckoning, or unstoppable strike.
-   - *Phase 7 (Resolution, 95–110s):* Primary conflict decisively settled with lasting consequences.
-   - *Phase 8 (Philosophical Outro, 110–130s):* Universal takeaway (*Niyati*, *Dharma*) and series connection.
-2. **Five-Phase Compact Arc (`five_phase_compact_arc`, 40–60s):**
-   - *Hook (0–5s)* $\rightarrow$ *Setup (5–15s)* $\rightarrow$ *Crisis Escalation (15–30s)* $\rightarrow$ *Climax (30–45s)* $\rightarrow$ *Resolution & Lesson (45–60s)*.
-3. **In Medias Res Structure (`in_medias_res`):**
-   - Open Scene 1 at the boiling point of disaster or clash, flashback to origin vow in Scenes 2–3, push back into the climax in Scene 4, and resolve decisively in Scene 5.
-
-### 7.2 Strict Anti-Cliffhanger Mandate
-- **Shinchan / Doraemon Cartoon Model Across ALL Videos:** Whether standalone or part of an ongoing series universe, **every episode must tell a 100% self-contained, fully resolved story**.
-- Cliffhangers (*"to be continued"*, *"part 2"*, *"अगले भाग में देखें"*, *"जारी रहेगा"*) are strictly forbidden and will fail automated validation.
-- The central dilemma must be decisively resolved, followed by a satisfying philosophical takeaway (`satisfying_takeaway`).
-
-### 7.3 ElevenLabs v4 Inline Audio Steering Rules
-Viraj performs all lines using inline square-bracket steering tags:
-- **Narrator Opening / Hook:** Always begin with `[slowly, solemn, deep]` to enforce a calm, ancient storytelling pace (~120–130 WPM) and prevent rushed delivery. Use `[pause]` between clauses.
-- **Divine / Cosmic Power (Shiva, Vishnu, Devas):** Use `[calm, serene, deep, slowly]` or `[building, intense]` right before a divine strike.
-- **Antagonist / Asura (Ravana, Demons):** Use `[arrogant, booming, furious]` and reaction tags like `[laughs]`, `[shouts]` to drop Viraj's pitch into an aggressive chest roar.
-- **Sorrow / Tragedy (Mandodari, Sita):** Use `[softly, sorrowful, trembling]` and `[sighs]` to soften Viraj's voice into a delicate, emotive whisper.
-- **Devotional / Sage (Narada, Rishis):** Use `[calm, gentle, devotional]`.
-- **Philosophical Outro:** Conclude with `[gentle, calm, peaceful]` for timeless moral resolution.
+All characters render through `templates/runtime/rigs/character_engine.js` using JSON presets in `assets/characters/*.json`:
+- **Tapered Capsule Limbs (`traceCapsule` / `drawAnatomicalArm`):** Two-pass organic shoulder-to-wrist contours with inner warm highlight (`#E8B186`) and crisp `#3B1E12` outlines (no uniform tube sticks, no brass rivet cutouts).
+- **5-Finger Sculpted Hands (`drawSculptedHand`):** Wrist-anchored hand poses supporting `"neutral"`, `"namaskar"`, `"gesture"`, `"palm_cup"`, `"drink"`, `"shield"`, `"pull"`, `"bless"`, `"clasp"`, `"awed"`, `"throat_reach"`, `"veena_play"`, `"strum"`.
+- **2.5D Head Turn Parallax (`drawMythFace`):** Continuous `turn` (`-0.45` to `+0.45`) shifts facial midline, nose bridge, brow curvature, iris gaze (`gaze_target`), and near/far ear visibility alongside natural blinking and phoneme-linked lip motion.
+- **Hairlines & Series Continuity:** Use high-arched parted hairlines strictly clear of brows and *tilak* (zero dark forehead bars). Returning heroes (*Shiva, Devi, Brahma, Vishnu, Shani Dev, Kakudmi, Revati, Balarama, Ravana, Sutradhar*) preserve locked palettes and accessories across episodes.
 
 ---
 
-## 8. Multi-Point Video Quality Control & Physical Artifact Verification
+## 6. Spatial Grounding Law (`HORIZON_Y`) & Peak Safety
 
-Successful command execution (exit code `0`) and passing lint checks are necessary but **not sufficient proof** of video quality. The AI must perform active multi-point verification of the actual rendered artifacts.
-
-```mermaid
-flowchart TD
-    A["render_and_qa.py finishes with exit code 0"] --> B["Artifact 1: Inspect build/final_qa_grid.jpg"]
-    B --> C["Artifact 2: Inspect build/thumbnail.jpg"]
-    C --> D["Artifact 3: Verify build/render_verification.json"]
-    D --> E["Artifact 4: Check Audio & AV Lip-Sync"]
-    E --> F{"Any defects found?"}
-    F -- Yes --> G["Repair episode_plan.json or SVG (Max 2 loops)"]
-    G --> H["Re-run build_audio.py + render_and_qa.py"]
-    H --> B
-    F -- No --> I["Proceed to publish_youtube.py"]
-```
-
-### 8.1 Pre-Render Gate: Snapshot Inspection (`build/qa_grid.jpg`)
-After running `scripts/preview_frames.py`, visually inspect `build/qa_grid.jpg`:
-- **Anatomy & Joints:** Verify that puppet limbs are cleanly attached to brass rivet pins with zero detached hands or floating heads.
-- **Prop Alignment:** Confirm dynamic props (Kundali, staircase, boot, thought bubbles) stay within safe boundaries and do not penetrate torso geometry unnaturally.
-- **Subtitle & Facial Clearance:** Verify bottom-centered word-by-word kinetic subtitles do not occlude character faces or heads.
-- **Safe-Zone Clearance:** Confirm heads stay below Y=288px and interactive elements stay above Y=1400px.
-
-### 8.2 Post-Render Gate: Automated Triple-Gate QA & Artifact Verification
-After running `scripts/render_and_qa.py`, verify the actual output files before publishing using the fail-closed Triple-Gate QA Verifier (`scripts/engine/qa_verifier.py`):
-
-1. **Gate 1: Cinematography & Temporal Pacing QA:**
-   - Average Shot Length (ASL): **Target 2.2s – 3.0s** (Strict Hard Bounds: **1.8s to 3.2s**).
-   - Maximum Static Shot Hold: **<= 3.8 seconds** for all beats.
-   - Opening Hook Limit: **<= 2.0 seconds**.
-   - Beat Duration Floor: **>= 1.2 seconds**.
-2. **Gate 2: Geometric & Safe-Zone QA:**
-   - 9:16 Canvas bounds ($1080\times 1920\text{px}$) strictly enforced.
-   - Character Bounding Width: **340px – 380px** (hard maximum 400px in multi-character framing).
-   - Conversational Spacing: **160px – 200px** central negative space between opponents.
-   - Zero Collision: Zero character overlap (**$\text{overlap} = 0\text{px}$**).
-   - Facial Clearance: Complete clearance below character heads ($Y \le 800\text{px}$).
-3. **Gate 3: Acoustic & Spectral Quality QA:**
-   - Sample Rate: **48,000 Hz** master (zero downsampling).
-   - Channels: **2-channel stereo** (zero mono downmixing).
-   - Spectral Ceiling: **>= 18,000 Hz** frequency retention.
-   - EBU R128 Integrated Loudness: **-14.0 LUFS ± 1.0** via `loudnorm=I=-14:TP=-1.5:LRA=11`.
-   - True Peak Max: **<= -1.5 dBTP** (protects mobile DACs against intersample clipping).
-   - BGM Sidechain Ducking: **8:1 ratio** (threshold 0.03, attack 20ms, release 500ms, makeup 1.0).
-   - FFmpeg Mixing Volume Protection: Explicit `normalize=0` (zero voiceover crushing).
-4. **Strict Fail-Closed KinoCut Checkpoint (`build/render_report.json`):**
-   - KinoCut Quality Score: **>= 80.0 / 100**.
-   - Zero Default Scores: Missing, malformed, or non-numeric scores fail closed immediately (the legacy default score of 90.0 is permanently eliminated).
-5. **Thumbnail & Contact Sheet Verification:**
-   - Contact Sheet (`build/final_qa_grid.jpg`): Inspect decoded video frames for visual integrity, smooth transitions, and zero black voids.
-   - Thumbnail (`build/thumbnail.jpg`): Exactly `1080×1920` (`9:16` RGB JPEG, file size **<= 2.0 MB**, non-blank, safe margins inside the central `2:3` Shorts shelf crop `1080×1620`), capturing a high-impact narrative hook. Uploaded strictly **after** `processingDetails.processingStatus == "succeeded"` and verified live against `shortsAspectRatio` (`sardefault.jpg`) from YouTube's CDN.
-
-### 8.3 Defect Resolution & Repair Loop
-- If visual anomalies, audio clipping, or duration violations are discovered during artifact inspection, modify `build/episode_plan.json` or the relevant SVG rig.
-- Re-run `build_audio.py` and `render_and_qa.py` (up to **2 repair attempts**).
-- **Hard Stop:** If defects persist after 2 repair attempts, **abort the run without uploading** to YouTube and report the exact defect to the user.
+- **`HORIZON_Y` Invariant:** Scene compositions lock wall baseboards and horizon plains to `HORIZON_Y = 1142` (`1445–1465` on subtitle-free covers).
+- **Zero Floating Actors or Props (`GROUND_TOLERANCE_PX = 6.0`):**
+  - Standing characters plant sandaled feet + dual cast shadows squarely at `(x, HORIZON_Y)` (`surface_type: "floor"` / `"terrain"` / `"rock"`).
+  - Seated figures anchor flush onto `"dais"` (`-98px`) or `"lotus"` (`-54px`) pedestals; props declare explicit `mount` (`floor | dais | table | pedestal | terrain | sky`).
+  - `storyboard_composer.py` verifies every character/prop vertical offset within `<= 6.0px` before rendering.
+- **Peak Silhouette Clamping:** Procedural mountain ridges and snow gullies (e.g., `drawKailashSacredPeak` in `atmosphere_v1.js`) MUST clip (`ctx.clip()`) inside their parent outer mountain polygon so no snow shard protrudes into open sky at `1.66x` thumbnail scale.
 
 ---
 
-## 9. Seven-Command Production Runbook
+## 7. Cinematography, Framing, Motion Fluidity & Rack Focus
 
-Execute ONLY these exact 7 commands in sequence. Do NOT chain commands with shell operators or introduce dynamic arguments:
+- **YouTube Shorts Safe Zones (`1080x1920`):**
+  - Top clear: `0..288px` (`Y >= 288px` for heads/crowns/overlays).
+  - Bottom clear: `1400..1920px` (`520px` bottom clear; keep hands, interactive props, and captions above `Y = 1400px`).
+  - Left clear: `>= 48px`; Right clear: `192px` (`X <= 888px`).
+- **Continuous Motion Law (`static_fraction <= 0.15`):**
+  - Drive continuous evolution via `camera_move` (`slow_push_in`, `slow_pull_out`, `pan_left`, `pan_right`, `drift`, `static` micro-drift), parallax depth planes (`0.03` starfields -> `1.0` foreground actors), flowing aura/particles, and gesture progression. Never leave static holds `> 3.2s`.
+- **Rack Focus & Lower-Third Composition:** Dim background layers (`0.35–0.45` rack-focus) during intense emotional close-ups; populate ocean/outdoor lower thirds with reflective water highlights, stone ledges, or flora silhouettes instead of empty dark voids.
 
+---
+
+## 8. Deterministic HyperFrames Contract & Bitrate Ceiling
+
+- **Modular ES Runtime:** Compose exclusively from `templates/runtime/` (`index.html.jinja2`, `styles.css`, `core/seek_runtime.js`, `core/scene_director.js`, `backdrops/*.js`, `rigs/character_engine.js`, `props/props_library.js`, `fx/transitions.js`, `captions/captions.html.jinja2`). Never inline JS blobs inside Python strings.
+- **Seek Determinism:**
+  - Single GSAP timeline per composition (`paused: true`) tweening `proxy = { t }` with `ease: "none"`, `immediateRender: false`, `lazy: false`.
+  - Listen to `hf-seek` events (`detail.time`) and expose `window.__timelines[id]`.
+  - Use deterministic `mulberry32` seeded PRNG, wait on `document.fonts.ready`, and **forbid** `gsap.delayedCall()`, `.call()` timeline callbacks, `repeat: -1`, and unseeded `Math.random()`.
+- **Bitrate & File Size Guardrail (`<= 55 MiB`):**
+  - Never shift full-frame canvas noise every `1/30s` frame (which breaks H.264 inter-frame compression). Keep micro-grain static or throttled (`<= 0.03` alpha).
+  - `render_optimizer.py` enforces `1080x1920 @ 30fps` H.264 (`yuv420p`, `+faststart`) strictly **`<= 57,671,680` bytes (`55 MiB`)**.
+
+---
+
+## 9. Motivated Transitions & VFX
+
+Use clean story-motivated transitions from `fx/transitions.js`:
+- `fade` / `crossfade`: Atmospheric time shifts and compassionate beats.
+- `whip` (`wipe_left`, `wipe_right`): Energetic spatial travel or rapid cause-and-effect cuts.
+- `iris`: Focused divine reveals and cosmic medallions.
+- `cut` / `flash_cut`: Sudden crisis eruptions or thunderous confrontations.
+Pair transitions with subtle aura pulses, particle motes (`golden_embers`, `starfield_warp`, `quantum_nodes`, `himalayan_snow`, `crimson_embers`, `mystic_mist`), and story props.
+
+---
+
+## 10. Synchronized Hindi Captions & Validated DOM Labels
+
+- **Clean Top Frame:** Keep `0` permanent progress bars, `0` episode counters, and `0` subscribe badges at the top of the frame.
+- **Opt-In DOM Contextual Pills (`contextual_pill`):**
+  - Disabled by default (`enabled: false`). When enabled for brief location/concept cues (`2–4` words), render strictly inside `#contextual-overlay` (`.ctx-kicker` `28px` / `.ctx-title` `32px`) as observable DOM nodes within `x: 48..888`, `y: 288..1248` (`y_px` `295..1220`).
+  - **Never** draw UI pills or titles inside `<canvas data-layout-ignore="true">`, which hides them from HyperFrames' `--safe-zone shorts` layout checker.
+- **Kinetic Hindi Captions (`templates/runtime/captions/captions.html.jinja2`):**
+  - Mounted as a HyperFrames sub-composition (`#captions` with `data-composition-src="captions/captions.html"`).
+  - Positioned strictly at `top: 1244px`, `left: 52px`, `right: 204px`, `max-height: 148px` (`rect.bottom <= 1395px` — always clearing `Y >= 1400px`).
+  - Uses local `Noto Sans Devanagari` (`46px`, weight `800`), `5`-word sliding windows, and em-dash-safe tokenization (`—`, `-`, `/`) so compound words like `"कहलाए—नीलकंठ!"` preserve keyword highlighting (`kw: true`).
+
+---
+
+## 11. Voice Direction, `faster-whisper small` & Multi-Act Audio Mix
+
+- **Tag-Preserving Synthesis (`elevenlabs_tts.py`):**
+  - Pronunciations (`pronunciations_hi.yaml`) run through `apply_pronunciations_preserving_tags` so `[slowly, solemn, deep]`, `[pause]`, `[sighs]`, and `[building energy, intense]` reach `eleven_v4` intact while display/alignment strips tags cleanly.
+  - Cache per-scene WAVs by `SHA-256(tagged_text, voice_id, model_id, settings)` and log every hit/miss to SQLite `audio_ledger`.
+- **Word Alignment (`whisper_aligner.py`):**
+  - Resample WAVs to `16 kHz` mono PCM via `ffmpeg` and transcribe with locally cached **`WhisperModel("small", compute_type="int8", vad_filter=True, local_files_only=True)`** paired with RMS speech-burst snapping.
+- **Multi-Act Mix & Mastering (`sound_mixer.py`):**
+  - Use up to `3` distinct non-duplicate BGM stems from `assets/audio/bgm/` (`0` duplicate MD5s; `allow_synth_fallback: false` — never synthesize sine drones).
+  - Schedule only story-referenced SFX from `assets/audio/sfx/` (zero orphaned UI pops), aligning sweep/transition crests to `+33ms` after visual cuts (`DEFAULT_CUT_CREST_OFFSET_SEC`).
+  - Apply voice-to-BGM sidechain ducking at **`6.5:1` (`ratio: 6.5`**, `threshold: 0.03`, `attack_ms: 20`, `release_ms: 500`) and a **single 2-pass `loudnorm`** targeting **`-14.0 ± 0.5 LUFS`**, **`-2.2 dBTP` WAV headroom** (yielding AAC MP4 **`<= -1.5 dBTP`**), **`48,000 Hz` stereo**.
+
+---
+
+## 12. Dedicated English Cover Thumbnails (`1080x1920` & `2:3` Safe)
+
+Never grab raw video frames for thumbnails. Render via `templates/thumbnail/cover_template.html.jinja2` and `sutradhar/visual/thumbnail_builder.py`:
+- **Format & Size:** `1080x1920` RGB JPEG, `<= 2.0 MiB` (`2,097,152 B`), `mean_stddev >= 4.0`.
+- **Typography:** English-only `ThumbnailSpec` (`pill`, `headline_line1`, `headline_line2`, optional `sub_pill`); use supported `Inter` / `Cinzel` weights **`500`, `700`, or `800` only** (never `900`, which is absent in `assets/fonts/fonts.css`).
+- **2:3 Shorts Shelf Crop Verification:** `thumbnail_builder.py` emits `build/thumbnail_2x3_crop.jpg` (`y = 150..1770`, `1080x1620`). Keep top badges and bottom footers safely inside `y = 200..1710` so Shorts grids never clip text.
+
+---
+
+## 13. Asset Reuse First & Bespoke Canvas/JSON Authoring
+
+- Inspect `assets/manifest.yaml` (Schema `v2.0.0`) and `npx hyperframes catalog --json` before authoring new assets.
+- Canonical asset directories: `assets/fonts/` (`31` `.woff2` + `fonts.css`), `assets/characters/*.json`, `assets/environments/*.json`, `assets/props/*.json`, `assets/audio/bgm/`, `assets/audio/sfx/`, and `assets/episodes/<slug>/` for episode-specific custom modules.
+- Every episode's `bespoke_asset_path` (`canvas_prop:<slug>`, `character:<slug>`, `environment:<slug>`, or `assets/episodes/<slug>/...`) must be unique against `previous_bespoke_assets` and actively rendered in at least one scene.
+
+---
+
+## 14. Pre-Render & Post-Render Fail-Closed Verification Protocol
+
+1. **Pre-Render Gate (`preview_frames.py`):**
+   - Runs `hyperframes lint` (`0` errors), `hyperframes check --strict --safe-zone shorts --json` (`ok: true`, `0` errors, `0` warnings), headless Chromium runtime probe (`__timelines`, `hf-seek`, font load, caption `rect.bottom <= 1395`, contextual pill bounds), and stitches **15-frame** `build/qa_grid.jpg` + `build/qa_grid_safezones.jpg`.
+   - **Human/AI Checkpoint:** Visually inspect `build/qa_grid.jpg` via `read_file` before running full MP4 encode.
+2. **Post-Render Gate (`render_and_qa.py` -> `quality_gate.py`):**
+   - Verifies MP4 contract (`1080x1920@30fps` H.264 + `48 kHz` stereo AAC, **`<= 55 MiB`**), `hf-seek` parity, zero black frames / frozen scenes, `hyperframes measure look`, **dual KinoCut profiles** (`ui-capture-dark >= 88.0` with `all_passed: true`, `default >= 55.0`, `color_balance PASS`, `static_fraction <= 0.15`), `ebur128` loudness + quiet `0.7s` tail (`<= -16.0 dBFS`) + zero mid-episode silences, `whisper_alignment` match ratios, `build/final_qa_grid.jpg`, and `build/thumbnail.jpg` + `build/thumbnail_2x3_crop.jpg`.
+   - Visually inspect `build/final_qa_grid.jpg`, `build/thumbnail.jpg`, and `build/thumbnail_2x3_crop.jpg` before publishing.
+
+---
+
+## 15. YouTube Publishing & `sardefault.jpg` CDN Parity
+
+Handled cohesively by `scripts/sutradhar/publishing/` (`youtube_client.py`, `metadata_policy.py`, `thumbnail_verifier.py`):
+1. Re-validate `EpisodePlanV2`, `final_short.mp4` (`<= 55 MiB`), `qa_report.json`, English metadata (`#Shorts`, 10–15 tags, citations), and `1080x1920` JPEG + `2:3` crop before consuming upload quota.
+2. Upload video (`containsSyntheticMedia=True`, `selfDeclaredMadeForKids=False`, `defaultLanguage="en"`, `defaultAudioLanguage="hi"`).
+3. Resolve/create English series playlist via paginated `playlists.list` and assign video (fail closed if `episodic_series` playlist assignment fails).
+4. Poll `videos.list` until **`uploadStatus == "processed"` AND `processingDetails.processingStatus == "succeeded"`** before calling `thumbnails.set`.
+5. Verify live `shortsAspectRatio` (`sardefault.jpg`) from `i.ytimg.com` (`HTTP 200`, `1080x1920`, **`MAE <= 12.0`**, **`dhash <= 16`** — mandatory from Episode 3 onward; Episodes 1–2 remain untouched historical baselines).
+6. Atomically persist `episodes` + `publishing_history` + `series.completed_episodes` in SQLite via `sutradhar.db.record_published_episode`, and write `build/publish_result.json` + `build/publish_verification.json`.
+
+---
+
+## 16. Safety Boundaries, 6-Command Atomic Runbook & Max-2-Repair Loop
+
+### 16.1 Six-Command Daily Production Runbook
 ```powershell
-# Step 1: Pre-flight state, multi-series inspection & context analysis
+# 1. Inspect series state, pillar rotation, topic history & ElevenLabs monthly budget
 .\.venv\Scripts\python.exe scripts/db_manager.py --context
 
-# Step 2: Initialize new series universe & playlist (ONLY when launching a new series)
+# 2. Initialize new series universe ONLY when starting a new episodic series
 .\.venv\Scripts\python.exe scripts/db_manager.py --create-series
 
-# Step 3: Synthesize Hindi speech via ElevenLabs Viraj & generate Whisper alignment
+# 3. Synthesize Hindi narration (pre-TTS <= 900 cap), Whisper small + RMS align & build captions
 .\.venv\Scripts\python.exe scripts/build_audio.py
 
-# Step 4: Validate composition, check safe zones, and generate pre-render QA snapshot grid
+# 4. Compile StoryboardIR, run HyperFrames --strict --safe-zone shorts & stitch 15-frame qa_grid.jpg
 .\.venv\Scripts\python.exe scripts/preview_frames.py
 
-# Step 5: Render 1080x1920 MP4, apply sidechain ducking, run KinoCut gate, extract thumbnail
+# 5. Render <= 55 MiB MP4, mix 48 kHz audio, render cover + 2:3 crop & run fail-closed Quality Gate
 .\.venv\Scripts\python.exe scripts/render_and_qa.py
 
-# Step 6: Upload MP4 and custom thumbnail to YouTube, verify live API read-back
+# 6. Upload, assign English playlist, verify sardefault.jpg CDN parity & commit SQLite atomically
 .\.venv\Scripts\python.exe scripts/publish_youtube.py
-
-# Step 7: Persist episode record and update series progress in SQLite
-.\.venv\Scripts\python.exe scripts/db_manager.py --record-published
 ```
+*(Manual recovery & read-only utilities: `scripts/db_manager.py --record-published`, `scripts/db_manager.py --repair`, and `scripts/publish_youtube.py --verify-only` / `--update-playlists` / `--update-thumbnail`.)*
 
----
-
-## 10. Required End-of-Run Summary Report
-
-Conclude every production session with this structured report:
-
-```markdown
-### Sutradhar Production Execution Report
-
-- **Execution Mode:** [Autonomous | User-Directed Overrides]
-- **Episode Format:** [standalone | episodic_series]
-- **Story Title:** [Devanagari Title] | [Series Name]
-- **Thematic Pillar:** [Ancient Epics & Lore | Hidden History | Cosmic Paradoxes]
-- **Scripture / Historical Sources:** [Puranas / Inscriptions cited]
-- **Duration:** [XX.X] seconds (Target: 40–120s | Hard: 30–180s)
-- **Voice Engine:** ElevenLabs v4 (`eleven_v4`) | Single Narrator: Viraj (`uuyFQegRan8rpIQCGu9K`)
-- **Bespoke Asset Created:** [Relative path to new SVG asset registered in assets/manifest.yaml]
-- **Audio Mastering:** Integrated Loudness [-14.0] LUFS | True Peak [-1.X] dBFS | Ducking [6:1]
-- **Quality Score:** KinoCut [XX.X / 100] (Gate: >= 80.0)
-- **Actual Artifact Verification:**
-  - `build/final_qa_grid.jpg`: [Verified clean - zero detached limbs, zero captions]
-  - `build/thumbnail.jpg`: [Verified - 1080x1920, size: XXX KB <= 2MB]
-  - Lip-Sync & SFX: [Verified aligned with spoken speech]
-- **YouTube Publishing:**
-  - Video ID: `[YouTube Video ID]`
-  - Privacy Status: `[public | private]`
-  - Playlist ID: `[Playlist ID or None if standalone]`
-  - Custom Thumbnail: Applied (`build/thumbnail.jpg`)
-  - Read-Back Verification: PASSED
-```
+### 16.2 Repair Ceiling & Hard Safety Rules
+- **Max 2 Repair Loops:** If `preview_frames.py` or `render_and_qa.py` fails, diagnose and repair `episode_plan.json` / runtime specs at most **2 times**. If defects persist, **abort without uploading** (zero extra TTS spend if script unchanged via SHA-256 cache).
+- **Never run `git add`, `git commit`, `git push`, `git reset`, or `git rm`** without explicit user authorization in the current turn.
+- **Never edit `episodes.db` directly** outside `scripts/db_manager.py` / `sutradhar.db`, and **never log or print secrets** from `.env.local`.

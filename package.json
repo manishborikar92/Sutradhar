@@ -11,10 +11,10 @@
     "hf:doctor": "hyperframes doctor",
     "hf:browser": "hyperframes browser ensure",
     "hf:lint": "hyperframes lint",
-    "hf:check": "hyperframes check --json"
+    "hf:check": "hyperframes check --strict --safe-zone shorts --json"
   },
   "dependencies": {
-    "hyperframes": "^0.9.19",
+    "hyperframes": "^0.9.70",
     "gsap": "^3.15.1"
   }
 }

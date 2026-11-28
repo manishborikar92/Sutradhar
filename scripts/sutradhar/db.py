@@ -1140,31 +1140,88 @@ def cmd_create_series(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def cmd_record_published(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
+def _extract_history_telemetry(
+    verification_audit: Optional[dict[str, Any]],
+) -> tuple[Optional[str], Optional[float], Optional[int], Optional[str], Optional[str], Optional[str]]:
+    if not isinstance(verification_audit, dict):
+        return None, None, None, None, None, None
+    checks = verification_audit.get("checks") or {}
+    thumb_chk = checks.get("thumbnail") if isinstance(checks, dict) else None
+    sim = thumb_chk.get("similarity") if isinstance(thumb_chk, dict) else None
+    cdn_url = thumb_chk.get("cdn_url") if isinstance(thumb_chk, dict) else None
+    cdn_mae = sim.get("mae") if isinstance(sim, dict) else None
+    cdn_dhash = sim.get("dhash_distance") if isinstance(sim, dict) else None
+    checks_json = json.dumps(checks, ensure_ascii=False) if checks else None
+    details_json = json.dumps(verification_audit, ensure_ascii=False)
+    published_at = verification_audit.get("timestamp")
+    return cdn_url, cdn_mae, cdn_dhash, checks_json, details_json, published_at
+
+
+def record_published_episode(
+    root: Path,
+    cfg: dict[str, Any],
+    *,
+    ep_plan: Optional[EpisodePlan] = None,
+    pub_res: Optional[PublishResult] = None,
+    verification_audit: Optional[dict[str, Any]] = None,
+    quality_metrics: Optional[dict[str, Any]] = None,
+) -> dict[str, Any]:
+    """Atomically record a published/private_review episode + publishing_history + series counter."""
     paths = resolve_paths(root, cfg)
     db_path = paths["db_file"]
     ensure_db_initialized(db_path)
 
-    ep_path = paths["build_dir"] / "episode_plan.json"
-    pub_path = paths["build_dir"] / "publish_result.json"
+    if ep_plan is None:
+        raw_ep = load_json_file(paths["build_dir"] / "episode_plan.json", "episode_plan.json")
+        try:
+            ep_plan = EpisodePlan.model_validate(raw_ep, context={"config": cfg})
+        except ValidationError as exc:
+            raise StateError(f"episode_plan.json validation failed:\n{exc}") from exc
 
-    raw_ep = load_json_file(ep_path, "episode_plan.json")
-    raw_pub = load_json_file(pub_path, "publish_result.json")
+    if pub_res is None:
+        raw_pub = load_json_file(paths["build_dir"] / "publish_result.json", "publish_result.json")
+        try:
+            pub_res = PublishResult.model_validate(raw_pub, context={"config": cfg})
+        except ValidationError as exc:
+            raise StateError(f"publish_result.json validation failed:\n{exc}") from exc
 
-    try:
-        ep_plan = EpisodePlan.model_validate(raw_ep, context={"config": cfg})
-    except ValidationError as exc:
-        raise StateError(f"episode_plan.json validation failed:\n{exc}") from exc
+    if verification_audit is None:
+        ver_path = paths["build_dir"] / "publish_verification.json"
+        if ver_path.is_file():
+            try:
+                verification_audit = json.loads(ver_path.read_text(encoding="utf-8"))
+            except Exception:
+                verification_audit = None
 
-    try:
-        pub_res = PublishResult.model_validate(raw_pub, context={"config": cfg})
-    except ValidationError as exc:
-        raise StateError(f"publish_result.json validation failed:\n{exc}") from exc
+    metrics = quality_metrics or {}
+    if not metrics:
+        qa_path = paths["build_dir"] / "qa_report.json"
+        render_path = paths["build_dir"] / "render_report.json"
+        qa_data = json.loads(qa_path.read_text(encoding="utf-8")) if qa_path.is_file() else {}
+        render_data = json.loads(render_path.read_text(encoding="utf-8")) if render_path.is_file() else {}
+        kc = (qa_data.get("motion_and_look_gate") or {}).get("kinocut") or {}
+        mp4_gate = qa_data.get("mp4_gate") or {}
+        final_mp4 = paths["build_dir"] / "final_short.mp4"
+        metrics = {
+            "file_bytes": final_mp4.stat().st_size if final_mp4.is_file() else render_data.get("file_bytes"),
+            "duration_sec": mp4_gate.get("duration_sec") or render_data.get("duration_sec") or ep_plan.target_duration_sec,
+            "kinocut_score": kc.get("dark_score") if kc.get("dark_score") is not None else render_data.get("kinocut_dark_score"),
+            "static_fraction": kc.get("static_fraction"),
+            "thumbnail_asset_path": "build/thumbnail.jpg" if (paths["build_dir"] / "thumbnail.jpg").is_file() else None,
+            "video_asset_path": "build/final_short.mp4" if final_mp4.is_file() else None,
+            "visual_direction_version": (
+                ep_plan.storyboard_ir.visual_direction_version
+                if ep_plan.storyboard_ir is not None
+                else render_data.get("runtime_version") or "v2_storycraft"
+            ),
+        }
 
     emit_pacing_warnings(ep_plan, cfg)
     billed_chars = count_billed_chars(ep_plan.scenes)
     meta_lang = ep_plan.metadata_language or ("en" if not has_devanagari(ep_plan.youtube_title) else "hi")
     aud_lang = ep_plan.audio_language or ep_plan.language or "hi"
+    cdn_url, cdn_mae, cdn_dhash, checks_json, details_json, published_at = _extract_history_telemetry(verification_audit)
+    duration_sec = metrics.get("duration_sec") or ep_plan.target_duration_sec
 
     conn = connect_db(db_path)
     try:
@@ -1204,8 +1261,10 @@ def cmd_record_published(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
                         series_id, episode_number_in_series, global_episode_number,
                         content_format, youtube_title, summary, bespoke_asset_path, script_json,
                         research_sources_json, youtube_video_id, video_url, scheduled_publish_at,
-                        duration_sec, audio_language, metadata_language, tts_billed_chars, status
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        published_at, duration_sec, audio_language, metadata_language,
+                        thumbnail_asset_path, video_asset_path, file_bytes, kinocut_score,
+                        static_fraction, tts_billed_chars, visual_direction_version, status
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         None,
@@ -1220,10 +1279,17 @@ def cmd_record_published(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
                         pub_res.video_id,
                         pub_res.video_url,
                         pub_res.scheduled_publish_at,
-                        ep_plan.target_duration_sec,
+                        published_at,
+                        duration_sec,
                         aud_lang,
                         meta_lang,
+                        metrics.get("thumbnail_asset_path"),
+                        metrics.get("video_asset_path"),
+                        metrics.get("file_bytes"),
+                        metrics.get("kinocut_score"),
+                        metrics.get("static_fraction"),
                         billed_chars,
+                        metrics.get("visual_direction_version") or "v2_storycraft",
                         pub_res.upload_status,
                     ),
                 )
@@ -1232,8 +1298,9 @@ def cmd_record_published(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
                     cur.execute(
                         """
                         INSERT INTO publishing_history (
-                            episode_id, action, youtube_video_id, playlist_id, status, notes
-                        ) VALUES (?, ?, ?, NULL, ?, ?)
+                            episode_id, action, youtube_video_id, playlist_id, status, notes,
+                            cdn_thumbnail_url, cdn_mae, cdn_dhash_distance, checks_json, details_json
+                        ) VALUES (?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             episode_id,
@@ -1241,6 +1308,11 @@ def cmd_record_published(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
                             pub_res.video_id,
                             pub_res.upload_status,
                             ep_plan.youtube_title,
+                            cdn_url,
+                            cdn_mae,
+                            cdn_dhash,
+                            checks_json,
+                            details_json,
                         ),
                     )
 
@@ -1360,8 +1432,10 @@ def cmd_record_published(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
                     series_id, episode_number_in_series, global_episode_number,
                     content_format, youtube_title, summary, bespoke_asset_path, script_json,
                     research_sources_json, youtube_video_id, video_url, scheduled_publish_at,
-                    duration_sec, audio_language, metadata_language, tts_billed_chars, status
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    published_at, duration_sec, audio_language, metadata_language,
+                    thumbnail_asset_path, video_asset_path, file_bytes, kinocut_score,
+                    static_fraction, tts_billed_chars, visual_direction_version, status
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     ep_plan.series_id,
@@ -1376,10 +1450,17 @@ def cmd_record_published(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
                     pub_res.video_id,
                     pub_res.video_url,
                     pub_res.scheduled_publish_at,
-                    ep_plan.target_duration_sec,
+                    published_at,
+                    duration_sec,
                     aud_lang,
                     meta_lang,
+                    metrics.get("thumbnail_asset_path"),
+                    metrics.get("video_asset_path"),
+                    metrics.get("file_bytes"),
+                    metrics.get("kinocut_score"),
+                    metrics.get("static_fraction"),
                     billed_chars,
+                    metrics.get("visual_direction_version") or "v2_storycraft",
                     pub_res.upload_status,
                 ),
             )
@@ -1389,8 +1470,9 @@ def cmd_record_published(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
                 cur.execute(
                     """
                     INSERT INTO publishing_history (
-                        episode_id, action, youtube_video_id, playlist_id, status, notes
-                    ) VALUES (?, ?, ?, ?, ?, ?)
+                        episode_id, action, youtube_video_id, playlist_id, status, notes,
+                        cdn_thumbnail_url, cdn_mae, cdn_dhash_distance, checks_json, details_json
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         episode_id,
@@ -1399,6 +1481,11 @@ def cmd_record_published(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
                         final_playlist_id,
                         pub_res.upload_status,
                         ep_plan.youtube_title,
+                        cdn_url,
+                        cdn_mae,
+                        cdn_dhash,
+                        checks_json,
+                        details_json,
                     ),
                 )
 
@@ -1432,6 +1519,10 @@ def cmd_record_published(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
         "total_planned_episodes": ep_plan.total_planned_episodes,
         "series_status": new_series_status,
     }
+
+
+def cmd_record_published(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
+    return record_published_episode(root, cfg)
 
 
 def cmd_repair(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
