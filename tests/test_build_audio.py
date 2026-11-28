@@ -22,7 +22,6 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 BUILD_AUDIO_SCRIPT = REPO_ROOT / "scripts" / "build_audio.py"
 DB_MANAGER_SCRIPT = REPO_ROOT / "scripts" / "db_manager.py"
 REAL_CONFIG = REPO_ROOT / "config.yaml"
-REAL_PRONUNCIATIONS = REPO_ROOT / "pronunciations.yaml"
 REAL_PRONUNCIATIONS_HI = REPO_ROOT / "pronunciations_hi.yaml"
 
 
@@ -78,18 +77,6 @@ class FakeElevenLabs:
         **kwargs: Any,
     ) -> tuple[np.ndarray, int]:
         return self.synthesize(text, voice_settings=voice_settings)
-
-    # Voice methods
-    def get_voices(self) -> list[str]:
-        return ["Viraj", "uuyFQegRan8rpIQCGu9K"]
-
-    def get_voice_style(self, voice_id: str) -> np.ndarray:
-        return np.ones((1, 256), dtype=np.float32) * (1.0 if voice_id == "Viraj" else 3.0)
-
-    def create(
-        self, text: str, voice: Any = None, speed: float = 1.0, lang: str = "hi"
-    ) -> tuple[np.ndarray, int]:
-        return self.synthesize(text)
 
 
 
@@ -197,7 +184,7 @@ def make_episode_plan(
         "global_episode_number": 1,
         "tts_voice": voice,
         "bgm_track": "dramatic_mythology.mp3",
-        "bespoke_asset_path": "assets/svg/diagrams/kailash_axis_diagram.svg",
+        "bespoke_asset_path": "canvas_prop:kailash_axis_diagram",
         "youtube_title": "The Hidden Geometry of Kailash (Part 1/3) #Shorts",
         "youtube_description": "Part 1 of 3 on Sutradhar. #History #Shorts",
         "summary": "Explores mythic and astronomical accounts surrounding Mount Kailash.",
@@ -211,8 +198,6 @@ class TestBuildAudio(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name)
         shutil.copy2(REAL_CONFIG, self.root / "config.yaml")
-        if REAL_PRONUNCIATIONS.is_file():
-            shutil.copy2(REAL_PRONUNCIATIONS, self.root / "pronunciations.yaml")
         if REAL_PRONUNCIATIONS_HI.is_file():
             shutil.copy2(REAL_PRONUNCIATIONS_HI, self.root / "pronunciations_hi.yaml")
         (self.root / "build/audio").mkdir(parents=True, exist_ok=True)
@@ -352,8 +337,8 @@ class TestBuildAudio(unittest.TestCase):
             {"word": "near", "start": 1.75, "end": 2.00},
             {"word": "Kailash", "start": 2.05, "end": 2.65},
         ]
-        words, ratio = self.mod.align_caption_words(
-            caption_text=caption,
+        words, ratio = self.mod.align_narration_words(
+            narration_text=caption,
             whisper_words=whisper_words,
             scene_duration=3.0,
             global_offset=10.0,
@@ -537,7 +522,7 @@ class TestBuildAudio(unittest.TestCase):
                 """
                 INSERT INTO series (series_id, series_title, pillar, tts_voice, bgm_track,
                                     series_bible_json, total_planned_episodes, completed_episodes, status, created_at)
-                VALUES (99, 'Conflicting Series', 'Hidden History', 'bm_fable', 'bgm.mp3', '{}', 3, 0, 'ACTIVE', '2026-01-01T00:00:00Z')
+                VALUES (99, 'Conflicting Series', 'Hidden History', 'uuyFQegRan8rpIQCGu9K', 'epic_history.mp3', '{}', 3, 0, 'ACTIVE', '2026-01-01T00:00:00Z')
                 """
             )
             conn.commit()

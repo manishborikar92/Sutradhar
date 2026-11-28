@@ -120,7 +120,7 @@ class TestAudioPacingSpeedInjection(unittest.TestCase):
             "youtube_title": "Audio Speed Test",
             "youtube_description": "Test description",
             "summary": "Speed injection test",
-            "bespoke_asset_path": "assets/svg/characters/ravana.svg",
+            "bespoke_asset_path": "character:ravana",
             "tts_voice": "uuyFQegRan8rpIQCGu9K",
             "bgm_track": "dramatic_mythology.mp3",
             "narrative_structure": "five_phase_compact_arc",

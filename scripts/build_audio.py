@@ -77,7 +77,6 @@ from sutradhar.audio.whisper_aligner import (  # noqa: E402
     write_wav_atomic,
 )
 
-align_caption_words = align_narration_words
 _LazyWhisperProxy = LazyWhisperProxy
 
 
@@ -552,13 +551,6 @@ def build_episode_audio(
         )
         print(f"[WARN] {duration_warning}", file=sys.stderr)
 
-    try:
-        from scripts.engine.beat_planner import decompose_episode_into_beats
-
-        decomposed_beats = [b.to_dict() for b in decompose_episode_into_beats(manifest_scenes)]
-    except Exception:
-        decomposed_beats = manifest_scenes
-
     caption_cues = build_caption_cues(manifest_scenes, full_duration)
 
     manifest_payload = {
@@ -595,8 +587,6 @@ def build_episode_audio(
         },
         "scenes": manifest_scenes,
         "caption_cues": caption_cues,
-        "beats": decomposed_beats,
-        "micro_beats": decomposed_beats,
     }
 
     manifest_path = build_dir / "manifest.js"

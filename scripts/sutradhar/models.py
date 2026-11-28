@@ -22,7 +22,6 @@ from pydantic import (
 # Constants & Validation Patterns
 # ---------------------------------------------------------------------------
 
-VOICE_ID_RE = re.compile(r"^[a-z]{2}_[a-z0-9_]+$")
 RIG_SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9_-]*$")
 SNAKE_CASE_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 AUDIO_FILENAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*\.(mp3|wav|ogg|flac)$")
@@ -30,9 +29,6 @@ YOUTUBE_ID_RE = re.compile(r"^[A-Za-z0-9_-]{3,128}$")
 DEVANAGARI_RE = re.compile(r"[\u0900-\u097F]")
 
 BESPOKE_ASSET_DIRS = (
-    "assets/svg/diagrams",
-    "assets/svg/backdrops",
-    "assets/svg/characters",
     "assets/props",
     "assets/characters",
     "assets/environments",
@@ -190,9 +186,8 @@ def _validate_bespoke_asset_path(value: str) -> str:
             f"bespoke asset path '{cleaned}' must be a canonical ID ({CANONICAL_ASSET_PREFIXES}) "
             f"or sit inside one of {BESPOKE_ASSET_DIRS} (got '{parent_dir}')"
         )
-    allowed_suffix = ".json" if parent_dir in ("assets/props", "assets/characters", "assets/environments") else ".svg"
-    if posix.suffix.lower() != allowed_suffix:
-        raise ValueError(f"bespoke asset path '{cleaned}' must end with '{allowed_suffix}'")
+    if posix.suffix.lower() != ".json":
+        raise ValueError(f"bespoke asset path '{cleaned}' must end with '.json'")
     if not RIG_SLUG_RE.match(posix.stem):
         raise ValueError(
             f"bespoke asset filename stem '{posix.stem}' must be lowercase alphanumeric/underscore/hyphen"
@@ -267,22 +262,11 @@ class SeriesBibleEpisode(BaseModel):
     hook: str = Field(..., min_length=10, max_length=300)
     narrative_direction: str = Field(..., min_length=15, max_length=1000)
     planned_bespoke_asset: str = Field(..., min_length=6, max_length=255)
-    cliffhanger_or_payoff: Optional[str] = Field(default=None, min_length=10, max_length=400)
-    satisfying_takeaway: Optional[str] = Field(default=None, min_length=10, max_length=400)
+    satisfying_takeaway: str = Field(..., min_length=10, max_length=400)
     standalone_story_synopsis: Optional[str] = Field(default=None, min_length=15, max_length=1000)
     central_conflict: Optional[str] = Field(default=None, min_length=10, max_length=500)
     resolution: Optional[str] = Field(default=None, min_length=10, max_length=500)
     series_connection: Optional[str] = Field(default=None, max_length=500)
-
-    @model_validator(mode="after")
-    def sync_payoff_and_takeaway(self) -> "SeriesBibleEpisode":
-        if self.satisfying_takeaway and not self.cliffhanger_or_payoff:
-            self.cliffhanger_or_payoff = self.satisfying_takeaway
-        elif self.cliffhanger_or_payoff and not self.satisfying_takeaway:
-            self.satisfying_takeaway = self.cliffhanger_or_payoff
-        elif not self.satisfying_takeaway and not self.cliffhanger_or_payoff:
-            raise ValueError("Either satisfying_takeaway or cliffhanger_or_payoff must be provided")
-        return self
 
     @field_validator(
         "standalone_story_synopsis",
@@ -744,14 +728,6 @@ class EpisodePlan(BaseModel):
     storyboard_ir: Optional[StoryboardIR] = None
     scenes: list[ScenePlan]
 
-    @model_validator(mode="before")
-    @classmethod
-    def normalize_input_fields(cls, data: Any) -> Any:
-        if isinstance(data, dict):
-            if "scenes" not in data and "shots" in data:
-                data["scenes"] = data["shots"]
-        return data
-
     @field_validator("language")
     @classmethod
     def check_language(cls, v: str, info: ValidationInfo) -> str:
@@ -882,24 +858,8 @@ class EpisodePlan(BaseModel):
                 featured = True
                 expected_field = "episode_bespoke_asset"
             else:
-                bespoke_posix = PurePosixPath(asset)
-                bespoke_dir = bespoke_posix.parent.as_posix()
-                bespoke_stem = bespoke_posix.stem
-                if bespoke_dir == "assets/svg/diagrams":
-                    featured = any(s.diagram_rig == bespoke_stem for s in self.scenes)
-                    expected_field = "diagram_rig"
-                elif bespoke_dir == "assets/svg/backdrops":
-                    featured = any(s.backdrop_rig == bespoke_stem for s in self.scenes)
-                    expected_field = "backdrop_rig"
-                else:
-                    featured = any(
-                        s.primary_character == bespoke_stem
-                        or s.secondary_character == bespoke_stem
-                        or s.tertiary_character == bespoke_stem
-                        or (s.characters and bespoke_stem in s.characters)
-                        for s in self.scenes
-                    )
-                    expected_field = "primary_character/secondary_character/tertiary_character"
+                featured = False
+                expected_field = "canonical_asset"
 
             if not featured:
                 raise ValueError(

@@ -794,10 +794,10 @@ def heal_and_backfill_live_db(conn: sqlite3.Connection, root: Optional[Path] = N
 # Context, Pillar Rotation & CLI Command Functions
 # ---------------------------------------------------------------------------
 
-def _list_svg_stems(directory: Path) -> list[str]:
+def _list_json_stems(directory: Path) -> list[str]:
     if not directory.is_dir():
         return []
-    return sorted(p.stem for p in directory.iterdir() if p.is_file() and p.suffix.lower() == ".svg")
+    return sorted(p.stem for p in directory.iterdir() if p.is_file() and p.suffix.lower() == ".json")
 
 
 def _list_audio_files(directory: Path) -> list[str]:
@@ -1006,7 +1006,7 @@ def cmd_context(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
     finally:
         conn.close()
 
-    content_format = cfg.get("content_format") or cfg.get("content", {}).get("format", "episodic_series")
+    content_format = cfg.get("content_format", "episodic_series")
     pacing = cfg["episode_pacing"]
 
     return {
@@ -1048,10 +1048,11 @@ def cmd_context(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
         "completed_series_history": completed_history,
         "previous_bespoke_assets": previous_bespoke_assets,
         "available_rigs": {
-            "characters": _list_svg_stems(assets_dir / "svg" / "characters"),
-            "backdrops": _list_svg_stems(assets_dir / "svg" / "backdrops"),
-            "bgm": _list_audio_files(assets_dir / "audio" / "bgm") or _list_audio_files(assets_dir / "bgm"),
-            "sfx": _list_audio_files(assets_dir / "audio" / "sfx") or _list_audio_files(assets_dir / "sfx"),
+            "characters": _list_json_stems(assets_dir / "characters"),
+            "environments": _list_json_stems(assets_dir / "environments"),
+            "props": _list_json_stems(assets_dir / "props"),
+            "bgm": _list_audio_files(assets_dir / "audio" / "bgm"),
+            "sfx": _list_audio_files(assets_dir / "audio" / "sfx"),
         },
     }
 

@@ -517,11 +517,17 @@ class TestPhase3AudioPipeline(unittest.TestCase):
         """Stale pre-v3 .words.json must be bypassed so adaptive Whisper recovery runs and refreshes cache."""
         live_s6 = REPO_ROOT / "build" / "audio" / "scene_6.wav"
         live_plan_path = REPO_ROOT / "build" / "episode_plan.json"
-        self.assertTrue(live_s6.is_file(), f"Missing {live_s6}")
-        self.assertTrue(live_plan_path.is_file(), f"Missing {live_plan_path}")
-
-        ep3_plan = json.loads(live_plan_path.read_text(encoding="utf-8"))
-        s6_clean = strip_audio_tags(ep3_plan["scenes"][5]["narration_text"])
+        if live_s6.is_file() and live_plan_path.is_file():
+            src_wav = live_s6
+            ep_plan = json.loads(live_plan_path.read_text(encoding="utf-8"))
+            s6_clean = strip_audio_tags(ep_plan["scenes"][5]["narration_text"])
+        else:
+            src_wav = REPO_ROOT / "playground" / "ep4_neelakantha_shiva" / "audio" / "scene_6.wav"
+            ep4_plan_path = REPO_ROOT / "playground" / "ep4_neelakantha_shiva" / "ep4_episode_plan.json"
+            self.assertTrue(src_wav.is_file(), f"Missing {src_wav}")
+            self.assertTrue(ep4_plan_path.is_file(), f"Missing {ep4_plan_path}")
+            ep_plan = json.loads(ep4_plan_path.read_text(encoding="utf-8"))
+            s6_clean = strip_audio_tags(ep_plan["scenes"][5]["narration_text"])
 
         with tempfile.TemporaryDirectory() as td:
             td_root = Path(td)
@@ -531,7 +537,7 @@ class TestPhase3AudioPipeline(unittest.TestCase):
             cache_dir.mkdir(parents=True, exist_ok=True)
 
             tmp_wav = audio_dir / "scene_6.wav"
-            shutil.copy2(live_s6, tmp_wav)
+            shutil.copy2(src_wav, tmp_wav)
             dur = probe_duration_sec(tmp_wav)
 
             # 1. Seed pre-v3 legacy MD5 cache with poor 0.40 alignment

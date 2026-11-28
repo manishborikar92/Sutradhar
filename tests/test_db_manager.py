@@ -42,9 +42,9 @@ def make_valid_bible(count: int = 3, prefix: str = "s1") -> dict[str, Any]:
                 "narrative_direction": (
                     f"Break down relativistic phenomenon {i} using escalating visual stakes."
                 ),
-                "planned_bespoke_asset": f"assets/svg/diagrams/{prefix}_ep{i}_diagram.svg",
-                "cliffhanger_or_payoff": (
-                    f"Plant the cliffhanger leading directly into part {i + 1}."
+                "planned_bespoke_asset": f"canvas_prop:{prefix}_ep{i}_diagram",
+                "satisfying_takeaway": (
+                    f"Resolve beat {i} with clear philosophical insight."
                     if i < count
                     else "Deliver the final evaporation payoff and subscribe invitation."
                 ),
@@ -169,7 +169,7 @@ def make_valid_episode_plan(
         "global_episode_number": global_ep,
         "tts_voice": "Viraj",
         "bgm_track": "cosmic_mystery.mp3",
-        "bespoke_asset_path": f"assets/svg/diagrams/{bespoke_stem}.svg",
+        "bespoke_asset_path": f"canvas_prop:{bespoke_stem}",
         "youtube_title": title,
         "youtube_description": "Part of the Event Horizon series on Sutradhar. #Space #Shorts",
         "summary": "Explores extreme gravitational time dilation near an event horizon.",
@@ -185,19 +185,19 @@ class TestDbManagerCompliance(unittest.TestCase):
 
         for rel in (
             "build/audio",
-            "assets/bgm",
-            "assets/sfx",
-            "assets/svg/characters",
-            "assets/svg/backdrops",
-            "assets/svg/diagrams",
+            "assets/audio/bgm",
+            "assets/audio/sfx",
+            "assets/characters",
+            "assets/environments",
+            "assets/props",
         ):
             (self.root / rel).mkdir(parents=True, exist_ok=True)
 
-        (self.root / "assets/svg/characters/sutradhar_narrator.svg").write_text("<svg/>", encoding="utf-8")
-        (self.root / "assets/svg/backdrops/deep_cosmos_nebula.svg").write_text("<svg/>", encoding="utf-8")
-        (self.root / "assets/svg/diagrams/black_hole_anatomy.svg").write_text("<svg/>", encoding="utf-8")
-        (self.root / "assets/bgm/cosmic_mystery.mp3").write_bytes(b"")
-        (self.root / "assets/sfx/sub_hit.wav").write_bytes(b"")
+        (self.root / "assets/characters/sutradhar_narrator.json").write_text("{}", encoding="utf-8")
+        (self.root / "assets/environments/observatory_cosmos.json").write_text("{}", encoding="utf-8")
+        (self.root / "assets/props/brahmaloka_time_chakra.json").write_text("{}", encoding="utf-8")
+        (self.root / "assets/audio/bgm/cosmic_mystery.mp3").write_bytes(b"")
+        (self.root / "assets/audio/sfx/sub_hit.wav").write_bytes(b"")
 
     def tearDown(self) -> None:
         self.tmp.cleanup()
@@ -325,7 +325,7 @@ class TestDbManagerCompliance(unittest.TestCase):
                 # Duplicate planned_bespoke_asset across episodes
                 "arc_summary": "Valid summary long enough for check.",
                 "episodes": [
-                    {**ep, "planned_bespoke_asset": "assets/svg/diagrams/same_asset.svg"}
+                    {**ep, "planned_bespoke_asset": "canvas_prop:same_asset"}
                     for ep in make_valid_bible(count=3)["episodes"]
                 ],
             },
@@ -333,7 +333,7 @@ class TestDbManagerCompliance(unittest.TestCase):
                 # Invalid asset path (nested subdirectory)
                 "arc_summary": "Valid summary long enough for check.",
                 "episodes": [
-                    {**ep, "planned_bespoke_asset": f"assets/svg/diagrams/nested/ep{i}.svg"}
+                    {**ep, "planned_bespoke_asset": f"assets/props/nested/ep{i}.json"}
                     for i, ep in enumerate(make_valid_bible(count=3)["episodes"], start=1)
                 ],
             },
@@ -613,9 +613,9 @@ class TestDbManagerCompliance(unittest.TestCase):
         assert_ep_rejected(lambda e: e.__setitem__("youtube_title", "Black <Hole> Mystery #Shorts"), "'<' or '>'")
         # Rig naming convention violation (.svg suffix in slug)
         assert_ep_rejected(lambda e: e["scenes"][0].__setitem__("backdrop_rig", "bad_rig.svg"), "lowercase slug")
-        # Bespoke asset category mismatch (diagram path used only as backdrop_rig)
+        # Bespoke asset category mismatch (diagram stem declared as environment preset)
         def set_category_mismatch(e: dict[str, Any]) -> None:
-            e["bespoke_asset_path"] = "assets/svg/backdrops/s1_ep1_diagram.svg"
+            e["bespoke_asset_path"] = "environment:s1_ep1_diagram"
         assert_ep_rejected(set_category_mismatch, "backdrop_rig")
 
         # Naive ISO-8601 timestamp (no timezone) rejected even when unlocked
@@ -724,7 +724,7 @@ class TestDbManagerCompliance(unittest.TestCase):
 
         # Continuity mismatch on tts_voice must be rejected
         ep2_bad_voice = make_valid_episode_plan(ep_in_series=2, global_ep=2, bespoke_stem="s1_ep2_diagram")
-        ep2_bad_voice["tts_voice"] = "am_michael"
+        ep2_bad_voice["tts_voice"] = "other_voice_id_1234567890"
         self.write_build_json("episode_plan.json", ep2_bad_voice)
         res = self.run_cli("--record-published")
         self.assertEqual(res.returncode, 1)
@@ -747,7 +747,7 @@ class TestDbManagerCompliance(unittest.TestCase):
                         series_id, episode_number_in_series, global_episode_number,
                         youtube_title, summary, bespoke_asset_path, script_json,
                         youtube_video_id, scheduled_publish_at, status
-                    ) VALUES (999, 1, 1, 'T', 'S', 'assets/svg/diagrams/x.svg', '{}', 'v999', NULL, 'PRIVATE_REVIEW')
+                    ) VALUES (999, 1, 1, 'T', 'S', 'canvas_prop:x', '{}', 'v999', NULL, 'PRIVATE_REVIEW')
                     """
                 )
 
@@ -757,7 +757,7 @@ class TestDbManagerCompliance(unittest.TestCase):
                 INSERT INTO series (
                     series_title, pillar, tts_voice, bgm_track,
                     total_planned_episodes, completed_episodes, series_bible_json, status
-                ) VALUES ('Second Active', 'Hidden History', 'am_fenrir', 'epic_history.mp3', 3, 0, '{}', 'ACTIVE')
+                ) VALUES ('Second Active', 'Hidden History', 'uuyFQegRan8rpIQCGu9K', 'epic_history.mp3', 3, 0, '{}', 'ACTIVE')
                 """
             )
             active_count = conn.execute("SELECT COUNT(*) FROM series WHERE status = 'ACTIVE'").fetchone()[0]
@@ -770,7 +770,7 @@ class TestDbManagerCompliance(unittest.TestCase):
                     series_id, episode_number_in_series, global_episode_number,
                     youtube_title, summary, bespoke_asset_path, script_json,
                     youtube_video_id, scheduled_publish_at, status
-                ) VALUES (1, 1, 1, 'T1', 'S1', 'assets/svg/diagrams/a.svg', '{}', 'v1', NULL, 'PRIVATE_REVIEW')
+                ) VALUES (1, 1, 1, 'T1', 'S1', 'canvas_prop:a', '{}', 'v1', NULL, 'PRIVATE_REVIEW')
                 """
             )
 
@@ -784,7 +784,7 @@ class TestDbManagerCompliance(unittest.TestCase):
                         series_id, episode_number_in_series, global_episode_number,
                         youtube_title, summary, bespoke_asset_path, script_json,
                         youtube_video_id, scheduled_publish_at, status
-                    ) VALUES (1, 1, 2, 'T1 Dup', 'S1', 'assets/svg/diagrams/b.svg', '{}', 'v2', NULL, 'PRIVATE_REVIEW')
+                    ) VALUES (1, 1, 2, 'T1 Dup', 'S1', 'canvas_prop:b', '{}', 'v2', NULL, 'PRIVATE_REVIEW')
                     """
                 )
         finally:
@@ -1032,7 +1032,7 @@ class TestDbManagerCompliance(unittest.TestCase):
         plan["episode_number_in_series"] = None
         plan["total_planned_episodes"] = None
         plan["global_episode_number"] = 1
-        plan["bespoke_asset_path"] = f"assets/svg/diagrams/{bespoke_stem}.svg"
+        plan["bespoke_asset_path"] = f"canvas_prop:{bespoke_stem}"
         plan["youtube_title"] = "Standalone Epic Tale of Cosmic Balance #Mythology"
         self.write_build_json("episode_plan.json", plan)
 
@@ -1174,8 +1174,8 @@ class TestDbManagerCompliance(unittest.TestCase):
                     "working_title": "Shani and the Stepping Stone",
                     "hook": "Why did the demon king face his stairs downward?",
                     "narrative_direction": "Explore Ravana's hubris and Shani's gaze.",
-                    "planned_bespoke_asset": "assets/svg/diagrams/ep1_diagram.svg",
-                    "cliffhanger_or_payoff": "Ravana's pride cracks under Shani's unwavering gaze.",
+                    "planned_bespoke_asset": "canvas_prop:ep1_diagram",
+                    "satisfying_takeaway": "Ravana's pride cracks under Shani's unwavering gaze.",
                     "standalone_story_synopsis": "Ravana forces Shani face down, but Shani's glance turns Lanka's fortune.",
                     "central_conflict": "Mortal arrogance attempts to conquer divine justice.",
                     "resolution": "Shani's gaze seals the doom of Lanka, delivering complete poetic justice.",
@@ -1186,8 +1186,8 @@ class TestDbManagerCompliance(unittest.TestCase):
                     "working_title": "The Liberation by Maruti",
                     "hook": "Who could survive entering the prison of the planetary god?",
                     "narrative_direction": "Hanuman encounters Shani trapped in Lanka's vaults.",
-                    "planned_bespoke_asset": "assets/svg/diagrams/ep2_diagram.svg",
-                    "cliffhanger_or_payoff": "Hanuman breaks the chains with selfless devotion.",
+                    "planned_bespoke_asset": "canvas_prop:ep2_diagram",
+                    "satisfying_takeaway": "Hanuman breaks the chains with selfless devotion.",
                     "standalone_story_synopsis": "Hanuman frees Shani and receives the blessing that protects devotees.",
                     "central_conflict": "Physical chains versus spiritual devotion.",
                     "resolution": "Shani grants the eternal boon of protection to all who honor the wind-god.",
@@ -1198,8 +1198,8 @@ class TestDbManagerCompliance(unittest.TestCase):
                     "working_title": "The Test of King Harishchandra",
                     "hook": "Can a king surrender his crown, family, and breath for truth?",
                     "narrative_direction": "The ultimate test of cosmic rectitude.",
-                    "planned_bespoke_asset": "assets/svg/diagrams/ep3_diagram.svg",
-                    "cliffhanger_or_payoff": "Truth vindicated at the burning ghats.",
+                    "planned_bespoke_asset": "canvas_prop:ep3_diagram",
+                    "satisfying_takeaway": "Truth vindicated at the burning ghats.",
                     "standalone_story_synopsis": "Harishchandra endures the supreme trial without breaking his vow of truth.",
                     "central_conflict": "Uncompromising truth versus relentless suffering.",
                     "resolution": "The gods restore his kingdom, crowning truth as supreme eternal law.",
@@ -1259,7 +1259,6 @@ class TestDbManagerCompliance(unittest.TestCase):
         cfg = yaml.safe_load((self.root / "config.yaml").read_text(encoding="utf-8"))
 
         bespoke_stem = "shani_staircase_diagram"
-        (self.root / f"assets/svg/diagrams/{bespoke_stem}.svg").write_text("<svg/>", encoding="utf-8")
 
         # Construct 8 scenes corresponding to the 8 phases
         scenes = []
@@ -1317,7 +1316,7 @@ class TestDbManagerCompliance(unittest.TestCase):
             "pillar": "Ancient Epics & Lore",
             "tts_voice": "Viraj",
             "bgm_track": "dramatic_mythology.mp3",
-            "bespoke_asset_path": f"assets/svg/diagrams/{bespoke_stem}.svg",
+            "bespoke_asset_path": f"canvas_prop:{bespoke_stem}",
             "youtube_title": "Why Ravana Made Shani His Staircase #Mythology",
             "youtube_description": "The complete untold story of Ravana's hubris and Shani's fatal glance. #Shorts",
             "summary": "Ravana subjugates the Navagrahas, but Shani's downward glance brings Lanka's ultimate downfall.",
@@ -1388,7 +1387,7 @@ class TestDbManagerCompliance(unittest.TestCase):
                         "working_title": "Ravana and the Staircase of Planets",
                         "hook": "Why did the demon king position the planets downward?",
                         "narrative_direction": "Explore Ravana's ego vs Shani's cosmic role.",
-                        "planned_bespoke_asset": "assets/svg/diagrams/s1_ep1.svg",
+                        "planned_bespoke_asset": "canvas_prop:s1_ep1",
                         "satisfying_takeaway": "No tyrant can escape the cosmic law of karma.",
                     }
                 ],
@@ -1418,7 +1417,7 @@ class TestDbManagerCompliance(unittest.TestCase):
                         "working_title": "The Rustless Iron Pillar of Delhi",
                         "hook": "How has ancient wrought iron resisted corrosion for 1600 years?",
                         "narrative_direction": "Examine high phosphorus metallurgy and misawite coating.",
-                        "planned_bespoke_asset": "assets/svg/diagrams/s2_ep1.svg",
+                        "planned_bespoke_asset": "canvas_prop:s2_ep1",
                         "satisfying_takeaway": "Ancient metallurgy mastered protective film chemistry centuries before modern science.",
                     }
                 ],
@@ -1439,7 +1438,6 @@ class TestDbManagerCompliance(unittest.TestCase):
         self.assertEqual(active_ids, [1, 2])
 
         # Record Episode 1 in Series 1
-        (self.root / "assets/svg/diagrams/s1_ep1.svg").write_text("<svg/>", encoding="utf-8")
         ep1_s1 = make_valid_episode_plan(
             series_id=1, ep_in_series=1, global_ep=1, bespoke_stem="s1_ep1",
             title="When Ravana Made Shani His Staircase | Shani Katha"
@@ -1455,7 +1453,6 @@ class TestDbManagerCompliance(unittest.TestCase):
         self.assertEqual(rec_res1.returncode, 0, rec_res1.stderr)
 
         # Record Episode 1 in Series 2 (Rotation to second series!)
-        (self.root / "assets/svg/diagrams/s2_ep1.svg").write_text("<svg/>", encoding="utf-8")
         ep1_s2 = make_valid_episode_plan(
             series_id=2, ep_in_series=1, global_ep=2, bespoke_stem="s2_ep1",
             title="The Rustless Iron Pillar of Delhi | Ancient Indian Engineering"
@@ -1471,7 +1468,6 @@ class TestDbManagerCompliance(unittest.TestCase):
         self.assertEqual(rec_res2.returncode, 0, rec_res2.stderr)
 
         # Record Episode 2 in Series 1 (Rotation BACK to first series!)
-        (self.root / "assets/svg/diagrams/s1_ep2.svg").write_text("<svg/>", encoding="utf-8")
         ep2_s1 = make_valid_episode_plan(
             series_id=1, ep_in_series=2, global_ep=3, bespoke_stem="s1_ep2",
             title="Shani's Gaze Upon Mount Kailash | Shani Katha"
@@ -1532,7 +1528,6 @@ class TestDbManagerCompliance(unittest.TestCase):
 
         # 3. Attach to EpisodePlan and record into DB
         bespoke_stem = "research_test_diagram"
-        (self.root / f"assets/svg/diagrams/{bespoke_stem}.svg").write_text("<svg/>", encoding="utf-8")
         plan = make_valid_episode_plan(bespoke_stem=bespoke_stem)
         plan["content_format"] = "standalone"
         plan["series_id"] = None
@@ -1540,7 +1535,7 @@ class TestDbManagerCompliance(unittest.TestCase):
         plan["episode_number_in_series"] = None
         plan["total_planned_episodes"] = None
         plan["global_episode_number"] = 1
-        plan["bespoke_asset_path"] = f"assets/svg/diagrams/{bespoke_stem}.svg"
+        plan["bespoke_asset_path"] = f"canvas_prop:{bespoke_stem}"
         plan["youtube_title"] = "When Shani's Gaze Sealed Lanka's Doom #Mythology"
         plan["story_research"] = research_data
 
@@ -1597,13 +1592,12 @@ class TestDbManagerCompliance(unittest.TestCase):
             "working_title": "The Cosmic Scale",
             "hook": "Can a feather outweigh the burden of royal hubris?",
             "narrative_direction": "Explore philosophical balance in ancient lore.",
-            "planned_bespoke_asset": "assets/svg/diagrams/scale_diagram.svg",
+            "planned_bespoke_asset": "canvas_prop:scale_diagram",
             "satisfying_takeaway": "Justice restores harmony, proving righteousness outweighs worldly dominion.",
         })
-        self.assertEqual(ep_bible.cliffhanger_or_payoff, ep_bible.satisfying_takeaway)
+        self.assertEqual(ep_bible.satisfying_takeaway, "Justice restores harmony, proving righteousness outweighs worldly dominion.")
 
         # 2. Add an episode and verify cmd_context includes previously_covered_topics
-        (self.root / "assets/svg/diagrams/scale_diagram.svg").write_text("<svg/>", encoding="utf-8")
         plan = make_valid_episode_plan(bespoke_stem="scale_diagram")
         plan["content_format"] = "standalone"
         plan["series_id"] = None
@@ -1611,7 +1605,7 @@ class TestDbManagerCompliance(unittest.TestCase):
         plan["episode_number_in_series"] = None
         plan["total_planned_episodes"] = None
         plan["global_episode_number"] = 1
-        plan["bespoke_asset_path"] = "assets/svg/diagrams/scale_diagram.svg"
+        plan["bespoke_asset_path"] = "canvas_prop:scale_diagram"
         plan["youtube_title"] = "The Feather and the Iron Throne | Cosmic Lore"
         plan["summary"] = "A sage tests the weight of an emperor's soul against the feather of truth."
 

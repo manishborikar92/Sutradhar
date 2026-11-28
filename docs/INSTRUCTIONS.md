@@ -155,7 +155,7 @@ Pair transitions with subtle aura pulses, particle motes (`golden_embers`, `star
 
 Never grab raw video frames for thumbnails. Render via `templates/thumbnail/cover_template.html.jinja2` and `sutradhar/visual/thumbnail_builder.py`:
 - **Format & Size:** `1080x1920` RGB JPEG, `<= 2.0 MiB` (`2,097,152 B`), `mean_stddev >= 4.0`.
-- **Typography:** English-only `ThumbnailSpec` (`pill`, `headline_line1`, `headline_line2`, optional `sub_pill`); use supported `Inter` / `Cinzel` weights **`500`, `700`, or `800` only** (never `900`, which is absent in `assets/fonts/fonts.css`).
+- **Typography:** English-only `ThumbnailSpec` (`pill`, `headline_line1`, `headline_line2`, optional `sub_pill`); use supported weights only (`Inter` **`500`, `700`, `800`**; `Cinzel` **`600`, `800`** — never `900`, which is absent in `assets/fonts/fonts.css`).
 - **2:3 Shorts Shelf Crop Verification:** `thumbnail_builder.py` emits `build/thumbnail_2x3_crop.jpg` (`y = 150..1770`, `1080x1620`). Keep top badges and bottom footers safely inside `y = 200..1710` so Shorts grids never clip text.
 
 ---

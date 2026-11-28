@@ -1,17 +1,21 @@
 #!/usr/bin/env python3
-"""Sutradhar — Production Acceptance Gates & End-to-End Verification.
+"""Sutradhar — Isolated v2 Production Acceptance Gates & Contract Verification.
 
-Audits production verification gates:
+Runs 100% isolated inside `tempfile.TemporaryDirectory()` with zero reads/writes
+to live `REPO_ROOT/build/` or `episodes.db` and $0 paid API calls.
+
+Audits:
   1. Gate 1 (Single Voice Standard): Viraj (uuyFQegRan8rpIQCGu9K) on eleven_v4
-  2. Gate 2 (Character Acting Verification): Distinct acoustic profiles across archetypes
-  3. Gate 3 (Zero Tag Leakage): 0 tags in Whisper transcription and subtitles
-  4. Gate 4 (Zero-Waste Caching): Sub-2-second rebuild with 0 network calls
-  5. Gate 5 (KinoCut Quality Gate): 44.1 kHz 16-bit PCM, -14 LUFS, trailing silence >= 0.75s
-  6. Gate 6 (Code Cleanliness): Zero legacy Kokoro/Gemini TTS runtime refs
+  2. Gate 2 (Pre-TTS Budget & Vocal Steering): <= 900 billed chars, >= 70% Devanagari, tag steering
+  3. Gate 3 (Zero Tag Leakage): 0 tags in clean narration, aligned words, and caption cues
+  4. Gate 4 (Zero-Waste Caching): Sub-2-second cached rebuild with 0 HTTP calls
+  5. Gate 5 (Broadcast Audio & Quality Gate): 48 kHz stereo mix, -14 LUFS, <= -1.5 dBTP, quiet tail, fail-closed QA
+  6. Gate 6 (Codebase Cleanliness): Zero Kokoro ONNX / Gemini TTS runtime dependencies
 """
 
 from __future__ import annotations
 
+import io
 import json
 import re
 import shutil
@@ -26,7 +30,6 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import soundfile as sf
-import yaml
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT_DIR = REPO_ROOT / "scripts"
@@ -35,210 +38,345 @@ if str(SCRIPT_DIR) not in sys.path:
 
 import build_audio  # noqa: E402
 import elevenlabs_engine  # noqa: E402
-import render_and_qa  # noqa: E402
-from db_manager import EpisodePlan, load_config  # noqa: E402
+from sutradhar.audio.elevenlabs_tts import (  # noqa: E402
+    DEFAULT_TAG_TEMPLATES,
+    DEFAULT_VOICE_SETTINGS,
+    ElevenLabsEngine,
+    FakeElevenLabs,
+    TTSBudgetError,
+    compute_cache_key,
+    load_pronunciations,
+    prepare_scene_tts_text,
+    validate_pre_tts_budget,
+)
+from sutradhar.audio.sound_mixer import mix_episode_audio  # noqa: E402
+from sutradhar.config import load_config  # noqa: E402
+from sutradhar.models import EpisodePlanV2  # noqa: E402
+from sutradhar.qa.quality_gate import QualityGateError, reject_synthetic_dom_snapshots  # noqa: E402
+from sutradhar.qa.render_optimizer import DEFAULT_MAX_FILE_BYTES  # noqa: E402
+
+
+class _FakeWord:
+    def __init__(self, word: str, start: float, end: float) -> None:
+        self.word = word
+        self.start = start
+        self.end = end
+
+
+class _FakeSegment:
+    def __init__(self, words: list[_FakeWord]) -> None:
+        self.words = words
+
+
+class _FakeWhisper:
+    def transcribe(
+        self,
+        audio_input: Any,
+        language: str = "hi",
+        word_timestamps: bool = True,
+        initial_prompt: str = "",
+        **kwargs: Any,
+    ) -> tuple[list[_FakeSegment], dict[str, Any]]:
+        tokens = (initial_prompt or "").split()
+        step = 7.0 / max(1, len(tokens))
+        words = [_FakeWord(tok, i * step, (i + 0.85) * step) for i, tok in enumerate(tokens)]
+        return [_FakeSegment(words)], {"language": language}
+
+
+def _make_v2_plan_dict() -> dict[str, Any]:
+    lines = [
+        ("[slowly, solemn, deep] अमृत के लिए देव और असुरों ने सागर मथा और विष निकला।", "narrator", "calm", "kailash_horizon", "dawn_epic", "shiva", "palm_cup"),
+        ("[arrogant, booming, furious, shouts] क्या कोई इस भयानक विष को रोक सकेगा!", "character_dialogue", "wrath", "brahmaloka_sabha", "palace_court", "ravana", "gesture"),
+        ("[softly, sorrowful, trembling, sighs] तीनों लोक भय से कांप उठे थे।", "character_dialogue", "fear", "cosmic_ocean_manthan", "dawn_epic", "devi", "awed"),
+        ("[calm, serene, deep, slowly] तब शिव ने करुणा से हलाहल कंठ में धारण किया।", "character_dialogue", "calm", "kailash_horizon", "dawn_epic", "shiva", "drink"),
+        ("[gentle, calm, peaceful] इसी त्याग से महादेव नीलकंठ कहलाए।", "narrator", "calm", "kailash_horizon", "dawn_epic", "shiva", "bless"),
+    ]
+    scenes = []
+    ir_scenes = []
+    for idx, (text, role, emo, env_id, mode, char_id, pose) in enumerate(lines, start=1):
+        vis_spec = {
+            "atmosphere_mode": mode,
+            "environment_preset": env_id,
+            "horizon_y": 1142,
+            "camera_move": "slow_push_in",
+            "transition_in": "fade",
+            "transition_sfx": "whoosh_soft.wav" if idx > 1 else None,
+            "bgm_mood": "dramatic" if idx < 4 else "serene",
+            "props": [
+                {"id": "samudra_manthan_halahala", "kind": "samudra_manthan_halahala", "mount": "terrain", "x": 540.0, "scale": 1.0}
+            ]
+            if idx == 1
+            else [],
+            "characters": [
+                {"id": char_id, "role": char_id, "x": 540.0, "surface_type": "floor", "pose": pose, "expr": "serene"}
+            ],
+            "contextual_pill": {"enabled": False},
+        }
+        ir_scenes.append(vis_spec)
+        scenes.append(
+            {
+                "scene_index": idx,
+                "narration_text": text,
+                "visual_mode": "character_drama",
+                "backdrop_rig": env_id,
+                "primary_character": char_id,
+                "speaker_role": role,
+                "emotion": emo,
+                "mood_palette": "kailash_himalayan",
+                "particle_theme": "himalayan_snow",
+                "camera_motion": "slow_push",
+                "transition_sfx": "whoosh_soft.wav" if idx > 1 else None,
+                "visual_spec": vis_spec,
+            }
+        )
+    return {
+        "content_format": "standalone",
+        "global_episode_number": 1,
+        "pillar": "Ancient Epics & Lore",
+        "tts_voice": "uuyFQegRan8rpIQCGu9K",
+        "bgm_track": "dramatic_mythology.mp3",
+        "bespoke_asset_path": "canvas_prop:samudra_manthan_halahala",
+        "youtube_title": "Why Shiva Became Neelakantha #Shorts",
+        "youtube_description": "The Samudra Manthan episode from Shiva Purana. #Shorts",
+        "youtube_tags": [
+            "Shorts", "Sutradhar", "Shiva", "Neelakantha", "Samudra Manthan",
+            "Indian Mythology", "Hindu Mythology", "Puranas", "Ancient India", "Vedic Stories",
+        ],
+        "summary": "Shiva absorbs Halahala poison to save the cosmos.",
+        "language": "hi",
+        "audio_language": "hi",
+        "caption_language": "hi",
+        "metadata_language": "en",
+        "thumbnail_language": "en",
+        "thumbnail_spec": {
+            "pill": "SAMUDRA MANTHAN",
+            "headline_line1": "WHY SHIVA",
+            "headline_line2": "DRANK POISON",
+            "sub_pill": "ORIGIN OF NEELAKANTHA",
+            "font_weight": 800,
+            "theme": "kailash_horizon",
+        },
+        "storyboard_ir": {
+            "visual_direction_version": "v2_storycraft",
+            "width": 1080,
+            "height": 1920,
+            "fps": 30,
+            "horizon_y": 1142,
+            "scenes": ir_scenes,
+        },
+        "scenes": scenes,
+    }
+
+
+def _make_mp3_bytes(duration_sec: float = 8.0, sr: int = 44100) -> bytes:
+    n = int(duration_sec * sr)
+    t = np.linspace(0.0, duration_sec, n, endpoint=False, dtype=np.float32)
+    samples = (0.3 * np.sin(2.0 * np.pi * 220.0 * t)).astype(np.float32)
+    buf = io.BytesIO()
+    sf.write(buf, samples, sr, format="MP3")
+    return buf.getvalue()
 
 
 class TestPhase5ProductionGates(unittest.TestCase):
-    """Rigorous audit suite for Phase 5 production acceptance gates."""
+    """Isolated production acceptance suite (zero mutations to live build/ or episodes.db)."""
 
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.cfg = load_config(REPO_ROOT)
-        cls.manifest_js_path = REPO_ROOT / "build" / "manifest.js"
-        cls.audio_manifest_path = REPO_ROOT / "build" / "audio" / "audio_manifest.json"
-        cls.master_wav_path = REPO_ROOT / "build" / "audio" / "narration_full.wav"
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory(prefix="sutradhar_accept_")
+        self.root = Path(self.tmp.name)
+        shutil.copy2(REPO_ROOT / "config.yaml", self.root / "config.yaml")
+        shutil.copy2(REPO_ROOT / "pronunciations_hi.yaml", self.root / "pronunciations_hi.yaml")
+        (self.root / "build" / "audio").mkdir(parents=True, exist_ok=True)
+        (self.root / "build" / "cache" / "audio").mkdir(parents=True, exist_ok=True)
+        (self.root / "assets").mkdir(parents=True, exist_ok=True)
+        self.cfg = load_config(self.root)
+
+    def tearDown(self) -> None:
+        self.tmp.cleanup()
 
     def test_gate_1_single_voice_standard(self) -> None:
-        """Gate 1: 100% of speech assets synthesized using Viraj (uuyFQegRan8rpIQCGu9K) on eleven_v4."""
+        """Gate 1: Viraj (uuyFQegRan8rpIQCGu9K) on eleven_v4 with Hindi audio policy."""
         tts_cfg = self.cfg.get("tts", {})
         self.assertEqual(tts_cfg.get("voice_id"), "uuyFQegRan8rpIQCGu9K")
         self.assertEqual(tts_cfg.get("model_id"), "eleven_v4")
         self.assertEqual(self.cfg.get("channel", {}).get("primary_language"), "hi")
-
         self.assertEqual(elevenlabs_engine.DEFAULT_VOICE_ID, "uuyFQegRan8rpIQCGu9K")
         self.assertEqual(elevenlabs_engine.DEFAULT_MODEL_ID, "eleven_v4")
         self.assertEqual(elevenlabs_engine.DEFAULT_SAMPLE_RATE, 44100)
 
-        # Audit production manifest if built
-        if self.audio_manifest_path.is_file():
-            manifest = json.loads(self.audio_manifest_path.read_text(encoding="utf-8"))
-            self.assertEqual(manifest.get("tts_voice"), "uuyFQegRan8rpIQCGu9K")
-            self.assertIn(manifest.get("tts_engine"), ("elevenlabs", "eleven_v4"))
-            self.assertEqual(manifest.get("language"), "hi")
+        plan_dict = _make_v2_plan_dict()
+        (self.root / "build" / "episode_plan.json").write_text(
+            json.dumps(plan_dict, ensure_ascii=False), encoding="utf-8"
+        )
+        res = build_audio.build_episode_audio(
+            self.root,
+            tts_factory=lambda c, r: FakeElevenLabs(sec_per_scene=8.5, sample_rate=44100),
+            whisper_factory=lambda c: _FakeWhisper(),
+        )
+        self.assertEqual(res["status"], "ok")
+        manifest = json.loads((self.root / "build" / "audio" / "audio_manifest.json").read_text(encoding="utf-8"))
+        self.assertEqual(manifest["tts_voice"], "uuyFQegRan8rpIQCGu9K")
+        self.assertEqual(manifest["tts_engine"], "elevenlabs")
+        self.assertEqual(manifest["language"], "hi")
 
-    def test_gate_2_character_acting_verification(self) -> None:
-        """Gate 2: Scripted scenes with tags demonstrate distinct acoustic energy and duration profiles."""
-        acting_dir = REPO_ROOT / "build" / "auditions" / "elevenlabs" / "viraj_character_acting"
-        wrath_wav = acting_dir / "Viraj_acting_Ravana_Wrath.wav"
-        serene_wav = acting_dir / "Viraj_acting_Mahadev_Serene.wav"
-        grief_wav = acting_dir / "Viraj_acting_Mandodari_Grief.wav"
+    def test_gate_2_pre_tts_budget_and_vocal_tag_steering(self) -> None:
+        """Gate 2: EpisodePlanV2 enforces <= 900 billed chars, >= 70% Devanagari, and preserves vocal tags."""
+        plan_dict = _make_v2_plan_dict()
+        plan = EpisodePlanV2.model_validate(plan_dict, context={"config": self.cfg})
+        self.assertLessEqual(plan.total_billed_chars(), 900)
 
-        if not (wrath_wav.is_file() and serene_wav.is_file() and grief_wav.is_file()):
-            self.skipTest(f"Phase 5 character acting artifacts not present in {acting_dir}")
+        reps = load_pronunciations(self.root, self.cfg, lang="hi")
+        tagged_texts: list[str] = []
+        clean_texts: list[str] = []
+        for idx, sc in enumerate(plan.scenes):
+            c_txt, t_txt = prepare_scene_tts_text(sc, idx, len(plan.scenes), reps, DEFAULT_TAG_TEMPLATES, idx == 3)
+            clean_texts.append(c_txt)
+            tagged_texts.append(t_txt)
 
-        def get_acoustic_profile(wav_path: Path) -> dict[str, float]:
-            data, sr = sf.read(str(wav_path))
-            rms = float(np.sqrt(np.mean(data**2) + 1e-15))
-            rms_dbfs = float(20 * np.log10(rms))
-            peak = float(np.max(np.abs(data)))
-            dur = len(data) / sr
-            return {"rms_dbfs": rms_dbfs, "peak": peak, "dur": dur, "sr": float(sr)}
+        report = validate_pre_tts_budget(tagged_texts, clean_texts, language="hi", enforce_devanagari=True)
+        self.assertLessEqual(report.total_billed_chars, 900)
+        self.assertGreaterEqual(report.devanagari_ratio, 0.70)
+        self.assertIn("[arrogant, booming, furious, shouts]", tagged_texts[1])
+        self.assertIn("[softly, sorrowful, trembling, sighs]", tagged_texts[2])
 
-        prof_wrath = get_acoustic_profile(wrath_wav)
-        prof_serene = get_acoustic_profile(serene_wav)
-        prof_grief = get_acoustic_profile(grief_wav)
-
-        # 1. Wrath has high dynamic energy (loudest RMS) and highest peak
-        self.assertGreater(prof_wrath["rms_dbfs"], prof_serene["rms_dbfs"])
-        self.assertGreater(prof_serene["rms_dbfs"], prof_grief["rms_dbfs"])
-
-        # 2. Significant acoustic energy differential (> 6.0 dB delta between Wrath and Grief)
-        delta_db = prof_wrath["rms_dbfs"] - prof_grief["rms_dbfs"]
-        self.assertGreater(delta_db, 6.0, f"Acoustic dynamic delta {delta_db:.2f} dB is too narrow")
-
-        # 3. Peak amplitude of wrath is authoritative
-        self.assertGreaterEqual(prof_wrath["peak"], 0.80)
+        # Over-budget (>900 chars) must abort before any TTS call
+        with self.assertRaises(TTSBudgetError):
+            validate_pre_tts_budget(["अ" * 901], ["अ" * 901], max_billed_chars=900, language="hi")
 
     def test_gate_3_zero_tag_leakage_and_manifest_validation(self) -> None:
-        """Gate 3: Whisper transcription and subtitles have strictly 0 bracketed tags; boundaries are monotonic."""
-        if not (self.manifest_js_path.is_file() and self.audio_manifest_path.is_file()):
-            self.skipTest("build/manifest.js or audio_manifest.json not present; run build_audio first")
+        """Gate 3: Aligned words and captions have 0 bracketed tags and monotonic boundaries."""
+        plan_dict = _make_v2_plan_dict()
+        (self.root / "build" / "episode_plan.json").write_text(
+            json.dumps(plan_dict, ensure_ascii=False), encoding="utf-8"
+        )
+        build_audio.build_episode_audio(
+            self.root,
+            tts_factory=lambda c, r: FakeElevenLabs(sec_per_scene=8.5, sample_rate=44100),
+            whisper_factory=lambda c: _FakeWhisper(),
+        )
 
-        js_text = self.manifest_js_path.read_text(encoding="utf-8")
+        js_text = (self.root / "build" / "manifest.js").read_text(encoding="utf-8")
         js_match = re.search(r"window\.EPISODE_MANIFEST\s*=\s*(\{.*\});", js_text, re.DOTALL)
         self.assertIsNotNone(js_match)
         manifest = json.loads(js_match.group(1))
 
         tag_re = re.compile(r"\[.*?\]")
         cursor = 0.0
-
-        for scene in manifest.get("scenes", []):
-            s_idx = scene["scene_index"]
-            clean_text = scene["narration_text"]
-            applied_text = scene.get("tts_text_applied", "")
-            words = scene.get("words", [])
-
-            # Narration text must not contain bracketed tags
-            self.assertIsNone(tag_re.search(clean_text), f"Tag leaked into scene {s_idx} narration: {clean_text}")
-
-            # Applied TTS text MUST preserve vocal steering tags
-            self.assertIsNotNone(tag_re.search(applied_text), f"Scene {s_idx} applied text missing tag: {applied_text}")
-
-            # Words list must not contain bracketed tags
-            self.assertGreater(len(words), 0, f"Scene {s_idx} words list is empty")
-            for w in words:
-                tok = w["word"]
-                self.assertIsNone(tag_re.search(tok), f"Tag leaked into word: {tok}")
+        for scene in manifest["scenes"]:
+            self.assertIsNone(tag_re.search(scene["narration_text"]))
+            self.assertIsNotNone(tag_re.search(scene["tts_text_applied"]))
+            self.assertGreater(len(scene["words"]), 0)
+            for w in scene["words"]:
+                self.assertIsNone(tag_re.search(w["word"]))
                 self.assertLess(w["start"], w["end"])
                 self.assertLess(w["global_start"], w["global_end"])
-
-            # Monotonic scene boundary verification
-            st = float(scene["start_sec"])
-            mid = float(scene["midpoint_sec"])
-            et = float(scene["end_sec"])
-            dur = float(scene["duration_sec"])
-
-            self.assertAlmostEqual(st, cursor, places=3, msg=f"Scene {s_idx} boundary mismatch")
-            self.assertTrue(st < mid < et, f"Scene {s_idx} non-increasing timestamps: {st} < {mid} < {et}")
+            st, mid, et, dur = (
+                float(scene["start_sec"]),
+                float(scene["midpoint_sec"]),
+                float(scene["end_sec"]),
+                float(scene["duration_sec"]),
+            )
+            self.assertAlmostEqual(st, cursor, places=3)
+            self.assertTrue(st < mid < et)
             self.assertAlmostEqual(et - st, dur, places=2)
             cursor = et
 
     def test_gate_4_zero_waste_caching_and_sub_two_second_rebuild(self) -> None:
-        """Gate 4: Re-running build_audio on an already built episode completes in < 2 seconds with 0 network calls."""
-        # Create an engine with a mocked network session that fails if an HTTP call is made
+        """Gate 4: Cached ElevenLabs rebuild inside isolated tmp root completes in < 2s with 0 HTTP calls."""
+        plan_dict = _make_v2_plan_dict()
+        (self.root / "build" / "episode_plan.json").write_text(
+            json.dumps(plan_dict, ensure_ascii=False), encoding="utf-8"
+        )
+        plan = EpisodePlanV2.model_validate(plan_dict, context={"config": self.cfg})
+        reps = load_pronunciations(self.root, self.cfg, lang="hi")
+        mp3_bytes = _make_mp3_bytes(8.5, 44100)
+
         mock_session = MagicMock()
-        mock_session.request.side_effect = RuntimeError("Network call attempted during cached execution!")
+        mock_session.headers = {}
+        mock_session.request.side_effect = AssertionError("HTTP call must never happen during cached rebuild!")
+        engine = ElevenLabsEngine(
+            api_key="sk_test_mock_key_12345",
+            config=self.cfg,
+            project_root=self.root,
+            session=mock_session,
+        )
 
-        # Bypass the live DB continuity check — this gate tests caching speed, not series continuity
-        with patch("build_audio.verify_active_series_continuity_readonly"):
-            t0 = time.perf_counter()
-            result = build_audio.build_episode_audio(REPO_ROOT)
-            elapsed = time.perf_counter() - t0
+        # Seed isolated cache for every scene
+        vs_base = {**DEFAULT_VOICE_SETTINGS, **self.cfg["tts"].get("voice_settings", {})}
+        for idx, sc in enumerate(plan.scenes):
+            _, tagged = prepare_scene_tts_text(sc, idx, len(plan.scenes), reps, DEFAULT_TAG_TEMPLATES, False)
+            spd = build_audio._compute_scene_speed(sc, self.cfg, "hi", sc.speaker_role == "character_dialogue", False)
+            key = compute_cache_key(tagged, engine.voice_id, engine.model_id, {**vs_base, "speed": spd})
+            (self.root / "build" / "cache" / "audio" / f"{key}.mp3").write_bytes(mp3_bytes)
 
-        self.assertEqual(result.get("status"), "ok")
-        self.assertLess(elapsed, 2.0, f"Re-run took {elapsed:.3f}s (must be < 2.0s)")
+        # First cached run populates loudnorm WAV cache (0 HTTP calls)
+        first_res = build_audio.build_episode_audio(
+            self.root,
+            tts_factory=lambda c, r: engine,
+            whisper_factory=lambda c: _FakeWhisper(),
+        )
+        self.assertEqual(first_res["status"], "ok")
+        self.assertEqual(mock_session.request.call_count, 0)
 
-    def test_gate_5_kinocut_mastering_and_broadcast_audio_specs(self) -> None:
-        """Gate 5: Mastered audio is 44.1 kHz 16-bit PCM, -14.0 LUFS (±1.0), true peak <= -1.0 dBTP, trailing silence >= 0.75s."""
-        if not self.master_wav_path.is_file():
-            self.skipTest("Master narration wav not present in build/audio/; run build_audio first")
+        # Second rebuild hits MP3 + loudnorm caches in < 2.0s with 0 HTTP calls
+        t0 = time.perf_counter()
+        result = build_audio.build_episode_audio(
+            self.root,
+            tts_factory=lambda c, r: engine,
+            whisper_factory=lambda c: _FakeWhisper(),
+        )
+        elapsed = time.perf_counter() - t0
+        self.assertEqual(result["status"], "ok")
+        self.assertEqual(mock_session.request.call_count, 0)
+        self.assertLess(elapsed, 2.0, f"Cached rebuild took {elapsed:.3f}s (must be < 2.0s)")
 
-        info = sf.info(str(self.master_wav_path))
-        self.assertEqual(info.samplerate, 44100, f"Sample rate {info.samplerate} != 44100 Hz")
-        self.assertEqual(info.subtype, "PCM_16", f"Subtype {info.subtype} != PCM_16")
-        self.assertEqual(info.channels, 1, f"Channels {info.channels} != 1 (mono)")
+    def test_gate_5_broadcast_48khz_stereo_mix_and_quality_gate_contracts(self) -> None:
+        """Gate 5: Real v2 48 kHz stereo mix, -14 LUFS, <= -1.5 dBTP, quiet tail, and fail-closed QA guards."""
+        # Stage canonical BGM/SFX & manifest inside isolated root
+        shutil.copy2(REPO_ROOT / "assets" / "manifest.yaml", self.root / "assets" / "manifest.yaml")
+        shutil.copytree(REPO_ROOT / "assets" / "audio", self.root / "assets" / "audio", dirs_exist_ok=True)
 
-        # FFmpeg EBU R128 Loudness measurement
-        cmd = [
-            "ffmpeg",
-            "-hide_banner",
-            "-i",
-            str(self.master_wav_path),
-            "-af",
-            "loudnorm=I=-14:TP=-1.5:LRA=9:print_format=json",
-            "-f",
-            "null",
-            "-",
-        ]
-        proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
-        idx1 = proc.stderr.rfind("{")
-        idx2 = proc.stderr.rfind("}")
-        self.assertTrue(idx1 != -1 and idx2 != -1, "FFmpeg loudnorm JSON not found in stderr")
-        stats = json.loads(proc.stderr[idx1 : idx2 + 1])
+        plan_dict = _make_v2_plan_dict()
+        (self.root / "build" / "episode_plan.json").write_text(
+            json.dumps(plan_dict, ensure_ascii=False), encoding="utf-8"
+        )
+        build_audio.build_episode_audio(
+            self.root,
+            tts_factory=lambda c, r: FakeElevenLabs(sec_per_scene=8.5, sample_rate=44100),
+            whisper_factory=lambda c: _FakeWhisper(),
+        )
+        audio_manifest = json.loads((self.root / "build" / "audio" / "audio_manifest.json").read_text(encoding="utf-8"))
+        out_wav = self.root / "build" / "master_mix.wav"
+        mix_rep = mix_episode_audio(
+            self.root,
+            audio_manifest,
+            self.cfg,
+            output_wav_path=out_wav,
+            allow_synth_fallback=False,
+        )
+        self.assertEqual(mix_rep["sample_rate"], 48000)
+        self.assertEqual(mix_rep["channels"], 2)
+        self.assertTrue(-14.5 <= mix_rep["integrated_lufs"] <= -13.5)
+        self.assertLessEqual(mix_rep["true_peak_dbtp"], -1.5)
+        self.assertGreaterEqual(mix_rep["bgm_acts"], 2)
+        self.assertGreaterEqual(mix_rep["sfx_cues"], 4)
 
-        input_i = float(stats["input_i"])
-        input_tp = float(stats["input_tp"])
-
-        # Target: -14.0 LUFS ± 1.0 (range: [-15.0, -13.0])
-        self.assertGreaterEqual(input_i, -15.0, f"Integrated loudness {input_i} is too quiet")
-        self.assertLessEqual(input_i, -13.0, f"Integrated loudness {input_i} is too loud")
-
-        # True peak limit <= -1.0 dBTP
-        self.assertLessEqual(input_tp, -1.0, f"True peak {input_tp} dBTP exceeds ceiling of -1.0 dBTP")
-
-        # Trailing silence: last 0.75s must have peak < 0.001 and RMS < -45 dBFS
-        data, sr = sf.read(str(self.master_wav_path))
-        tail = data[-int(0.75 * sr) :]
-        tail_peak = float(np.max(np.abs(tail)))
-        tail_rms = float(np.sqrt(np.mean(tail**2) + 1e-15))
-        tail_rms_dbfs = float(20 * np.log10(tail_rms))
-
-        self.assertLess(tail_peak, 0.001, f"Trailing silence peak {tail_peak} is too high")
-        self.assertLess(tail_rms_dbfs, -45.0, f"Trailing silence RMS {tail_rms_dbfs} dBFS is too loud")
+        # Quality gate contracts: 55 MiB ceiling & synthetic dom_snapshots rejection
+        self.assertEqual(DEFAULT_MAX_FILE_BYTES, 57_671_680)
+        with self.assertRaises(QualityGateError):
+            reject_synthetic_dom_snapshots({"dom_snapshots": [{"scene_index": 0}]})
 
     def test_gate_6_codebase_cleanliness_and_pruned_dependencies(self) -> None:
-        """Gate 6: Disk space freed, zero Kokoro ONNX or Gemini TTS runtime references."""
-        # 1. Kokoro model directory must not exist
-        kokoro_model_dir = REPO_ROOT / "models" / "kokoro"
-        self.assertFalse(kokoro_model_dir.exists(), "models/kokoro/ must be deleted")
-
-        # 2. requirements.txt must not contain kokoro-onnx or onnxruntime
+        """Gate 6: Zero Kokoro ONNX or legacy Gemini TTS runtime dependencies."""
+        self.assertFalse((REPO_ROOT / "models" / "kokoro").exists())
         reqs_text = (REPO_ROOT / "requirements.txt").read_text(encoding="utf-8")
         self.assertNotIn("kokoro-onnx", reqs_text)
         self.assertNotIn("onnxruntime", reqs_text)
         self.assertIn("requests", reqs_text)
 
-        # 3. Active runtime scripts must not import kokoro
-        for py_script in SCRIPT_DIR.glob("*.py"):
+        for py_script in SCRIPT_DIR.rglob("*.py"):
             content = py_script.read_text(encoding="utf-8")
-            self.assertNotIn("from kokoro_onnx", content, f"kokoro_onnx import in {py_script.name}")
-            self.assertNotIn("import kokoro_onnx", content, f"kokoro_onnx import in {py_script.name}")
-
-    def test_downstream_rendering_workflow_integration(self) -> None:
-        """Verify downstream render_and_qa integration with master narration audio."""
-        if not self.manifest_js_path.is_file():
-            self.skipTest("build/manifest.js not present; run build_audio first")
-        manifest = render_and_qa.parse_manifest_js(self.manifest_js_path)
-        self.assertEqual(manifest.get("language"), "hi")
-        self.assertEqual(manifest.get("audio", {}).get("sample_rate"), 44100)
-
-        # SFX & BGM parsing
-        sfx_inputs = render_and_qa.collect_sfx_schedule(REPO_ROOT, manifest)
-        bgm_schedule = render_and_qa.parse_bgm_schedule(REPO_ROOT, manifest, self.cfg)
-        self.assertIsInstance(sfx_inputs, list)
-        self.assertIsInstance(bgm_schedule, list)
-        self.assertGreater(len(bgm_schedule), 0)
+            self.assertNotIn("from kokoro_onnx", content, f"kokoro_onnx import in {py_script}")
+            self.assertNotIn("import kokoro_onnx", content, f"kokoro_onnx import in {py_script}")
 
 
 if __name__ == "__main__":

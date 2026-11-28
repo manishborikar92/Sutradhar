@@ -139,24 +139,23 @@ def resolve_bgm_path(
 
     # 3. Check config.yaml bgm_by_mood mapping
     mood_map = ((cfg or {}).get("assets") or {}).get("bgm_by_mood") or {}
+    bgm_dir = root / "assets" / "audio" / "bgm"
     if token_lower in mood_map:
         mapped_name = mood_map[token_lower]
-        for candidate_dir in (root / "assets" / "audio" / "bgm", root / "assets" / "bgm"):
-            cand = candidate_dir / mapped_name
-            if cand.is_file():
-                return cand, False
+        cand = bgm_dir / mapped_name
+        if cand.is_file():
+            return cand, False
 
-    # 4. Direct file search in canonical assets/audio/bgm (then legacy assets/bgm)
+    # 4. Direct file search in canonical assets/audio/bgm
     if token:
-        for candidate_dir in (root / "assets" / "audio" / "bgm", root / "assets" / "bgm"):
-            cand = candidate_dir / token
-            if cand.is_file():
-                return cand, False
-            if not Path(token).suffix:
-                for ext in (".mp3", ".wav"):
-                    cand_ext = candidate_dir / f"{token}{ext}"
-                    if cand_ext.is_file():
-                        return cand_ext, False
+        cand = bgm_dir / token
+        if cand.is_file():
+            return cand, False
+        if not Path(token).suffix:
+            for ext in (".mp3", ".wav"):
+                cand_ext = bgm_dir / f"{token}{ext}"
+                if cand_ext.is_file():
+                    return cand_ext, False
 
     if allow_synth_fallback:
         return None, True
@@ -186,14 +185,14 @@ def resolve_sfx_path(
             if rel_file and (root / rel_file).is_file():
                 return root / rel_file
 
-    for sfx_dir in (root / "assets" / "audio" / "sfx", root / "assets" / "sfx"):
-        direct = sfx_dir / clean
-        if direct.is_file():
-            return direct
-        for ext in (".mp3", ".wav"):
-            alt = sfx_dir / f"{stem}{ext}"
-            if alt.is_file():
-                return alt
+    sfx_dir = root / "assets" / "audio" / "sfx"
+    direct = sfx_dir / clean
+    if direct.is_file():
+        return direct
+    for ext in (".mp3", ".wav"):
+        alt = sfx_dir / f"{stem}{ext}"
+        if alt.is_file():
+            return alt
     return None
 
 

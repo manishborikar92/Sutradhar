@@ -1,32 +1,31 @@
 #!/usr/bin/env python3
-"""Sutradhar — Pre-Render Visual QA & Snapshot Grid Generator.
+"""Sutradhar — Thin CLI Facade for Phase 4 Pre-Render Visual QA & Preview Sheet.
 
 Whitelisted zero-argument CLI invocation:
     python scripts/preview_frames.py
 
 Reads:
-    - build/manifest.js (midpoint timestamps, scene count, safe zones)
+    - build/episode_plan.json (EpisodePlanV2 + StoryboardIR)
+    - build/audio/audio_manifest.json
 
 Executes:
-    - npx hyperframes lint
-    - npx hyperframes check --json
-    - npx hyperframes snapshot --at <t1,t2,...>
+    - sutradhar.visual.storyboard_composer.compose_storyboard()
+    - npx hyperframes lint + npx hyperframes check --strict --safe-zone shorts --json
+    - Chromium deterministic runtime probe (__timelines, hf-seek, fonts, safe zones)
+    - 15-frame storyboard preview contact sheet
 
 Writes (atomically):
-    - build/qa_grid.jpg (labeled 3x3 mid-scene contact sheet)
-    - build/qa_grid_safezones.jpg (contact sheet with 2026 YouTube Shorts safe-zone overlays)
+    - build/qa_grid.jpg
+    - build/qa_grid_safezones.jpg
     - build/qa_report.json
 """
 
 from __future__ import annotations
 
 import json
-import re
-import shutil
-import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent
@@ -36,14 +35,11 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from db_manager import get_project_root, load_config  # noqa: E402
-from scripts.engine.composer import compose_episode  # noqa: E402
 from sutradhar.qa.hyperframes_runner import (  # noqa: E402
-    HyperFramesError,
     generate_storyboard_preview_sheet,
     run_chromium_runtime_probe,
     run_hf_check,
     run_hf_lint,
-    stitch_contact_sheet as _shared_stitch_contact_sheet,
     validate_runtime_probe_and_hf_check,
 )
 from sutradhar.visual.storyboard_composer import (  # noqa: E402
@@ -54,67 +50,38 @@ from sutradhar.visual.storyboard_composer import (  # noqa: E402
     SHORTS_PILL_MIN_X,
     SHORTS_PILL_MIN_Y,
     compose_storyboard,
-    detect_v2_storyboard_run,
-    parse_manifest_js as _shared_parse_manifest_js,
     resolve_v2_episode_inputs,
 )
 
 
 class PreviewPipelineError(RuntimeError):
-    """Raised when preview extraction or visual QA fails."""
+    """Raised when StoryboardIR compilation, linting, or visual QA fails."""
 
 
-def parse_manifest_js(manifest_path: Path) -> dict[str, Any]:
-    """Parse episode manifest JS using shared sutradhar.visual helper."""
+def run_preview_pipeline(root: Path) -> dict[str, Any]:
+    """Compile v2 StoryboardIR bundle, verify runtime & safe zones, and stitch 15-frame QA grids."""
+    cfg = load_config(root)
+    build_dir = (root / cfg["paths"]["build_dir"]).resolve()
     try:
-        return _shared_parse_manifest_js(manifest_path)
+        plan_data, audio_manifest = resolve_v2_episode_inputs(root, cfg)
+        comp = compose_storyboard(
+            root,
+            plan_data,
+            audio_manifest=audio_manifest,
+            output_dir=build_dir / "composition",
+            mix_audio=True,
+            cfg=cfg,
+        )
     except CompositionError as exc:
         raise PreviewPipelineError(str(exc)) from exc
 
-
-def stitch_contact_sheet(
-    image_paths: list[Path],
-    scene_labels: list[str],
-    output_path: Path,
-    cols: int = 3,
-    thumb_w: int = 360,
-    thumb_h: int = 640,
-    overlay_safe_zones: bool = False,
-    safe_zones: Optional[dict[str, int]] = None,
-) -> None:
-    """Delegate contact-sheet rendering to shared sutradhar.qa helper."""
-    try:
-        _shared_stitch_contact_sheet(
-            image_paths,
-            scene_labels,
-            output_path,
-            cols=cols,
-            thumb_w=thumb_w,
-            thumb_h=thumb_h,
-            overlay_safe_zones=overlay_safe_zones,
-            safe_zones=safe_zones,
-        )
-    except HyperFramesError as exc:
-        raise PreviewPipelineError(str(exc)) from exc
-
-
-def _run_v2_preview_pipeline(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
-    build_dir = (root / cfg["paths"]["build_dir"]).resolve()
-    plan_data, audio_manifest = resolve_v2_episode_inputs(root, cfg)
-    comp = compose_storyboard(
-        root,
-        plan_data,
-        audio_manifest=audio_manifest,
-        output_dir=build_dir / "composition",
-        mix_audio=True,
-        cfg=cfg,
-    )
     lint_res = run_hf_lint(root, comp.output_dir)
     if not lint_res.get("ok"):
         raise PreviewPipelineError(
             f"hyperframes lint failed: errors={lint_res.get('errorCount')}, "
             f"warnings={lint_res.get('warningCount')}, findings={lint_res.get('findings')}"
         )
+
     check_res = run_hf_check(root, comp.output_dir, safe_zone="shorts", strict=True)
     probe_res = run_chromium_runtime_probe(root, comp.index_html, duration_sec=comp.duration_sec)
     validation_errors = validate_runtime_probe_and_hf_check(
@@ -156,113 +123,6 @@ def _run_v2_preview_pipeline(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
         "preview_sheet": sheet_info,
     }
     (build_dir / "qa_report.json").write_text(json.dumps(qa_report, indent=2), encoding="utf-8")
-    return qa_report
-
-
-def run_preview_pipeline(root: Path) -> dict[str, Any]:
-    cfg = load_config(root)
-    if detect_v2_storyboard_run(root, cfg):
-        return _run_v2_preview_pipeline(root, cfg)
-
-    build_dir = (root / cfg["paths"]["build_dir"]).resolve()
-    manifest_path = build_dir / "manifest.js"
-    manifest = parse_manifest_js(manifest_path)
-
-    # Ensure composition files are generated & synchronized
-    compose_episode(root)
-
-    scenes = manifest.get("scenes", [])
-    if not scenes:
-        raise PreviewPipelineError("No scenes found in manifest.js.")
-
-    midpoints = [round(float(s["midpoint_sec"]), 2) for s in scenes]
-    midpoints_str = ",".join(str(m) for m in midpoints)
-
-    npx_exe = shutil.which("npx") or ("npx.cmd" if sys.platform == "win32" else "npx")
-
-    print(f"[INFO] Running HyperFrames lint...", file=sys.stderr)
-    lint_proc = subprocess.run([npx_exe, "hyperframes", "lint", "build/composition"], cwd=root, capture_output=True, text=True, check=False)
-    lint_clean = lint_proc.returncode == 0
-    if not lint_clean:
-        print(f"[WARN] HyperFrames lint output:\n{lint_proc.stderr or lint_proc.stdout}", file=sys.stderr)
-
-    print(f"[INFO] Capturing {len(midpoints)} scene snapshots at [{midpoints_str}]...", file=sys.stderr)
-    cmd_snap = [npx_exe, "hyperframes", "snapshot", "build/composition", "--at", midpoints_str]
-    snap_proc = subprocess.run(cmd_snap, cwd=root, capture_output=True, text=True, check=False)
-    if snap_proc.returncode != 0:
-        raise PreviewPipelineError(f"hyperframes snapshot failed: {snap_proc.stderr or snap_proc.stdout}")
-
-    # Discover snapshot directory from output or recent snapshot directory
-    out_text = snap_proc.stdout + "\n" + snap_proc.stderr
-    match_dir = re.search(r"snapshots saved to\s+(.*?)(?:\r?\n|$)", out_text)
-    snap_dir: Optional[Path] = None
-    if match_dir:
-        candidate = Path(match_dir.group(1).strip())
-        if candidate.is_dir():
-            snap_dir = candidate
-
-    if not snap_dir:
-        # Fallback: scan composition and root .hyperframes/artifacts/snapshots
-        for base_snaps in [
-            root / "build" / "composition" / ".hyperframes" / "artifacts" / "snapshots",
-            root / ".hyperframes" / "artifacts" / "snapshots",
-        ]:
-            if base_snaps.is_dir():
-                subdirs = sorted(base_snaps.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True)
-                if subdirs and subdirs[0].is_dir():
-                    snap_dir = subdirs[0]
-                    break
-
-    if not snap_dir or not snap_dir.is_dir():
-        raise PreviewPipelineError(f"Could not locate snapshot output directory. Output:\n{out_text}")
-
-    # Gather frame PNGs (matching frame-*.png or at-*.png)
-    frame_files = sorted(list(snap_dir.glob("frame-*.png")) + list(snap_dir.glob("at-*.png")))
-    if not frame_files:
-        raise PreviewPipelineError(f"Zero snapshot frame PNGs found in {snap_dir}")
-
-    # Match frame files to scenes
-    scene_frames = frame_files[: len(scenes)]
-    scene_labels = [
-        f"S{s['scene_index']} ({(s.get('shot_type') or s.get('visual_mode') or 'shot')[:6]}) @ {s['midpoint_sec']}s"
-        for s in scenes
-    ]
-
-    safe_zones = cfg.get("video", {}).get("safe_zones", {})
-
-    qa_grid_jpg = build_dir / "qa_grid.jpg"
-    qa_grid_safezones_jpg = build_dir / "qa_grid_safezones.jpg"
-
-    print(f"[INFO] Stitching labeled contact sheet -> {qa_grid_jpg.name} ...", file=sys.stderr)
-    stitch_contact_sheet(
-        image_paths=scene_frames,
-        scene_labels=scene_labels,
-        output_path=qa_grid_jpg,
-        overlay_safe_zones=False,
-    )
-
-    print(f"[INFO] Stitching safe-zone overlay contact sheet -> {qa_grid_safezones_jpg.name} ...", file=sys.stderr)
-    stitch_contact_sheet(
-        image_paths=scene_frames,
-        scene_labels=scene_labels,
-        output_path=qa_grid_safezones_jpg,
-        overlay_safe_zones=True,
-        safe_zones=safe_zones,
-    )
-
-    qa_report = {
-        "status": "ok",
-        "action": "preview_frames",
-        "scene_count": len(scenes),
-        "midpoints_sec": midpoints,
-        "qa_grid_jpg": "build/qa_grid.jpg",
-        "qa_grid_safezones_jpg": "build/qa_grid_safezones.jpg",
-        "snapshot_dir": str(snap_dir),
-        "lint_clean": lint_clean,
-    }
-
-    report_path = build_dir / "qa_report.json"
-    report_path.write_text(json.dumps(qa_report, indent=2), encoding="utf-8")
     return qa_report
 
 

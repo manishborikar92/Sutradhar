@@ -16,7 +16,7 @@ from sutradhar.db import (
     immediate_transaction,
     record_published_episode,
 )
-from sutradhar.models import EpisodePlan, EpisodePlanV2, PublishResult, has_devanagari
+from sutradhar.models import EpisodePlanV2, PublishResult, has_devanagari
 from sutradhar.publishing.metadata_policy import (
     MetadataPolicyError,
     PlaylistResolutionError,
@@ -167,15 +167,10 @@ def _validate_pre_publish_artifacts(
     except json.JSONDecodeError as exc:
         raise PublishPipelineError(f"Invalid JSON in '{episode_plan_path}': {exc}") from exc
 
-    is_v2 = bool(plan_data.get("storyboard_ir") is not None or plan_data.get("thumbnail_spec") is not None)
     try:
-        if is_v2:
-            EpisodePlanV2.model_validate(plan_data, context={"config": cfg})
-        else:
-            legacy_payload = {k: v for k, v in plan_data.items() if k != "youtube_playlist_id"}
-            EpisodePlan.model_validate(legacy_payload, context={"config": cfg})
+        EpisodePlanV2.model_validate(plan_data, context={"config": cfg})
     except Exception as exc:
-        raise PublishPipelineError(f"EpisodePlan validation failed before publishing: {exc}") from exc
+        raise PublishPipelineError(f"EpisodePlanV2 validation failed before publishing: {exc}") from exc
 
     max_file_bytes = int((cfg.get("video") or {}).get("max_file_bytes", 57_671_680))
     actual_bytes = final_video_path.stat().st_size
@@ -190,10 +185,10 @@ def _validate_pre_publish_artifacts(
             f"Pre-publish QA gate failed in '{build_dir / 'qa_report.json'}': {qa_report.get('failures')}"
         )
 
-    if is_v2 and not thumbnail_path.is_file():
+    if not thumbnail_path.is_file():
         raise PublishPipelineError(f"Missing required v2 English cover thumbnail at '{thumbnail_path}'.")
 
-    metadata = build_video_metadata(plan_data, cfg, strict_v2=is_v2)
+    metadata = build_video_metadata(plan_data, cfg, strict_v2=True)
     quality_metrics = _extract_quality_metrics(build_dir, final_video_path, thumbnail_path, plan_data)
     return plan_data, metadata, quality_metrics
 
@@ -287,7 +282,7 @@ def publish_episode(
         ep_num = int(plan_data.get("global_episode_number", 1))
         series_id = int(plan_data.get("series_id") or 1)
         simulated_video_id = f"dryrun_{ep_num:03d}_{int(time.time())}"
-        simulated_playlist_id = None if fmt == "standalone" else (plan_data.get("youtube_playlist_id") or f"PL_dryrun_{series_id:03d}")
+        simulated_playlist_id = None if fmt == "standalone" else f"PL_dryrun_{series_id:03d}"
 
         result_dict = {
             "video_id": simulated_video_id,
@@ -368,9 +363,9 @@ def publish_episode(
                 raise PublishPipelineError(f"YouTube videos.insert returned no video ID: {response}")
 
             # Resolve & assign series playlist (fail closed for episodic_series / serial!)
-            playlist_id = plan_data.get("youtube_playlist_id")
+            playlist_id = None
             playlist_privacy = "public" if upload_mode == "public" else "private"
-            if fmt != "standalone" or playlist_id:
+            if fmt != "standalone":
                 auto_create = bool(pub_cfg.get("auto_create_series_playlist", True))
                 playlist_id = resolve_or_create_series_playlist(
                     youtube,
@@ -529,8 +524,7 @@ def publish_episode(
         else (not is_offline_dry_run and paths["db_file"].is_file())
     )
     if should_commit_db and validated_res.upload_status in ("PUBLISHED", "PRIVATE_REVIEW"):
-        ep_payload = plan_data if plan_data.get("storyboard_ir") is not None else {k: v for k, v in plan_data.items() if k != "youtube_playlist_id"}
-        ep_model = EpisodePlan.model_validate(ep_payload, context={"config": cfg})
+        ep_model = EpisodePlanV2.model_validate(plan_data, context={"config": cfg})
         db_sync_result = record_published_episode(
             root,
             cfg,

@@ -159,9 +159,7 @@ def validate_config(cfg: Any, config_path: Path) -> dict[str, Any]:
     if "default_voice" not in tts and "languages" in cfg:
         active_lprof = cfg["languages"].get(primary_lang, {})
         narr_v = active_lprof.get("narrator_voice") or active_lprof.get("narrator_voice_id")
-        if isinstance(narr_v, dict):
-            tts["default_voice"] = "+".join(f"{k}:{v}" for k, v in narr_v.items())
-        elif isinstance(narr_v, str):
+        if isinstance(narr_v, str):
             tts["default_voice"] = narr_v
     if "default_voice" not in tts and "voice_id" in tts:
         tts["default_voice"] = tts["voice_id"]
@@ -191,13 +189,13 @@ def validate_config(cfg: Any, config_path: Path) -> dict[str, Any]:
         if not isinstance(paths.get(key), str) or not paths[key].strip():
             raise StateError(f"config.yaml paths.{key} must be a non-empty string.")
 
-    content_format = cfg.get("content_format") or cfg.get("content", {}).get("format")
+    content_format = cfg.get("content_format")
     if content_format is not None and content_format not in ("standalone", "episodic_series", "serial"):
         raise StateError(
             f"config.yaml content_format must be 'standalone', 'episodic_series', or 'serial' (got {content_format!r})."
         )
 
-    dur_range = cfg.get("target_duration_range") or cfg.get("content", {}).get("target_duration_range")
+    dur_range = cfg.get("target_duration_range")
     if dur_range is not None:
         if not isinstance(dur_range, dict):
             raise StateError("config.yaml target_duration_range must be a mapping.")

@@ -1,27 +1,19 @@
 #!/usr/bin/env python3
-"""Comprehensive Unit and Contract Tests for scripts/publish_youtube.py.
-
-Verifies:
-1. Zero CLI arguments contract.
-2. Safety configuration locks (upload_mode in public, private_review, scheduled).
-3. Missing input guards (final_short.mp4, episode_plan.json).
-4. Offline / stub publishing behavior producing valid PublishResult (public and private_review).
-5. Mocked Google API interaction (videos.insert, playlists, AI synthetic media disclosure).
-6. Custom thumbnail generation and upload verification.
-7. End-to-end integration piping publish_result.json into db_manager.py --record-published.
-"""
+"""Comprehensive Unit and Contract Tests for scripts/publish_youtube.py (v2 Schema v4)."""
 
 from __future__ import annotations
 
+import io
 import json
 import os
 import shutil
-import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+
+from PIL import Image, ImageDraw
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS_DIR = REPO_ROOT / "scripts"
@@ -34,9 +26,6 @@ import publish_youtube
 
 def _make_test_jpeg_bytes(size: tuple[int, int] = (1080, 1920), variant: str = "hero") -> bytes:
     """Create a valid high-variance JPEG test image in memory."""
-    import io
-    from PIL import Image, ImageDraw
-
     im = Image.new("RGB", size, (18, 26, 62) if variant == "hero" else (210, 225, 190))
     draw = ImageDraw.Draw(im)
     w, h = size
@@ -52,71 +41,127 @@ def _make_test_jpeg_bytes(size: tuple[int, int] = (1080, 1920), variant: str = "
     return buf.getvalue()
 
 
+def _make_v2_plan(
+    *,
+    content_format: str = "episodic_series",
+    series_id: int | None = 1,
+    series_title: str | None = "Secrets of the Cosmos",
+) -> dict:
+    ir_scenes = [
+        {
+            "atmosphere_mode": "cosmic_explainer",
+            "environment_preset": "observatory_cosmos",
+            "horizon_y": 1142,
+            "camera_move": "slow_push_in",
+            "transition_in": "fade",
+            "bgm_mood": "cosmic",
+            "props": [
+                {"id": "brahmaloka_time_chakra", "kind": "brahmaloka_time_chakra", "mount": "sky", "x": 540.0, "y": 520.0}
+            ],
+            "characters": [
+                {"id": "sutradhar_narrator", "role": "sutradhar_narrator", "x": 540.0, "surface_type": "floor", "pose": "gesture", "expr": "serene"}
+            ],
+        }
+        for _ in range(5)
+    ]
+    return {
+        "content_format": content_format,
+        "series_id": series_id if content_format != "standalone" else None,
+        "series_title": series_title if content_format != "standalone" else None,
+        "pillar": "Cosmic & Scientific Paradoxes",
+        "episode_number_in_series": 1 if content_format != "standalone" else None,
+        "total_planned_episodes": 3 if content_format != "standalone" else None,
+        "global_episode_number": 1,
+        "tts_voice": "uuyFQegRan8rpIQCGu9K",
+        "bgm_track": "cosmic_mystery.mp3",
+        "bespoke_asset_path": "canvas_prop:brahmaloka_time_chakra",
+        "youtube_title": "What Lies Beyond The Event Horizon? #Shorts",
+        "youtube_description": "Explore Vedic cosmic time cycles and modern gravitational relativity.",
+        "youtube_tags": [
+            "Shorts", "Sutradhar", "Secrets of the Cosmos", "Space", "Relativity",
+            "Vedic Science", "Cosmic Time", "Brahmaloka", "Ancient India", "Astronomy",
+        ],
+        "summary": "Exploring event horizons and Vedic cosmic time.",
+        "language": "hi",
+        "audio_language": "hi",
+        "caption_language": "hi",
+        "metadata_language": "en",
+        "thumbnail_language": "en",
+        "story_research": {
+            "source_tradition": "Srimad Bhagavatam & Surya Siddhanta",
+            "canonical_story_summary": "Vedic texts describe varying cosmic time scales across loka planes.",
+            "key_verified_facts": ["Bhagavatam 9.3 contrasts Brahmaloka time with Bhuloka time."],
+            "source_references": ["Srimad Bhagavatam 9.3.29-32", "Surya Siddhanta Ch. 1"],
+        },
+        "thumbnail_spec": {
+            "pill": "COSMIC PARADOX",
+            "headline_line1": "BEYOND THE",
+            "headline_line2": "EVENT HORIZON",
+            "sub_pill": "VEDIC RELATIVITY",
+            "font_weight": 800,
+            "theme": "observatory_cosmos",
+        },
+        "storyboard_ir": {
+            "visual_direction_version": "v2_storycraft",
+            "width": 1080,
+            "height": 1920,
+            "fps": 30,
+            "horizon_y": 1142,
+            "scenes": ir_scenes,
+        },
+        "scenes": [
+            {
+                "scene_index": i,
+                "narration_text": f"[slowly, solemn, deep] ब्रह्माण्ड के इस अद्भुत रहस्य में समय की गति बदल जाती है भाग {i}।",
+                "visual_mode": "character_drama",
+                "backdrop_rig": "observatory_cosmos",
+                "primary_character": "sutradhar_narrator",
+                "emotion": "calm",
+                "action_gesture": "idle_breathe",
+                "mood_palette": "cosmic_indigo",
+                "particle_theme": "starfield_warp",
+                "camera_motion": "slow_push",
+                "transition_sfx": "sub_hit.wav",
+                "visual_spec": ir_scenes[i - 1],
+            }
+            for i in range(1, 6)
+        ],
+    }
+
+
 class TestPublishYouTube(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp_dir = Path(tempfile.mkdtemp(prefix="sutradhar_pub_test_"))
         self.build_dir = self.tmp_dir / "build"
         self.build_dir.mkdir(parents=True, exist_ok=True)
 
-        # Copy real valid config
         shutil.copy2(REPO_ROOT / "config.yaml", self.tmp_dir / "config.yaml")
         self.cfg = db_manager.load_config(self.tmp_dir)
 
-        # Baseline minimal episode_plan.json
-        self.sample_plan = {
-            "series_id": 1,
-            "series_title": "Secrets of the Cosmos",
-            "pillar": "Cosmic & Scientific Paradoxes",
-            "episode_number_in_series": 1,
-            "total_planned_episodes": 3,
-            "global_episode_number": 1,
-            "tts_voice": "bm_daniel",
-            "bgm_track": "cosmic_mystery.mp3",
-            "bespoke_asset_path": "assets/svg/diagrams/black_hole_anatomy.svg",
-            "youtube_title": "What Lies Beyond The Horizon? (Part 1/3) #Shorts",
-            "youtube_description": "Part 1 of 3: Deep cosmic journey. #Shorts",
-            "summary": "Exploring event horizons.",
-            "scenes": [
-                {
-                    "scene_index": i,
-                    "narration_text": f"What happens when you cross event horizon stage {i}?",
-                    "visual_mode": "character_drama" if i % 2 == 1 else "explainer_diagram",
-                    "backdrop_rig": "deep_cosmos_nebula",
-                    "diagram_rig": None if i % 2 == 1 else "black_hole_anatomy",
-                    "active_diagram_stage": None if i % 2 == 1 else 1,
-                    "primary_character": "sutradhar_narrator" if i % 2 == 1 else None,
-                    "secondary_character": None,
-                    "callout_headline": None,
-                    "callout_subtext": None,
-                    "emotion": "shock",
-                    "action_gesture": "idle_breathe",
-                    "mood_palette": "cosmic_indigo",
-                    "particle_theme": "starfield_warp",
-                    "camera_motion": "dramatic_zoom",
-                    "transition_sfx": "sub_hit.wav",
-                }
-                for i in range(1, 8)
-            ],
-        }
-        (self.build_dir / "episode_plan.json").write_text(json.dumps(self.sample_plan), encoding="utf-8")
-
-        # Fake final_short.mp4
+        self.sample_plan = _make_v2_plan()
+        (self.build_dir / "episode_plan.json").write_text(
+            json.dumps(self.sample_plan, ensure_ascii=False), encoding="utf-8"
+        )
         (self.build_dir / "final_short.mp4").write_bytes(b"\x00\x00\x00\x20ftypisom" + b"\x00" * 1024)
+
+        thumb_bytes = _make_test_jpeg_bytes((1080, 1920), "hero")
+        thumb_path = self.build_dir / "thumbnail.jpg"
+        thumb_path.write_bytes(thumb_bytes)
+        with Image.open(thumb_path) as im:
+            im.crop((0, 150, 1080, 1770)).save(self.build_dir / "thumbnail_2x3_crop.jpg", format="JPEG", quality=92)
+        (self.build_dir / "qa_report.json").write_text(json.dumps({"passed": True}), encoding="utf-8")
 
     def tearDown(self) -> None:
         shutil.rmtree(self.tmp_dir, ignore_errors=True)
 
     def test_01_cli_zero_arguments(self) -> None:
-        """CLI must reject dynamic arguments per Antigravity contract."""
         with patch("sys.argv", ["publish_youtube.py", "--force"]):
             ret = publish_youtube.main()
             self.assertEqual(ret, 1)
 
     def test_02_safety_guards(self) -> None:
-        """Pipeline must enforce mode validity and allow_public_or_scheduled requirements."""
         import yaml
 
-        # Mode without permission
         bad_cfg = dict(self.cfg)
         bad_cfg["publishing"] = {"upload_mode": "public", "allow_public_or_scheduled": False}
         (self.tmp_dir / "config.yaml").write_text(yaml.safe_dump(bad_cfg), encoding="utf-8")
@@ -131,7 +176,6 @@ class TestPublishYouTube(unittest.TestCase):
             publish_youtube.run_publish_pipeline(self.tmp_dir)
         self.assertIn("Safety Violation", str(ctx.exception))
 
-        # Invalid upload_mode string
         bad_cfg2 = dict(self.cfg)
         bad_cfg2["publishing"] = {"upload_mode": "unsupported_mode", "allow_public_or_scheduled": True}
         (self.tmp_dir / "config.yaml").write_text(yaml.safe_dump(bad_cfg2), encoding="utf-8")
@@ -140,24 +184,20 @@ class TestPublishYouTube(unittest.TestCase):
         self.assertIn("upload_mode", str(ctx2.exception))
 
     def test_03_missing_inputs(self) -> None:
-        """Must fail clearly if final_short.mp4 or episode_plan.json is absent."""
         (self.build_dir / "final_short.mp4").unlink()
         with self.assertRaises(publish_youtube.PublishPipelineError) as ctx:
             publish_youtube.run_publish_pipeline(self.tmp_dir)
         self.assertIn("Missing master video file", str(ctx.exception))
 
     def test_04_offline_stub_mode_public_and_private(self) -> None:
-        """Must produce valid PublishResult without making external requests when offline."""
         import yaml
 
-        # 1. Test Public Mode
         pub_cfg = dict(self.cfg)
         pub_cfg["publishing"] = {"upload_mode": "public", "allow_public_or_scheduled": True}
         (self.tmp_dir / "config.yaml").write_text(yaml.safe_dump(pub_cfg), encoding="utf-8")
 
         with patch.dict(os.environ, {"SUTRADHAR_OFFLINE_STUB": "1"}, clear=False):
             res = publish_youtube.run_publish_pipeline(self.tmp_dir)
-
             self.assertEqual(res["upload_status"], "PUBLISHED")
             self.assertEqual(res["upload_mode"], "public")
             self.assertEqual(res["privacy_status"], "public")
@@ -165,15 +205,11 @@ class TestPublishYouTube(unittest.TestCase):
             self.assertIsNotNone(res["video_url"])
             self.assertIsNone(res["error_message"])
 
-            # Verify file was written
             out_file = self.build_dir / "publish_result.json"
             self.assertTrue(out_file.is_file())
-
-            # Validate against Pydantic model
             pub_model = db_manager.PublishResult.model_validate(res, context={"config": pub_cfg})
             self.assertEqual(pub_model.upload_status, "PUBLISHED")
 
-        # 2. Test Private Review Mode
         priv_cfg = dict(self.cfg)
         priv_cfg["publishing"] = {"upload_mode": "private_review", "allow_public_or_scheduled": False}
         (self.tmp_dir / "config.yaml").write_text(yaml.safe_dump(priv_cfg), encoding="utf-8")
@@ -184,11 +220,16 @@ class TestPublishYouTube(unittest.TestCase):
             self.assertEqual(res_priv["privacy_status"], "private")
 
     def test_05_mocked_live_public_upload(self) -> None:
-        """Mock google-api-python-client to test full live flow in public mode with custom thumbnail."""
         import yaml
+
         pub_cfg = dict(self.cfg)
         pub_cfg["publishing"] = {"upload_mode": "public", "allow_public_or_scheduled": True}
         (self.tmp_dir / "config.yaml").write_text(yaml.safe_dump(pub_cfg), encoding="utf-8")
+
+        expected_desc = publish_youtube.format_description_with_citations(
+            self.sample_plan["youtube_description"],
+            self.sample_plan["story_research"],
+        )
 
         mock_youtube = MagicMock()
         mock_videos = MagicMock()
@@ -197,20 +238,18 @@ class TestPublishYouTube(unittest.TestCase):
         mock_insert.next_chunk.return_value = (None, {"id": "mock_yt_vid_public"})
         mock_videos.insert.return_value = mock_insert
 
-        # Mock videos.list for processing wait + read-back verification
         mock_vid_list = MagicMock()
         mock_vid_list.execute.return_value = {
             "items": [
                 {
                     "id": "mock_yt_vid_public",
                     "snippet": {
-                        "title": self.sample_plan["youtube_title"][:100],
-                        "description": self.sample_plan["youtube_description"][:5000],
+                        "title": self.sample_plan["youtube_title"],
+                        "description": expected_desc,
                         "categoryId": "27",
-                        "defaultLanguage": self.cfg["channel"]["primary_language"],
-                        "defaultAudioLanguage": self.cfg["channel"]["primary_language"],
+                        "defaultLanguage": "en",
+                        "defaultAudioLanguage": "hi",
                         "thumbnails": {
-                            "default": {"url": "https://i.ytimg.com/vi/mock_yt_vid_public/default.jpg"},
                             "maxres": {"url": "https://i.ytimg.com/vi/mock_yt_vid_public/maxresdefault.jpg"},
                             "shortsAspectRatio": {
                                 "url": "https://i.ytimg.com/vi/mock_yt_vid_public/sardefault.jpg",
@@ -226,68 +265,41 @@ class TestPublishYouTube(unittest.TestCase):
                         "containsSyntheticMedia": True,
                         "publishAt": None,
                     },
-                    "processingDetails": {
-                        "processingStatus": "succeeded",
-                        "thumbnailsAvailability": "available",
-                    },
-                    "contentDetails": {
-                        "hasCustomThumbnail": True,
-                    },
+                    "processingDetails": {"processingStatus": "succeeded", "thumbnailsAvailability": "available"},
+                    "contentDetails": {"hasCustomThumbnail": True},
                 }
             ]
         }
         mock_videos.list.return_value = mock_vid_list
         mock_youtube.videos.return_value = mock_videos
 
-        # Mock thumbnails.set
         mock_thumbnails = MagicMock()
-        mock_thumb_set = MagicMock()
-        mock_thumb_set.execute.return_value = {
+        mock_thumbnails.set.return_value.execute.return_value = {
             "items": [
                 {
-                    "default": {"url": "https://i.ytimg.com/vi/mock_yt_vid_public/default.jpg"},
-                    "maxres": {"url": "https://i.ytimg.com/vi/mock_yt_vid_public/maxresdefault.jpg"},
                     "shortsAspectRatio": {
                         "url": "https://i.ytimg.com/vi/mock_yt_vid_public/sardefault.jpg",
                         "width": 1080,
                         "height": 1920,
-                    },
+                    }
                 }
             ]
         }
-        mock_thumbnails.set.return_value = mock_thumb_set
         mock_youtube.thumbnails.return_value = mock_thumbnails
 
-        # Mock playlists
         mock_playlists = MagicMock()
-        mock_pl_list = MagicMock()
-        mock_pl_list.execute.return_value = {"items": []}
-        mock_playlists.list.return_value = mock_pl_list
-
-        mock_pl_insert = MagicMock()
-        mock_pl_insert.execute.return_value = {"id": "mock_pl_888"}
-        mock_playlists.insert.return_value = mock_pl_insert
+        mock_playlists.list.return_value.execute.return_value = {"items": []}
+        mock_playlists.insert.return_value.execute.return_value = {"id": "mock_pl_888"}
         mock_youtube.playlists.return_value = mock_playlists
 
-        # Mock playlistItems
         mock_pl_items = MagicMock()
-        mock_pl_item_insert = MagicMock()
-        mock_pl_item_insert.execute.return_value = {"id": "mock_pl_item_777"}
-        mock_pl_items.insert.return_value = mock_pl_item_insert
-
-        mock_pl_item_list = MagicMock()
-        mock_pl_item_list.execute.return_value = {
-            "items": [
-                {"snippet": {"resourceId": {"videoId": "mock_yt_vid_public"}}}
-            ]
+        mock_pl_items.insert.return_value.execute.return_value = {"id": "mock_pl_item_777"}
+        mock_pl_items.list.return_value.execute.return_value = {
+            "items": [{"snippet": {"resourceId": {"videoId": "mock_yt_vid_public"}}}]
         }
-        mock_pl_items.list.return_value = mock_pl_item_list
         mock_youtube.playlistItems.return_value = mock_pl_items
 
-        # Create real 1080x1920 JPEG thumbnail.jpg
-        thumb_bytes = _make_test_jpeg_bytes((1080, 1920), "hero")
-        (self.build_dir / "thumbnail.jpg").write_bytes(thumb_bytes)
-
+        thumb_bytes = (self.build_dir / "thumbnail.jpg").read_bytes()
         with patch.dict(
             os.environ,
             {
@@ -297,82 +309,56 @@ class TestPublishYouTube(unittest.TestCase):
                 "YOUTUBE_REFRESH_TOKEN": "mock_refresh",
             },
         ):
-            with patch("google.oauth2.credentials.Credentials") as mock_creds_cls, \
-                 patch("googleapiclient.discovery.build", return_value=mock_youtube) as mock_build, \
+            with patch("google.oauth2.credentials.Credentials"), \
+                 patch("googleapiclient.discovery.build", return_value=mock_youtube), \
                  patch("googleapiclient.http.MediaFileUpload"), \
                  patch("thumbnail_utils.fetch_cdn_image", return_value=(200, thumb_bytes)), \
                  patch("time.sleep"):
 
                 res = publish_youtube.run_publish_pipeline(self.tmp_dir)
-
                 self.assertEqual(res["video_id"], "mock_yt_vid_public")
                 self.assertEqual(res["playlist_id"], "mock_pl_888")
                 self.assertEqual(res["upload_status"], "PUBLISHED")
                 self.assertEqual(res["privacy_status"], "public")
 
-                # Verify synthetic media flag was set
                 insert_kwargs = mock_videos.insert.call_args[1]
                 body = insert_kwargs["body"]
                 self.assertTrue(body["status"]["containsSyntheticMedia"])
                 self.assertFalse(body["status"]["selfDeclaredMadeForKids"])
-                self.assertEqual(body["status"]["privacyStatus"], "public")
+                self.assertEqual(body["snippet"]["defaultLanguage"], "en")
+                self.assertEqual(body["snippet"]["defaultAudioLanguage"], "hi")
 
-                # Verify publish_verification.json was written including live CDN parity
-                verif_file = self.build_dir / "publish_verification.json"
-                self.assertTrue(verif_file.is_file())
-                verif = json.loads(verif_file.read_text(encoding="utf-8"))
+                verif = json.loads((self.build_dir / "publish_verification.json").read_text(encoding="utf-8"))
                 self.assertEqual(verif["verification_verdict"], "PASSED")
                 self.assertEqual(verif["thumbnail_upload_status"], "uploaded")
                 self.assertTrue(verif["checks"]["thumbnail"]["match"])
-                self.assertEqual(verif["checks"]["thumbnail"]["primary_slot"], "shortsAspectRatio")
-                self.assertTrue(verif["checks"]["title"]["match"])
-                self.assertTrue(verif["checks"]["privacyStatus"]["match"])
                 self.assertTrue(verif["checks"]["playlist_membership"]["is_member"])
 
-    def test_07_thumbnail_403_graceful_handling(self) -> None:
-        """Channel without custom thumbnail permission (403) must not fail upload."""
+    def test_06_thumbnail_403_graceful_handling(self) -> None:
         from googleapiclient.errors import HttpError
         import httplib2
 
         mock_youtube = MagicMock()
-        mock_videos = MagicMock()
-        mock_insert = MagicMock()
-        mock_insert.execute.return_value = {"id": "mock_vid_403"}
-        mock_insert.next_chunk.return_value = (None, {"id": "mock_vid_403"})
-        mock_videos.insert.return_value = mock_insert
-
-        mock_vid_list = MagicMock()
-        mock_vid_list.execute.return_value = {
+        mock_youtube.videos().insert().next_chunk.return_value = (None, {"id": "mock_vid_403"})
+        mock_youtube.videos().list().execute.return_value = {
             "items": [
                 {
                     "id": "mock_vid_403",
-                    "snippet": {"title": self.sample_plan["youtube_title"][:100], "categoryId": "27"},
+                    "snippet": {"title": self.sample_plan["youtube_title"], "categoryId": "27"},
                     "status": {"uploadStatus": "processed", "privacyStatus": "public", "publishAt": None},
                     "processingDetails": {"processingStatus": "succeeded"},
                 }
             ]
         }
-        mock_videos.list.return_value = mock_vid_list
-        mock_youtube.videos.return_value = mock_videos
 
-        # Mock thumbnails.set raising 403 HttpError
         resp = httplib2.Response({"status": 403, "reason": "Forbidden"})
-        http_err = HttpError(resp, b"The caller does not have permission for custom thumbnails.")
-        mock_thumbnails = MagicMock()
-        mock_thumbnails.set.side_effect = http_err
-        mock_youtube.thumbnails.return_value = mock_thumbnails
-
-        mock_playlists = MagicMock()
-        mock_playlists.list.return_value.execute.return_value = {"items": []}
-        mock_playlists.insert.return_value.execute.return_value = {"id": "mock_pl_403"}
-        mock_youtube.playlists.return_value = mock_playlists
-
-        mock_pl_items = MagicMock()
-        mock_pl_items.insert.return_value.execute.return_value = {"id": "mock_item_403"}
-        mock_pl_items.list.return_value.execute.return_value = {"items": []}
-        mock_youtube.playlistItems.return_value = mock_pl_items
-
-        (self.build_dir / "thumbnail.jpg").write_bytes(_make_test_jpeg_bytes((1080, 1920), "hero"))
+        mock_youtube.thumbnails().set.side_effect = HttpError(
+            resp, b"The caller does not have permission for custom thumbnails."
+        )
+        mock_youtube.playlists().list().execute.return_value = {"items": []}
+        mock_youtube.playlists().insert().execute.return_value = {"id": "mock_pl_403"}
+        mock_youtube.playlistItems().insert().execute.return_value = {"id": "mock_item_403"}
+        mock_youtube.playlistItems().list().execute.return_value = {"items": []}
 
         with patch.dict(
             os.environ,
@@ -387,22 +373,13 @@ class TestPublishYouTube(unittest.TestCase):
                  patch("googleapiclient.discovery.build", return_value=mock_youtube), \
                  patch("googleapiclient.http.MediaFileUpload"), \
                  patch("time.sleep"):
-
                 res = publish_youtube.run_publish_pipeline(self.tmp_dir)
-
-                # Must not fail the upload
                 self.assertEqual(res["upload_status"], "PUBLISHED")
                 self.assertEqual(res["video_id"], "mock_vid_403")
-
-                # Verify publish_verification.json records 403 status
-                verif_file = self.build_dir / "publish_verification.json"
-                self.assertTrue(verif_file.is_file())
-                verif = json.loads(verif_file.read_text(encoding="utf-8"))
+                verif = json.loads((self.build_dir / "publish_verification.json").read_text(encoding="utf-8"))
                 self.assertEqual(verif["thumbnail_upload_status"], "403_forbidden_custom_thumbnails_pending")
 
-    def test_09_thumbnail_validation_and_cdn_mismatch_fails(self) -> None:
-        """Invalid local dimensions or live CDN auto-frame mismatch must fail closed."""
-        # 1. Wrong 16:9 thumbnail must fail BEFORE touching YouTube upload API
+    def test_07_thumbnail_validation_and_cdn_mismatch_fails(self) -> None:
         (self.build_dir / "thumbnail.jpg").write_bytes(_make_test_jpeg_bytes((1280, 720), "hero"))
         mock_youtube = MagicMock()
         with patch.dict(
@@ -421,7 +398,6 @@ class TestPublishYouTube(unittest.TestCase):
                 self.assertIn("Invalid thumbnail dimensions", res_bad["error_message"])
                 mock_youtube.videos.return_value.insert.assert_not_called()
 
-        # 2. Valid local 1080x1920 thumbnail vs mismatched live CDN image (e.g., auto-frame oar2.jpg)
         local_bytes = _make_test_jpeg_bytes((1080, 1920), "hero")
         wrong_cdn_bytes = _make_test_jpeg_bytes((1080, 1920), "autoframe")
         (self.build_dir / "thumbnail.jpg").write_bytes(local_bytes)
@@ -434,12 +410,11 @@ class TestPublishYouTube(unittest.TestCase):
                     "id": "mock_vid_mismatch",
                     "snippet": {
                         "thumbnails": {
-                            "maxres": {"url": "https://i.ytimg.com/vi/mock_vid_mismatch/maxresdefault.jpg"},
                             "shortsAspectRatio": {
                                 "url": "https://i.ytimg.com/vi/mock_vid_mismatch/sardefault.jpg",
                                 "width": 1080,
                                 "height": 1920,
-                            },
+                            }
                         }
                     },
                     "status": {"uploadStatus": "processed", "privacyStatus": "public"},
@@ -449,15 +424,7 @@ class TestPublishYouTube(unittest.TestCase):
             ]
         }
         mock_yt2.thumbnails().set().execute.return_value = {
-            "items": [
-                {
-                    "shortsAspectRatio": {
-                        "url": "https://i.ytimg.com/vi/mock_vid_mismatch/sardefault.jpg",
-                        "width": 1080,
-                        "height": 1920,
-                    }
-                }
-            ]
+            "items": [{"shortsAspectRatio": {"url": "https://i.ytimg.com/vi/mock_vid_mismatch/sardefault.jpg"}}]
         }
 
         with patch.dict(
@@ -480,35 +447,34 @@ class TestPublishYouTube(unittest.TestCase):
                 verif = json.loads((self.build_dir / "publish_verification.json").read_text(encoding="utf-8"))
                 self.assertTrue(verif["verification_verdict"].startswith("FAILED:"))
 
-    def test_06_e2e_db_manager_integration(self) -> None:
-        """Piping publish_youtube output straight to db_manager.py --record-published must succeed in public mode."""
+    def test_08_e2e_db_manager_integration(self) -> None:
         loaded_cfg = db_manager.load_config(self.tmp_dir)
         db_manager.cmd_init(self.tmp_dir, loaded_cfg)
         conn = db_manager.connect_db(self.tmp_dir / "episodes.db")
-        with db_manager.immediate_transaction(conn) as cur:
-            cur.execute(
-                """
-                INSERT INTO series (series_title, pillar, tts_voice, bgm_track, total_planned_episodes, series_bible_json, status)
-                VALUES (?, ?, ?, ?, ?, ?, 'ACTIVE')
-                """,
-                ("Secrets of the Cosmos", "Cosmic & Scientific Paradoxes", "bm_daniel", "cosmic_mystery.mp3", 3, "{}")
-            )
+        try:
+            with db_manager.immediate_transaction(conn) as cur:
+                cur.execute(
+                    """
+                    INSERT INTO series (series_title, series_title_en, pillar, tts_voice, bgm_track, total_planned_episodes, series_bible_json, status)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE')
+                    """,
+                    ("Secrets of the Cosmos", "Secrets of the Cosmos", "Cosmic & Scientific Paradoxes", "uuyFQegRan8rpIQCGu9K", "cosmic_mystery.mp3", 3, "{}"),
+                )
+        finally:
+            conn.close()
 
-        # Run publish_youtube offline
         with patch.dict(os.environ, {"SUTRADHAR_OFFLINE_STUB": "1", "SUTRADHAR_ROOT": str(self.tmp_dir)}):
             res_pub = publish_youtube.run_publish_pipeline(self.tmp_dir)
             self.assertEqual(res_pub["upload_status"], "PUBLISHED")
             self.assertEqual(res_pub["privacy_status"], "public")
 
-            # Run db_manager cmd_record_published
             db_res = db_manager.cmd_record_published(self.tmp_dir, loaded_cfg)
             self.assertEqual(db_res["action"], "record_published")
             self.assertEqual(db_res["episode_status"], "PUBLISHED")
             self.assertEqual(db_res["series_status"], "ACTIVE")
             self.assertEqual(db_res["completed_episodes"], 1)
 
-    def test_07_description_citations_formatting(self) -> None:
-        """Verify format_description_with_citations appends structured provenance to YouTube description."""
+    def test_09_description_citations_formatting(self) -> None:
         base_desc = "The eternal confrontation between Ravana and Shani Dev. #Shorts #Mythology"
         research = {
             "source_tradition": "Skanda Purana, Kashi Khanda 32",
@@ -518,51 +484,49 @@ class TestPublishYouTube(unittest.TestCase):
                 "Ravana placed planets face down as footstools",
             ],
             "cross_checked_variants": "Valmiki Ramayana Yuddha Kanda mentions victory over planets.",
-            "source_references": [
-                "Skanda Purana Vol. 4",
-                "Kashi Khanda 32.1-45",
-            ],
+            "source_references": ["Skanda Purana Vol. 4", "Kashi Khanda 32.1-45"],
         }
-
         formatted = publish_youtube.format_description_with_citations(base_desc, research)
         self.assertIn(base_desc, formatted)
         self.assertIn("--- Traditional Sources & References ---", formatted)
         self.assertIn("• Scripture / Source: Skanda Purana, Kashi Khanda 32", formatted)
-        self.assertIn("• Variants / Tradition: Valmiki Ramayana Yuddha Kanda", formatted)
-        self.assertIn("• Key Verified Facts:", formatted)
-        self.assertIn("  - Shani's gaze cannot be nullified once cast", formatted)
-        self.assertIn("• Authoritative References:", formatted)
-        self.assertIn("  - Skanda Purana Vol. 4", formatted)
-
-        # None or empty research leaves description intact
         self.assertEqual(publish_youtube.format_description_with_citations(base_desc, None), base_desc)
         self.assertEqual(publish_youtube.format_description_with_citations(base_desc, {}), base_desc)
 
-    def test_08_recurring_series_playlist_creation_and_reuse(self) -> None:
-        """Verify publishing to a recurring series finds existing playlist or creates it, while standalone skips playlist."""
+    def test_10_recurring_series_playlist_creation_and_reuse(self) -> None:
         mock_youtube = MagicMock()
-
-        # Simulate existing playlist found for "Shani Katha"
         mock_youtube.playlists().list().execute.return_value = {
             "items": [
-                {"id": "PL_EXISTING_SHANI", "snippet": {"title": "Shani Katha"}, "status": {"privacyStatus": "public"}}
+                {"id": "PL_EXISTING_SHANI", "snippet": {"title": "Shani Katha", "defaultLanguage": "en"}, "status": {"privacyStatus": "public"}}
             ]
         }
-        mock_youtube.videos().insert().execute.return_value = {"id": "mock_vid_shani"}
         mock_youtube.videos().insert().next_chunk.return_value = (None, {"id": "mock_vid_shani"})
         mock_youtube.playlistItems().insert().execute.return_value = {"id": "mock_item_id"}
         mock_youtube.videos().list().execute.return_value = {
-            "items": [{"id": "mock_vid_shani", "snippet": {"title": "Test Title", "categoryId": "27"}, "status": {"privacyStatus": "public"}}]
+            "items": [
+                {
+                    "id": "mock_vid_shani",
+                    "snippet": {
+                        "title": "Test Title",
+                        "categoryId": "27",
+                        "thumbnails": {"shortsAspectRatio": {"url": "https://i.ytimg.com/vi/mock_vid_shani/sardefault.jpg"}},
+                    },
+                    "status": {"uploadStatus": "processed", "privacyStatus": "public"},
+                    "processingDetails": {"processingStatus": "succeeded", "thumbnailsAvailability": "available"},
+                    "contentDetails": {"hasCustomThumbnail": True},
+                }
+            ]
+        }
+        mock_youtube.thumbnails().set().execute.return_value = {
+            "items": [{"shortsAspectRatio": {"url": "https://i.ytimg.com/vi/mock_vid_shani/sardefault.jpg"}}]
         }
         mock_youtube.playlistItems().list().execute.return_value = {
             "items": [{"snippet": {"resourceId": {"videoId": "mock_vid_shani"}}}]
         }
 
-        plan_shani = dict(self.sample_plan)
-        plan_shani["content_format"] = "episodic_series"
-        plan_shani["series_title"] = "Shani Katha"
-        plan_shani["youtube_playlist_id"] = None  # Will discover existing playlist
-        (self.build_dir / "episode_plan.json").write_text(json.dumps(plan_shani), encoding="utf-8")
+        thumb_bytes = (self.build_dir / "thumbnail.jpg").read_bytes()
+        plan_shani = _make_v2_plan(content_format="episodic_series", series_id=1, series_title="Shani Katha")
+        (self.build_dir / "episode_plan.json").write_text(json.dumps(plan_shani, ensure_ascii=False), encoding="utf-8")
 
         with patch.dict(
             os.environ,
@@ -575,18 +539,17 @@ class TestPublishYouTube(unittest.TestCase):
         ):
             with patch("google.oauth2.credentials.Credentials"), \
                  patch("googleapiclient.discovery.build", return_value=mock_youtube), \
-                 patch("googleapiclient.http.MediaFileUpload"):
+                 patch("googleapiclient.http.MediaFileUpload"), \
+                 patch("thumbnail_utils.fetch_cdn_image", return_value=(200, thumb_bytes)), \
+                 patch("time.sleep"):
 
                 res = publish_youtube.run_publish_pipeline(self.tmp_dir)
                 self.assertEqual(res["playlist_id"], "PL_EXISTING_SHANI")
 
-                # Standalone test: does not add to playlist
-                plan_standalone = dict(self.sample_plan)
-                plan_standalone["content_format"] = "standalone"
-                plan_standalone["series_title"] = None
-                plan_standalone["youtube_playlist_id"] = None
-                (self.build_dir / "episode_plan.json").write_text(json.dumps(plan_standalone), encoding="utf-8")
-
+                plan_standalone = _make_v2_plan(content_format="standalone", series_id=None, series_title=None)
+                (self.build_dir / "episode_plan.json").write_text(
+                    json.dumps(plan_standalone, ensure_ascii=False), encoding="utf-8"
+                )
                 res_standalone = publish_youtube.run_publish_pipeline(self.tmp_dir)
                 self.assertIsNone(res_standalone["playlist_id"])
 

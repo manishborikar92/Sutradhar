@@ -177,21 +177,13 @@ def build_video_metadata(
     plan_data: dict[str, Any],
     cfg: dict[str, Any],
     *,
-    strict_v2: Optional[bool] = None,
+    strict_v2: bool = True,
 ) -> dict[str, Any]:
-    """Build and policy-validate YouTube snippet metadata from EpisodePlan + config.yaml."""
+    """Build and policy-validate YouTube snippet metadata from EpisodePlanV2 + config.yaml."""
     channel_cfg = cfg.get("channel") or {}
     pub_cfg = cfg.get("publishing") or {}
 
-    is_v2 = bool(
-        strict_v2
-        if strict_v2 is not None
-        else (
-            plan_data.get("storyboard_ir") is not None
-            or plan_data.get("thumbnail_spec") is not None
-            or plan_data.get("youtube_tags") is not None
-        )
-    )
+    is_v2 = bool(strict_v2)
 
     raw_title = plan_data.get("youtube_title") or "Sutradhar Episode #Shorts"
     raw_desc = plan_data.get("youtube_description") or "Autonomous YouTube Shorts produced by Sutradhar."
@@ -216,32 +208,22 @@ def build_video_metadata(
         require_scriptural_refs=bool(is_v2 and research is not None),
     )
 
-    is_legacy_plan = (
-        not is_v2
-        and "metadata_language" not in plan_data
-        and "audio_language" not in plan_data
-        and "language" not in plan_data
+    meta_lang = (
+        plan_data.get("metadata_language")
+        or channel_cfg.get("metadata_language")
+        or channel_cfg.get("default_language")
+        or "en"
     )
-    if is_legacy_plan:
-        meta_lang = channel_cfg.get("primary_language", "en")
-        audio_lang = channel_cfg.get("primary_language", "hi")
-    else:
-        meta_lang = (
-            plan_data.get("metadata_language")
-            or channel_cfg.get("metadata_language")
-            or channel_cfg.get("default_language")
-            or "en"
-        )
-        audio_lang = (
-            plan_data.get("audio_language")
-            or channel_cfg.get("audio_language")
-            or channel_cfg.get("default_audio_language")
-            or "hi"
-        )
-        if meta_lang != "en":
-            raise MetadataPolicyError(f"metadata_language must be 'en' (got {meta_lang!r}).")
-        if audio_lang != "hi":
-            raise MetadataPolicyError(f"audio_language must be 'hi' (got {audio_lang!r}).")
+    audio_lang = (
+        plan_data.get("audio_language")
+        or channel_cfg.get("audio_language")
+        or channel_cfg.get("default_audio_language")
+        or "hi"
+    )
+    if meta_lang != "en":
+        raise MetadataPolicyError(f"metadata_language must be 'en' (got {meta_lang!r}).")
+    if audio_lang != "hi":
+        raise MetadataPolicyError(f"audio_language must be 'hi' (got {audio_lang!r}).")
 
     category_id = str(channel_cfg.get("category_id") or pub_cfg.get("category_id") or "27")
 
