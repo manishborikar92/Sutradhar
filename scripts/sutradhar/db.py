@@ -964,31 +964,6 @@ def cmd_context(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
         private_review_count = int(
             conn.execute("SELECT COUNT(*) FROM episodes WHERE status = 'PRIVATE_REVIEW'").fetchone()[0]
         )
-
-        # Monthly TTS credit accounting from audio_ledger
-        tts_row = conn.execute(
-            """
-            SELECT
-                COALESCE(SUM(CASE WHEN cache_hit = 0 THEN billed_chars ELSE 0 END), 0) AS spent_chars,
-                COALESCE(SUM(CASE WHEN cache_hit = 1 THEN 1 ELSE 0 END), 0) AS cache_hits,
-                COUNT(*) AS total_rows
-            FROM audio_ledger
-            WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')
-            """
-        ).fetchone()
-        monthly_limit = int(cfg.get("tts", {}).get("monthly_credit_budget", 30000))
-        spent_chars = int(tts_row["spent_chars"]) if tts_row else 0
-        monthly_tts_budget = {
-            "monthly_limit": monthly_limit,
-            "spent_this_month_billed_chars": spent_chars,
-            "remaining_credits": max(0, monthly_limit - spent_chars),
-            "cache_hits_this_month": int(tts_row["cache_hits"]) if tts_row else 0,
-            "max_billed_chars_per_episode": int(cfg.get("tts", {}).get("max_billed_chars_per_episode", 900)),
-            "target_billed_chars_range": [
-                int(cfg.get("tts", {}).get("target_billed_chars_min", 760)),
-                int(cfg.get("tts", {}).get("target_billed_chars_max", 840)),
-            ],
-        }
     finally:
         conn.close()
 
@@ -1000,7 +975,6 @@ def cmd_context(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
         "language_policy": policy.model_dump(),
         "next_pillar": next_pillar,
         "last_completed_pillar": last_completed_pillar,
-        "monthly_tts_budget": monthly_tts_budget,
         "channel_config": {
             "language_mode": cfg["channel"]["language_mode"],
             "primary_language": cfg["channel"]["primary_language"],

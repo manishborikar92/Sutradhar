@@ -1248,8 +1248,7 @@ class TestDbManagerCompliance(unittest.TestCase):
         )
         self.assertEqual(out["next_pillar"], "Ancient Epics & Lore")
         self.assertIsNone(out["last_completed_pillar"])
-        self.assertEqual(out["monthly_tts_budget"]["monthly_limit"], 30000)
-        self.assertEqual(out["monthly_tts_budget"]["max_billed_chars_per_episode"], 900)
+        self.assertNotIn("monthly_tts_budget", out)
         self.assertIn("episode_pacing", out["channel_config"])
 
     def test_20_acceptance_standalone_eight_phase_complete_story(self) -> None:

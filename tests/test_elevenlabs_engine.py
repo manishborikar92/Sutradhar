@@ -296,18 +296,13 @@ class TestElevenLabsEngineOperations(unittest.TestCase):
 
     def test_synthesize_scene_cache_miss_then_hit(self) -> None:
         """Verify that first call fetches from API and caches, and second call uses disk cache (0 calls)."""
-        # Mock subscription balance (sufficient credits)
-        sub_resp = make_mock_response(
-            status_code=200,
-            json_data={"tier": "starter", "character_count": 100, "character_limit": 37188, "status": "active"},
-        )
         # Mock TTS audio response
         tts_resp = make_mock_response(
             status_code=200,
             content=self.test_mp3_bytes,
         )
 
-        self.mock_session.request.side_effect = [sub_resp, tts_resp]
+        self.mock_session.request.return_value = tts_resp
 
         text = "[slowly, solemn, deep] सत्य केवल काल के गाल पर लिखा एक शब्द नहीं..."
         cache_path = self.engine.get_cache_path(text)
@@ -319,7 +314,7 @@ class TestElevenLabsEngineOperations(unittest.TestCase):
         self.assertGreater(len(samples_1), 0)
         self.assertTrue(cache_path.exists())
         self.assertEqual(cache_path.stat().st_size, len(self.test_mp3_bytes))
-        self.assertEqual(self.mock_session.request.call_count, 2)  # 1 sub + 1 tts
+        self.assertEqual(self.mock_session.request.call_count, 1)  # 1 tts
 
         # Second call: Cache Hit
         self.mock_session.request.reset_mock()
@@ -329,39 +324,17 @@ class TestElevenLabsEngineOperations(unittest.TestCase):
         # Zero API requests made on cache hit
         self.mock_session.request.assert_not_called()
 
-    def test_synthesize_scene_insufficient_quota_raises_error(self) -> None:
-        """Verify that quota exhaustion prevents API TTS calls."""
-        # Mock subscription with only 5 remaining characters
-        sub_resp = make_mock_response(
-            status_code=200,
-            json_data={"tier": "starter", "character_count": 37183, "character_limit": 37188, "status": "active"},
-        )
-        self.mock_session.request.return_value = sub_resp
-
-        text = "यह वाक्य पाँच से अधिक अक्षरों का है।"  # > 5 characters
-        with self.assertRaises(ElevenLabsQuotaExceededError) as ctx:
-            self.engine.synthesize_scene(text, check_quota=True)
-
-        self.assertIn("Insufficient ElevenLabs credits", str(ctx.exception))
-        # Ensure TTS endpoint was never invoked
-        self.assertEqual(self.mock_session.request.call_count, 1)
-        self.assertTrue(self.mock_session.request.call_args[1]["url"].endswith("/subscription"))
-
     def test_skip_cache_forces_api_call(self) -> None:
         """Verify skip_cache=True invokes API even if cache file exists."""
         text = "पुनः निर्माण वाक्य।"
         cache_path = self.engine.get_cache_path(text)
         cache_path.write_bytes(self.test_mp3_bytes)
 
-        sub_resp = make_mock_response(
-            status_code=200,
-            json_data={"tier": "starter", "character_count": 0, "character_limit": 37188, "status": "active"},
-        )
         tts_resp = make_mock_response(status_code=200, content=self.test_mp3_bytes)
-        self.mock_session.request.side_effect = [sub_resp, tts_resp]
+        self.mock_session.request.return_value = tts_resp
 
         self.engine.synthesize_scene(text, skip_cache=True)
-        self.assertEqual(self.mock_session.request.call_count, 2)
+        self.assertEqual(self.mock_session.request.call_count, 1)
 
     def test_corrupt_cache_file_recovery(self) -> None:
         """Verify engine re-synthesizes if cached file exists but is corrupted."""
@@ -370,12 +343,8 @@ class TestElevenLabsEngineOperations(unittest.TestCase):
         # Write corrupted garbage bytes
         cache_path.write_bytes(b"CORRUPTED_GARBAGE_NOT_MP3")
 
-        sub_resp = make_mock_response(
-            status_code=200,
-            json_data={"tier": "starter", "character_count": 0, "character_limit": 37188, "status": "active"},
-        )
         tts_resp = make_mock_response(status_code=200, content=self.test_mp3_bytes)
-        self.mock_session.request.side_effect = [sub_resp, tts_resp]
+        self.mock_session.request.return_value = tts_resp
 
         samples, sr = self.engine.synthesize_scene(text)
         self.assertEqual(sr, 44100)
@@ -473,12 +442,8 @@ class TestElevenLabsEngineOperations(unittest.TestCase):
 
     def test_synthesize_to_file(self) -> None:
         """Verify synthesize_to_file creates a valid WAV file."""
-        sub_resp = make_mock_response(
-            status_code=200,
-            json_data={"tier": "starter", "character_count": 0, "character_limit": 37188, "status": "active"},
-        )
         tts_resp = make_mock_response(status_code=200, content=self.test_mp3_bytes)
-        self.mock_session.request.side_effect = [sub_resp, tts_resp]
+        self.mock_session.request.return_value = tts_resp
 
         out_wav = self.tmp_dir / "output" / "scene_1.wav"
         result_path = self.engine.synthesize_to_file("परीक्षण दृश्य।", out_wav)
@@ -510,29 +475,13 @@ class TestElevenLabsEngineOperations(unittest.TestCase):
 
     def test_synthesize_convenience_alias(self) -> None:
         """Verify synthesize() acts as an exact alias for synthesize_scene()."""
-        sub_resp = make_mock_response(
-            status_code=200,
-            json_data={"tier": "starter", "character_count": 0, "character_limit": 37188, "status": "active"},
-        )
         tts_resp = make_mock_response(status_code=200, content=self.test_mp3_bytes)
-        self.mock_session.request.side_effect = [sub_resp, tts_resp]
+        self.mock_session.request.return_value = tts_resp
 
         text = "संक्षिप्त कॉल।"
         samples, sr = self.engine.synthesize(text)
         self.assertEqual(sr, 44100)
         self.assertGreater(len(samples), 0)
-
-    def test_check_quota_false_bypasses_quota_call(self) -> None:
-        """Verify check_quota=False calls TTS API directly without pre-flight subscription check."""
-        tts_resp = make_mock_response(status_code=200, content=self.test_mp3_bytes)
-        self.mock_session.request.return_value = tts_resp
-
-        text = "कोटा जाँच बाईपास परीक्षण।"
-        samples, sr = self.engine.synthesize_scene(text, check_quota=False)
-        self.assertEqual(sr, 44100)
-        # Exactly 1 call (TTS endpoint directly, no subscription endpoint)
-        self.assertEqual(self.mock_session.request.call_count, 1)
-        self.assertTrue(self.mock_session.request.call_args[1]["url"].endswith(f"/text-to-speech/{DEFAULT_VOICE_ID}"))
 
     def test_config_dict_custom_settings(self) -> None:
         """Verify custom settings from config dictionary are applied correctly."""

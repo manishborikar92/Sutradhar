@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import dataclasses
+from datetime import datetime, timezone
 import hashlib
 import io
 import json
@@ -54,10 +55,6 @@ DEFAULT_TIMEOUT_SEC = 30.0
 DEFAULT_MAX_RETRIES = 3
 DEFAULT_MAX_TIMEOUT_RETRIES = 2
 
-MAX_BILLED_CHARS = 900
-TARGET_BILLED_CHARS_MIN = 760
-TARGET_BILLED_CHARS_MAX = 840
-SOFT_WARN_BILLED_CHARS = 850
 MIN_DEVANAGARI_RATIO = 0.70
 
 DEFAULT_VOICE_SETTINGS: dict[str, Any] = {
@@ -336,15 +333,11 @@ def validate_pre_tts_budget(
     tagged_texts: list[str],
     clean_texts: list[str],
     *,
-    max_billed_chars: int = MAX_BILLED_CHARS,
-    warn_billed_chars: int = SOFT_WARN_BILLED_CHARS,
-    target_min: int = TARGET_BILLED_CHARS_MIN,
-    target_max: int = TARGET_BILLED_CHARS_MAX,
     language: str = "hi",
     min_devanagari_ratio: float = MIN_DEVANAGARI_RATIO,
     enforce_devanagari: bool = True,
 ) -> PreTTSBudgetReport:
-    """Validate pre-TTS billed character cap and Devanagari ratio BEFORE any API call."""
+    """Validate pre-TTS Devanagari ratio BEFORE any API call."""
     scene_chars = [len(t.strip()) for t in tagged_texts]
     total_chars = sum(scene_chars)
     combined_clean = " ".join(t.strip() for t in clean_texts if t and t.strip())
@@ -356,26 +349,12 @@ def validate_pre_tts_budget(
             f"{min_devanagari_ratio:.0%} required for language='hi'."
         )
 
-    if total_chars > max_billed_chars:
-        raise TTSBudgetError(
-            f"Pre-TTS budget aborted: {total_chars} total billed characters (incl. tags) "
-            f"exceeds hard limit {max_billed_chars} (target {target_min}-{target_max})."
-        )
-
-    warning: Optional[str] = None
-    if total_chars > warn_billed_chars:
-        warning = (
-            f"Pre-TTS billed character count {total_chars} exceeds soft target "
-            f"{warn_billed_chars} (hard limit {max_billed_chars})."
-        )
-        logger.warning("%s", warning)
-
     return PreTTSBudgetReport(
         total_billed_chars=total_chars,
         scene_billed_chars=scene_chars,
         devanagari_ratio=round(hi_ratio, 4),
-        within_target=(target_min <= total_chars <= target_max),
-        warning=warning,
+        within_target=True,
+        warning=None,
     )
 
 
@@ -472,54 +451,6 @@ def record_audio_ledger(
                 ),
             )
             return int(cur.lastrowid)
-    finally:
-        if owns_conn:
-            conn.close()
-
-
-def get_monthly_tts_usage(
-    db_or_conn: Path | sqlite3.Connection,
-    *,
-    monthly_limit: int = 30000,
-    month_yyyy_mm: Optional[str] = None,
-) -> dict[str, Any]:
-    """Summarize billed ElevenLabs characters (excluding cache hits) for a calendar month."""
-    owns_conn = not isinstance(db_or_conn, sqlite3.Connection)
-    conn = connect_db(Path(db_or_conn)) if owns_conn else db_or_conn
-    try:
-        if month_yyyy_mm:
-            row = conn.execute(
-                """
-                SELECT
-                    COALESCE(SUM(CASE WHEN cache_hit = 0 THEN billed_chars ELSE 0 END), 0) AS spent_chars,
-                    COALESCE(SUM(CASE WHEN cache_hit = 1 THEN 1 ELSE 0 END), 0) AS cache_hits,
-                    COUNT(*) AS total_entries
-                FROM audio_ledger
-                WHERE strftime('%Y-%m', created_at) = ?
-                """,
-                (month_yyyy_mm,),
-            ).fetchone()
-        else:
-            row = conn.execute(
-                """
-                SELECT
-                    COALESCE(SUM(CASE WHEN cache_hit = 0 THEN billed_chars ELSE 0 END), 0) AS spent_chars,
-                    COALESCE(SUM(CASE WHEN cache_hit = 1 THEN 1 ELSE 0 END), 0) AS cache_hits,
-                    COUNT(*) AS total_entries
-                FROM audio_ledger
-                WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')
-                """
-            ).fetchone()
-        spent = int(row["spent_chars"]) if row else 0
-        hits = int(row["cache_hits"]) if row else 0
-        total_entries = int(row["total_entries"]) if row else 0
-        return {
-            "monthly_limit": int(monthly_limit),
-            "spent_chars": spent,
-            "remaining_credits": max(0, int(monthly_limit) - spent),
-            "cache_hits": hits,
-            "total_entries": total_entries,
-        }
     finally:
         if owns_conn:
             conn.close()
@@ -817,7 +748,6 @@ class ElevenLabsEngine:
         model_id: Optional[str] = None,
         voice_settings: Optional[dict[str, Any]] = None,
         output_format: Optional[str] = None,
-        check_quota: bool = True,
         skip_cache: bool = False,
     ) -> tuple[np.ndarray, int]:
         """Synthesize scene text into float32 audio samples using cache first."""
@@ -844,16 +774,6 @@ class ElevenLabsEngine:
                             candidate.name,
                             exc,
                         )
-
-        char_count = len(text)
-        if check_quota:
-            sub_info = self.get_subscription_info()
-            if sub_info.remaining_characters < char_count:
-                raise ElevenLabsQuotaExceededError(
-                    f"Insufficient ElevenLabs credits: text requires {char_count} characters, "
-                    f"but only {sub_info.remaining_characters} remain in {sub_info.tier} tier "
-                    f"({sub_info.character_count}/{sub_info.character_limit} used)."
-                )
 
         url = f"{self.base_url}/text-to-speech/{vid}"
         resp = self._request_with_retry(
@@ -886,7 +806,6 @@ class ElevenLabsEngine:
         model_id: Optional[str] = None,
         voice_settings: Optional[dict[str, Any]] = None,
         output_format: Optional[str] = None,
-        check_quota: bool = True,
         skip_cache: bool = False,
     ) -> Path:
         """Synthesize audio and write directly to a destination WAV path."""
@@ -897,7 +816,6 @@ class ElevenLabsEngine:
             model_id=model_id,
             voice_settings=voice_settings,
             output_format=output_format,
-            check_quota=check_quota,
             skip_cache=skip_cache,
         )
         target_path.parent.mkdir(parents=True, exist_ok=True)

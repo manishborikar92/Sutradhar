@@ -40,7 +40,6 @@ from sutradhar.audio.elevenlabs_tts import (  # noqa: E402
     apply_pronunciations_preserving_tags,
     compute_cache_key,
     compute_scene_sha256,
-    get_monthly_tts_usage,
     load_pronunciations,
     record_audio_ledger,
     resolve_scene_tag,
@@ -171,32 +170,32 @@ class TestPhase3AudioPipeline(unittest.TestCase):
     def setUp(self) -> None:
         self.cfg = load_config(REPO_ROOT)
 
-    def test_01_budget_abort_gt_900_and_devanagari_guard_zero_tts_calls(self) -> None:
+    def test_01_devanagari_guard_zero_tts_calls(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             shutil.copy2(REPO_ROOT / "config.yaml", root / "config.yaml")
             shutil.copy2(REPO_ROOT / "pronunciations_hi.yaml", root / "pronunciations_hi.yaml")
             (root / "build").mkdir(parents=True, exist_ok=True)
 
-            # Build Hindi plan exceeding 900 billed chars (~1050 chars)
-            long_line = "[slowly, solemn, deep] अमृत के लिए देव और असुरों ने सागर मथा और भयानक हलाहल निकला। [pause] ब्रह्मांड जलने लगा था और सभी भयभीत थे।"
-            plan = _make_hindi_plan([long_line for _ in range(8)])
+            # Build plan violating >= 70% Devanagari guard
+            english_line = "[slowly] This is mostly English text with one देव word."
+            plan = _make_hindi_plan([english_line for _ in range(5)])
             (root / "build" / "episode_plan.json").write_text(
                 json.dumps(plan, ensure_ascii=False), encoding="utf-8"
             )
 
             fake_tts = FakeElevenLabs(sec_per_scene=9.0)
-            with self.assertRaises(build_audio.AudioBuildError) as ctx:
+            with self.assertRaises(TTSBudgetError) as ctx:
                 build_audio.build_episode_audio(
                     root,
                     tts_factory=lambda c, r: fake_tts,
                     whisper_factory=lambda c: _FakeWhisper(),
                     strict_budget=True,
                 )
-            self.assertIn("900", str(ctx.exception))
-            self.assertEqual(len(fake_tts.calls), 0, "FakeElevenLabs must NOT be called on >900 char abort")
+            self.assertIn("Devanagari", str(ctx.exception))
+            self.assertEqual(len(fake_tts.calls), 0, "FakeElevenLabs must NOT be called on Devanagari abort")
 
-            # Also verify <70% Devanagari guard aborts BEFORE any TTS call
+            # Also verify validate_pre_tts_budget directly
             with self.assertRaises(TTSBudgetError):
                 validate_pre_tts_budget(
                     ["[slowly] This is mostly English text with one देव word."],
@@ -280,14 +279,20 @@ class TestPhase3AudioPipeline(unittest.TestCase):
             record_audio_ledger(db_path, scene_index=1, sha256_key=k1, billed_chars=120, cache_hit=True)
             record_audio_ledger(db_path, scene_index=2, sha256_key=k2 + "_rev", billed_chars=105, cache_hit=False)
 
-            usage = get_monthly_tts_usage(db_path, monthly_limit=30000)
-            self.assertEqual(usage["spent_chars"], 335)  # 120 + 110 + 105 (cache_hit=True excluded!)
-            self.assertEqual(usage["cache_hits"], 1)
-            self.assertEqual(usage["remaining_credits"], 29665)
+            import sqlite3
+            conn = sqlite3.connect(str(db_path))
+            try:
+                row = conn.execute(
+                    "SELECT COALESCE(SUM(CASE WHEN cache_hit = 0 THEN billed_chars ELSE 0 END), 0), "
+                    "COALESCE(SUM(CASE WHEN cache_hit = 1 THEN 1 ELSE 0 END), 0) FROM audio_ledger"
+                ).fetchone()
+            finally:
+                conn.close()
+            self.assertEqual(row[0], 335)  # 120 + 110 + 105 (cache_hit=True excluded!)
+            self.assertEqual(row[1], 1)
 
             ctx = cmd_context(root, self.cfg)
-            self.assertEqual(ctx["monthly_tts_budget"]["spent_this_month_billed_chars"], 335)
-            self.assertEqual(ctx["monthly_tts_budget"]["cache_hits_this_month"], 1)
+            self.assertNotIn("monthly_tts_budget", ctx)
 
     def test_04_em_dash_tokenization_dynamic_keywords_and_non_overlap(self) -> None:
         self.assertEqual(extract_subtokens("बची—कैलाश"), ["बची", "कैलाश"])
@@ -603,16 +608,16 @@ class TestPhase3AudioPipeline(unittest.TestCase):
             self.assertGreaterEqual(ratio_2, 0.75)
 
     def test_09_custom_tts_factory_live_budget_gate_legacy_cache_and_cli_ledger(self) -> None:
-        """Verify live-engine budget gate works under custom factory, legacy cache reporting, and CLI temp DB ledger."""
-        # 1. Custom tts_factory wrapping ElevenLabsEngine with strict_budget=None must STILL abort >900 chars
+        """Verify live-engine Devanagari gate works under custom factory, legacy cache reporting, and CLI temp DB ledger."""
+        # 1. Custom tts_factory wrapping ElevenLabsEngine with strict_budget=None must STILL abort <70% Devanagari
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             shutil.copy2(REPO_ROOT / "config.yaml", root / "config.yaml")
             shutil.copy2(REPO_ROOT / "pronunciations_hi.yaml", root / "pronunciations_hi.yaml")
             (root / "build").mkdir(parents=True, exist_ok=True)
 
-            long_line = "[slowly, solemn, deep] अमृत के लिए देव और असुरों ने सागर मथा और भयानक हलाहल निकला। [pause] ब्रह्मांड जलने लगा था और सभी भयभीत थे।"
-            plan = _make_hindi_plan([long_line for _ in range(8)])
+            english_line = "[slowly] This is mostly English narration with one देव word."
+            plan = _make_hindi_plan([english_line for _ in range(5)])
             for k in ("audio_language", "caption_language", "metadata_language", "thumbnail_language"):
                 plan.pop(k, None)  # Explicitly omit v2 keys and thumbnail_spec
             (root / "build" / "episode_plan.json").write_text(
@@ -621,7 +626,7 @@ class TestPhase3AudioPipeline(unittest.TestCase):
 
             mock_session = MagicMock(spec=requests.Session)
             mock_session.headers = {}
-            mock_session.request.side_effect = AssertionError("HTTP call must never happen when >900 chars!")
+            mock_session.request.side_effect = AssertionError("HTTP call must never happen when Devanagari < 70%!")
 
             with self.assertRaises(TTSBudgetError) as ctx:
                 build_audio.build_episode_audio(
@@ -635,7 +640,7 @@ class TestPhase3AudioPipeline(unittest.TestCase):
                     whisper_factory=lambda cfg: _FakeWhisper(),
                     strict_budget=None,
                 )
-            self.assertIn("900", str(ctx.exception))
+            self.assertIn("Devanagari", str(ctx.exception))
             self.assertEqual(mock_session.request.call_count, 0)
 
         # 2. Legacy stripped-tag cache hits report synth_text & len(synth_text), AND main() records temp audio_ledger

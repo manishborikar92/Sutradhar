@@ -48,8 +48,8 @@ Sutradhar uses **ElevenLabs v4 (`eleven_v4`)** with **Viraj** (`uuyFQegRan8rpIQC
    ```
 
 > [!NOTE]
-> **Per-Episode Character Budget & Caching:**  
-> Sutradhar enforces a **`760–840` billed-char target** (`850` soft warning, **`900` hard pre-TTS cap**, including inline `[tags]`). Scene-level SHA-256 WAV caching in `build/cache/audio/` + SQLite `audio_ledger` ensures visual edits cost `0` credits and single-scene rewrites re-bill only that scene.
+> **Scene-Level Audio Caching:**  
+> Scene-level SHA-256 WAV caching in `build/cache/audio/` + SQLite `audio_ledger` ensures visual edits make zero TTS API calls and single-scene rewrites re-synthesize only that scene.
 
 ### 2.2 Google Cloud & YouTube Data API v3 OAuth Setup
 1. Open [Google Cloud Console](https://console.cloud.google.com/), create a project, and enable **YouTube Data API v3**.
@@ -90,7 +90,7 @@ flowchart TD
 ```powershell
 .\.venv\Scripts\python.exe scripts/db_manager.py --context
 ```
-- Returns Schema `v4` context: `language_policy` (`hi` audio/captions, `en` metadata/thumbnails), `next_pillar`, `monthly_tts_budget` (from `audio_ledger`), `active_series_list`, `previously_covered_topics`, and `previous_bespoke_assets`.
+- Returns Schema `v4` context: `language_policy` (`hi` audio/captions, `en` metadata/thumbnails), `next_pillar`, `active_series_list`, `previously_covered_topics`, and `previous_bespoke_assets`.
 
 ### Step 2: Create Series *(Only When Starting a New Series Universe)*
 ```powershell
@@ -102,7 +102,7 @@ flowchart TD
 ```powershell
 .\.venv\Scripts\python.exe scripts/build_audio.py
 ```
-- Enforces `<= 900` billed-char pre-TTS cap and `>= 70%` Devanagari ratio.
+- Enforces `>= 70%` Devanagari ratio.
 - Applies `pronunciations_hi.yaml` via `apply_pronunciations_preserving_tags` (keeping `[pause]`/`[sighs]` intact), caches per-scene WAVs in `build/cache/audio/`, records `audio_ledger`, resamples to `16 kHz` PCM, runs locally cached **`faster-whisper small`** (`local_files_only=True`) + RMS speech-burst snapping, and generates em-dash-safe `captions_data.js` + `build/audio/audio_manifest.json`.
 
 ### Step 4: Preview Storyboard & Safe Zones

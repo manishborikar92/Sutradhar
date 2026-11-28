@@ -51,10 +51,6 @@ tts:
   sample_rate: 44100
   output_format: mp3_44100_128
   cache_dir: build/cache/audio
-  max_billed_chars_per_episode: 900
-  target_billed_chars_min: 760
-  target_billed_chars_max: 840
-  monthly_credit_budget: 30000
   voice_settings:
     stability: 0.55
     similarity_boost: 0.80

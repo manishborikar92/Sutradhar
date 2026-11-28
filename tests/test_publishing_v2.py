@@ -651,8 +651,6 @@ class TestPhase5Publishing(unittest.TestCase):
 
         # Key specs in INSTRUCTIONS.md aligned with config.yaml & code
         self.assertIn("<= 55 MiB", instructions)
-        self.assertIn("<= 900", instructions)
-        self.assertIn("760–840", instructions)
         self.assertIn("faster-whisper small", instructions)
         self.assertIn("rect.bottom <= 1395px", instructions)
         self.assertIn("88.0", instructions)
@@ -674,8 +672,7 @@ class TestPhase5Publishing(unittest.TestCase):
         self.assertEqual(ctx["schema_version"], 4)
         self.assertEqual(ctx["language_policy"]["audio_language"], "hi")
         self.assertEqual(ctx["language_policy"]["metadata_language"], "en")
-        self.assertEqual(ctx["monthly_tts_budget"]["monthly_limit"], 30000)
-        self.assertEqual(ctx["monthly_tts_budget"]["max_billed_chars_per_episode"], 900)
+        self.assertNotIn("monthly_tts_budget", ctx)
 
 
 if __name__ == "__main__":

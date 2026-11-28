@@ -85,7 +85,7 @@ templates/
 - `caption_builder.py` splits tokens on internal punctuation (`—`, `-`, `/`) before stripping non-word characters so compound Devanagari phrases like `"कहलाए—नीलकंठ!"` preserve titular keyword highlighting (`kw: true`) inside `5`-word sliding windows (`rect.bottom <= 1395px`).
 
 ### 2.7 Database Schema v4 (`docs/schema.sql` & `sutradhar/db.py`)
-- Formalizes four tables: `series` (with `series_title_en`, `series_title_hi`, `metadata_language`, `audio_language`), `episodes` (with `duration_sec`, `file_bytes`, `kinocut_score`, `static_fraction`, `tts_billed_chars`, `visual_direction_version`, `legacy_asset_path`, `published_at`, `video_url`), `publishing_history` (full upload/thumbnail/CDN audit log), and `audio_ledger` (per-scene SHA-256 cache & credit tracking).
+- Formalizes four tables: `series` (with `series_title_en`, `series_title_hi`, `metadata_language`, `audio_language`), `episodes` (with `duration_sec`, `file_bytes`, `kinocut_score`, `static_fraction`, `tts_billed_chars`, `visual_direction_version`, `legacy_asset_path`, `published_at`, `video_url`), `publishing_history` (full upload/thumbnail/CDN audit log), and `audio_ledger` (per-scene SHA-256 cache & TTS telemetry).
 - `compute_pillar_rotation` queries the latest non-failed `PUBLISHED` episode to cycle cleanly across `Ancient Epics & Lore -> Hidden History -> Cosmic & Scientific Paradoxes` even for open-ended (`total_planned_episodes IS NULL`) series.
 
 ### 2.8 YouTube Publishing & OAuth Hardening
@@ -95,12 +95,10 @@ templates/
 
 ---
 
-## 3. ElevenLabs Starter Economics & Cost Math
+## 3. ElevenLabs Scene Caching & Telemetry
 
-- **Plan Allowance:** `30,000` credits/month (`eleven_v4`, Viraj `uuyFQegRan8rpIQCGu9K`), billed at **`1` credit per character** including inline `[...]` expression tags.
-- **Per-Episode Budget Lock:** `760–840` billed characters target, `> 850` soft warning, **`> 900` hard pre-TTS abort** (`tts.max_billed_chars_per_episode = 900`).
-- **Monthly Projection:** At `~815` avg billed chars per Short, **30 Shorts/month** consume `~24,450 / 30,000` credits, preserving an **`~18.5%` buffer** (`~5,550` credits) for occasional single-scene edits.
-- **Zero-Spend Caching:** Per-scene WAVs are content-addressed by `SHA-256(tagged_text, voice_id, model_id, settings)` in `build/cache/audio/` and tracked in `audio_ledger`. Visual, caption, or thumbnail iterations cost `0` credits; single-scene script edits re-bill only that scene.
+- **Voice & Model:** `eleven_v4`, Viraj (`uuyFQegRan8rpIQCGu9K`), with read-only live subscription diagnostics via `scripts/elevenlabs_engine.py --check-subscription` (`GET /v1/user/subscription`).
+- **SHA-256 Scene Caching:** Per-scene WAVs are content-addressed by `SHA-256(tagged_text, voice_id, model_id, settings)` in `build/cache/audio/` and logged in SQLite `audio_ledger` (`cache_hit`, `billed_chars`). Visual, caption, or thumbnail iterations hit the local cache with zero TTS API calls; single-scene script edits re-synthesize only the modified scene.
 
 ---
 
@@ -130,7 +128,7 @@ templates/
 All tests run in isolated temporary directories with zero live ElevenLabs or YouTube write calls:
 - `test_db_models.py`: Schema v4 migrations, `EpisodePlanV2` / `StoryboardIR` validation, pillar rotation, `audio_ledger`.
 - `test_runtime.py`: Canonical assets, `templates/runtime/` ES modules, deterministic `hf-seek`, peak-clamped Kailash geometry.
-- `test_audio_pipeline_v2.py`: Tag-preserving pronunciations, `<= 900` cap, `faster-whisper small` + RMS alignment, em-dash tokenization, `sound_mixer`.
+- `test_audio_pipeline_v2.py`: Tag-preserving pronunciations, `>= 70%` Devanagari validation, `faster-whisper small` + RMS alignment, em-dash tokenization, `sound_mixer`.
 - `test_render_qa.py`: Storyboard compilation, `<= 55 MiB` `render_optimizer`, fail-closed `quality_gate` & end-to-end Chromium/KinoCut checks.
 - `test_publishing_v2.py`: Metadata policy, `sardefault.jpg` CDN parity, playlist pagination, read-only verify, cross-document consistency.
 - Supporting unit/contract suites: `test_config_standardization.py`, `test_db_manager.py`, `test_build_audio.py`, `test_elevenlabs_engine.py`, `test_audio_speed_pacing.py`, `test_audition_voices.py`, `test_render_pipeline.py`, `test_publish_youtube.py`, `test_thumbnail_utils.py`, `test_sutradhar_oauth_refresh.py`, `test_production_acceptance.py`.

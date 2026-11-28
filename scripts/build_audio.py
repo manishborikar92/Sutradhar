@@ -40,8 +40,6 @@ from sutradhar.audio.elevenlabs_tts import (  # noqa: E402
     DEFAULT_TAG_TEMPLATES,
     DEFAULT_VOICE_ID,
     DEFAULT_VOICE_SETTINGS,
-    MAX_BILLED_CHARS,
-    SOFT_WARN_BILLED_CHARS,
     ElevenLabsEngine,
     FakeElevenLabs,
     TTSBudgetError,
@@ -287,8 +285,6 @@ def build_episode_audio(
     expected_sr = int(tts_cfg.get("sample_rate", DEFAULT_SAMPLE_RATE))
     tag_templates = {**DEFAULT_TAG_TEMPLATES, **tts_cfg.get("tag_templates", {})}
     voice_settings = {**DEFAULT_VOICE_SETTINGS, **tts_cfg.get("voice_settings", {})}
-    max_billed_chars = int(tts_cfg.get("max_billed_chars_per_episode", MAX_BILLED_CHARS))
-    warn_billed_chars = int(tts_cfg.get("target_billed_chars_max", SOFT_WARN_BILLED_CHARS))
 
     # Prepare clean + tag-preserving phonetic text and speeds BEFORE instantiating/calling TTS
     total_scenes = len(ep_plan.scenes)
@@ -366,8 +362,6 @@ def build_episode_audio(
         validate_pre_tts_budget(
             [item["synth_text"] for item in prepared],
             [item["clean_text"] for item in prepared],
-            max_billed_chars=max_billed_chars,
-            warn_billed_chars=warn_billed_chars,
             language=active_lang,
             enforce_devanagari=(strict_budget is True or active_lang == "hi"),
         )

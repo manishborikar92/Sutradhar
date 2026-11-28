@@ -219,10 +219,9 @@ class TestPhase5ProductionGates(unittest.TestCase):
         self.assertEqual(manifest["language"], "hi")
 
     def test_gate_2_pre_tts_budget_and_vocal_tag_steering(self) -> None:
-        """Gate 2: EpisodePlanV2 enforces <= 900 billed chars, >= 70% Devanagari, and preserves vocal tags."""
+        """Gate 2: EpisodePlanV2 enforces >= 70% Devanagari and preserves vocal tags."""
         plan_dict = _make_v2_plan_dict()
         plan = EpisodePlanV2.model_validate(plan_dict, context={"config": self.cfg})
-        self.assertLessEqual(plan.total_billed_chars(), 900)
 
         reps = load_pronunciations(self.root, self.cfg, lang="hi")
         tagged_texts: list[str] = []
@@ -233,14 +232,14 @@ class TestPhase5ProductionGates(unittest.TestCase):
             tagged_texts.append(t_txt)
 
         report = validate_pre_tts_budget(tagged_texts, clean_texts, language="hi", enforce_devanagari=True)
-        self.assertLessEqual(report.total_billed_chars, 900)
+        self.assertGreater(report.total_billed_chars, 0)
         self.assertGreaterEqual(report.devanagari_ratio, 0.70)
         self.assertIn("[arrogant, booming, furious, shouts]", tagged_texts[1])
         self.assertIn("[softly, sorrowful, trembling, sighs]", tagged_texts[2])
 
-        # Over-budget (>900 chars) must abort before any TTS call
+        # Non-Devanagari (<70%) must abort before any TTS call
         with self.assertRaises(TTSBudgetError):
-            validate_pre_tts_budget(["अ" * 901], ["अ" * 901], max_billed_chars=900, language="hi")
+            validate_pre_tts_budget(["English only text"], ["English only text"], language="hi")
 
     def test_gate_3_zero_tag_leakage_and_manifest_validation(self) -> None:
         """Gate 3: Aligned words and captions have 0 bracketed tags and monotonic boundaries."""

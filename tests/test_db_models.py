@@ -149,24 +149,11 @@ class TestSutradharPhase1Foundation(unittest.TestCase):
         with self.assertRaises(StateError):
             validate_config(bad_meta, REPO_ROOT / "config.yaml")
 
-        bad_tts = copy.deepcopy(self.cfg)
-        bad_tts["tts"]["max_billed_chars_per_episode"] = 1200
-        with self.assertRaises(StateError):
-            validate_config(bad_tts, REPO_ROOT / "config.yaml")
-
     def test_episode_plan_v2_pre_tts_and_bilingual_guards(self) -> None:
         valid = _make_v2_plan()
         plan = EpisodePlanV2.model_validate(valid, context={"config": self.cfg})
-        self.assertLessEqual(plan.total_billed_chars(), 900)
         self.assertGreaterEqual(devanagari_token_ratio(" ".join(s.narration_text for s in plan.scenes)), 0.70)
         self.assertEqual(plan.thumbnail_spec.font_weight, 800)
-
-        # Reject > 900 billed chars before TTS call
-        oversized = _make_v2_plan(long_pad=("अतिरिक्त विस्तार " * 55).strip())
-        self.assertGreater(count_billed_chars(EpisodePlan.model_validate(oversized, context={"config": self.cfg}).scenes), 900)
-        with self.assertRaises(ValueError) as ctx_len:
-            EpisodePlanV2.model_validate(oversized, context={"config": self.cfg})
-        self.assertIn("900 cap", str(ctx_len.exception))
 
         # Reject Devanagari inside YouTube title, description, tags, or thumbnail
         bad_title = _make_v2_plan()
@@ -286,9 +273,7 @@ class TestSutradharPhase1Foundation(unittest.TestCase):
                 c2.close()
 
             ctx = cmd_context(tmp_root, self.cfg)
-            self.assertEqual(ctx["monthly_tts_budget"]["spent_this_month_billed_chars"], 400)
-            self.assertEqual(ctx["monthly_tts_budget"]["remaining_credits"], 29600)
-            self.assertEqual(ctx["monthly_tts_budget"]["cache_hits_this_month"], 1)
+            self.assertNotIn("monthly_tts_budget", ctx)
 
 
 if __name__ == "__main__":

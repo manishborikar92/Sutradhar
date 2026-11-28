@@ -150,12 +150,6 @@ def validate_config(cfg: Any, config_path: Path) -> dict[str, Any]:
     tts = cfg["tts"]
     if not isinstance(tts.get("engine"), str):
         raise StateError("config.yaml tts.engine must be a string.")
-    max_chars = tts.get("max_billed_chars_per_episode")
-    if max_chars is not None:
-        if not isinstance(max_chars, int) or not (100 <= max_chars <= 900):
-            raise StateError(
-                f"config.yaml tts.max_billed_chars_per_episode must be between 100 and 900 (got {max_chars!r})."
-            )
     if "default_voice" not in tts and "languages" in cfg:
         active_lprof = cfg["languages"].get(primary_lang, {})
         narr_v = active_lprof.get("narrator_voice") or active_lprof.get("narrator_voice_id")

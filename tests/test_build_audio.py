@@ -838,6 +838,55 @@ class TestBuildAudio(unittest.TestCase):
         sent_to_tts = fake_eleven.calls[0]["text"]
         self.assertIn("रिषि", sent_to_tts)
 
+    # 18. Fully cached scenes bypass live subscription check (0 HTTP calls)
+    def test_18_cached_scenes_bypass_subscription_check(self) -> None:
+        import io
+        from unittest.mock import MagicMock
+        import requests
+        from sutradhar.audio.elevenlabs_tts import ElevenLabsEngine
+
+        plan = make_episode_plan(scene_count=5)
+        self.write_plan(plan)
+
+        # Generate valid MP3 bytes and pre-populate cache for all 5 scenes
+        t = np.linspace(0.0, 9.0, int(9.0 * 44100), endpoint=False, dtype=np.float32)
+        samples = (0.2 * np.sin(2.0 * np.pi * 220.0 * t)).astype(np.float32)
+        buf = io.BytesIO()
+        sf.write(buf, samples, 44100, format="MP3")
+        mp3_bytes = buf.getvalue()
+
+        mock_session = MagicMock(spec=requests.Session)
+        mock_session.headers = {}
+
+        cfg = yaml.safe_load((self.root / "config.yaml").read_text(encoding="utf-8"))
+        # Build a temporary engine to compute exact cache paths
+        probe_engine = ElevenLabsEngine(
+            api_key="sk_mock_valid_key_123456",
+            config=cfg,
+            cache_dir=self.root / "build/cache/audio",
+            session=mock_session,
+            project_root=self.root,
+        )
+        from sutradhar.models import EpisodePlan
+        ep = EpisodePlan.model_validate(plan, context={"config": cfg})
+        reps = self.mod._load_pronunciations_map(self.root, cfg, lang="hi")
+        tag_templates = {**self.mod.DEFAULT_TAG_TEMPLATES, **cfg["tts"].get("tag_templates", {})}
+        vs_base = {**self.mod.DEFAULT_VOICE_SETTINGS, **cfg["tts"].get("voice_settings", {})}
+        for idx, sc in enumerate(ep.scenes):
+            _, tagged = self.mod.prepare_scene_tts_text(sc, idx, len(ep.scenes), reps, tag_templates, False)
+            spd = self.mod._compute_scene_speed(sc, cfg, "hi", False, False)
+            cpath = probe_engine.get_cache_path(tagged, voice_settings={**vs_base, "speed": spd})
+            cpath.parent.mkdir(parents=True, exist_ok=True)
+            cpath.write_bytes(mp3_bytes)
+
+        res = self.mod.build_episode_audio(
+            root=self.root,
+            tts_factory=lambda c, r: probe_engine,
+            whisper_factory=lambda c: FakeWhisper(),
+        )
+        self.assertEqual(res["status"], "ok")
+        self.assertEqual(mock_session.request.call_count, 0)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

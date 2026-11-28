@@ -30,15 +30,10 @@ Enforced identically by `config.yaml`, `sutradhar.config.LanguagePolicy`, `Episo
 
 ---
 
-## 3. Scriptwriting, Scriptural Grounding & Narration Limits
+## 3. Scriptwriting, Scriptural Grounding & Narration Policy
 
-### 3.1 Per-Episode Narration & Tag Length Limits
-- **Character Accounting:** `1` billed char includes inline `[...]` expression tags.
-- **Per-Episode Budget Lock:**
-  - **Target Sweet Spot:** **`760–840` billed characters** across all scenes (including `[tags]`).
-  - **Soft Warning:** `> 850` billed chars (`SOFT_WARN_BILLED_CHARS`).
-  - **Hard Pre-TTS Abort:** **`> 900` billed chars** (`tts.max_billed_chars_per_episode = 900`).
-- **Pre-TTS Validation Mandate:** `build/episode_plan.json` MUST pass `EpisodePlanV2` validation **before** calling `build_audio.py` and **before** `preview_frames.py` (never invert plan creation after rendering).
+### 3.1 Pre-TTS Validation Mandate
+- **Pre-TTS Validation Mandate:** `build/episode_plan.json` MUST pass `EpisodePlanV2` validation (`>= 70%` Devanagari narration, pure English metadata/thumbnails, anti-cliffhanger checks) **before** calling `build_audio.py` and **before** `preview_frames.py` (never invert plan creation after rendering).
 
 ### 3.2 Pacing, Scriptural Provenance & Anti-Cliffhanger Law
 - **Retention & Duration Bounds (`config.yaml` `episode_pacing`):**
@@ -53,7 +48,6 @@ Run `.\.venv\Scripts\python.exe scripts/db_manager.py --context` first to inspec
 1. `next_pillar` cycling across `Ancient Epics & Lore -> Hidden History -> Cosmic & Scientific Paradoxes` (computed from latest non-failed published episode).
 2. `active_series_list` and `next_episode_number_in_series` / `next_global_episode_number`.
 3. `previously_covered_topics` (`LIMIT 30`) and `previous_bespoke_assets` (never reuse a topic or `bespoke_asset_path`).
-4. `monthly_tts_budget` (`audio_ledger` live usage and remaining quota).
 
 ---
 
@@ -201,7 +195,7 @@ Handled cohesively by `scripts/sutradhar/publishing/` (`youtube_client.py`, `met
 # 2. Initialize new series universe ONLY when starting a new episodic series
 .\.venv\Scripts\python.exe scripts/db_manager.py --create-series
 
-# 3. Synthesize Hindi narration (pre-TTS <= 900 cap), Whisper small + RMS align & build captions
+# 3. Synthesize Hindi narration (>= 70% Devanagari), Whisper small + RMS align & build captions
 .\.venv\Scripts\python.exe scripts/build_audio.py
 
 # 4. Compile StoryboardIR, run HyperFrames --strict --safe-zone shorts & stitch 15-frame qa_grid.jpg

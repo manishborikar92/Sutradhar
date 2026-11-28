@@ -68,7 +68,6 @@ class TestPhase2ConfigStandardization(unittest.TestCase):
         self.assertNotIn("format_pacing", self.cfg)
         self.assertEqual(self.cfg.get("audio_mastering", {}).get("sidechain_ducking", {}).get("ratio"), 6.5)
         self.assertEqual(self.cfg.get("paths", {}).get("auditions_dir"), "build/auditions")
-        self.assertEqual(self.cfg.get("tts", {}).get("max_billed_chars_per_episode"), 900)
 
     def test_02_english_purged_from_languages(self) -> None:
         """Verify obsolete English ('en') profile is completely removed from languages."""

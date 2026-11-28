@@ -11,7 +11,7 @@
 
 ### Core Architectural Pillars
 - **Bilingual Platform Policy:** Pure **Hindi (`hi`)** narration and synchronized bottom-center kinetic captions (`Noto Sans Devanagari`, strictly `< Y = 1400px`) paired with pure **English (`en`)** `1080x1920` cover thumbnails (`2:3` Shorts shelf safe), YouTube titles (`#Shorts`), descriptions with scriptural citations, `10–15` tags, and English playlists.
-- **Single Master Storyteller (`eleven_v4`):** Voiced exclusively by **Viraj** (`uuyFQegRan8rpIQCGu9K`) via ElevenLabs v4 (`44.1 kHz` synthesis mastered to `48,000 Hz` 24-bit stereo WAV), keeping scripts within `760–840` billed chars (`<= 900` hard cap) with scene-level SHA-256 caching.
+- **Single Master Storyteller (`eleven_v4`):** Voiced exclusively by **Viraj** (`uuyFQegRan8rpIQCGu9K`) via ElevenLabs v4 (`44.1 kHz` synthesis mastered to `48,000 Hz` 24-bit stereo WAV) with scene-level SHA-256 caching.
 - **Modular `Canvas2D + DOM` Runtime (`templates/runtime/`):** Deterministic `hf-seek` ES modules (`seek_runtime.js`, `scene_director.js`, `atmosphere_v1.js`, `architectural_stage.js`, `character_engine.js`, `props_library.js`, `transitions.js`, and `#captions` sub-composition) featuring `traceCapsule` anatomy, 5-finger sculpted hands, `2.5D` head turns, and `HORIZON_Y = 1142` spatial grounding.
 - **`48 kHz` Broadcast Audio Pipeline:** Local `16 kHz` **`faster-whisper small`** + RMS speech-burst alignment, em-dash-safe keyword highlighting, 3-act BGM (`0` MD5 clones, `allow_synth_fallback: false`), `+33ms` peak-aligned SFX, **`6.5:1` (`ratio=6.5`)** sidechain ducking, and single 2-pass `loudnorm` (**`-14.0 ± 0.5 LUFS`**, **`<= -1.5 dBTP`**).
 - **Fail-Closed QA & Bitrate Guardrails:** `hyperframes check --strict --safe-zone shorts --json`, `<= 55 MiB` (`57,671,680 B`) H.264 MP4 ceiling, dual KinoCut profiles (`ui-capture-dark >= 88.0`, `default >= 55.0`, `color_balance PASS`, `static_fraction <= 0.15`), and `thumbnail_2x3_crop.jpg` (`y=150..1770`) verification.
@@ -107,9 +107,9 @@ npx hyperframes browser ensure
 
 | Step | Command | Purpose |
 | --- | --- | --- |
-| **1. Context** | `.\.venv\Scripts\python.exe scripts/db_manager.py --context` | Inspect pillar rotation, `audio_ledger` credit budget, active series & topic history. |
+| **1. Context** | `.\.venv\Scripts\python.exe scripts/db_manager.py --context` | Inspect pillar rotation, `language_policy`, active series & topic history. |
 | **2. Series Init** | `.\.venv\Scripts\python.exe scripts/db_manager.py --create-series` | *(Optional)* Initialize a new English-titled series from `build/new_series_plan.json`. |
-| **3. Audio Build** | `.\.venv\Scripts\python.exe scripts/build_audio.py` | Validate `<= 900` billed chars, synthesize via Viraj (`SHA-256` cache), align with `faster-whisper small` + RMS & build captions. |
+| **3. Audio Build** | `.\.venv\Scripts\python.exe scripts/build_audio.py` | Validate `>= 70%` Devanagari ratio, synthesize via Viraj (`SHA-256` cache), align with `faster-whisper small` + RMS & build captions. |
 | **4. Preview QA** | `.\.venv\Scripts\python.exe scripts/preview_frames.py` | Compile `StoryboardIR`, run `hyperframes check --strict --safe-zone shorts`, probe DOM & stitch 15-frame `build/qa_grid.jpg`. |
 | **5. Render & QA** | `.\.venv\Scripts\python.exe scripts/render_and_qa.py` | Render `<= 55 MiB` `1080x1920@30fps` MP4, master `48 kHz` audio (`-14 LUFS`), build `1080x1920` cover + `2:3` crop & run KinoCut dual gate. |
 | **6. Publish** | `.\.venv\Scripts\python.exe scripts/publish_youtube.py` | Upload MP4, assign English playlist, poll processing, `thumbnails.set`, verify live `sardefault.jpg` CDN parity & commit SQLite atomically. |

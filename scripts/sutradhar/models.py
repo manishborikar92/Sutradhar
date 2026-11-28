@@ -935,7 +935,7 @@ class EpisodePlan(BaseModel):
 
 
 class EpisodePlanV2(EpisodePlan):
-    """Strict pre-TTS & pre-render EpisodePlan v2 enforcing bilingual policy & 900-char TTS ceiling."""
+    """Strict pre-TTS & pre-render EpisodePlan v2 enforcing bilingual policy."""
 
     language: Literal["hi"] = "hi"
     audio_language: Literal["hi"] = "hi"
@@ -965,15 +965,6 @@ class EpisodePlanV2(EpisodePlan):
                 f"(got {hi_ratio:.2%})"
             )
 
-        # 3. Pre-TTS ElevenLabs hard char cap (<= 900 billed chars, 760-840 target)
-        cfg = (info.context or {}).get("config") or {}
-        max_chars = int(cfg.get("tts", {}).get("max_billed_chars_per_episode", 900))
-        billed = self.total_billed_chars()
-        if billed > max_chars:
-            raise ValueError(
-                f"Pre-TTS character budget exceeded: {billed} billed chars > {max_chars} cap "
-                "(target sweet spot: 760-840 billed chars including [vocal tags])."
-            )
         return self
 
 
@@ -1104,7 +1095,7 @@ PublishResult.model_rebuild()
 
 
 def emit_pacing_warnings(plan: EpisodePlan, cfg: dict[str, Any]) -> None:
-    """Log non-fatal narration prosody word-count and TTS budget warnings to stderr."""
+    """Log non-fatal narration prosody word-count warnings to stderr."""
     fmt = getattr(plan, "content_format", None) or cfg.get("content_format", "episodic_series")
     format_pacing = cfg.get("format_pacing", {}).get(fmt, {})
     default_pacing = cfg.get("episode_pacing", {})
@@ -1118,10 +1109,3 @@ def emit_pacing_warnings(plan: EpisodePlan, cfg: dict[str, Any]) -> None:
                 f"(target narration sweet spot: {min_words}-{max_words}).",
                 file=sys.stderr,
             )
-    billed = plan.total_billed_chars()
-    soft_warn = int(cfg.get("tts", {}).get("target_billed_chars_max", 850))
-    if billed > soft_warn:
-        print(
-            f"[WARN] Pre-TTS billed character estimate {billed} exceeds {soft_warn} soft target.",
-            file=sys.stderr,
-        )
