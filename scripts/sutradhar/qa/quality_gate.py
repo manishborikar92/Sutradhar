@@ -1,4 +1,4 @@
-"""Fail-closed Phase 4 Quality Gate (zero synthetic dom_snapshots fabrication)."""
+"""Fail-closed Quality Gate (zero synthetic dom_snapshots fabrication)."""
 
 from __future__ import annotations
 
@@ -46,7 +46,7 @@ from thumbnail_utils import validate_local_thumbnail
 
 
 class QualityGateError(RuntimeError):
-    """Raised whenever any fail-closed Phase 4 QA gate fails."""
+    """Raised whenever any fail-closed QA gate fails."""
 
 
 @dataclass
@@ -633,7 +633,7 @@ def run_v2_quality_gate(
     run_hf_shorts_check: bool = True,
     max_file_bytes: int = DEFAULT_MAX_FILE_BYTES,
 ) -> QualityGateReport:
-    """Execute all 5 fail-closed Phase 4 QA gates; raises QualityGateError on any failure."""
+    """Execute all 5 fail-closed QA gates; raises QualityGateError on any failure."""
     root = Path(root).resolve()
     composition_dir = Path(composition_dir).resolve()
     mp4_path = Path(mp4_path).resolve()
@@ -836,5 +836,5 @@ def run_v2_quality_gate(
         report.report_path = report_output_path
 
     if not report.passed:
-        raise QualityGateError("Phase 4 Quality Gate FAILED:\n- " + "\n- ".join(failures))
+        raise QualityGateError("Quality Gate FAILED:\n- " + "\n- ".join(failures))
     return report

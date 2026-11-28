@@ -1,4 +1,4 @@
-"""Sutradhar modular Phase 3 audio pipeline package."""
+"""Sutradhar modular audio pipeline package."""
 
 from sutradhar.audio.caption_builder import (
     build_caption_cues,

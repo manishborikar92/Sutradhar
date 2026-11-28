@@ -2,7 +2,7 @@
  * Sutradhar v2 Anatomical Character Engine.
  * Fuses Episode 4's tapered traceCapsule limbs, 5-finger drawSculptedHand poses,
  * 2.5D head turn parallax, high-arched hairlines clear of tilak, and phoneme mouthOpen
- * interpolation with Candidate B's hero, royal, sage, and musician presets.
+ * interpolation with hero, royal, sage, and musician presets.
  */
 
 import { clamp, drawGlow, drawHalahalaOrb, lerp } from "../core/seek_runtime.js";

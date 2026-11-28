@@ -63,7 +63,7 @@ class TestPhase2ConfigStandardization(unittest.TestCase):
         self.assertEqual(policy.metadata_language, "en")
         self.assertEqual(policy.thumbnail_language, "en")
 
-        # Verify cleaned Phase 1 canonical config consolidation
+        # Verify cleaned canonical config consolidation
         self.assertNotIn("target_duration_range", self.cfg)
         self.assertNotIn("format_pacing", self.cfg)
         self.assertEqual(self.cfg.get("audio_mastering", {}).get("sidechain_ducking", {}).get("ratio"), 6.5)

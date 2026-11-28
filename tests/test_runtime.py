@@ -1,4 +1,4 @@
-"""Phase 2 Verification Suite: Canonical Assets, HyperFrames Runtime, Deterministic Seek & Bounded Kailash."""
+"""Runtime Verification Suite: Canonical Assets, HyperFrames Runtime, Deterministic Seek & Bounded Kailash."""
 
 from __future__ import annotations
 
@@ -254,7 +254,7 @@ def _stage_sample_composition(stage_dir: Path) -> None:
     jenv_rt = Environment(loader=FileSystemLoader(str(REPO_ROOT / "templates" / "runtime")))
     (stage_dir / "index.html").write_text(
         jenv_rt.get_template("index.html.jinja2").render(
-            title="Phase 2 Verification Sample",
+            title="Runtime Verification Sample",
             fonts_css="fonts/fonts.css",
             styles_css="styles.css",
             gsap_src="lib/gsap.min.js",

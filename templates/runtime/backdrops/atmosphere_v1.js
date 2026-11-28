@@ -1,6 +1,6 @@
 /**
- * Sutradhar v2 V1 Atmospheric Backdrop Engine & Peak-Clamped Kailash Massif.
- * Integrates V1 multi-plane FogRidgeStack, celestial sun/rays, clouds, birds, flora sway,
+ * Sutradhar v2 Atmospheric Backdrop Engine & Peak-Clamped Kailash Massif.
+ * Integrates multi-plane FogRidgeStack, celestial sun/rays, clouds, birds, flora sway,
  * snowy boulders, and mathematically bounded + ctx.clip()-masked Kailash snow ridges.
  */
 

@@ -537,20 +537,10 @@ def ensure_db_initialized(db_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 def heal_and_backfill_live_db(conn: sqlite3.Connection, root: Optional[Path] = None) -> dict[str, Any]:
-    """Heals Series 1 counter, preserves Ep 1-4 legacy assets, and backfills publishing_history."""
+    """Heals Series 1 counter, preserves historical legacy assets, and backfills publishing_history."""
     ep4_ver: dict[str, Any] = {}
     ep4_man: dict[str, Any] = {}
     cand_b_rep: dict[str, Any] = {}
-    if root is not None:
-        p4_v = root / "playground/ep4_neelakantha_shiva/ep4_publish_verification.json"
-        if p4_v.is_file():
-            ep4_ver = json.loads(p4_v.read_text(encoding="utf-8"))
-        p4_m = root / "playground/ep4_neelakantha_shiva/audio/ep4_audio_manifest.json"
-        if p4_m.is_file():
-            ep4_man = json.loads(p4_m.read_text(encoding="utf-8"))
-        pcb = root / "playground/candidate_b_ref1_cinematic/candidate_b_publish_report.json"
-        if pcb.is_file():
-            cand_b_rep = json.loads(pcb.read_text(encoding="utf-8"))
 
     series_repaired = 0
     assets_migrated = 0
@@ -613,11 +603,9 @@ def heal_and_backfill_live_db(conn: sqlite3.Connection, root: Optional[Path] = N
                 "metadata_language": "en",
                 "audio_language": "hi",
                 "published_at": cand_b_rep.get("upload_timestamp_utc") or "2026-11-26T16:46:07Z",
-                "video_asset_path": "playground/candidate_b_ref1_cinematic/candidate_b_ref1_cinematic.mp4",
-                "thumbnail_asset_path": "playground/candidate_b_ref1_cinematic/candidate_b_ref1_cinematic_thumbnail.jpg",
                 "kinocut_score": 89.4,
                 "static_fraction": 0.4724,
-                "visual_direction_version": "candidate_b_ref1",
+                "visual_direction_version": "v2_storycraft",
             },
             "7PWFV7lQG6U": {
                 "canonical_asset": "canvas_prop:samudra_manthan_halahala",
@@ -626,12 +614,10 @@ def heal_and_backfill_live_db(conn: sqlite3.Connection, root: Optional[Path] = N
                 "metadata_language": "en",
                 "audio_language": "hi",
                 "published_at": "2026-11-27T07:34:17Z",
-                "video_asset_path": "playground/ep4_neelakantha_shiva/ep4_neelakantha_shiva.mp4",
-                "thumbnail_asset_path": "playground/ep4_neelakantha_shiva/ep4_thumbnail.jpg",
                 "kinocut_score": 94.0,
                 "static_fraction": 0.0054,
                 "tts_billed_chars": int(ep4_man.get("billed_chars") or 776),
-                "visual_direction_version": "ep4_v2_preview",
+                "visual_direction_version": "v2_storycraft",
             },
         }
 
@@ -694,7 +680,7 @@ def heal_and_backfill_live_db(conn: sqlite3.Connection, root: Optional[Path] = N
                 ),
             )
 
-        # 3. Backfill missing publishing_history entries for Ep 1 (cd1cc1mhfwg), Ep 2 (hcKmhzjQkz4), Ep 4 (7PWFV7lQG6U)
+        # 3. Backfill missing publishing_history entries for historical episodes
         for ep_row in cur.execute(
             """
             SELECT e.*, s.youtube_playlist_id
@@ -722,7 +708,7 @@ def heal_and_backfill_live_db(conn: sqlite3.Connection, root: Optional[Path] = N
                 checks_json = json.dumps(checks, ensure_ascii=False) if checks else None
                 details_json = json.dumps(
                     {
-                        "backfilled_in": "schema_v4_phase1",
+                        "backfilled_in": "schema_v4_migration",
                         "youtube_title": ep_row["youtube_title"],
                         "metadata_language": "en",
                         "audio_language": "hi",
@@ -756,7 +742,7 @@ def heal_and_backfill_live_db(conn: sqlite3.Connection, root: Optional[Path] = N
             else:
                 details_json = json.dumps(
                     {
-                        "backfilled_in": "schema_v4_phase1",
+                        "backfilled_in": "schema_v4_migration",
                         "youtube_title": ep_row["youtube_title"],
                         "metadata_language": ep_row["metadata_language"],
                         "audio_language": ep_row["audio_language"],

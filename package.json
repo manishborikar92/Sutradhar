@@ -1,7 +1,7 @@
 {
   "name": "sutradhar",
   "version": "0.1.0",
-  "description": "Autonomous serialized Hindi YouTube Shorts engine (Antigravity + ElevenLabs v4 + HyperFrames + KinoCut)",
+  "description": "Autonomous serialized Hindi YouTube Shorts engine (ElevenLabs v4 + HyperFrames + KinoCut)",
   "private": true,
   "type": "module",
   "engines": {

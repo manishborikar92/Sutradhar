@@ -1,4 +1,4 @@
-"""Comprehensive unit and offline integration tests for Phase 3 (`sutradhar.audio`)."""
+"""Comprehensive unit and offline integration tests for `sutradhar.audio`."""
 
 from __future__ import annotations
 
@@ -522,8 +522,8 @@ class TestPhase3AudioPipeline(unittest.TestCase):
             ep_plan = json.loads(live_plan_path.read_text(encoding="utf-8"))
             s6_clean = strip_audio_tags(ep_plan["scenes"][5]["narration_text"])
         else:
-            src_wav = REPO_ROOT / "playground" / "ep4_neelakantha_shiva" / "audio" / "scene_6.wav"
-            ep4_plan_path = REPO_ROOT / "playground" / "ep4_neelakantha_shiva" / "ep4_episode_plan.json"
+            src_wav = REPO_ROOT / "tests" / "fixtures" / "scene_6.wav"
+            ep4_plan_path = REPO_ROOT / "tests" / "fixtures" / "ep4_episode_plan.json"
             self.assertTrue(src_wav.is_file(), f"Missing {src_wav}")
             self.assertTrue(ep4_plan_path.is_file(), f"Missing {ep4_plan_path}")
             ep_plan = json.loads(ep4_plan_path.read_text(encoding="utf-8"))
@@ -715,7 +715,7 @@ class TestPhase3AudioPipeline(unittest.TestCase):
             self.assertEqual([r[1] for r in rows], [len(t) for t in expected_legacy_texts])
 
             # And verify live REPO_ROOT DB is protected under pytest
-            with patch.dict(os.environ, {"PYTEST_CURRENT_TEST": "tests/test_sutradhar_phase3_audio.py::test_09"}):
+            with patch.dict(os.environ, {"PYTEST_CURRENT_TEST": "tests/test_audio_pipeline_v2.py::test_09"}):
                 self.assertIsNone(build_audio._resolve_cli_ledger_db(REPO_ROOT))
 
 

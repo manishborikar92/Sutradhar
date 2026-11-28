@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sutradhar — Thin CLI Facade for Phase 4 Render, Audio Mastering & Fail-Closed QA Gate.
+"""Sutradhar — Thin CLI Facade for Render, Audio Mastering & Fail-Closed QA Gate.
 
 Whitelisted zero-argument CLI invocation:
     python scripts/render_and_qa.py

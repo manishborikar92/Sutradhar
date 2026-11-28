@@ -965,7 +965,7 @@ class EpisodePlanV2(EpisodePlan):
                 f"(got {hi_ratio:.2%})"
             )
 
-        # 3. Pre-TTS ElevenLabs Starter hard char cap (<= 900 billed chars, 760-840 target)
+        # 3. Pre-TTS ElevenLabs hard char cap (<= 900 billed chars, 760-840 target)
         cfg = (info.context or {}).get("config") or {}
         max_chars = int(cfg.get("tts", {}).get("max_billed_chars_per_episode", 900))
         billed = self.total_billed_chars()

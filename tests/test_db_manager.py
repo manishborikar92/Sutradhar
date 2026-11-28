@@ -1365,7 +1365,7 @@ class TestDbManagerCompliance(unittest.TestCase):
         self.assertEqual(out["episode_status"], "PUBLISHED")
 
     def test_21_open_ended_multi_series_concurrent_rotation(self) -> None:
-        """Verify Phase 6: multiple open-ended series can be active concurrently and rotated seamlessly."""
+        """Verify multiple open-ended series can be active concurrently and rotated seamlessly."""
         mod = load_db_manager_module()
         self.assertEqual(self.run_cli("--init").returncode, 0)
         cfg = yaml.safe_load((self.root / "config.yaml").read_text(encoding="utf-8"))

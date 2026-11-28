@@ -15,5 +15,5 @@ All BGM assets below are verified unique (0 duplicate MD5 hashes), instrumental,
 | `orchestral_sarabande_strings.mp3` | 165.02 | 48000 Hz | 2 | 192 kbps | 3961702 | `10b131dc8b0863b75ffec0b4fec626d6` | Edvard Grieg (perf. United States Marine Band Chamber Orchestra) | Public Domain (US Government Work / Pre-1929 Composition) | https://commons.wikimedia.org/wiki/File:Grieg%27s_Suite_for_Strings,_Op._40,_%22From_Holberg%E2%80%99s_Time%22_-_II._Sarabande_-_Chamber_Orchestra_-_United_States_Marine_Band.mp3 |
 
 ## Usage Notes
-- Legacy `assets/bgm/*.mp3` files remain temporarily untouched until Phase 6 decouples legacy tests and scripts.
-- Phase 2+ compositions resolve BGM from `assets/audio/bgm/` via `assets/manifest.yaml` (Schema `2.0.0`).
+- Legacy `assets/bgm/*.mp3` files are deprecated in favor of curated BGM stems.
+- Production compositions resolve BGM from `assets/audio/bgm/` via `assets/manifest.yaml` (Schema `2.0.0`).

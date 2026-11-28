@@ -16,7 +16,7 @@ episodes.db-shm
 episodes.db-wal
 
 # Local backups & archives
-backup/
+.backups/
 
 # Secrets & credentials (keep example files tracked)
 .secrets/

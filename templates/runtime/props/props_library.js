@@ -1,8 +1,8 @@
 /**
  * Sutradhar v2 Declarative Mythic, Archival & Cosmic Props Library.
  * Consolidates Episode 4 (Kurma, Vasuki, Mandara, Ocean, Halahala, Kalash, Trishul),
- * Candidate B (Brass Clock, Hourglass Stand, Route Scroll, Magnifying Lens, Comparator,
- * Earth Globe, Wedding Mandap), V1 (Kalachakra), and Historical Monuments (Iron Pillar).
+ * Architectural/Explainer props (Brass Clock, Hourglass Stand, Route Scroll, Magnifying Lens, Comparator,
+ * Earth Globe, Wedding Mandap), Kalachakra, and Historical Monuments (Iron Pillar).
  */
 
 import {

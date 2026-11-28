@@ -1,7 +1,7 @@
 # Sutradhar — Master Authoritative Directing & Production Specification
 
 > **Primary AI Directive:** Read and follow `docs/INSTRUCTIONS.md` to produce every Sutradhar YouTube Short.  
-> **Architecture Standard:** *Sutradhar Kinetic Storycraft v2* — Tri-Milestone Synthesis (`V1 Dawn Ridge` atmosphere + `Candidate B` grounded storytelling + `Episode 4` anatomical rigs & choreography) running on modular `Canvas2D + DOM` ES modules (`templates/runtime/`) and `scripts/sutradhar/`.
+> **Architecture Standard:** *Sutradhar Kinetic Storycraft v2* — modular `Canvas2D + DOM` ES modules (`templates/runtime/`) orchestrated by `scripts/sutradhar/`.
 
 ---
 
@@ -11,8 +11,8 @@
    - If the user specifies a **Topic**, **Script**, **Format** (`standalone` or `episodic_series`), **Playlist**, or **Visual Direction**, treat those inputs as locked requirements and fill remaining fields autonomously.
    - Preserve user-provided script phrasing and dramatic beats while adding ElevenLabs `[vocal tags]` and `StoryboardIR` staging.
 2. **Tier 2 — Autonomous Production & Visual North Star:**
-   - Operate strictly within **Antigravity (Hydrogen)**, **ElevenLabs Starter** (`30,000` credits/mo), and local free/open-source tools (`HyperFrames`, `GSAP`, `Canvas2D`, `FFmpeg`, `faster-whisper small`, `KinoCut`, `Pillow`).
-   - Anchor every visual decision on the verified Tri-Milestone Synthesis: expressive `traceCapsule` anatomy (`Episode 4`), `HORIZON_Y` spatial grounding and clean stage margins (`Candidate B`), and multi-plane atmospheric lighting (`V1`).
+   - Operate strictly within local/open-source tooling (`HyperFrames`, `GSAP`, `Canvas2D`, `FFmpeg`, `faster-whisper small`, `KinoCut`, `Pillow`) and configured ElevenLabs TTS.
+   - Anchor every visual decision on expressive `traceCapsule` anatomy, `HORIZON_Y` spatial grounding, clean stage margins, and multi-plane atmospheric lighting.
 
 ---
 
@@ -30,14 +30,14 @@ Enforced identically by `config.yaml`, `sutradhar.config.LanguagePolicy`, `Episo
 
 ---
 
-## 3. Scriptwriting, Scriptural Grounding & ElevenLabs Budget
+## 3. Scriptwriting, Scriptural Grounding & Narration Limits
 
-### 3.1 ElevenLabs Starter Economics (`30 Shorts / Month`)
-- **Monthly Allowance:** `30,000` credits/month (`1` billed char = `1` credit, including inline `[...]` expression tags).
+### 3.1 Per-Episode Narration & Tag Length Limits
+- **Character Accounting:** `1` billed char includes inline `[...]` expression tags.
 - **Per-Episode Budget Lock:**
   - **Target Sweet Spot:** **`760–840` billed characters** across all scenes (including `[tags]`).
   - **Soft Warning:** `> 850` billed chars (`SOFT_WARN_BILLED_CHARS`).
-  - **Hard Pre-TTS Abort:** **`> 900` billed chars** (`tts.max_billed_chars_per_episode = 900`). At `~815` avg chars, `30` Shorts consume `~24,450 / 30,000` credits (`~18.5%` buffer).
+  - **Hard Pre-TTS Abort:** **`> 900` billed chars** (`tts.max_billed_chars_per_episode = 900`).
 - **Pre-TTS Validation Mandate:** `build/episode_plan.json` MUST pass `EpisodePlanV2` validation **before** calling `build_audio.py` and **before** `preview_frames.py` (never invert plan creation after rendering).
 
 ### 3.2 Pacing, Scriptural Provenance & Anti-Cliffhanger Law
@@ -53,7 +53,7 @@ Run `.\.venv\Scripts\python.exe scripts/db_manager.py --context` first to inspec
 1. `next_pillar` cycling across `Ancient Epics & Lore -> Hidden History -> Cosmic & Scientific Paradoxes` (computed from latest non-failed published episode).
 2. `active_series_list` and `next_episode_number_in_series` / `next_global_episode_number`.
 3. `previously_covered_topics` (`LIMIT 30`) and `previous_bespoke_assets` (never reuse a topic or `bespoke_asset_path`).
-4. `monthly_tts_budget` (`audio_ledger` live spend and remaining credits).
+4. `monthly_tts_budget` (`audio_ledger` live usage and remaining quota).
 
 ---
 
@@ -155,7 +155,7 @@ Pair transitions with subtle aura pulses, particle motes (`golden_embers`, `star
 
 Never grab raw video frames for thumbnails. Render via `templates/thumbnail/cover_template.html.jinja2` and `sutradhar/visual/thumbnail_builder.py`:
 - **Format & Size:** `1080x1920` RGB JPEG, `<= 2.0 MiB` (`2,097,152 B`), `mean_stddev >= 4.0`.
-- **Typography:** English-only `ThumbnailSpec` (`pill`, `headline_line1`, `headline_line2`, optional `sub_pill`); use supported weights only (`Inter` **`500`, `700`, `800`**; `Cinzel` **`600`, `800`** — never `900`, which is absent in `assets/fonts/fonts.css`).
+- **Typography:** English-only `ThumbnailSpec` (`pill`, `headline_line1`, `headline_line2`, optional `sub_pill`); use supported weights only (`Inter` **`500`, `700`, `800`**; `Cinzel` **`600`, `800`** — never `900`, which is unsupported).
 - **2:3 Shorts Shelf Crop Verification:** `thumbnail_builder.py` emits `build/thumbnail_2x3_crop.jpg` (`y = 150..1770`, `1080x1620`). Keep top badges and bottom footers safely inside `y = 200..1710` so Shorts grids never clip text.
 
 ---
@@ -186,7 +186,7 @@ Handled cohesively by `scripts/sutradhar/publishing/` (`youtube_client.py`, `met
 2. Upload video (`containsSyntheticMedia=True`, `selfDeclaredMadeForKids=False`, `defaultLanguage="en"`, `defaultAudioLanguage="hi"`).
 3. Resolve/create English series playlist via paginated `playlists.list` and assign video (fail closed if `episodic_series` playlist assignment fails).
 4. Poll `videos.list` until **`uploadStatus == "processed"` AND `processingDetails.processingStatus == "succeeded"`** before calling `thumbnails.set`.
-5. Verify live `shortsAspectRatio` (`sardefault.jpg`) from `i.ytimg.com` (`HTTP 200`, `1080x1920`, **`MAE <= 12.0`**, **`dhash <= 16`** — mandatory from Episode 3 onward; Episodes 1–2 remain untouched historical baselines).
+5. Verify live `shortsAspectRatio` (`sardefault.jpg`) from `i.ytimg.com` (`HTTP 200`, `1080x1920`, **`MAE <= 12.0`**, **`dhash <= 16`**).
 6. Atomically persist `episodes` + `publishing_history` + `series.completed_episodes` in SQLite via `sutradhar.db.record_published_episode`, and write `build/publish_result.json` + `build/publish_verification.json`.
 
 ---
@@ -195,7 +195,7 @@ Handled cohesively by `scripts/sutradhar/publishing/` (`youtube_client.py`, `met
 
 ### 16.1 Six-Command Daily Production Runbook
 ```powershell
-# 1. Inspect series state, pillar rotation, topic history & ElevenLabs monthly budget
+# 1. Inspect series state, pillar rotation, topic history & TTS quota
 .\.venv\Scripts\python.exe scripts/db_manager.py --context
 
 # 2. Initialize new series universe ONLY when starting a new episodic series

@@ -11,7 +11,7 @@
 
 ### Core Architectural Pillars
 - **Bilingual Platform Policy:** Pure **Hindi (`hi`)** narration and synchronized bottom-center kinetic captions (`Noto Sans Devanagari`, strictly `< Y = 1400px`) paired with pure **English (`en`)** `1080x1920` cover thumbnails (`2:3` Shorts shelf safe), YouTube titles (`#Shorts`), descriptions with scriptural citations, `10–15` tags, and English playlists.
-- **Single Master Storyteller (`eleven_v4`):** Voiced exclusively by **Viraj** (`uuyFQegRan8rpIQCGu9K`) via ElevenLabs v4 (`44.1 kHz` synthesis mastered to `48,000 Hz` 24-bit stereo WAV), keeping scripts within `760–840` billed chars (`<= 900` hard cap) to fit **30 Shorts/month** inside the **30,000-credit ElevenLabs Starter plan**.
+- **Single Master Storyteller (`eleven_v4`):** Voiced exclusively by **Viraj** (`uuyFQegRan8rpIQCGu9K`) via ElevenLabs v4 (`44.1 kHz` synthesis mastered to `48,000 Hz` 24-bit stereo WAV), keeping scripts within `760–840` billed chars (`<= 900` hard cap) with scene-level SHA-256 caching.
 - **Modular `Canvas2D + DOM` Runtime (`templates/runtime/`):** Deterministic `hf-seek` ES modules (`seek_runtime.js`, `scene_director.js`, `atmosphere_v1.js`, `architectural_stage.js`, `character_engine.js`, `props_library.js`, `transitions.js`, and `#captions` sub-composition) featuring `traceCapsule` anatomy, 5-finger sculpted hands, `2.5D` head turns, and `HORIZON_Y = 1142` spatial grounding.
 - **`48 kHz` Broadcast Audio Pipeline:** Local `16 kHz` **`faster-whisper small`** + RMS speech-burst alignment, em-dash-safe keyword highlighting, 3-act BGM (`0` MD5 clones, `allow_synth_fallback: false`), `+33ms` peak-aligned SFX, **`6.5:1` (`ratio=6.5`)** sidechain ducking, and single 2-pass `loudnorm` (**`-14.0 ± 0.5 LUFS`**, **`<= -1.5 dBTP`**).
 - **Fail-Closed QA & Bitrate Guardrails:** `hyperframes check --strict --safe-zone shorts --json`, `<= 55 MiB` (`57,671,680 B`) H.264 MP4 ceiling, dual KinoCut profiles (`ui-capture-dark >= 88.0`, `default >= 55.0`, `color_balance PASS`, `static_fraction <= 0.15`), and `thumbnail_2x3_crop.jpg` (`y=150..1770`) verification.
@@ -70,7 +70,7 @@ Sutradhar/
 │   ├── publish_youtube.py           # --publish, --update-playlists, --update-thumbnail, --verify-only
 │   ├── thumbnail_utils.py           # Re-export facade for sutradhar.publishing.thumbnail_verifier
 │   └── audition_voices.py           # Standalone voice audition utility (build/auditions/)
-├── docs/                            # INSTRUCTIONS.md, SETUP_AND_OPERATIONS.md, schema.sql & plans
+├── docs/                            # INSTRUCTIONS.md, SETUP_AND_OPERATIONS.md, ARCHITECTURE.md & schema.sql
 ├── tests/                           # Pytest unit, contract & Chromium/pipeline verification suites
 ├── build/                           # Ephemeral build artifacts (git-ignored)
 ├── config.yaml                      # Single source of truth for pacing, audio, safe zones & publishing
@@ -115,7 +115,7 @@ npx hyperframes browser ensure
 | **6. Publish** | `.\.venv\Scripts\python.exe scripts/publish_youtube.py` | Upload MP4, assign English playlist, poll processing, `thumbnails.set`, verify live `sardefault.jpg` CDN parity & commit SQLite atomically. |
 
 Read-only verification & recovery:
-- `.\.venv\Scripts\python.exe scripts/publish_youtube.py --verify-only` (read-only live audit of Ep 1–4, Series 1–3 playlists, CDN & DB parity)
+- `.\.venv\Scripts\python.exe scripts/publish_youtube.py --verify-only` (read-only live audit of published episodes, playlists, CDN & DB parity)
 - `.\.venv\Scripts\python.exe scripts/db_manager.py --record-published` / `--repair` (manual DB recovery & integrity repair)
 
 ---
@@ -127,7 +127,7 @@ Read-only verification & recovery:
 .\.venv\Scripts\python.exe -m pytest -q
 
 # Fast non-render test suite (skips full Chromium/MP4 render tests)
-.\.venv\Scripts\python.exe -m pytest -q --ignore=tests/test_sutradhar_phase2_runtime.py --ignore=tests/test_sutradhar_phase4_pipeline.py
+.\.venv\Scripts\python.exe -m pytest -q --ignore=tests/test_runtime.py --ignore=tests/test_render_qa.py
 
 # Run HyperFrames strict Shorts safe-zone check
 npm run hf:check
@@ -138,11 +138,10 @@ npm run hf:check
 ## 7. Documentation Index
 
 - [INSTRUCTIONS.md](./docs/INSTRUCTIONS.md) — 16-Part Authoritative Directing & Production Spec (mandatory reading for video production runs).
-- [SETUP_AND_OPERATIONS.md](./docs/SETUP_AND_OPERATIONS.md) — Prerequisites, ElevenLabs Starter math, OAuth setup, and daily 6-command runbook.
+- [SETUP_AND_OPERATIONS.md](./docs/SETUP_AND_OPERATIONS.md) — Prerequisites, OAuth setup, and daily 6-command runbook.
+- [ARCHITECTURE.md](./docs/ARCHITECTURE.md) — System architecture, design decisions, ElevenLabs cost math, and historical benchmarks.
 - [schema.sql](./docs/schema.sql) — Canonical SQLite Schema v4 (`series`, `episodes`, `publishing_history`, `audio_ledger`).
 - [manifest.yaml](./assets/manifest.yaml) — Schema v2.0.0 asset catalog (`fonts`, `audio`, `characters`, `environments`, `props`, `runtime`).
-- [VIDEO_PRODUCTION_REDESIGN_PLAN.md](./docs/VIDEO_PRODUCTION_REDESIGN_PLAN.md) — Master architecture redesign & 7-phase roadmap.
-- [VIDEO_STYLE_EXPLORATION_PLAN.md](./docs/VIDEO_STYLE_EXPLORATION_PLAN.md) — Chronological Round 1–2 POCs, Ep 3 replacement (`oBcyiPy26rg`), and Ep 4 (`7PWFV7lQG6U`) forensic record.
 
 ---
 

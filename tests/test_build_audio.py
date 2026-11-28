@@ -472,7 +472,7 @@ class TestBuildAudio(unittest.TestCase):
             )
         self.assertIn("zero spoken words", str(ctx_empty.exception))
 
-    # 8. CLI strictly rejects dynamic arguments (Antigravity whitelist safety)
+    # 8. CLI strictly rejects dynamic arguments (zero-argument CLI safety)
     def test_08_cli_rejects_dynamic_arguments(self) -> None:
         env = {**os.environ, "SUTRADHAR_ROOT": str(self.root)}
         proc = subprocess.run(

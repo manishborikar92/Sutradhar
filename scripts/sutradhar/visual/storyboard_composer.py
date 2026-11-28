@@ -193,7 +193,7 @@ def detect_v2_storyboard_run(root: Path, cfg: dict[str, Any]) -> bool:
 
 
 def resolve_v2_episode_inputs(root: Path, cfg: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Load EpisodePlanV2 dict and Phase 3 audio_manifest dict from build_dir."""
+    """Load EpisodePlanV2 dict and audio_manifest dict from build_dir."""
     build_dir = (Path(root) / cfg["paths"]["build_dir"]).resolve()
     plan_path = build_dir / "episode_plan.json"
     if not plan_path.is_file():
@@ -206,7 +206,7 @@ def resolve_v2_episode_inputs(root: Path, cfg: dict[str, Any]) -> tuple[dict[str
     elif (build_dir / "manifest.js").is_file():
         audio_manifest = parse_manifest_js(build_dir / "manifest.js")
     else:
-        raise CompositionError(f"Missing Phase 3 audio_manifest.json at '{audio_manifest_path}'.")
+        raise CompositionError(f"Missing audio_manifest.json at '{audio_manifest_path}'.")
     return plan_data, audio_manifest
 
 
@@ -879,7 +879,7 @@ def _stage_runtime_bundle(root: Path, output_dir: Path, registry: dict[str, Any]
 
     rt_src = root / "templates" / "runtime"
     shutil.copytree(rt_src, output_dir / "runtime", dirs_exist_ok=True)
-    # Remove any three.js remnants if ever present; Phase 2 runtime uses pure Canvas2D
+    # Remove any three.js remnants if ever present; runtime uses pure Canvas2D
     for unwanted in output_dir.rglob("three.module.min.js"):
         unwanted.unlink(missing_ok=True)
 
@@ -900,7 +900,7 @@ def compose_storyboard(
     vignette_strength: float = 0.40,
     grain_alpha: float = 0.022,
 ) -> CompiledComposition:
-    """Compile EpisodePlanV2 + StoryboardIR + Phase 3 audio into a HyperFrames composition."""
+    """Compile EpisodePlanV2 + StoryboardIR + audio into a HyperFrames composition."""
     from jinja2 import Environment, FileSystemLoader
 
     root = Path(root).resolve()
@@ -949,7 +949,7 @@ def compose_storyboard(
     captions_js_path = target_dir / "captions" / "captions_data.js"
     write_captions_data_js(cues, captions_js_path)
 
-    # Audio handling: copy pre-mixed WAV or mix cleanly using Phase 3 sound_mixer
+    # Audio handling: copy pre-mixed WAV or mix cleanly using sound_mixer
     audio_out_path: Optional[Path] = target_dir / "audio" / "master_mix.wav"
     audio_mix_report: dict[str, Any] = {}
     if master_wav_path is not None:

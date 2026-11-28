@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Sutradhar SQLite state machine and Pydantic schema validator CLI facade.
 
-Fixed zero-argument CLI commands (for Antigravity /automation whitelist):
+Fixed zero-argument CLI commands:
     python scripts/db_manager.py --init
     python scripts/db_manager.py --context
     python scripts/db_manager.py --create-series

@@ -1,4 +1,4 @@
-"""Phase 4 unit, negative fail-closed, and real end-to-end compilation/render/QA tests."""
+"""Render & QA unit, negative fail-closed, and real end-to-end compilation/render/QA tests."""
 
 from __future__ import annotations
 
@@ -69,7 +69,7 @@ from sutradhar.visual.thumbnail_builder import (  # noqa: E402
 
 
 def _write_speech_wav(path: Path, duration_sec: float = 2.4, freq_hz: float = 210.0) -> None:
-    """Create a synthetic speech-like PCM WAV (48 kHz mono) for $0-budget Phase 4 tests."""
+    """Create a synthetic speech-like PCM WAV (48 kHz mono) for $0-budget render/QA tests."""
     sr = 48000
     n_total = int(sr * duration_sec)
     n_quiet_tail = min(int(sr * 0.45), int(n_total * 0.30))
@@ -641,7 +641,7 @@ def test_captions_mounted_as_sub_composition_in_index_html(tmp_path: Path) -> No
 
 
 def test_phase3_audio_manifest_narration_full_path_and_parity(tmp_path: Path) -> None:
-    """Finding 2 fix: Verify compose_storyboard handles Phase 3 build_audio manifest shape & rejects tampered billed_chars."""
+    """Finding 2 fix: Verify compose_storyboard handles build_audio manifest shape & rejects tampered billed_chars."""
     from sutradhar.audio.elevenlabs_tts import DEFAULT_TAG_TEMPLATES, load_pronunciations, prepare_scene_tts_text
 
     cfg = load_config(REPO_ROOT)

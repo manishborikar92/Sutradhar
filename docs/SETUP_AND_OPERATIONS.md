@@ -48,9 +48,8 @@ Sutradhar uses **ElevenLabs v4 (`eleven_v4`)** with **Viraj** (`uuyFQegRan8rpIQC
    ```
 
 > [!NOTE]
-> **ElevenLabs Starter Quota Math (`30 Shorts / Month`):**  
-> ElevenLabs Starter includes **`30,000` credits/month** (`1` credit = `1` billed character, including inline `[tags]`).  
-> Sutradhar enforces a **`760–840` billed-char target** (`850` soft warning, **`900` hard pre-TTS cap**). At `~815` avg billed chars per Short, **`30` Shorts/month** consume **`~24,450 / 30,000` credits**, leaving an **`~18.5%` buffer** (`~5,550` credits). Scene-level SHA-256 WAV caching in `build/cache/audio/` + SQLite `audio_ledger` ensures visual edits cost `0` credits and single-scene rewrites re-bill only that scene.
+> **Per-Episode Character Budget & Caching:**  
+> Sutradhar enforces a **`760–840` billed-char target** (`850` soft warning, **`900` hard pre-TTS cap**, including inline `[tags]`). Scene-level SHA-256 WAV caching in `build/cache/audio/` + SQLite `audio_ledger` ensures visual edits cost `0` credits and single-scene rewrites re-bill only that scene.
 
 ### 2.2 Google Cloud & YouTube Data API v3 OAuth Setup
 1. Open [Google Cloud Console](https://console.cloud.google.com/), create a project, and enable **YouTube Data API v3**.
@@ -131,7 +130,7 @@ flowchart TD
 
 #### Additional `publish_youtube.py` & `db_manager.py` Maintenance Commands
 ```powershell
-# Strictly read-only live audit (Ep 1-4, Series 1-3 playlists, sardefault.jpg CDN & DB parity)
+# Strictly read-only live audit (published episodes, series playlists, sardefault.jpg CDN & DB parity)
 .\.venv\Scripts\python.exe scripts/publish_youtube.py --verify-only
 
 # Sync English playlist titles/privacy on YouTube
@@ -166,7 +165,7 @@ Schema v4 is defined in [docs/schema.sql](./schema.sql) (`series`, `episodes`, `
 .\.venv\Scripts\python.exe -m pytest -q
 
 # Fast non-render unit & contract suite
-.\.venv\Scripts\python.exe -m pytest -q --ignore=tests/test_sutradhar_phase2_runtime.py --ignore=tests/test_sutradhar_phase4_pipeline.py
+.\.venv\Scripts\python.exe -m pytest -q --ignore=tests/test_runtime.py --ignore=tests/test_render_qa.py
 
 # HyperFrames strict Shorts safe-zone check (on a compiled composition)
 npm run hf:check

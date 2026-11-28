@@ -1,0 +1,359 @@
+{
+  "content_format": "standalone",
+  "series_id": null,
+  "series_title": null,
+  "pillar": "Ancient Epics & Lore",
+  "episode_number_in_series": null,
+  "total_planned_episodes": null,
+  "global_episode_number": 4,
+  "tts_voice": "uuyFQegRan8rpIQCGu9K",
+  "bgm_track": "dramatic_mythology.mp3",
+  "bespoke_asset_path": "assets/svg/backdrops/samudra_manthan_halahala.svg",
+  "youtube_title": "Why Lord Shiva Drank Poison Before the Gods Got Nectar #Shorts",
+  "youtube_description": "During the Samudra Manthan—the churning of the Cosmic Ocean for the nectar of immortality (Amrita)—the very first force to rise from the depths was Halahala (Kalakuta), a blazing poison fierce enough to consume all three worlds.\n\nWhile both Devas and Asuras fled in terror, Lord Shiva stepped forward in boundless compassion, gathered the poison into his palm, and held it in his throat—earning the eternal name Neelakantha, the Blue-Throated Protector of Creation.\n\n--- Scriptural & Traditional References ---\n• Srimad Bhagavatam — Canto 8, Chapter 7, Verses 18–46 (Appearance of Halahala & Lord Shiva as Neelakantha)\n• Vishnu Purana — Book 1, Chapter 9 (Churning of the Ocean of Milk)\n• Padma Purana & Skanda Purana — Samudra Manthan & Devi Shakti tradition\n\nAudio Narration: Hindi | On-Screen Captions: Synchronized Hindi\nSutradhar Chronicles — Ancient Epics & Lore\n\n#Shorts #Shiva #Neelakantha #SamudraManthan #HinduMythology #SrimadBhagavatam #Halahala #Mahadev #IndianEpics #Sutradhar",
+  "summary": "समुद्र मंथन के समय निकले भयंकर हलाहल (कालकूट) विष से तीनों लोकों की रक्षा हेतु भगवान शिव द्वारा करुणापूर्वक विष पान और नीलकंठ कहलाने की प्रामाणिक पौराणिक गाथा।",
+  "language": "hi",
+  "target_duration_sec": 61.947,
+  "target_duration_range": {
+    "min_seconds": 40.0,
+    "max_seconds": 120.0
+  },
+  "narrative_structure": "five_phase_compact_arc",
+  "story_arc": {
+    "arc_title": "समुद्र मंथन एवं हलाहल पान — नीलकंठ महादेव",
+    "premise": "अमृत की कामना से देवों और असुरों ने मंदराचल व वासुकि द्वारा क्षीरसागर का मंथन प्रारंभ किया।",
+    "central_conflict": "अमृत से पहले प्रलयंकारी हलाहल विष प्रकट हुआ जिसने तीनों लोकों को भस्म करना प्रारंभ कर दिया।",
+    "resolution": "महादेव ने सृष्टि-रक्षा हेतु विष को हथेली में समेटकर पी लिया और कंठ में धारण कर नीलकंठ कहलाए।",
+    "thematic_lesson": "सच्चा महान वही है जो अमृत की दौड़ के बीच संसार की पीड़ा स्वयं थाम ले।",
+    "narrative_structure": "five_phase_compact_arc",
+    "climax_scene_index": 5,
+    "resolution_scene_index": 7,
+    "phases": [
+      {
+        "phase_index": 1,
+        "phase_name": "Samudra Manthan & Halahala",
+        "narrative_goal": "सागर मंथन से अमृत के स्थान पर हलाहल विष के उद्भव का संकट स्थापित करना।",
+        "structure_type": "hook",
+        "target_duration_sec": 9.8,
+        "scenes": [
+          1
+        ]
+      },
+      {
+        "phase_index": 2,
+        "phase_name": "Panic Across Creation",
+        "narrative_goal": "देवों और दानवों के भय व कैलाश की ओर पलायन को दर्शाना।",
+        "structure_type": "premise",
+        "target_duration_sec": 15.2,
+        "scenes": [
+          2,
+          3
+        ]
+      },
+      {
+        "phase_index": 3,
+        "phase_name": "Compassion on Kailash",
+        "narrative_goal": "महादेव द्वारा भवानी के समक्ष सृष्टि-कल्याण का संकल्प लेना।",
+        "structure_type": "escalation",
+        "target_duration_sec": 8.4,
+        "scenes": [
+          4
+        ]
+      },
+      {
+        "phase_index": 4,
+        "phase_name": "Halahala Drink & Neelakantha",
+        "narrative_goal": "शिव द्वारा विष-पान और कंठ में धारण कर नीलकंठ रूप प्रकट करना।",
+        "structure_type": "climax",
+        "target_duration_sec": 18.2,
+        "scenes": [
+          5,
+          6
+        ]
+      },
+      {
+        "phase_index": 5,
+        "phase_name": "Cosmic Dawn & Moral",
+        "narrative_goal": "अमृत बनाम विष के त्याग का दार्शनिक निष्कर्ष प्रस्तुत करना।",
+        "structure_type": "resolution",
+        "target_duration_sec": 10.4,
+        "scenes": [
+          7
+        ]
+      }
+    ]
+  },
+  "story_research": {
+    "source_tradition": "श्रीमद्भागवत महापुराण, विष्णु पुराण, पद्म पुराण एवं स्कंद पुराण",
+    "canonical_story_summary": "श्रीमद्भागवत महापुराण (स्कंध ८, अध्याय ७) और विष्णु पुराण (अंश १, अध्याय ९) के अनुसार समुद्र मंथन में मंदराचल पर्वत, वासुकि नाग और भगवान विष्णु के कूर्म अवतार के सहयोग से मंथन के प्रारंभ में ही अत्यंत दाहक हलाहल (कालकूट) विष प्रकट हुआ। भयाक्रांत देवगण और प्रजापति कैलाश पर भगवान शिव की शरण में पहुँचे। देवी सती/भवानी से संभाषण के उपरांत करुणासागर महादेव ने उस महाविष को अंजलि में लेकर पान किया तथा योगशक्ति एवं पराशक्ति के अनुग्रह से उसे कंठ में ही रोके रखा, जिससे उनका कंठ नीलवर्ण हो गया और वे नीलकंठ कहलाए।",
+    "key_verified_facts": [
+      "Srimad Bhagavatam Canto 8, Chapter 7, Verses 18–46 describes the emergence of fierce Halahala poison before Amrita, Lord Shiva's dialogue with Bhavani/Sati, drinking the poison from his palm, and stray droplets absorbed by serpents and scorpions.",
+      "Vishnu Purana Book 1, Chapter 9 recounts Devas holding Vasuki's tail and Asuras near Vasuki's five-headed hood while Mount Mandara rests atop Lord Vishnu's Kurma avatar.",
+      "Padma Purana & Skanda Purana preserve the tradition of Devi gently pressing Shiva's throat so the poison remains held safely there, bestowing the epithet Neelakantha."
+    ],
+    "cross_checked_variants": "श्रीमद्भागवत में भगवती सती तथा शाक्त/पद्म-स्कंद पुराण परंपरा में देवी पार्वती द्वारा कंठ-धारण का प्रसंग मिलता है।",
+    "source_references": [
+      "श्रीमद्भागवत महापुराण — स्कंध ८, अध्याय ७, श्लोक १८–४६",
+      "विष्णु पुराण — अंश १, अध्याय ९",
+      "पद्म पुराण एवं स्कंद पुराण — समुद्र मंथन एवं नीलकंठ उपाख्यान"
+    ]
+  },
+  "scenes": [
+    {
+      "scene_index": 1,
+      "narration_text": "अमृत के लिए देव और असुरों ने सागर मथा। पर पहले निकला हलाहल, जो तीनों लोकों को जलाने लगा!",
+      "visual_mode": "character_drama",
+      "backdrop_rig": "samudra_manthan_halahala",
+      "diagram_rig": null,
+      "active_diagram_stage": null,
+      "primary_character": "sutradhar_narrator",
+      "secondary_character": null,
+      "tertiary_character": null,
+      "callout_headline": null,
+      "callout_subtext": null,
+      "emotion": "calm",
+      "action_gesture": "idle_breathe",
+      "mood_palette": "cosmic_indigo",
+      "particle_theme": "mystic_mist",
+      "camera_motion": "slow_zoom",
+      "transition_sfx": null,
+      "pause_after_ms": 260,
+      "emphasis_word": null,
+      "speaker_role": "narrator",
+      "voice_override": null,
+      "speed": 0.9,
+      "shot_type": "establishing",
+      "transition_type": "curtain_open",
+      "sfx_cue": null,
+      "fx_theme": null,
+      "vfx_elements": [
+        "sound_ripple"
+      ],
+      "characters": [
+        "sutradhar_narrator"
+      ],
+      "pose_preset": "standing_hero",
+      "expression_preset": "calm"
+    },
+    {
+      "scene_index": 2,
+      "narration_text": "इस कालकूट विष की ज्वाला से देवता और दानव भयभीत हो भागे। सृष्टि का कोई रक्षक न बचा था।",
+      "visual_mode": "character_drama",
+      "backdrop_rig": "crushed_atmosphere",
+      "diagram_rig": null,
+      "active_diagram_stage": null,
+      "primary_character": "indra_dev",
+      "secondary_character": null,
+      "tertiary_character": null,
+      "callout_headline": null,
+      "callout_subtext": null,
+      "emotion": "fear",
+      "action_gesture": "tremble",
+      "mood_palette": "crimson_wrath",
+      "particle_theme": "crimson_embers",
+      "camera_motion": "slow_pan",
+      "transition_sfx": null,
+      "pause_after_ms": 260,
+      "emphasis_word": null,
+      "speaker_role": "narrator",
+      "voice_override": null,
+      "speed": 0.9,
+      "shot_type": "medium_close",
+      "transition_type": "cut",
+      "sfx_cue": null,
+      "fx_theme": null,
+      "vfx_elements": [
+        "sound_ripple"
+      ],
+      "characters": [
+        "indra_dev"
+      ],
+      "pose_preset": "standing_hero",
+      "expression_preset": "fear"
+    },
+    {
+      "scene_index": 3,
+      "narration_text": "तब एक ही आशा बची—कैलाश के महादेव। व्याकुल देवगण शिव की शरण में पहुँचे।",
+      "visual_mode": "character_drama",
+      "backdrop_rig": "mount_kailash",
+      "diagram_rig": null,
+      "active_diagram_stage": null,
+      "primary_character": "indra_dev",
+      "secondary_character": "shiva",
+      "tertiary_character": null,
+      "callout_headline": null,
+      "callout_subtext": null,
+      "emotion": "fear",
+      "action_gesture": "idle_breathe",
+      "mood_palette": "kailash_himalayan",
+      "particle_theme": "himalayan_snow",
+      "camera_motion": "slow_push",
+      "transition_sfx": null,
+      "pause_after_ms": 260,
+      "emphasis_word": null,
+      "speaker_role": "narrator",
+      "voice_override": null,
+      "speed": 0.9,
+      "shot_type": "establishing",
+      "transition_type": "fade",
+      "sfx_cue": null,
+      "fx_theme": null,
+      "vfx_elements": [
+        "sound_ripple"
+      ],
+      "characters": [
+        "indra_dev",
+        "shiva"
+      ],
+      "pose_preset": "standing_hero",
+      "expression_preset": "fear"
+    },
+    {
+      "scene_index": 4,
+      "narration_text": "करुणा से भरकर महादेव ने भवानी से कहा— प्रजा के कल्याण हेतु मैं यह विष स्वयं पिऊँगा।",
+      "visual_mode": "character_drama",
+      "backdrop_rig": "mount_kailash",
+      "diagram_rig": null,
+      "active_diagram_stage": null,
+      "primary_character": "shiva",
+      "secondary_character": "bhavani_devi",
+      "tertiary_character": null,
+      "callout_headline": null,
+      "callout_subtext": null,
+      "emotion": "calm",
+      "action_gesture": "bless_hand",
+      "mood_palette": "kailash_himalayan",
+      "particle_theme": "himalayan_snow",
+      "camera_motion": "slow_push",
+      "transition_sfx": null,
+      "pause_after_ms": 260,
+      "emphasis_word": null,
+      "speaker_role": "character_dialogue",
+      "voice_override": null,
+      "speed": 0.9,
+      "shot_type": "medium_close",
+      "transition_type": "fade",
+      "sfx_cue": null,
+      "fx_theme": null,
+      "vfx_elements": [
+        "sound_ripple"
+      ],
+      "characters": [
+        "shiva",
+        "bhavani_devi"
+      ],
+      "pose_preset": "meditative_padmasana",
+      "expression_preset": "calm"
+    },
+    {
+      "scene_index": 5,
+      "narration_text": "ब्रह्मांड स्तब्ध था। शिव ने उस महाविष को हथेली में समेटा और बिना संकोच पी लिया!",
+      "visual_mode": "character_drama",
+      "backdrop_rig": "kailash_subterranean_core",
+      "diagram_rig": null,
+      "active_diagram_stage": null,
+      "primary_character": "shiva",
+      "secondary_character": null,
+      "tertiary_character": null,
+      "callout_headline": null,
+      "callout_subtext": null,
+      "emotion": "meditating",
+      "action_gesture": "bless_hand",
+      "mood_palette": "mystic_slate",
+      "particle_theme": "mystic_mist",
+      "camera_motion": "slow_zoom",
+      "transition_sfx": null,
+      "pause_after_ms": 260,
+      "emphasis_word": null,
+      "speaker_role": "narrator",
+      "voice_override": null,
+      "speed": 0.94,
+      "shot_type": "medium_close",
+      "transition_type": "cut",
+      "sfx_cue": null,
+      "fx_theme": null,
+      "vfx_elements": [
+        "sound_ripple"
+      ],
+      "characters": [
+        "shiva"
+      ],
+      "pose_preset": "meditative_padmasana",
+      "expression_preset": "meditating"
+    },
+    {
+      "scene_index": 6,
+      "narration_text": "विष उनके कंठ में ठहर गया और कंठ नीला हो उठा। सृष्टि बच गई, और शिव कहलाए—नीलकंठ!",
+      "visual_mode": "character_drama",
+      "backdrop_rig": "mount_kailash",
+      "diagram_rig": null,
+      "active_diagram_stage": null,
+      "primary_character": "shiva",
+      "secondary_character": "bhavani_devi",
+      "tertiary_character": null,
+      "callout_headline": null,
+      "callout_subtext": null,
+      "emotion": "calm",
+      "action_gesture": "idle_breathe",
+      "mood_palette": "kailash_himalayan",
+      "particle_theme": "golden_embers",
+      "camera_motion": "slow_push",
+      "transition_sfx": null,
+      "pause_after_ms": 260,
+      "emphasis_word": null,
+      "speaker_role": "narrator",
+      "voice_override": null,
+      "speed": 0.9,
+      "shot_type": "medium_close",
+      "transition_type": "fade",
+      "sfx_cue": null,
+      "fx_theme": null,
+      "vfx_elements": [
+        "sunburst"
+      ],
+      "characters": [
+        "shiva",
+        "bhavani_devi"
+      ],
+      "pose_preset": "meditative_padmasana",
+      "expression_preset": "calm"
+    },
+    {
+      "scene_index": 7,
+      "narration_text": "अमृत लेने सब दौड़े, पर विष केवल शिव ने पिया। सच्चा महान वही है, जो जगत की पीड़ा थाम ले।",
+      "visual_mode": "character_drama",
+      "backdrop_rig": "mount_kailash",
+      "diagram_rig": null,
+      "active_diagram_stage": null,
+      "primary_character": "shiva",
+      "secondary_character": "indra_dev",
+      "tertiary_character": null,
+      "callout_headline": null,
+      "callout_subtext": null,
+      "emotion": "calm",
+      "action_gesture": "bless_hand",
+      "mood_palette": "golden_imperial",
+      "particle_theme": "golden_embers",
+      "camera_motion": "slow_zoom",
+      "transition_sfx": null,
+      "pause_after_ms": 850,
+      "emphasis_word": null,
+      "speaker_role": "narrator",
+      "voice_override": null,
+      "speed": 0.9,
+      "shot_type": "establishing",
+      "transition_type": "curtain_open",
+      "sfx_cue": null,
+      "fx_theme": null,
+      "vfx_elements": [
+        "sunburst"
+      ],
+      "characters": [
+        "shiva",
+        "indra_dev"
+      ],
+      "pose_preset": "standing_hero",
+      "expression_preset": "calm"
+    }
+  ]
+}

@@ -10,7 +10,7 @@ Audits:
   3. Gate 3 (Zero Tag Leakage): 0 tags in clean narration, aligned words, and caption cues
   4. Gate 4 (Zero-Waste Caching): Sub-2-second cached rebuild with 0 HTTP calls
   5. Gate 5 (Broadcast Audio & Quality Gate): 48 kHz stereo mix, -14 LUFS, <= -1.5 dBTP, quiet tail, fail-closed QA
-  6. Gate 6 (Codebase Cleanliness): Zero Kokoro ONNX / Gemini TTS runtime dependencies
+  6. Gate 6 (Codebase Cleanliness): Zero Kokoro ONNX / legacy external TTS runtime dependencies
 """
 
 from __future__ import annotations
@@ -366,7 +366,7 @@ class TestPhase5ProductionGates(unittest.TestCase):
             reject_synthetic_dom_snapshots({"dom_snapshots": [{"scene_index": 0}]})
 
     def test_gate_6_codebase_cleanliness_and_pruned_dependencies(self) -> None:
-        """Gate 6: Zero Kokoro ONNX or legacy Gemini TTS runtime dependencies."""
+        """Gate 6: Zero Kokoro ONNX or legacy external TTS runtime dependencies."""
         self.assertFalse((REPO_ROOT / "models" / "kokoro").exists())
         reqs_text = (REPO_ROOT / "requirements.txt").read_text(encoding="utf-8")
         self.assertNotIn("kokoro-onnx", reqs_text)

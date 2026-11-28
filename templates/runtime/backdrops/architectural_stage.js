@@ -1,5 +1,5 @@
 /**
- * Sutradhar v2 Architectural Stage Engine (Ref-1 HORIZON_Y Grounding Law).
+ * Sutradhar v2 Architectural Stage Engine (HORIZON_Y Grounding Law).
  * Provides unified palace walls, dado wainscoting, fluted pilasters, 1-point perspective
  * floorboards, optional velvet curtains (Beat-1 opt-in), clock niches, and dais pedestals.
  */

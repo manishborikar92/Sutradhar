@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sutradhar — Thin CLI Facade for Phase 3 Audio Pipeline (`sutradhar.audio`).
+"""Sutradhar — Thin CLI Facade for Audio Pipeline (`sutradhar.audio`).
 
 Whitelisted zero-argument CLI invocation:
     python scripts/build_audio.py
@@ -320,7 +320,7 @@ def build_episode_audio(
     raw_factory = tts_factory or kwargs.get("elevenlabs_factory") or default_elevenlabs_factory
     tts_engine = _instantiate_tts_engine(raw_factory, cfg, root)
 
-    # Check if an already-synthesized legacy episode (pre-Phase 3 [pause]-stripped cache)
+    # Check if an already-synthesized legacy episode ([pause]-stripped cache)
     # is 100% cached on disk so Gate 4 rebuilds execute with 0 API calls in < 2s.
     is_live_engine = isinstance(tts_engine, ElevenLabsEngine) and not isinstance(
         tts_engine, FakeElevenLabs
@@ -653,7 +653,7 @@ def main() -> int:
     if len(sys.argv) > 1:
         print(
             "[ERROR] scripts/build_audio.py takes zero CLI arguments "
-            "(strict Antigravity whitelist compliance).",
+            "(strict zero-argument CLI compliance).",
             file=sys.stderr,
         )
         return 1

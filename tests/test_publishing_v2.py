@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Phase 5 unit, integration, and cross-document consistency tests (`sutradhar.publishing`)."""
+"""Unit, integration, and cross-document consistency tests (`sutradhar.publishing`)."""
 
 from __future__ import annotations
 

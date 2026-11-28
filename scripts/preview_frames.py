@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sutradhar — Thin CLI Facade for Phase 4 Pre-Render Visual QA & Preview Sheet.
+"""Sutradhar — Thin CLI Facade for Pre-Render Visual QA & Preview Sheet.
 
 Whitelisted zero-argument CLI invocation:
     python scripts/preview_frames.py
