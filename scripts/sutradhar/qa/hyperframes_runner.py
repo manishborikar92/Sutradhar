@@ -201,7 +201,152 @@ def run_hf_lint(root: Path, project_dir: Path, *, timeout_sec: int = 60) -> dict
             f"hyperframes lint failed (exit={proc.returncode}): {(proc.stderr or proc.stdout)[-500:]}"
         ) from exc
     parsed.setdefault("exit_code", proc.returncode)
+    raw_ok = bool(parsed.get("ok", proc.returncode == 0))
+    err_cnt = int(parsed.get("errorCount") or 0)
+    warn_cnt = int(parsed.get("warningCount") or 0)
+    parsed["raw_ok"] = raw_ok
+    parsed["ok"] = (proc.returncode == 0) and raw_ok and err_cnt == 0 and warn_cnt == 0
     return parsed
+
+
+def _collect_hf_check_issues(check_res: dict[str, Any]) -> tuple[int, int, list[str]]:
+    """Count all errors and warnings across top-level and sub-report sections of `hyperframes check`."""
+    total_errors = 0
+    total_warnings = 0
+    issues: list[str] = []
+
+    if check_res.get("raw_ok", check_res.get("ok")) is False:
+        issues.append("hyperframes check reported ok=false")
+    exit_code = check_res.get("exit_code")
+    if exit_code not in (None, 0):
+        issues.append(f"hyperframes check exited with code {exit_code}")
+
+    top_errs = check_res.get("errors") or []
+    top_warns = check_res.get("warnings") or []
+    top_err_cnt = int(check_res.get("errorCount") or 0)
+    top_warn_cnt = int(check_res.get("warningCount") or 0)
+    if top_err_cnt or top_errs:
+        total_errors += max(top_err_cnt, len(top_errs))
+        for item in top_errs:
+            issues.append(f"top-level error: {item}")
+    if top_warn_cnt or top_warns:
+        total_warnings += max(top_warn_cnt, len(top_warns))
+        for item in top_warns:
+            issues.append(f"top-level warning: {item}")
+
+    section_names = ("lint", "runtime", "layout", "motion", "contrast", "craft", "audio")
+    seen_sections: set[str] = set()
+    ordered_sections: list[tuple[str, dict[str, Any]]] = []
+    for name in section_names:
+        val = check_res.get(name)
+        if isinstance(val, dict):
+            seen_sections.add(name)
+            ordered_sections.append((name, val))
+    for name, val in check_res.items():
+        if name not in seen_sections and isinstance(val, dict) and any(
+            k in val for k in ("errorCount", "warningCount", "findings", "errors", "warnings")
+        ):
+            ordered_sections.append((name, val))
+
+    for sec_name, sec in ordered_sections:
+        sec_findings = sec.get("findings") or []
+        sec_errs = sec.get("errors") or []
+        sec_warns = sec.get("warnings") or []
+        finding_errs = [f for f in sec_findings if isinstance(f, dict) and f.get("severity") == "error"]
+        finding_warns = [f for f in sec_findings if isinstance(f, dict) and f.get("severity") == "warning"]
+
+        sec_err_cnt = max(int(sec.get("errorCount") or 0), len(finding_errs), len(sec_errs))
+        sec_warn_cnt = max(int(sec.get("warningCount") or 0), len(finding_warns), len(sec_warns))
+        total_errors += sec_err_cnt
+        total_warnings += sec_warn_cnt
+
+        for f in finding_errs + finding_warns:
+            code = f.get("code") or "finding"
+            sev = f.get("severity") or "issue"
+            msg = f.get("message") or str(f)
+            issues.append(f"{sec_name}.{code} ({sev}): {msg}")
+        for item in sec_errs:
+            issues.append(f"{sec_name} error: {item}")
+        for item in sec_warns:
+            issues.append(f"{sec_name} warning: {item}")
+        if sec_err_cnt > 0 and not finding_errs and not sec_errs:
+            issues.append(f"{sec_name}: errorCount={sec_err_cnt}")
+        if sec_warn_cnt > 0 and not finding_warns and not sec_warns:
+            issues.append(f"{sec_name}: warningCount={sec_warn_cnt}")
+
+    return total_errors, total_warnings, issues
+
+
+def validate_hf_check_report(check_res: dict[str, Any]) -> list[str]:
+    """Fail closed unless `hyperframes check` reports ok=true with 0 errors and 0 warnings everywhere."""
+    total_errors, total_warnings, issues = _collect_hf_check_issues(check_res)
+    if total_errors == 0 and total_warnings == 0 and not issues:
+        return []
+    if not issues:
+        issues.append(f"total_errors={total_errors}, total_warnings={total_warnings}")
+    return [
+        f"hyperframes check --strict --safe-zone shorts failed "
+        f"(errors={total_errors}, warnings={total_warnings}): " + "; ".join(issues)
+    ]
+
+
+def validate_runtime_probe_and_hf_check(
+    probe_res: dict[str, Any],
+    hf_check_res: dict[str, Any] | None = None,
+    *,
+    caption_safe_bottom_max: float = 1395.0,
+    pill_min_x: float = 48.0,
+    pill_max_x: float = 888.0,
+    pill_min_y: float = 288.0,
+    pill_max_y: float = 1248.0,
+) -> list[str]:
+    """Shared fail-closed validation for Chromium DOM/seek probe and HyperFrames Shorts check."""
+    failures: list[str] = []
+    if probe_res.get("console_errors") or probe_res.get("page_errors") or probe_res.get("failed_requests"):
+        failures.append(
+            f"chromium runtime errors: console={probe_res.get('console_errors')}, "
+            f"page={probe_res.get('page_errors')}, network={probe_res.get('failed_requests')}"
+        )
+    if not probe_res.get("loaded_fonts_main"):
+        failures.append("chromium runtime loaded 0 main webfonts")
+    if not probe_res.get("idempotency_passed"):
+        failures.append(
+            f"hf-seek({probe_res.get('idempotency_time_sec')}s) pixel-parity "
+            f"MAE={probe_res.get('idempotency_mae')} > 0.5"
+        )
+    cap_mount = probe_res.get("caption_mount_status") or {}
+    if not cap_mount.get("mounted") or not cap_mount.get("hasChildren"):
+        failures.append(
+            "#captions sub-composition not mounted in index.html "
+            "(data-composition-src/data-composition-id missing or failed to load)"
+        )
+    elif not probe_res.get("caption_checks") or not cap_mount.get("hasDevanagari"):
+        failures.append(
+            "#captions sub-composition rendered zero Devanagari cues inside index.html at spoken timestamps"
+        )
+    hf_tl = probe_res.get("hf_timeline_captions")
+    if not isinstance(hf_tl, dict) or not hf_tl.get("mounted"):
+        failures.append(
+            f"hyperframes timeline #captions sub-composition not mounted: {hf_tl}"
+        )
+    for box in probe_res.get("caption_checks") or []:
+        if float(box["bottom"]) > caption_safe_bottom_max:
+            failures.append(
+                f"caption bottom {box['bottom']:.1f}px > {caption_safe_bottom_max}px (< Y=1400) at t={box['t']}s"
+            )
+    for pill in probe_res.get("pill_boxes") or []:
+        if (
+            float(pill["left"]) < pill_min_x
+            or float(pill["right"]) > pill_max_x
+            or float(pill["top"]) < pill_min_y
+            or float(pill["bottom"]) > pill_max_y
+            or int(pill["scrollHeight"]) > int(pill["clientHeight"]) + 2
+        ):
+            failures.append(f"contextual pill out of Shorts bounds or clipped: {pill}")
+
+    if hf_check_res is not None and not hf_check_res.get("skipped"):
+        failures.extend(validate_hf_check_report(hf_check_res))
+    return failures
 
 
 def run_hf_timeline(root: Path, project_dir: Path, *, timeout_sec: int = 60) -> dict[str, Any]:
@@ -265,7 +410,18 @@ def run_hf_check(
             f"hyperframes check failed (exit={proc.returncode}): {(proc.stderr or proc.stdout)[-600:]}"
         ) from exc
     parsed.setdefault("exit_code", proc.returncode)
-    parsed.setdefault("ok", proc.returncode == 0 and len(parsed.get("errors") or []) == 0)
+    raw_ok = bool(parsed.get("ok", proc.returncode == 0))
+    total_errors, total_warnings, issue_messages = _collect_hf_check_issues(parsed)
+    parsed["raw_ok"] = raw_ok
+    parsed["total_error_count"] = total_errors
+    parsed["total_warning_count"] = total_warnings
+    parsed["issue_messages"] = issue_messages
+    parsed["ok"] = (
+        proc.returncode == 0
+        and raw_ok
+        and total_errors == 0
+        and total_warnings == 0
+    )
     return parsed
 
 

@@ -48,10 +48,10 @@ body {
 .ctx-pill {
   display: inline-flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 12px 22px;
+  gap: 6px;
+  padding: 14px 24px;
   border-radius: 16px;
-  background: rgba(10, 14, 34, 0.80);
+  background: rgba(10, 14, 34, 0.82);
   border: 1.5px solid rgba(246, 196, 83, 0.56);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.48);
   backdrop-filter: blur(8px);
@@ -59,16 +59,17 @@ body {
 
 .ctx-kicker {
   font-family: "Cinzel", "Inter", sans-serif;
-  font-size: 20px;
+  font-size: 28px;
   font-weight: 800;
-  letter-spacing: 0.14em;
+  line-height: 1.15;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: #FFD750;
 }
 
 .ctx-title {
   font-family: "Inter", "Noto Sans Devanagari", sans-serif;
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 700;
   line-height: 1.2;
   color: #F8F4EC;

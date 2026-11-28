@@ -18,6 +18,7 @@ BROADCAST_SAMPLE_RATE = 48000
 BROADCAST_CHANNELS = 2
 DEFAULT_TARGET_LUFS = -14.0
 DEFAULT_TRUE_PEAK_DBTP = -1.5
+DEFAULT_AAC_TRUE_PEAK_HEADROOM_DB = 0.7  # Leaves headroom so AAC-encoded MP4 stays <= -1.5 dBTP
 DEFAULT_LRA = 10.0
 DEFAULT_BGM_TARGET_LUFS = -34.0
 DEFAULT_CUT_CREST_OFFSET_SEC = 0.033  # +1 frame @ 30fps
@@ -498,7 +499,9 @@ def mix_episode_audio(
     total_dur = float((manifest.get("audio") or {}).get("total_duration_sec") or probe_duration_sec(resolved_narr))
     master_cfg = cfg.get("audio_mastering", {})
     target_lufs = float(master_cfg.get("target_lufs", DEFAULT_TARGET_LUFS))
-    target_tp = float(master_cfg.get("true_peak_max_dbtp", DEFAULT_TRUE_PEAK_DBTP))
+    max_tp = float(master_cfg.get("true_peak_max_dbtp", DEFAULT_TRUE_PEAK_DBTP))
+    aac_headroom_db = float(master_cfg.get("aac_true_peak_headroom_db", DEFAULT_AAC_TRUE_PEAK_HEADROOM_DB))
+    target_tp = round(min(max_tp - max(0.0, aac_headroom_db), max_tp), 2)
     base_sfx_gain = float(sfx_gain_db if sfx_gain_db is not None else master_cfg.get("sfx_gain_db", -10.0))
 
     duck_cfg = master_cfg.get("sidechain_ducking", {})

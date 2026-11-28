@@ -103,7 +103,7 @@ def _concat_wavs(wavs: list[Path], out_wav: Path, *, trailing_silence_sec: float
 
 def _make_sample_v2_plan_and_audio(tmp_path: Path, *, include_pill: bool = True) -> tuple[EpisodePlanV2, dict]:
     scene_specs = [
-        ("कैलाश पर्वत पर महादेव शांत ध्यान में स्थित हैं।", 1.4, 210.0, "कैलाश", "kailash_horizon", "dawn_epic", "shiva", "floor", "palm_cup", "determined", [PropPlacement(id="trishul", kind="trishul", mount="floor", x=210.0, scale=1.0)], include_pill),
+        ("कैलाश पर्वत पर महादेव शांत ध्यान में स्थित हैं।", 2.8, 210.0, "कैलाश", "kailash_horizon", "dawn_epic", "shiva", "floor", "palm_cup", "determined", [PropPlacement(id="trishul", kind="trishul", mount="floor", x=210.0, scale=1.0)], include_pill),
         ("ब्रह्मलोक में समय का चक्र ब्रह्मांड से तेज चलता है।", 1.4, 235.0, "ब्रह्मलोक", "brahmaloka_sabha", "palace_court", "brahma", "dais", "bless", "serene", [PropPlacement(id="brass_clock", kind="brass_clock", mount="pedestal", x=540.0, y=540.0, scale=1.0)], False),
         ("अंतरिक्ष में कालचक्र की गति गुरुत्वाकर्षण से बदलती है।", 1.4, 225.0, "कालचक्र", "observatory_cosmos", "cosmic_explainer", "sutradhar_narrator", "floor", "gesture", "serene", [PropPlacement(id="brahmaloka_time_chakra", kind="brahmaloka_time_chakra", mount="sky", x=540.0, y=520.0, scale=1.0)], False),
         ("हिमालय के आश्रम में ऋषियों ने यह सत्य जाना।", 1.4, 240.0, "हिमालय", "ashram_twilight", "dawn_epic", "ancient_scholar", "floor", "namaskar", "determined", [], False),
@@ -464,8 +464,11 @@ def test_end_to_end_v2_compile_preview_render_and_fail_closed_qa(tmp_path: Path)
     lint_res = run_hf_lint(REPO_ROOT, comp.output_dir)
     assert lint_res.get("ok", lint_res.get("exit_code") == 0)
 
-    check_res = run_hf_check(REPO_ROOT, comp.output_dir, safe_zone="shorts", strict=True, no_craft=True)
+    check_res = run_hf_check(REPO_ROOT, comp.output_dir, safe_zone="shorts", strict=True)
     assert check_res["ok"] is True
+    assert check_res["total_error_count"] == 0
+    assert check_res["total_warning_count"] == 0
+    assert (check_res.get("craft") or {}).get("warningCount", 0) == 0
 
     qa_grid = tmp_path / "qa_grid.jpg"
     sheet_info = generate_storyboard_preview_sheet(
@@ -517,6 +520,10 @@ def test_end_to_end_v2_compile_preview_render_and_fail_closed_qa(tmp_path: Path)
             },
         ],
     ):
+        # Also include per-scene alignment_match_ratio in audio_manifest to verify Whisper QA reporting
+        for sc_idx, asc in enumerate(audio_manifest["scenes"], start=1):
+            asc["alignment_match_ratio"] = round(0.80 + 0.03 * sc_idx, 4)
+
         report = run_v2_quality_gate(
             REPO_ROOT,
             composition_dir=comp.output_dir,
@@ -524,16 +531,25 @@ def test_end_to_end_v2_compile_preview_render_and_fail_closed_qa(tmp_path: Path)
             thumbnail_jpg=thumb_jpg,
             crop_2x3_jpg=crop_jpg,
             master_wav_path=comp.master_wav,
+            audio_manifest=audio_manifest,
             report_output_path=report_path,
             final_qa_grid_path=final_grid,
             cfg=cfg,
-            no_craft=True,
-            run_hf_shorts_check=False,
         )
     assert report.passed is True
     assert report_path.is_file()
     assert final_grid.is_file()
     assert abs(report.audio_gate["mp4_ebur128"]["integrated_lufs"] - (-14.0)) <= 0.5
+    assert report.audio_gate["mp4_ebur128"]["true_peak_dbtp"] <= -1.5
+    assert report.audio_gate["whisper_alignment"]["available"] is True
+    assert report.audio_gate["whisper_alignment"]["scene_count"] == 5
+    assert report.audio_gate["whisper_alignment"]["min_match_ratio"] == 0.83
+    assert report.audio_gate["whisper_alignment"]["avg_match_ratio"] == 0.89
+    assert [s["alignment_match_ratio"] for s in report.audio_gate["whisper_alignment"]["per_scene"]] == [
+        0.83, 0.86, 0.89, 0.92, 0.95
+    ]
+    assert report.geometry_gate["hyperframes_check"]["total_error_count"] == 0
+    assert report.geometry_gate["hyperframes_check"]["total_warning_count"] == 0
     assert report.geometry_gate["chromium_probe"]["idempotency_mae"] <= 0.5
 
 
@@ -708,7 +724,6 @@ def test_fail_closed_quality_gate_real_kinocut_and_ebur128(tmp_path: Path) -> No
             crop_2x3_jpg=crop_jpg,
             master_wav_path=comp.master_wav,
             cfg=cfg,
-            no_craft=True,
             run_hf_shorts_check=True,
         )
     msg = str(exc_info.value)
@@ -760,7 +775,7 @@ def test_fail_closed_quality_gate_real_chromium_and_hf_check_defects(tmp_path: P
             run_v2_quality_gate(
                 REPO_ROOT, composition_dir=comp.output_dir, mp4_path=out_mp4,
                 thumbnail_jpg=thumb_jpg, crop_2x3_jpg=crop_jpg,
-                master_wav_path=comp.master_wav, cfg=cfg, no_craft=True, run_hf_shorts_check=True,
+                master_wav_path=comp.master_wav, cfg=cfg, run_hf_shorts_check=True,
             )
 
     # 2. Caption overflow (> 1395px) -> real Chromium probe + hf check fail closed
@@ -771,7 +786,7 @@ def test_fail_closed_quality_gate_real_chromium_and_hf_check_defects(tmp_path: P
             run_v2_quality_gate(
                 REPO_ROOT, composition_dir=comp.output_dir, mp4_path=out_mp4,
                 thumbnail_jpg=thumb_jpg, crop_2x3_jpg=crop_jpg,
-                master_wav_path=comp.master_wav, cfg=cfg, no_craft=True, run_hf_shorts_check=True,
+                master_wav_path=comp.master_wav, cfg=cfg, run_hf_shorts_check=True,
             )
 
     # 3. Non-deterministic hf-seek MAE > 0.5 -> real Chromium probe fails closed
@@ -788,7 +803,7 @@ def test_fail_closed_quality_gate_real_chromium_and_hf_check_defects(tmp_path: P
             run_v2_quality_gate(
                 REPO_ROOT, composition_dir=comp.output_dir, mp4_path=out_mp4,
                 thumbnail_jpg=thumb_jpg, crop_2x3_jpg=crop_jpg,
-                master_wav_path=comp.master_wav, cfg=cfg, no_craft=True, run_hf_shorts_check=True,
+                master_wav_path=comp.master_wav, cfg=cfg, run_hf_shorts_check=True,
             )
 
 
@@ -812,6 +827,7 @@ def test_preview_frames_and_render_and_qa_v2_cli_main(tmp_path: Path) -> None:
         sc_copy["applied_speed"] = sc_copy.pop("speed")
         sc_copy["tts_text_applied"] = tagged
         sc_copy["billed_chars"] = len(tagged)
+        sc_copy["alignment_match_ratio"] = round(0.75 + 0.04 * (idx + 1), 4)
         phase3_manifest["scenes"].append(sc_copy)
 
     build_dir = tmp_path / "build"
@@ -847,3 +863,102 @@ def test_preview_frames_and_render_and_qa_v2_cli_main(tmp_path: Path) -> None:
     assert (build_dir / "final_short.mp4").stat().st_size <= DEFAULT_MAX_FILE_BYTES
     assert (build_dir / "final_qa_grid.jpg").is_file()
     assert (build_dir / "render_report.json").is_file()
+    render_rep = json.loads((build_dir / "render_report.json").read_text(encoding="utf-8"))
+    whisper_qa = render_rep["v2_quality_gate"]["audio_gate"]["whisper_alignment"]
+    assert whisper_qa["available"] is True
+    assert whisper_qa["min_match_ratio"] == 0.79
+    assert whisper_qa["avg_match_ratio"] == 0.87
+
+
+def test_remediation_fail_closed_warnings_true_peak_and_shared_probe_validation(tmp_path: Path) -> None:
+    """Verify craft/sub-report warnings fail closed, MP4 true peak <= -1.5 dBTP is strict, and shared probe checks reject drift."""
+    from sutradhar.qa.hyperframes_runner import validate_hf_check_report, validate_runtime_probe_and_hf_check
+
+    # 1. HyperFrames returns ok=True even when craft.warningCount=1 -> validate_hf_check_report must fail closed
+    craft_warn_payload = {
+        "ok": True,
+        "exit_code": 0,
+        "lint": {"errorCount": 0, "warningCount": 0, "findings": []},
+        "runtime": {"errorCount": 0, "warningCount": 0, "findings": []},
+        "layout": {"errorCount": 0, "warningCount": 0, "findings": []},
+        "motion": {"errorCount": 0, "warningCount": 0, "findings": []},
+        "contrast": {"errorCount": 0, "warningCount": 0, "findings": []},
+        "craft": {
+            "errorCount": 0,
+            "warningCount": 1,
+            "findings": [{"code": "text_below_floor", "severity": "warning", "message": "20px < 28px"}],
+        },
+        "audio": {"errorCount": 0, "warningCount": 0, "findings": []},
+    }
+    errs = validate_hf_check_report(craft_warn_payload)
+    assert errs and "warnings=1" in errs[0] and "text_below_floor" in errs[0]
+
+    # 2. Shared probe validator rejects unmounted hf_timeline_captions & out-of-bounds contextual pill
+    bad_probe = {
+        "console_errors": [],
+        "page_errors": [],
+        "failed_requests": [],
+        "loaded_fonts_main": [{"family": "Inter", "status": "loaded"}],
+        "idempotency_passed": True,
+        "idempotency_time_sec": 12.6,
+        "idempotency_mae": 0.0,
+        "caption_mount_status": {"mounted": True, "hasChildren": True, "hasDevanagari": True},
+        "caption_checks": [{"t": 1.0, "bottom": 1350.0}],
+        "hf_timeline_captions": {"mounted": False},
+        "pill_boxes": [{"left": 20.0, "right": 920.0, "top": 296.0, "bottom": 380.0, "scrollHeight": 84, "clientHeight": 84}],
+    }
+    probe_errs = validate_runtime_probe_and_hf_check(bad_probe, craft_warn_payload)
+    assert any("hf_timeline_captions" in e or "timeline #captions" in e for e in probe_errs)
+    assert any("contextual pill out of Shorts bounds" in e for e in probe_errs)
+    assert any("text_below_floor" in e for e in probe_errs)
+
+    # 3. Quality gate enforces literal MP4 true peak <= -1.5 dBTP (rejects -1.2 dBTP; no +0.5 dB loophole)
+    plan, audio_manifest = _make_sample_v2_plan_and_audio(tmp_path)
+    for idx, asc in enumerate(audio_manifest["scenes"], start=1):
+        asc["alignment_match_ratio"] = round(0.70 + 0.05 * idx, 4)
+    cfg = load_config(REPO_ROOT)
+    comp = compose_storyboard(
+        REPO_ROOT, plan, audio_manifest=audio_manifest,
+        output_dir=tmp_path / "comp_tp", mix_audio=True, cfg=cfg,
+    )
+    out_mp4 = tmp_path / "tp_test.mp4"
+    subprocess.run(
+        [
+            "ffmpeg", "-y", "-loglevel", "error",
+            "-f", "lavfi", "-i", f"testsrc2=size=1080x1920:rate=30:duration={comp.duration_sec:.3f}",
+            "-i", str(comp.master_wav),
+            "-t", f"{comp.duration_sec:.3f}", "-c:v", "libx264", "-pix_fmt", "yuv420p",
+            "-c:a", "aac", "-b:a", "192k", "-ac", "2", "-ar", "48000",
+            str(out_mp4),
+        ],
+        check=True,
+    )
+    thumb_jpg = tmp_path / "t_tp.jpg"
+    crop_jpg = tmp_path / "t_tp_2x3.jpg"
+    build_thumbnail(REPO_ROOT, plan.thumbnail_spec, thumb_jpg, crop_output_jpg=crop_jpg)
+    kc_stub = [
+        {"overall_score": 92.0, "all_passed": True, "checks": [{"name": "temporal_motion", "passed": True, "score": 99.0, "details": {"static_fraction": 0.02}}]},
+        {"overall_score": 60.0, "all_passed": False, "checks": [
+            {"name": "color_balance", "passed": True, "score": 74.0},
+            {"name": "temporal_motion", "passed": True, "score": 99.0, "details": {"static_fraction": 0.02}},
+        ]},
+    ]
+    with mock.patch("sutradhar.qa.quality_gate.kinocut.quality_check", side_effect=kc_stub), \
+         mock.patch(
+             "sutradhar.qa.quality_gate.measure_loudness_ebur128",
+             side_effect=[
+                 {"integrated_lufs": -14.0, "true_peak_dbtp": -2.2, "lra_lu": 3.0},
+                 {"integrated_lufs": -14.0, "true_peak_dbtp": -1.2, "lra_lu": 3.0},
+             ],
+         ):
+        with pytest.raises(QualityGateError, match=r"MP4 true_peak -1\.20 dBTP > -1\.50 dBTP"):
+            run_v2_quality_gate(
+                REPO_ROOT,
+                composition_dir=comp.output_dir,
+                mp4_path=out_mp4,
+                thumbnail_jpg=thumb_jpg,
+                crop_2x3_jpg=crop_jpg,
+                master_wav_path=comp.master_wav,
+                audio_manifest=audio_manifest,
+                cfg=cfg,
+            )

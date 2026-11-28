@@ -29,6 +29,7 @@ from sutradhar.qa.hyperframes_runner import (
     run_hf_measure_look,
     select_storyboard_timestamps,
     stitch_contact_sheet,
+    validate_runtime_probe_and_hf_check,
 )
 from sutradhar.qa.render_optimizer import DEFAULT_MAX_FILE_BYTES, validate_mp4_contract
 from sutradhar.visual.storyboard_composer import (
@@ -286,6 +287,79 @@ def _evaluate_kinocut_checks(
     return summary, failures
 
 
+def _extract_whisper_alignment_summary(
+    *,
+    audio_manifest: Optional[dict[str, Any] | Path],
+    audio_manifest_path: Optional[Path],
+    compiled_meta: dict[str, Any],
+    composition_dir: Path,
+) -> dict[str, Any]:
+    """Extract per-scene Whisper alignment_match_ratio stats from audio_manifest or compiled metadata."""
+    manifest_data: Optional[dict[str, Any]] = None
+    manifest_source: Optional[str] = None
+
+    candidate_path: Optional[Path] = None
+    if isinstance(audio_manifest, dict):
+        manifest_data = audio_manifest
+        manifest_source = "audio_manifest_arg"
+    elif audio_manifest is not None:
+        candidate_path = Path(audio_manifest)
+    elif audio_manifest_path is not None:
+        candidate_path = Path(audio_manifest_path)
+    elif (composition_dir.parent / "audio" / "audio_manifest.json").is_file():
+        candidate_path = composition_dir.parent / "audio" / "audio_manifest.json"
+
+    if manifest_data is None and candidate_path is not None and candidate_path.is_file():
+        try:
+            manifest_data = json.loads(candidate_path.read_text(encoding="utf-8"))
+            manifest_source = str(candidate_path)
+        except Exception:
+            manifest_data = None
+
+    if isinstance(manifest_data, dict) and isinstance(manifest_data.get("scenes"), list):
+        per_scene: list[dict[str, Any]] = []
+        ratios: list[float] = []
+        for idx, sc in enumerate(manifest_data["scenes"]):
+            if not isinstance(sc, dict):
+                continue
+            sc_idx = sc.get("scene_index", idx + 1)
+            raw_ratio = sc.get("alignment_match_ratio")
+            ratio_val = round(float(raw_ratio), 4) if raw_ratio is not None else None
+            if ratio_val is not None:
+                ratios.append(ratio_val)
+            per_scene.append(
+                {
+                    "scene_index": sc_idx,
+                    "alignment_match_ratio": ratio_val,
+                }
+            )
+        if ratios or per_scene:
+            return {
+                "available": len(ratios) > 0,
+                "source": manifest_source,
+                "scene_count": len(per_scene),
+                "avg_match_ratio": round(sum(ratios) / len(ratios), 4) if ratios else None,
+                "min_match_ratio": round(min(ratios), 4) if ratios else None,
+                "per_scene": per_scene,
+            }
+
+    compiled_align = compiled_meta.get("audio_alignment")
+    if isinstance(compiled_align, dict) and compiled_align.get("per_scene"):
+        return {
+            "source": "storyboard_compiled.json",
+            **compiled_align,
+        }
+
+    return {
+        "available": False,
+        "source": None,
+        "scene_count": 0,
+        "avg_match_ratio": None,
+        "min_match_ratio": None,
+        "per_scene": [],
+    }
+
+
 def run_v2_quality_gate(
     root: Path,
     *,
@@ -294,6 +368,8 @@ def run_v2_quality_gate(
     thumbnail_jpg: Path,
     crop_2x3_jpg: Optional[Path] = None,
     master_wav_path: Optional[Path] = None,
+    audio_manifest: Optional[dict[str, Any] | Path] = None,
+    audio_manifest_path: Optional[Path] = None,
     report_output_path: Optional[Path] = None,
     final_qa_grid_path: Optional[Path] = None,
     final_qa_grid_safezones_path: Optional[Path] = None,
@@ -336,47 +412,6 @@ def run_v2_quality_gate(
         composition_dir / "index.html",
         duration_sec=duration_sec,
     )
-    if probe_res["console_errors"] or probe_res["page_errors"] or probe_res["failed_requests"]:
-        failures.append(
-            f"chromium runtime errors: console={probe_res['console_errors']}, "
-            f"page={probe_res['page_errors']}, network={probe_res['failed_requests']}"
-        )
-    if not probe_res["loaded_fonts_main"]:
-        failures.append("chromium runtime loaded 0 main webfonts")
-    if not probe_res["idempotency_passed"]:
-        failures.append(
-            f"hf-seek({probe_res['idempotency_time_sec']}s) pixel-parity MAE={probe_res['idempotency_mae']} > 0.5"
-        )
-    # Fail closed on unmounted, empty, or non-Devanagari #captions sub-composition
-    cap_mount = probe_res.get("caption_mount_status") or {}
-    if not cap_mount.get("mounted") or not cap_mount.get("hasChildren"):
-        failures.append(
-            "#captions sub-composition not mounted in index.html "
-            "(data-composition-src/data-composition-id missing or failed to load)"
-        )
-    elif not probe_res.get("caption_checks") or not cap_mount.get("hasDevanagari"):
-        failures.append(
-            "#captions sub-composition rendered zero Devanagari cues inside index.html at spoken timestamps"
-        )
-    hf_tl = probe_res.get("hf_timeline_captions")
-    if isinstance(hf_tl, dict) and not hf_tl.get("mounted"):
-        failures.append(
-            f"hyperframes timeline #captions sub-composition not mounted: {hf_tl}"
-        )
-    for box in probe_res["caption_checks"]:
-        if float(box["bottom"]) > CAPTION_SAFE_BOTTOM_MAX:
-            failures.append(
-                f"caption bottom {box['bottom']:.1f}px > {CAPTION_SAFE_BOTTOM_MAX}px (< Y=1400) at t={box['t']}s"
-            )
-    for pill in probe_res["pill_boxes"]:
-        if (
-            float(pill["left"]) < SHORTS_PILL_MIN_X
-            or float(pill["right"]) > SHORTS_PILL_MAX_X
-            or float(pill["top"]) < SHORTS_PILL_MIN_Y
-            or float(pill["bottom"]) > SHORTS_PILL_MAX_Y
-            or int(pill["scrollHeight"]) > int(pill["clientHeight"]) + 2
-        ):
-            failures.append(f"contextual pill out of Shorts bounds or clipped: {pill}")
 
     hf_check_res: dict[str, Any] = {"skipped": True}
     if run_hf_shorts_check:
@@ -387,11 +422,18 @@ def run_v2_quality_gate(
             strict=True,
             no_craft=no_craft,
         )
-        if not hf_check_res.get("ok"):
-            failures.append(
-                f"hyperframes check --strict --safe-zone shorts failed: "
-                f"errors={hf_check_res.get('errors')}, warnings={hf_check_res.get('warnings')}"
-            )
+
+    failures.extend(
+        validate_runtime_probe_and_hf_check(
+            probe_res,
+            hf_check_res if run_hf_shorts_check else None,
+            caption_safe_bottom_max=CAPTION_SAFE_BOTTOM_MAX,
+            pill_min_x=SHORTS_PILL_MIN_X,
+            pill_max_x=SHORTS_PILL_MAX_X,
+            pill_min_y=SHORTS_PILL_MIN_Y,
+            pill_max_y=SHORTS_PILL_MAX_Y,
+        )
+    )
 
     geometry_gate = {
         "grounding_entities": len(compiled_meta.get("grounding_report") or []),
@@ -437,19 +479,18 @@ def run_v2_quality_gate(
         "kinocut": kc_summary,
     }
 
-    # 4. Real Audio Gate (ebur128, true peak, sample rate, quiet tail, silence drops)
+    # 4. Real Audio Gate (ebur128, true peak <= -1.5 dBTP, sample rate, quiet tail, silence drops, Whisper match ratios)
     audio_master_cfg = resolved_cfg.get("audio_mastering", {})
     target_lufs = float(audio_master_cfg.get("target_lufs", DEFAULT_TARGET_LUFS))
     lufs_tol = float(audio_master_cfg.get("lufs_tolerance", 0.5))
-    max_wav_tp = float(audio_master_cfg.get("true_peak_max_dbtp", DEFAULT_TRUE_PEAK_DBTP))
-    max_aac_tp = max_wav_tp + 0.5  # AAC re-quantization margin (-1.5 WAV -> <= -1.0 MP4)
+    max_tp = float(audio_master_cfg.get("true_peak_max_dbtp", DEFAULT_TRUE_PEAK_DBTP))
 
     wav_candidate = Path(master_wav_path) if master_wav_path else (composition_dir / "audio" / "master_mix.wav")
     if wav_candidate.is_file():
         wav_ebur = measure_loudness_ebur128(wav_candidate)
-        if wav_ebur["true_peak_dbtp"] > max_wav_tp + 0.05:
+        if wav_ebur["true_peak_dbtp"] > max_tp:
             failures.append(
-                f"master_mix.wav true_peak {wav_ebur['true_peak_dbtp']:.2f} dBTP > {max_wav_tp:.2f} dBTP"
+                f"master_mix.wav true_peak {wav_ebur['true_peak_dbtp']:.2f} dBTP > {max_tp:.2f} dBTP"
             )
     else:
         wav_ebur = None
@@ -459,9 +500,9 @@ def run_v2_quality_gate(
         failures.append(
             f"MP4 integrated loudness {mp4_ebur['integrated_lufs']:.2f} LUFS outside {target_lufs} ± {lufs_tol}"
         )
-    if mp4_ebur["true_peak_dbtp"] > max_aac_tp:
+    if mp4_ebur["true_peak_dbtp"] > max_tp:
         failures.append(
-            f"MP4 true_peak {mp4_ebur['true_peak_dbtp']:.2f} dBTP > {max_aac_tp:.2f} dBTP"
+            f"MP4 true_peak {mp4_ebur['true_peak_dbtp']:.2f} dBTP > {max_tp:.2f} dBTP"
         )
 
     mp4_audio_stream = probe_audio_stream(mp4_path)
@@ -482,12 +523,20 @@ def run_v2_quality_gate(
             f"ending tail 0.7s RMS {tail_info['tail_rms_dbfs']} dBFS too loud (expected quiet outro <= -16.0 dBFS)"
         )
 
+    whisper_alignment = _extract_whisper_alignment_summary(
+        audio_manifest=audio_manifest,
+        audio_manifest_path=audio_manifest_path,
+        compiled_meta=compiled_meta,
+        composition_dir=composition_dir,
+    )
+
     audio_gate = {
         "master_wav_ebur128": wav_ebur,
         "mp4_ebur128": mp4_ebur,
         "mp4_audio_stream": mp4_audio_stream,
         "mid_episode_silences": mid_silences,
         "tail_check": tail_info,
+        "whisper_alignment": whisper_alignment,
     }
 
     # 5. Thumbnail + 2:3 Shorts Center-Crop Gate

@@ -747,14 +747,9 @@ def _compile_scene_visuals(
                 if dais_top is None:
                     dais_top = _find_or_add_dais(stage_elements, float(p.x), horizon_y, height=DEFAULT_DAIS_HEIGHT)
                 support_top_y = dais_top
-                # When y is None for pedestal mount, place at dais top (not horizon_y)
-                py = explicit_y if explicit_y is not None else support_top_y
-            elif canonical not in AERIAL_CENTERED_PROPS:
-                support_top_y = float(horizon_y)
-                py = explicit_y if explicit_y is not None else support_top_y
             else:
                 support_top_y = float(horizon_y)
-                py = explicit_y if explicit_y is not None else support_top_y
+            py = explicit_y if explicit_y is not None else support_top_y
             delta_px = abs(py - support_top_y)
             if delta_px > GROUND_TOLERANCE_PX:
                 raise CompositionError(
@@ -1025,6 +1020,27 @@ def compose_storyboard(
     )
     write_text_atomic(captions_html_path, captions_rendered)
 
+    audio_alignment_scenes: list[dict[str, Any]] = []
+    ratios: list[float] = []
+    for asc in a_manifest.get("scenes") or []:
+        ratio_raw = asc.get("alignment_match_ratio")
+        ratio_val = round(float(ratio_raw), 4) if ratio_raw is not None else None
+        if ratio_val is not None:
+            ratios.append(ratio_val)
+        audio_alignment_scenes.append(
+            {
+                "scene_index": asc.get("scene_index"),
+                "alignment_match_ratio": ratio_val,
+            }
+        )
+    audio_alignment = {
+        "available": len(ratios) > 0,
+        "scene_count": len(audio_alignment_scenes),
+        "avg_match_ratio": round(sum(ratios) / len(ratios), 4) if ratios else None,
+        "min_match_ratio": round(min(ratios), 4) if ratios else None,
+        "per_scene": audio_alignment_scenes,
+    }
+
     compiled_meta = {
         "schema_version": "2.0.0",
         "episode_title": plan.youtube_title,
@@ -1035,6 +1051,7 @@ def compose_storyboard(
         "enable_contextual_pills": bool(enable_contextual_pills),
         "grounding_report": grounding_report,
         "audio_mix_report": audio_mix_report,
+        "audio_alignment": audio_alignment,
         "episode_runtime": episode_runtime,
     }
     compiled_meta_path = target_dir / "storyboard_compiled.json"

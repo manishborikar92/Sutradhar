@@ -44,10 +44,15 @@ from sutradhar.qa.hyperframes_runner import (  # noqa: E402
     run_hf_check,
     run_hf_lint,
     stitch_contact_sheet as _shared_stitch_contact_sheet,
+    validate_runtime_probe_and_hf_check,
 )
 from sutradhar.visual.storyboard_composer import (  # noqa: E402
     CAPTION_SAFE_BOTTOM_MAX,
     CompositionError,
+    SHORTS_PILL_MAX_X,
+    SHORTS_PILL_MAX_Y,
+    SHORTS_PILL_MIN_X,
+    SHORTS_PILL_MIN_Y,
     compose_storyboard,
     detect_v2_storyboard_run,
     parse_manifest_js as _shared_parse_manifest_js,
@@ -105,30 +110,24 @@ def _run_v2_preview_pipeline(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
         cfg=cfg,
     )
     lint_res = run_hf_lint(root, comp.output_dir)
+    if not lint_res.get("ok"):
+        raise PreviewPipelineError(
+            f"hyperframes lint failed: errors={lint_res.get('errorCount')}, "
+            f"warnings={lint_res.get('warningCount')}, findings={lint_res.get('findings')}"
+        )
     check_res = run_hf_check(root, comp.output_dir, safe_zone="shorts", strict=True)
     probe_res = run_chromium_runtime_probe(root, comp.index_html, duration_sec=comp.duration_sec)
-    if probe_res["console_errors"] or probe_res["page_errors"] or probe_res["failed_requests"]:
-        raise PreviewPipelineError(
-            f"Chromium runtime errors during preview: {probe_res['console_errors']} {probe_res['page_errors']}"
-        )
-    if not probe_res["idempotency_passed"]:
-        raise PreviewPipelineError(
-            f"hf-seek({probe_res['idempotency_time_sec']}s) pixel-parity MAE={probe_res['idempotency_mae']} > 0.5"
-        )
-    cap_mount = probe_res.get("caption_mount_status") or {}
-    if not cap_mount.get("mounted") or not cap_mount.get("hasChildren") or not cap_mount.get("hasDevanagari"):
-        raise PreviewPipelineError(
-            f"#captions sub-composition not properly mounted/rendered in index.html: {cap_mount}"
-        )
-    for box in probe_res.get("caption_checks") or []:
-        if float(box["bottom"]) > CAPTION_SAFE_BOTTOM_MAX:
-            raise PreviewPipelineError(
-                f"caption bottom {box['bottom']:.1f}px > {CAPTION_SAFE_BOTTOM_MAX}px at t={box['t']}s"
-            )
-    if not check_res.get("ok"):
-        raise PreviewPipelineError(
-            f"hyperframes check --strict --safe-zone shorts failed: {check_res.get('errors')} {check_res.get('warnings')}"
-        )
+    validation_errors = validate_runtime_probe_and_hf_check(
+        probe_res,
+        check_res,
+        caption_safe_bottom_max=CAPTION_SAFE_BOTTOM_MAX,
+        pill_min_x=SHORTS_PILL_MIN_X,
+        pill_max_x=SHORTS_PILL_MAX_X,
+        pill_min_y=SHORTS_PILL_MIN_Y,
+        pill_max_y=SHORTS_PILL_MAX_Y,
+    )
+    if validation_errors:
+        raise PreviewPipelineError("Preview QA checks failed:\n- " + "\n- ".join(validation_errors))
 
     scene_ranges = [(float(sc["s0"]), float(sc["s1"])) for sc in comp.episode_runtime["scenes"]]
     qa_grid_jpg = build_dir / "qa_grid.jpg"
