@@ -11,6 +11,12 @@ from sutradhar.publishing.metadata_policy import (
     validate_english_metadata,
     validate_english_playlist_title,
 )
+from sutradhar.publishing.oauth_refresh import (
+    OAuthRefreshError,
+    load_oauth_client_credentials,
+    run_oauth_refresh_flow,
+    update_refresh_token,
+)
 from sutradhar.publishing.thumbnail_verifier import (
     SHORTS_2X3_CROP_BOX,
     YOUTUBE_MAX_THUMBNAIL_BYTES,
@@ -40,6 +46,7 @@ from sutradhar.publishing.youtube_client import (
 __all__ = [
     "DEFAULT_SHORTS_TAGS",
     "MetadataPolicyError",
+    "OAuthRefreshError",
     "PlaylistResolutionError",
     "PublishPipelineError",
     "SHORTS_2X3_CROP_BOX",
@@ -56,9 +63,12 @@ __all__ = [
     "hamming_distance",
     "list_channel_playlists_paginated",
     "load_env_file",
+    "load_oauth_client_credentials",
     "publish_episode",
     "resolve_or_create_series_playlist",
+    "run_oauth_refresh_flow",
     "update_playlists",
+    "update_refresh_token",
     "update_thumbnail_only",
     "upload_thumbnail_and_verify",
     "validate_2x3_crop_bounds",

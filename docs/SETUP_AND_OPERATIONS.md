@@ -58,7 +58,7 @@ Sutradhar uses **ElevenLabs v4 (`eleven_v4`)** with **Viraj** (`uuyFQegRan8rpIQC
    - `https://www.googleapis.com/auth/youtube.upload`
    - `https://www.googleapis.com/auth/youtube`
 3. Create an **OAuth 2.0 Client ID** (**Desktop App**) and note the **Client ID** and **Client Secret** (store any downloaded `client_secret*.json` inside git-ignored `.secrets/`).
-4. Obtain a long-lived **Refresh Token** for that Desktop OAuth client (for example via [Google OAuth 2.0 Playground](https://developers.google.com/oauthplayground/) configured with your own Client ID/Secret in *Settings -> Use your own OAuth credentials*, or a one-time Desktop authorization exchange against `https://oauth2.googleapis.com/token`).
+4. Obtain a long-lived **Refresh Token** for that Desktop OAuth client by running `.\.venv\Scripts\python.exe scripts\refresh_youtube_token.py` (which uses a local loopback + PKCE flow and updates `YOUTUBE_REFRESH_TOKEN` in `.env.local` without printing secrets), or as a fallback via [Google OAuth 2.0 Playground](https://developers.google.com/oauthplayground/) configured with your own Client ID/Secret in *Settings -> Use your own OAuth credentials*.
 5. Populate `.env.local`:
    ```env
    YOUTUBE_CLIENT_ID="your_client_id.apps.googleusercontent.com"
