@@ -46,6 +46,7 @@ from sutradhar.qa.hyperframes_runner import (  # noqa: E402
     stitch_contact_sheet as _shared_stitch_contact_sheet,
 )
 from sutradhar.visual.storyboard_composer import (  # noqa: E402
+    CAPTION_SAFE_BOTTOM_MAX,
     CompositionError,
     compose_storyboard,
     detect_v2_storyboard_run,
@@ -114,6 +115,16 @@ def _run_v2_preview_pipeline(root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
         raise PreviewPipelineError(
             f"hf-seek({probe_res['idempotency_time_sec']}s) pixel-parity MAE={probe_res['idempotency_mae']} > 0.5"
         )
+    cap_mount = probe_res.get("caption_mount_status") or {}
+    if not cap_mount.get("mounted") or not cap_mount.get("hasChildren") or not cap_mount.get("hasDevanagari"):
+        raise PreviewPipelineError(
+            f"#captions sub-composition not properly mounted/rendered in index.html: {cap_mount}"
+        )
+    for box in probe_res.get("caption_checks") or []:
+        if float(box["bottom"]) > CAPTION_SAFE_BOTTOM_MAX:
+            raise PreviewPipelineError(
+                f"caption bottom {box['bottom']:.1f}px > {CAPTION_SAFE_BOTTOM_MAX}px at t={box['t']}s"
+            )
     if not check_res.get("ok"):
         raise PreviewPipelineError(
             f"hyperframes check --strict --safe-zone shorts failed: {check_res.get('errors')} {check_res.get('warnings')}"

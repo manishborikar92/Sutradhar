@@ -28,10 +28,15 @@
 
     {% if include_captions | default(true) %}
     <div id="captions"
-         class="clip"
-         data-include="{{ captions_src | default('captions/captions.html') }}"
+         data-composition-id="captions"
+         data-composition-src="{{ captions_src | default('captions/captions.html') }}"
+         data-track-kind="captions"
+         data-track-index="1"
          data-start="0"
-         data-duration="{{ duration_sec | default(60.0) }}"></div>
+         data-duration="{{ duration_sec | default(60.0) }}"
+         data-width="1080"
+         data-height="1920"
+         style="position:absolute;inset:0;z-index:35;"></div>
     {% endif %}
   </div>
 

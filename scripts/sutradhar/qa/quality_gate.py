@@ -347,6 +347,22 @@ def run_v2_quality_gate(
         failures.append(
             f"hf-seek({probe_res['idempotency_time_sec']}s) pixel-parity MAE={probe_res['idempotency_mae']} > 0.5"
         )
+    # Fail closed on unmounted, empty, or non-Devanagari #captions sub-composition
+    cap_mount = probe_res.get("caption_mount_status") or {}
+    if not cap_mount.get("mounted") or not cap_mount.get("hasChildren"):
+        failures.append(
+            "#captions sub-composition not mounted in index.html "
+            "(data-composition-src/data-composition-id missing or failed to load)"
+        )
+    elif not probe_res.get("caption_checks") or not cap_mount.get("hasDevanagari"):
+        failures.append(
+            "#captions sub-composition rendered zero Devanagari cues inside index.html at spoken timestamps"
+        )
+    hf_tl = probe_res.get("hf_timeline_captions")
+    if isinstance(hf_tl, dict) and not hf_tl.get("mounted"):
+        failures.append(
+            f"hyperframes timeline #captions sub-composition not mounted: {hf_tl}"
+        )
     for box in probe_res["caption_checks"]:
         if float(box["bottom"]) > CAPTION_SAFE_BOTTOM_MAX:
             failures.append(

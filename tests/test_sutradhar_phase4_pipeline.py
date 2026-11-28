@@ -427,7 +427,8 @@ def test_fail_closed_caption_overflow_and_fake_snapshot_in_quality_gate(tmp_path
 
     # Push caption CSS below Y=1400 safe band -> Chromium probe detects rect.bottom > 1395
     cap_html = comp.captions_html
-    cap_text = cap_html.read_text(encoding="utf-8").replace("top: 1246px;", "top: 1365px;")
+    cap_text = cap_html.read_text(encoding="utf-8").replace("top: 1244px;", "top: 1365px;")
+    assert "top: 1365px;" in cap_text
     cap_html.write_text(cap_text, encoding="utf-8")
     probe_bad = run_chromium_runtime_probe(REPO_ROOT, comp.index_html, duration_sec=comp.duration_sec)
     assert any(b["bottom"] > 1395 for b in probe_bad["caption_checks"])
@@ -534,3 +535,315 @@ def test_end_to_end_v2_compile_preview_render_and_fail_closed_qa(tmp_path: Path)
     assert final_grid.is_file()
     assert abs(report.audio_gate["mp4_ebur128"]["integrated_lufs"] - (-14.0)) <= 0.5
     assert report.geometry_gate["chromium_probe"]["idempotency_mae"] <= 0.5
+
+
+
+    # Clean slate for Phase 4 remediation tests
+def test_captions_mounted_as_sub_composition_in_index_html(tmp_path: Path) -> None:
+    """Finding 1 fix: Verify #captions uses data-composition-src/data-composition-id (not data-include) and passes timeline/probe."""
+    plan, audio_manifest = _make_sample_v2_plan_and_audio(tmp_path)
+    comp = compose_storyboard(
+        REPO_ROOT,
+        plan,
+        audio_manifest=audio_manifest,
+        output_dir=tmp_path / "comp",
+        mix_audio=False,
+    )
+    html_text = comp.index_html.read_text(encoding="utf-8")
+    assert 'data-composition-id="captions"' in html_text
+    assert 'data-composition-src="captions/captions.html"' in html_text
+    assert 'data-track-kind="captions"' in html_text
+    assert "data-include=" not in html_text
+
+    probe = run_chromium_runtime_probe(REPO_ROOT, comp.index_html, duration_sec=comp.duration_sec)
+    assert probe["hf_timeline_captions"]["mounted"] is True
+    assert probe["hf_timeline_captions"]["src"] == "captions/captions.html"
+    assert probe["hf_timeline_captions"]["sourceFile"] == "captions/captions.html"
+    assert probe["caption_mount_status"]["mounted"] is True
+    assert probe["caption_mount_status"]["hasChildren"] is True
+    assert probe["caption_mount_status"]["hasDevanagari"] is True
+    assert probe["caption_checks"] and all(b["bottom"] <= 1395 for b in probe["caption_checks"])
+
+
+def test_phase3_audio_manifest_narration_full_path_and_parity(tmp_path: Path) -> None:
+    """Finding 2 fix: Verify compose_storyboard handles Phase 3 build_audio manifest shape & rejects tampered billed_chars."""
+    from sutradhar.audio.elevenlabs_tts import DEFAULT_TAG_TEMPLATES, load_pronunciations, prepare_scene_tts_text
+
+    cfg = load_config(REPO_ROOT)
+    plan, audio_manifest = _make_sample_v2_plan_and_audio(tmp_path)
+    # Use ScenePlan.speed=None + applied_speed + tts_text_applied + narration_full_path (real Phase 3 contract)
+    reps = load_pronunciations(REPO_ROOT, cfg, lang="hi")
+    updated_scenes = [sc.model_copy(update={"speed": None}) for sc in plan.scenes]
+    plan_p3 = plan.model_copy(update={"scenes": updated_scenes})
+
+    phase3_manifest = {
+        "audio": {"narration_full_path": audio_manifest["audio"]["narration_wav_path"]},
+        "scenes": [],
+    }
+    for idx, (psc, asc) in enumerate(zip(plan_p3.scenes, audio_manifest["scenes"])):
+        _, tagged = prepare_scene_tts_text(psc, idx, len(plan_p3.scenes), reps, DEFAULT_TAG_TEMPLATES, idx == 2)
+        sc_copy = dict(asc)
+        sc_copy["applied_speed"] = sc_copy.pop("speed")
+        sc_copy["tts_text_applied"] = tagged
+        sc_copy["billed_chars"] = len(tagged)
+        phase3_manifest["scenes"].append(sc_copy)
+
+    comp = compose_storyboard(
+        REPO_ROOT,
+        plan_p3,
+        audio_manifest=phase3_manifest,
+        output_dir=tmp_path / "comp_p3",
+        mix_audio=True,
+        cfg=cfg,
+    )
+    assert comp.master_wav is not None and comp.master_wav.is_file()
+    assert comp.duration_sec > 0
+
+    # Tampered billed_chars (without matching tts_text_applied) must fail closed
+    bad_manifest = json.loads(json.dumps(phase3_manifest))
+    bad_manifest["scenes"][0].pop("tts_text_applied")
+    bad_manifest["scenes"][0]["billed_chars"] = 999
+    with pytest.raises(CompositionError, match="char count mismatch"):
+        compose_storyboard(
+            REPO_ROOT,
+            plan_p3,
+            audio_manifest=bad_manifest,
+            output_dir=tmp_path / "comp_bad_chars",
+            mix_audio=False,
+            cfg=cfg,
+        )
+
+
+def test_observatory_cosmos_ground_floor_and_schema_compat(tmp_path: Path) -> None:
+    """Finding 3 & 4 fix: observatory_cosmos ground floor, calm_standing/id fallback, pill_y_px, pedestal clock, stale staging."""
+    from sutradhar.visual.storyboard_composer import POSE_ALIASES, detect_v2_storyboard_run
+
+    assert POSE_ALIASES["calm_standing"] == "neutral"
+
+    plan, audio_manifest = _make_sample_v2_plan_and_audio(tmp_path, include_pill=True)
+    ir = plan.storyboard_ir.model_copy(deep=True)
+    # CharacterPlacement(id="shiva", role="protagonist", pose="calm_standing")
+    ir.scenes[0].characters[0] = CharacterPlacement(
+        id="shiva", role="protagonist", x=540.0, surface_type="floor", pose="calm_standing", expr="serene"
+    )
+    # Aerial brass_clock with mount="pedestal" and y=None -> elevated to shrine niche, not buried at horizon_y
+    ir.scenes[1].props = [PropPlacement(id="brass_clock", kind="brass_clock", mount="pedestal", x=540.0, y=None, scale=1.0)]
+    plan_mod = plan.model_copy(update={"storyboard_ir": ir})
+
+    comp_dir = tmp_path / "comp_compat"
+    comp_dir.mkdir(parents=True, exist_ok=True)
+    (comp_dir / "engine.js").write_text("stale", encoding="utf-8")
+    (comp_dir / "runtime").mkdir(parents=True, exist_ok=True)
+    (comp_dir / "runtime" / "obsolete_stale.js").write_text("stale", encoding="utf-8")
+
+    # Omit enable_contextual_pills -> auto-enabled from scene 0 pill
+    comp = compose_storyboard(
+        REPO_ROOT,
+        plan_mod,
+        audio_manifest=audio_manifest,
+        output_dir=comp_dir,
+        mix_audio=False,
+    )
+    assert not (comp_dir / "engine.js").exists()
+    assert not (comp_dir / "runtime" / "obsolete_stale.js").exists()
+
+    assert comp.episode_runtime["enable_contextual_pills"] is True
+    assert comp.episode_runtime["scenes"][0]["pill_title"] == "KAILASH HORIZON"
+    assert comp.episode_runtime["scenes"][0]["pill_y_px"] == 310
+    assert comp.episode_runtime["scenes"][0]["characters"][0]["id"] == "shiva"
+    assert comp.episode_runtime["scenes"][0]["characters"][0]["pose"] == "neutral"
+
+    # brass_clock(mount="pedestal", y=None) placed in elevated niche (y=540, not 1142)
+    sc1_props = comp.episode_runtime["scenes"][1]["props"]
+    assert sc1_props[0]["y"] == 540.0
+    assert any(st.get("type") == "clock_niche" for st in comp.episode_runtime["scenes"][1]["stage_elements"])
+
+    # observatory_cosmos floor propagated to runtime JSON
+    sc2_env = comp.episode_runtime["scenes"][2]["environment"]
+    assert sc2_env.get("ground_top") and sc2_env.get("ground_bot")
+
+    # detect_v2_storyboard_run rejects stale compiled/manifest when episode_plan has storyboard_ir=None
+    build_dir = tmp_path / "stale_build"
+    (build_dir / "composition").mkdir(parents=True, exist_ok=True)
+    (build_dir / "episode_plan.json").write_text(json.dumps({"storyboard_ir": None, "scenes": []}), encoding="utf-8")
+    (build_dir / "composition" / "storyboard_compiled.json").write_text("{}", encoding="utf-8")
+    (build_dir / "manifest.js").write_text('window.EPISODE_MANIFEST = {"visual_direction_version": "v2_storycraft"};', encoding="utf-8")
+    assert detect_v2_storyboard_run(tmp_path, {"paths": {"build_dir": str(build_dir)}}) is False
+
+
+def test_fail_closed_quality_gate_real_kinocut_and_ebur128(tmp_path: Path) -> None:
+    """Finding 4.5 fix: Direct unmocked run_v2_quality_gate raises QualityGateError on real KinoCut + ebur128 failures."""
+    plan, audio_manifest = _make_sample_v2_plan_and_audio(tmp_path)
+    cfg = load_config(REPO_ROOT)
+    comp = compose_storyboard(
+        REPO_ROOT, plan, audio_manifest=audio_manifest,
+        output_dir=tmp_path / "comp_real_fail", mix_audio=True, cfg=cfg,
+    )
+    thumb_jpg = tmp_path / "t.jpg"
+    crop_jpg = tmp_path / "t_2x3.jpg"
+    build_thumbnail(REPO_ROOT, plan.thumbnail_spec, thumb_jpg, crop_output_jpg=crop_jpg)
+
+    # Create a real static solid-navy 1080x1920 MP4 with quiet -32 LUFS audio (unmocked KinoCut + ebur128 both fail!)
+    bad_mp4 = tmp_path / "bad_static_quiet.mp4"
+    dur = comp.duration_sec
+    subprocess.run(
+        [
+            "ffmpeg", "-y", "-loglevel", "error",
+            "-f", "lavfi", "-i", f"color=c=#080c18:s=1080x1920:r=30:d={dur:.3f}",
+            "-f", "lavfi", "-i", f"sine=frequency=220:sample_rate=48000:duration={dur:.3f}",
+            "-af", "volume=-28dB,apad",
+            "-t", f"{dur:.3f}", "-c:v", "libx264", "-pix_fmt", "yuv420p",
+            "-c:a", "aac", "-ac", "2", "-ar", "48000",
+            str(bad_mp4),
+        ],
+        check=True,
+    )
+
+    with pytest.raises(QualityGateError) as exc_info:
+        run_v2_quality_gate(
+            REPO_ROOT,
+            composition_dir=comp.output_dir,
+            mp4_path=bad_mp4,
+            thumbnail_jpg=thumb_jpg,
+            crop_2x3_jpg=crop_jpg,
+            master_wav_path=comp.master_wav,
+            cfg=cfg,
+            no_craft=True,
+            run_hf_shorts_check=True,
+        )
+    msg = str(exc_info.value)
+    assert ("KinoCut" in msg or "static" in msg) and "integrated loudness" in msg
+
+
+def test_fail_closed_quality_gate_real_chromium_and_hf_check_defects(tmp_path: Path) -> None:
+    """Finding 4.5 fix: Direct run_v2_quality_gate fails closed with real Chromium probe & hf check on unmounted captions, overflow, and hf-seek MAE."""
+    plan, audio_manifest = _make_sample_v2_plan_and_audio(tmp_path)
+    cfg = load_config(REPO_ROOT)
+    comp = compose_storyboard(
+        REPO_ROOT, plan, audio_manifest=audio_manifest,
+        output_dir=tmp_path / "comp_real_probe", mix_audio=True, cfg=cfg,
+    )
+    out_mp4 = tmp_path / "final.mp4"
+    subprocess.run(
+        [
+            "ffmpeg", "-y", "-loglevel", "error",
+            "-f", "lavfi", "-i", f"testsrc2=size=1080x1920:rate=30:duration={comp.duration_sec:.3f}",
+            "-i", str(comp.master_wav),
+            "-t", f"{comp.duration_sec:.3f}", "-c:v", "libx264", "-pix_fmt", "yuv420p",
+            "-c:a", "aac", "-b:a", "192k", "-ac", "2", "-ar", "48000",
+            str(out_mp4),
+        ],
+        check=True,
+    )
+    thumb_jpg = tmp_path / "t.jpg"
+    crop_jpg = tmp_path / "t_2x3.jpg"
+    build_thumbnail(REPO_ROOT, plan.thumbnail_spec, thumb_jpg, crop_output_jpg=crop_jpg)
+
+    kc_stub = [
+        {"overall_score": 92.0, "all_passed": True, "checks": [{"name": "temporal_motion", "passed": True, "score": 99.0, "details": {"static_fraction": 0.02}}]},
+        {"overall_score": 60.0, "all_passed": False, "checks": [
+            {"name": "color_balance", "passed": True, "score": 74.0},
+            {"name": "temporal_motion", "passed": True, "score": 99.0, "details": {"static_fraction": 0.02}},
+        ]},
+    ]
+
+    orig_index = comp.index_html.read_text(encoding="utf-8")
+    orig_caps = comp.captions_html.read_text(encoding="utf-8")
+
+    # 1. Unmounted #captions (data-include instead of data-composition-src) -> real Chromium probe + timeline fail closed
+    comp.index_html.write_text(
+        orig_index.replace('data-composition-src="captions/captions.html"', 'data-include="captions/captions.html"'),
+        encoding="utf-8",
+    )
+    with mock.patch("sutradhar.qa.quality_gate.kinocut.quality_check", side_effect=kc_stub):
+        with pytest.raises(QualityGateError, match="captions sub-composition not mounted"):
+            run_v2_quality_gate(
+                REPO_ROOT, composition_dir=comp.output_dir, mp4_path=out_mp4,
+                thumbnail_jpg=thumb_jpg, crop_2x3_jpg=crop_jpg,
+                master_wav_path=comp.master_wav, cfg=cfg, no_craft=True, run_hf_shorts_check=True,
+            )
+
+    # 2. Caption overflow (> 1395px) -> real Chromium probe + hf check fail closed
+    comp.index_html.write_text(orig_index, encoding="utf-8")
+    comp.captions_html.write_text(orig_caps.replace("top: 1244px;", "top: 1365px;"), encoding="utf-8")
+    with mock.patch("sutradhar.qa.quality_gate.kinocut.quality_check", side_effect=kc_stub):
+        with pytest.raises(QualityGateError, match="caption bottom"):
+            run_v2_quality_gate(
+                REPO_ROOT, composition_dir=comp.output_dir, mp4_path=out_mp4,
+                thumbnail_jpg=thumb_jpg, crop_2x3_jpg=crop_jpg,
+                master_wav_path=comp.master_wav, cfg=cfg, no_craft=True, run_hf_shorts_check=True,
+            )
+
+    # 3. Non-deterministic hf-seek MAE > 0.5 -> real Chromium probe fails closed
+    comp.captions_html.write_text(orig_caps, encoding="utf-8")
+    jitter_script = (
+        '<script>window.addEventListener("load",()=>{window.__hfCalls=0;window.addEventListener("hf-seek",()=>{'
+        'window.__hfCalls++;const c=document.getElementById("world-canvas");'
+        'if(c&&window.__hfCalls>=4){const x=c.getContext("2d");x.fillStyle="#ffffff";x.fillRect(0,0,1080,1920);}'
+        '});});</script></body>'
+    )
+    comp.index_html.write_text(orig_index.replace("</body>", jitter_script), encoding="utf-8")
+    with mock.patch("sutradhar.qa.quality_gate.kinocut.quality_check", side_effect=kc_stub):
+        with pytest.raises(QualityGateError, match="hf-seek.*MAE"):
+            run_v2_quality_gate(
+                REPO_ROOT, composition_dir=comp.output_dir, mp4_path=out_mp4,
+                thumbnail_jpg=thumb_jpg, crop_2x3_jpg=crop_jpg,
+                master_wav_path=comp.master_wav, cfg=cfg, no_craft=True, run_hf_shorts_check=True,
+            )
+
+
+def test_preview_frames_and_render_and_qa_v2_cli_main(tmp_path: Path) -> None:
+    """Finding 2 fix: Wire Phase 3 build_audio output manifest into both preview_frames.main() and render_and_qa.main()."""
+    from scripts import preview_frames, render_and_qa
+    from sutradhar.audio.elevenlabs_tts import DEFAULT_TAG_TEMPLATES, load_pronunciations, prepare_scene_tts_text
+
+    cfg = load_config(REPO_ROOT)
+    plan, audio_manifest = _make_sample_v2_plan_and_audio(tmp_path, include_pill=True)
+    reps = load_pronunciations(REPO_ROOT, cfg, lang="hi")
+    plan_p3 = plan.model_copy(update={"scenes": [sc.model_copy(update={"speed": None}) for sc in plan.scenes]})
+
+    phase3_manifest = {
+        "audio": {"narration_full_path": audio_manifest["audio"]["narration_wav_path"]},
+        "scenes": [],
+    }
+    for idx, (psc, asc) in enumerate(zip(plan_p3.scenes, audio_manifest["scenes"])):
+        _, tagged = prepare_scene_tts_text(psc, idx, len(plan_p3.scenes), reps, DEFAULT_TAG_TEMPLATES, idx == 2)
+        sc_copy = dict(asc)
+        sc_copy["applied_speed"] = sc_copy.pop("speed")
+        sc_copy["tts_text_applied"] = tagged
+        sc_copy["billed_chars"] = len(tagged)
+        phase3_manifest["scenes"].append(sc_copy)
+
+    build_dir = tmp_path / "build"
+    (build_dir / "audio").mkdir(parents=True, exist_ok=True)
+    (build_dir / "episode_plan.json").write_text(json.dumps(plan_p3.model_dump(), ensure_ascii=False), encoding="utf-8")
+    (build_dir / "audio" / "audio_manifest.json").write_text(json.dumps(phase3_manifest), encoding="utf-8")
+
+    cfg_tmp = json.loads(json.dumps(cfg))
+    cfg_tmp["paths"]["build_dir"] = str(build_dir)
+
+    with mock.patch("scripts.preview_frames.load_config", return_value=cfg_tmp), \
+         mock.patch("scripts.preview_frames.get_project_root", return_value=REPO_ROOT), \
+         mock.patch.object(sys, "argv", ["preview_frames.py"]):
+        assert preview_frames.main() == 0
+    assert (build_dir / "qa_grid.jpg").is_file()
+    assert (build_dir / "qa_report.json").is_file()
+
+    with mock.patch("scripts.render_and_qa.load_config", return_value=cfg_tmp), \
+         mock.patch("scripts.render_and_qa.get_project_root", return_value=REPO_ROOT), \
+         mock.patch.object(sys, "argv", ["render_and_qa.py"]), \
+         mock.patch(
+             "sutradhar.qa.quality_gate.kinocut.quality_check",
+             side_effect=[
+                 {"overall_score": 92.0, "all_passed": True, "checks": [{"name": "temporal_motion", "passed": True, "score": 99.0, "details": {"static_fraction": 0.02}}]},
+                 {"overall_score": 60.0, "all_passed": False, "checks": [
+                     {"name": "color_balance", "passed": True, "score": 74.0},
+                     {"name": "temporal_motion", "passed": True, "score": 99.0, "details": {"static_fraction": 0.02}},
+                 ]},
+             ],
+         ):
+        assert render_and_qa.main() == 0
+    assert (build_dir / "final_short.mp4").is_file()
+    assert (build_dir / "final_short.mp4").stat().st_size <= DEFAULT_MAX_FILE_BYTES
+    assert (build_dir / "final_qa_grid.jpg").is_file()
+    assert (build_dir / "render_report.json").is_file()

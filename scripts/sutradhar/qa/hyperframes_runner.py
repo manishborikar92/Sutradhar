@@ -204,6 +204,23 @@ def run_hf_lint(root: Path, project_dir: Path, *, timeout_sec: int = 60) -> dict
     return parsed
 
 
+def run_hf_timeline(root: Path, project_dir: Path, *, timeout_sec: int = 60) -> dict[str, Any]:
+    """Run ``hyperframes timeline <dir> --json`` to inspect mounted tracks and sub-compositions."""
+    node_exe, hf_cli = find_hyperframes_cli(root)
+    proc = subprocess.run(
+        [node_exe, str(hf_cli), "timeline", str(project_dir), "--json"],
+        cwd=str(root),
+        capture_output=True,
+        text=True,
+        timeout=timeout_sec,
+    )
+    if proc.returncode != 0:
+        raise HyperFramesError(
+            f"hyperframes timeline failed (exit={proc.returncode}): {(proc.stderr or proc.stdout)[-500:]}"
+        )
+    return _extract_json_blob(proc.stdout or proc.stderr)
+
+
 def run_hf_check(
     root: Path,
     project_dir: Path,
@@ -668,44 +685,100 @@ def run_chromium_runtime_probe(
 
   const captionChecks = [];
   let captionFonts = [];
-  if (payload.captionsUrl) {
-    await page.goto(payload.captionsUrl, { waitUntil: "networkidle0" });
-    await page.evaluate(async () => {
-      if (document.fonts && document.fonts.load) {
-        await Promise.all([
-          document.fonts.load('700 46px "Noto Sans Devanagari"', "क").catch(() => []),
-          document.fonts.load('800 46px "Noto Sans Devanagari"', "क").catch(() => []),
-        ]);
+  let captionMountStatus = { mounted: false, hasChildren: false, hasDevanagari: false };
+  // Mount & probe #captions sub-composition INSIDE index.html via data-composition-src
+  {
+    const mountMeta = await page.evaluate(() => {
+      const captionsEl = document.getElementById("captions");
+      if (!captionsEl) return { ok: false, reason: "#captions element missing" };
+      const compSrc = (captionsEl.getAttribute("data-composition-src") || "").trim();
+      const compId = (captionsEl.getAttribute("data-composition-id") || "").trim();
+      if (!compSrc || !compId) {
+        return { ok: false, reason: "data-composition-src or data-composition-id missing on #captions" };
       }
-      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      return { ok: true, compSrc, compId };
     });
-    captionFonts = await page.evaluate(() => {
-      const out = [];
-      if (document.fonts) {
-        for (const f of document.fonts) out.push({ family: f.family, weight: String(f.weight), status: f.status });
+
+    if (mountMeta.ok) {
+      const iframeLoaded = await page.evaluate(async (compSrc) => {
+        const captionsEl = document.getElementById("captions");
+        if (!captionsEl) return false;
+        const iframe = document.createElement("iframe");
+        iframe.id = "__hf_probe_captions_frame";
+        iframe.style.cssText = "position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent;";
+        const resolvedUrl = new URL(compSrc, window.location.href).href;
+        await new Promise((resolve) => {
+          let settled = false;
+          const done = (val) => { if (!settled) { settled = true; resolve(val); } };
+          iframe.addEventListener("load", () => done(true), { once: true });
+          iframe.addEventListener("error", () => done(false), { once: true });
+          setTimeout(() => done(true), 4000);
+          iframe.src = resolvedUrl;
+          captionsEl.appendChild(iframe);
+        });
+        if (!iframe.contentDocument) return false;
+        if (iframe.contentWindow && iframe.contentWindow.__sutradharFontsReady) {
+          await iframe.contentWindow.__sutradharFontsReady.catch(() => {});
+        }
+        if (iframe.contentDocument.fonts && iframe.contentDocument.fonts.ready) {
+          await iframe.contentDocument.fonts.ready.catch(() => {});
+        }
+        return true;
+      }, mountMeta.compSrc);
+
+      if (iframeLoaded) {
+        captionFonts = await page.evaluate(() => {
+          const out = [];
+          const iframe = document.getElementById("__hf_probe_captions_frame");
+          if (iframe && iframe.contentDocument && iframe.contentDocument.fonts) {
+            for (const f of iframe.contentDocument.fonts) {
+              out.push({ family: f.family, weight: String(f.weight), status: f.status, source: "captions-iframe" });
+            }
+          }
+          return out;
+        });
+
+        for (const ct of payload.captionTimes || []) {
+          const capBox = await page.evaluate((t) => {
+            window.dispatchEvent(new CustomEvent("hf-seek", { detail: { time: t } }));
+            const captionsEl = document.getElementById("captions");
+            const iframe = document.getElementById("__hf_probe_captions_frame");
+            if (!captionsEl || !iframe || !iframe.contentDocument || !iframe.contentWindow) return null;
+            iframe.contentWindow.dispatchEvent(new CustomEvent("hf-seek", { detail: { time: t } }));
+            const doc = iframe.contentDocument;
+            const line = doc.getElementById("caption-line");
+            const grp = doc.getElementById("caption-group");
+            const target = line && line.textContent.trim().length ? line : grp;
+            if (!target) return null;
+            const hostRect = captionsEl.getBoundingClientRect();
+            const innerRect = target.getBoundingClientRect();
+            const text = (target.textContent || "").trim();
+            return {
+              t,
+              text,
+              left: hostRect.left + innerRect.left,
+              top: hostRect.top + innerRect.top,
+              right: hostRect.left + innerRect.right,
+              bottom: hostRect.top + innerRect.bottom,
+              width: innerRect.width,
+              height: innerRect.height,
+              hasDevanagari: /[\u0900-\u097F]/.test(text),
+            };
+          }, ct);
+          if (capBox) captionChecks.push(capBox);
+        }
+
+        captionMountStatus = await page.evaluate(() => {
+          const iframe = document.getElementById("__hf_probe_captions_frame");
+          const doc = iframe ? iframe.contentDocument : null;
+          if (!doc) return { mounted: false, hasChildren: false, hasDevanagari: false };
+          const lineEl = doc.getElementById("caption-line");
+          const grpEl = doc.getElementById("caption-group");
+          const hasChildren = !!(lineEl || grpEl);
+          return { mounted: true, hasChildren, hasDevanagari: false };
+        });
+        captionMountStatus.hasDevanagari = captionChecks.some((b) => Boolean(b.hasDevanagari));
       }
-      return out;
-    });
-    for (const ct of payload.captionTimes || []) {
-      const capBox = await page.evaluate((t) => {
-        window.dispatchEvent(new CustomEvent("hf-seek", { detail: { time: t } }));
-        const line = document.getElementById("caption-line");
-        const grp = document.getElementById("caption-group");
-        const target = line && line.textContent.trim().length ? line : grp;
-        if (!target) return null;
-        const r = target.getBoundingClientRect();
-        return {
-          t,
-          text: (target.textContent || "").trim(),
-          left: r.left,
-          top: r.top,
-          right: r.right,
-          bottom: r.bottom,
-          width: r.width,
-          height: r.height,
-        };
-      }, ct);
-      if (capBox) captionChecks.push(capBox);
     }
   }
 
@@ -719,8 +792,27 @@ def run_chromium_runtime_probe(
     captionChecks,
     seqPngB64: seqDataUrl.split(",", 2)[1],
     directPngB64: directDataUrl.split(",", 2)[1],
+    captionMountStatus,
   };
 """
+    hf_tl_captions = {"mounted": False, "src": None, "sourceFile": None}
+    try:
+        tl_json = run_hf_timeline(root, project_dir, timeout_sec=60)
+        for tr in (tl_json.get("timeline") or {}).get("tracks") or []:
+            if tr.get("kind") == "captions":
+                for row in tr.get("rows") or []:
+                    if row.get("id") == "captions" or row.get("trackKind") == "captions":
+                        src = row.get("src")
+                        sf = row.get("sourceFile")
+                        hf_tl_captions = {
+                            "mounted": bool(src and sf and (project_dir / sf).is_file()),
+                            "src": src,
+                            "sourceFile": sf,
+                        }
+                        break
+    except Exception as exc:
+        hf_tl_captions["error"] = str(exc)
+
     with serve_directory(project_dir) as base_url:
         payload = {
             "indexUrl": f"{base_url}/{index_html.name}",
@@ -743,6 +835,8 @@ def run_chromium_runtime_probe(
         "loaded_fonts_captions": loaded_cap,
         "pill_boxes": raw.get("pillBoxes", []),
         "caption_checks": raw.get("captionChecks", []),
+        "caption_mount_status": raw.get("captionMountStatus", {"mounted": False, "hasChildren": False, "hasDevanagari": False}),
+        "hf_timeline_captions": hf_tl_captions,
         "idempotency_time_sec": seek_t,
         "idempotency_mae": round(mae, 6),
         "idempotency_passed": mae <= max_idempotency_mae,

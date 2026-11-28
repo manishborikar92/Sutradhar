@@ -8,6 +8,8 @@
     "mid": "#0D152E",
     "bot": "#070C1B"
   },
+  "ground_top": "#0F0E22",
+  "ground_bot": "#080716",
   "grid": {
     "enabled": true,
     "spacing_px": 60,

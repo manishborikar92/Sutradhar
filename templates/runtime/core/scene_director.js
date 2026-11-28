@@ -202,6 +202,14 @@ function drawSingleScene(targetCtx, sc, t, localT, atmoPools) {
       flGrad.addColorStop(1, env.ground_bot || "#060814");
       targetCtx.fillStyle = flGrad;
       targetCtx.fillRect(-160, horizonY, CANVAS_WIDTH + 320, CANVAS_HEIGHT - horizonY + 140);
+      if (env.ground_top || env.ground_bot) {
+        targetCtx.strokeStyle = "rgba(118, 212, 255, 0.24)";
+        targetCtx.lineWidth = 2.5;
+        targetCtx.beginPath();
+        targetCtx.moveTo(-160, horizonY);
+        targetCtx.lineTo(CANVAS_WIDTH + 160, horizonY);
+        targetCtx.stroke();
+      }
     }
 
     if (env.flora === true) {
@@ -394,6 +402,12 @@ export function createEpisodeDirector({ canvas, episodePlan, compositionId = "ma
     }
     if (kickerEl) kickerEl.textContent = sc.pill_kicker || "";
     if (titleEl) titleEl.textContent = sc.pill_title || "";
+    // Wire pill_y_px dynamically from scene data (default: 296px from CSS)
+    if (typeof sc.pill_y_px === "number" && sc.pill_y_px >= 288 && sc.pill_y_px <= 1248) {
+      overlayEl.style.top = sc.pill_y_px + "px";
+    } else {
+      overlayEl.style.top = "";
+    }
     const fadeIn = smooth(localT / 0.35);
     const fadeOut = smooth((sceneDur - localT) / 0.35);
     overlayEl.style.opacity = String(clamp(Math.min(fadeIn, fadeOut), 0, 1));

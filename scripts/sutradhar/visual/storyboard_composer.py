@@ -12,6 +12,13 @@ from typing import Any, Optional
 import yaml
 
 from sutradhar.audio.caption_builder import build_caption_cues, write_captions_data_js
+from sutradhar.audio.elevenlabs_tts import (
+    DEFAULT_TAG_TEMPLATES,
+    apply_pronunciations_preserving_tags,
+    load_pronunciations,
+    prepare_scene_tts_text,
+    strip_audio_tags,
+)
 from sutradhar.audio.sound_mixer import mix_episode_audio
 from sutradhar.audio.whisper_aligner import write_text_atomic
 from sutradhar.config import load_config
@@ -39,6 +46,7 @@ POSE_ALIASES: dict[str, str] = {
     "standing_hero": "neutral",
     "standing": "neutral",
     "hero": "neutral",
+    "calm_standing": "neutral",
     "meditating": "neutral",
     "meditate": "neutral",
     "padmasana": "neutral",
@@ -166,8 +174,8 @@ def detect_v2_storyboard_run(root: Path, cfg: dict[str, Any]) -> bool:
     if plan_path.is_file():
         try:
             plan_data = json.loads(plan_path.read_text(encoding="utf-8"))
-            if isinstance(plan_data, dict) and plan_data.get("storyboard_ir") is not None:
-                return True
+            if isinstance(plan_data, dict):
+                return plan_data.get("storyboard_ir") is not None
         except Exception:
             pass
     compiled_path = build_dir / "composition" / "storyboard_compiled.json"
@@ -339,7 +347,13 @@ def _load_or_build_captions(
     return normalized
 
 
-def verify_plan_audio_parity(plan: EpisodePlanV2, audio_manifest: dict[str, Any]) -> tuple[StoryboardIR, float]:
+def verify_plan_audio_parity(
+    plan: EpisodePlanV2,
+    audio_manifest: dict[str, Any],
+    *,
+    root: Path | None = None,
+    cfg: dict[str, Any] | None = None,
+) -> tuple[StoryboardIR, float]:
     """Fail closed on any mismatch between EpisodePlan, StoryboardIR, and audio manifest."""
     if plan.storyboard_ir is None:
         raise CompositionError("EpisodePlanV2.storyboard_ir is required for v2 composition")
@@ -358,7 +372,17 @@ def verify_plan_audio_parity(plan: EpisodePlanV2, audio_manifest: dict[str, Any]
             f"storyboard_ir={len(ir_scenes)}, audio_manifest={len(audio_scenes)}"
         )
 
+    text_reps: dict[str, str] = {}
+    tag_templates = DEFAULT_TAG_TEMPLATES
+    if root is not None:
+        resolved_cfg = cfg if cfg is not None else load_config(Path(root))
+        lang = getattr(plan, "audio_language", None) or getattr(plan, "language", "hi") or "hi"
+        text_reps = load_pronunciations(Path(root), resolved_cfg, lang=lang)
+        tag_templates = (resolved_cfg.get("tts") or {}).get("tag_templates") or DEFAULT_TAG_TEMPLATES
+    climax_idx = getattr(getattr(plan, "story_arc", None), "climax_scene_index", None)
+
     sum_dur = 0.0
+    total_scenes = len(plan_scenes)
     for idx, (psc, asc) in enumerate(zip(plan_scenes, audio_scenes)):
         a_idx = asc.get("scene_index")
         if a_idx is not None and int(a_idx) != int(psc.scene_index):
@@ -370,20 +394,68 @@ def verify_plan_audio_parity(plan: EpisodePlanV2, audio_manifest: dict[str, Any]
             raise CompositionError(f"Scene {idx} audio duration_sec must be > 0, got {dur}")
         sum_dur += dur
 
-        if asc.get("speed") is not None:
-            a_speed = float(asc["speed"])
-            if abs(a_speed - float(psc.speed)) > 0.015:
+        a_speed_raw = asc.get("speed") if asc.get("speed") is not None else asc.get("applied_speed")
+        if a_speed_raw is not None:
+            a_speed = float(a_speed_raw)
+            if psc.speed is not None:
+                if abs(a_speed - float(psc.speed)) > 0.015:
+                    raise CompositionError(
+                        f"Scene {idx} spoken speed mismatch: plan={psc.speed}, audio={a_speed}"
+                    )
+            elif not (0.5 <= a_speed <= 1.5):
                 raise CompositionError(
-                    f"Scene {idx} spoken speed mismatch: plan={psc.speed}, audio={a_speed}"
-                )
-        if asc.get("billed_chars") is not None:
-            expected_chars = count_billed_chars([psc])
-            if int(asc["billed_chars"]) != expected_chars:
-                raise CompositionError(
-                    f"Scene {idx} narration char count mismatch: plan={expected_chars}, audio={asc['billed_chars']}"
+                    f"Scene {idx} applied_speed {a_speed} outside valid [0.5, 1.5] bounds"
                 )
 
-    total_duration = float(audio_manifest.get("total_duration_sec") or sum_dur)
+        if asc.get("narration_text") is not None:
+            plan_clean = strip_audio_tags(psc.narration_text).strip()
+            aud_clean = strip_audio_tags(str(asc["narration_text"])).strip()
+            if plan_clean and aud_clean != plan_clean:
+                raise CompositionError(
+                    f"Scene {idx} narration text mismatch between plan and audio_manifest"
+                )
+
+        if asc.get("billed_chars") is not None:
+            raw_chars = count_billed_chars([psc])
+            clean_text, prepared_tts = prepare_scene_tts_text(
+                psc,
+                idx,
+                total_scenes,
+                text_reps,
+                tag_templates,
+                is_climax_scene=(climax_idx == psc.scene_index),
+            )
+            actual_chars = int(asc["billed_chars"])
+            tts_text = asc.get("tts_text_applied") or asc.get("synth_text")
+            if tts_text is not None:
+                tts_str = str(tts_text)
+                if actual_chars != len(tts_str):
+                    raise CompositionError(
+                        f"Scene {idx} narration char count mismatch: "
+                        f"prepared_text={len(tts_str)}, audio={actual_chars}"
+                    )
+                stripped_tts = strip_audio_tags(tts_str).strip()
+                expected_phonetic = apply_pronunciations_preserving_tags(clean_text, text_reps).strip()
+                if stripped_tts not in (clean_text, expected_phonetic):
+                    # Allow legacy/custom pronunciation substitution only when token overlap is high
+                    clean_toks = set(clean_text.split())
+                    tts_toks = set(stripped_tts.split())
+                    overlap = len(clean_toks & tts_toks) / max(1, len(clean_toks))
+                    if overlap < 0.70:
+                        raise CompositionError(
+                            f"Scene {idx} tts_text_applied diverges from plan narration (overlap={overlap:.2f})"
+                        )
+            elif actual_chars not in (raw_chars, len(prepared_tts)):
+                raise CompositionError(
+                    f"Scene {idx} narration char count mismatch: plan={raw_chars}, "
+                    f"prepared={len(prepared_tts)}, audio={actual_chars}"
+                )
+
+    total_duration = float(
+        audio_manifest.get("total_duration_sec")
+        or (audio_manifest.get("audio") or {}).get("total_duration_sec")
+        or sum_dur
+    )
     if total_duration <= 0.0:
         raise CompositionError(f"Total audio duration must be > 0, got {total_duration}")
     if abs(total_duration - sum_dur) > 0.15:
@@ -437,7 +509,7 @@ def _build_env_dict(env_preset: dict[str, Any], sc_vis: Any, horizon_y: int) -> 
         "atmosphere_mode": sc_vis.atmosphere_mode,
         "horizon_y": horizon_y,
     }
-    for opt in ("palette", "sky", "sun", "terrain", "grid", "stars_alpha", "motes_color", "has_diyas", "include_curtains"):
+    for opt in ("palette", "sky", "sun", "terrain", "grid", "stars_alpha", "motes_color", "has_diyas", "include_curtains", "ground_top", "ground_bot"):
         if opt in env_preset:
             env[opt] = env_preset[opt]
 
@@ -543,15 +615,20 @@ def _compile_scene_visuals(
     # Resolve characters & ground supports first so dais placements exist for props/telemetry
     runtime_chars: list[dict[str, Any]] = []
     for ch in sc_vis.characters:
-        if ch.role not in char_presets:
-            raise CompositionError(f"Scene {scene_idx} references unknown character role={ch.role!r}")
+        # Support lookup by role first, then fall back to character id
+        if ch.role in char_presets:
+            preset_key = ch.role
+        elif ch.id in char_presets:
+            preset_key = ch.id
+        else:
+            raise CompositionError(f"Scene {scene_idx} references unknown character role={ch.role!r} id={ch.id!r}")
+        c_preset = char_presets[preset_key]
         if not (90.0 <= float(ch.x) <= 990.0):
             raise CompositionError(
                 f"Scene {scene_idx} character {ch.role!r} x={ch.x} clipped outside safe horizontal margin [90, 990]"
             )
-        c_preset = char_presets[ch.role]
         norm_pose, norm_expr, seated = _normalize_pose_and_expr(
-            ch.pose, ch.expr, c_preset, ch.role, scene_idx
+            ch.pose, ch.expr, c_preset, preset_key, scene_idx
         )
         default_scale = float((c_preset.get("proportions") or {}).get("defaultScale", 1.0))
 
@@ -571,17 +648,17 @@ def _compile_scene_visuals(
         foot_y = support_top_y
         delta_px = abs(foot_y - support_top_y)
         speaking = (
-            (sc_plan.speaker_role == "character_dialogue" and ch.role == sc_plan.primary_character)
+            (sc_plan.speaker_role == "character_dialogue" and preset_key == sc_plan.primary_character)
             or (
                 sc_plan.speaker_role == "narrator"
-                and (ch.role == "sutradhar_narrator" or ch.role == sc_plan.primary_character or len(runtime_chars) == 0)
+                and (preset_key == "sutradhar_narrator" or preset_key == sc_plan.primary_character or len(runtime_chars) == 0)
             )
         )
 
         ch_dict: dict[str, Any] = {
-            "id": ch.role,
+            "id": preset_key,
             "instance_id": ch.id,
-            "role": ch.role,
+            "role": preset_key,
             "x": round(float(ch.x), 2),
             "y": round(foot_y, 2),
             "scale": round(default_scale, 3),
@@ -592,9 +669,9 @@ def _compile_scene_visuals(
             "speaking": bool(speaking),
             "surface_type": ch.surface_type,
         }
-        if ch.role == "shiva" and norm_pose == "palm_cup":
+        if preset_key == "shiva" and norm_pose == "palm_cup":
             ch_dict["halahalaInHand"] = 0.9
-        if ch.role == "shiva" and (
+        if preset_key == "shiva" and (
             norm_pose == "drink" or "नीलकंठ" in str(getattr(sc_plan, "narration_text", ""))
         ):
             ch_dict["neelakantha"] = 1.0
@@ -634,7 +711,11 @@ def _compile_scene_visuals(
             "mount": mount,
         }
 
-        if mount == "sky" or (canonical in AERIAL_CENTERED_PROPS and mount == "pedestal" and explicit_y is not None and explicit_y < horizon_y - 200):
+        if mount == "sky" or (
+            canonical in AERIAL_CENTERED_PROPS
+            and mount == "pedestal"
+            and (explicit_y is None or explicit_y < horizon_y - 200)
+        ):
             py = explicit_y if explicit_y is not None else 540.0
             if not (80.0 <= py <= horizon_y - 60.0):
                 raise CompositionError(
@@ -660,14 +741,20 @@ def _compile_scene_visuals(
             prop_dict["floorY"] = round(py, 2)
             support_top_y = dais_top
         elif mount in ("floor", "table", "pedestal"):
-            if mount == "pedestal" and canonical not in AERIAL_CENTERED_PROPS:
+            if mount == "pedestal":
+                # Pedestal props get elevated placement on a dais
                 dais_top = _find_dais_top_only(stage_elements, float(p.x))
                 if dais_top is None:
                     dais_top = _find_or_add_dais(stage_elements, float(p.x), horizon_y, height=DEFAULT_DAIS_HEIGHT)
                 support_top_y = dais_top
+                # When y is None for pedestal mount, place at dais top (not horizon_y)
+                py = explicit_y if explicit_y is not None else support_top_y
+            elif canonical not in AERIAL_CENTERED_PROPS:
+                support_top_y = float(horizon_y)
+                py = explicit_y if explicit_y is not None else support_top_y
             else:
                 support_top_y = float(horizon_y)
-            py = explicit_y if explicit_y is not None else support_top_y
+                py = explicit_y if explicit_y is not None else support_top_y
             delta_px = abs(py - support_top_y)
             if delta_px > GROUND_TOLERANCE_PX:
                 raise CompositionError(
@@ -758,6 +845,16 @@ def validate_storyboard_grounding(grounding_report: list[dict[str, Any]]) -> lis
 
 def _stage_runtime_bundle(root: Path, output_dir: Path, registry: dict[str, Any]) -> None:
     """Mount single copy of runtime assets (fonts, gsap, runtime modules) without legacy bloat."""
+    # Clean stale root-level runtime files & staged subdirs before writing fresh bundle
+    for stale_name in ("engine.js", "gsap.min.js", "world.js"):
+        stale_file = output_dir / stale_name
+        if stale_file.is_file():
+            stale_file.unlink(missing_ok=True)
+    for reset_sub in ("runtime", "captions"):
+        sub_path = output_dir / reset_sub
+        if sub_path.is_dir():
+            shutil.rmtree(sub_path)
+
     for sub in ("fonts", "lib", "runtime", "captions", "audio"):
         (output_dir / sub).mkdir(parents=True, exist_ok=True)
 
@@ -797,7 +894,14 @@ def compose_storyboard(
     registry = load_asset_registry(root)
     plan = _coerce_episode_plan(episode_plan)
     a_manifest = _load_audio_manifest(audio_manifest)
-    ir, total_duration = verify_plan_audio_parity(plan, a_manifest)
+    ir, total_duration = verify_plan_audio_parity(plan, a_manifest, root=root, cfg=cfg)
+
+    # Auto-enable contextual pills when any scene has an enabled pill with text
+    if not enable_contextual_pills:
+        for sv in ir.scenes:
+            if sv.contextual_pill.enabled and (sv.contextual_pill.text or sv.contextual_pill.subtext):
+                enable_contextual_pills = True
+                break
 
     target_dir = (output_dir or (root / "build" / "composition")).resolve()
     target_dir.mkdir(parents=True, exist_ok=True)
@@ -843,7 +947,12 @@ def compose_storyboard(
             shutil.copy2(src_wav, audio_out_path)
     elif mix_audio:
         resolved_cfg = cfg if cfg is not None else load_config(root)
-        narration_ref = (a_manifest.get("audio") or {}).get("narration_wav_path") or a_manifest.get("narration_wav_path")
+        narration_ref = (
+            (a_manifest.get("audio") or {}).get("narration_wav_path")
+            or (a_manifest.get("audio") or {}).get("narration_full_path")
+            or a_manifest.get("narration_wav_path")
+            or a_manifest.get("narration_full_path")
+        )
         narration_path = Path(narration_ref) if narration_ref else None
         if narration_path is not None and not narration_path.is_absolute():
             narration_path = root / narration_path
