@@ -44,6 +44,8 @@ from sutradhar.qa.hyperframes_runner import (  # noqa: E402
 )
 from sutradhar.qa.quality_gate import (  # noqa: E402
     QualityGateError,
+    _evaluate_kinocut_checks,
+    _measure_full_res_temporal_motion,
     reject_synthetic_dom_snapshots,
     run_v2_quality_gate,
 )
@@ -962,3 +964,153 @@ def test_remediation_fail_closed_warnings_true_peak_and_shared_probe_validation(
                 audio_manifest=audio_manifest,
                 cfg=cfg,
             )
+
+
+def test_kinocut_temporal_motion_timeout_diagnostic_not_masked(tmp_path: Path) -> None:
+    """Verify temporal_motion timeout/missing static_fraction surfaces details.diagnostic instead of silent 1.0."""
+    plan, audio_manifest = _make_sample_v2_plan_and_audio(tmp_path)
+    cfg = load_config(REPO_ROOT)
+    comp = compose_storyboard(
+        REPO_ROOT, plan, audio_manifest=audio_manifest,
+        output_dir=tmp_path / "comp_tm_diag", mix_audio=True, cfg=cfg,
+    )
+    out_mp4 = tmp_path / "tm_diag.mp4"
+    subprocess.run(
+        [
+            "ffmpeg", "-y", "-loglevel", "error",
+            "-f", "lavfi", "-i", f"testsrc2=size=1080x1920:rate=30:duration={comp.duration_sec:.3f}",
+            "-i", str(comp.master_wav),
+            "-t", f"{comp.duration_sec:.3f}", "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p",
+            "-c:a", "aac", "-b:a", "192k", "-ac", "2", "-ar", "48000",
+            str(out_mp4),
+        ],
+        check=True,
+    )
+    thumb_jpg = tmp_path / "t_diag.jpg"
+    crop_jpg = tmp_path / "t_diag_2x3.jpg"
+    build_thumbnail(REPO_ROOT, plan.thumbnail_spec, thumb_jpg, crop_output_jpg=crop_jpg)
+
+    timeout_diag = {"stage": "ffprobe_tblend_motion", "message": "ffprobe timed out"}
+    kc_timeout_pair = [
+        {
+            "overall_score": 93.0,
+            "all_passed": True,
+            "checks": [
+                {
+                    "name": "temporal_motion",
+                    "passed": False,
+                    "score": 0.0,
+                    "message": "Could not analyze temporal motion (analysis failed)",
+                    "details": {"diagnostic": timeout_diag},
+                }
+            ],
+        },
+        {
+            "overall_score": 60.5,
+            "all_passed": False,
+            "checks": [
+                {"name": "color_balance", "passed": True, "score": 70.3},
+                {
+                    "name": "temporal_motion",
+                    "passed": False,
+                    "score": 0.0,
+                    "message": "Could not analyze temporal motion (analysis failed)",
+                    "details": {"diagnostic": timeout_diag},
+                },
+            ],
+        },
+    ]
+
+    with mock.patch("sutradhar.qa.quality_gate.kinocut.quality_check", side_effect=kc_timeout_pair):
+        summary, kc_failures = _evaluate_kinocut_checks(out_mp4, cfg)
+    assert summary["static_fraction"] is None
+    assert summary["temporal_motion_diagnostic"] == timeout_diag
+    assert any("ffprobe_tblend_motion: ffprobe timed out" in f for f in kc_failures)
+    assert not any("static_fraction=1.0000" in f for f in kc_failures)
+
+    # Also verify missing static_fraction without diagnostic fails closed without inventing 1.0
+    kc_missing_sf = [
+        {"overall_score": 93.0, "all_passed": True, "checks": [{"name": "temporal_motion", "passed": False, "score": 0.0, "details": {}}]},
+        {"overall_score": 60.5, "all_passed": False, "checks": [
+            {"name": "color_balance", "passed": True, "score": 70.3},
+            {"name": "temporal_motion", "passed": False, "score": 0.0, "message": "missing metric", "details": {}},
+        ]},
+    ]
+    with mock.patch("sutradhar.qa.quality_gate.kinocut.quality_check", side_effect=kc_missing_sf):
+        summary_missing, missing_failures = _evaluate_kinocut_checks(out_mp4, cfg)
+    assert summary_missing["static_fraction"] is None
+    assert any("missing static_fraction" in f for f in missing_failures)
+
+    # Verify run_v2_quality_gate writes qa_report.json with static_fraction=None and raises diagnostic error
+    qa_report_path = tmp_path / "qa_diag_report.json"
+    with mock.patch("sutradhar.qa.quality_gate.kinocut.quality_check", side_effect=kc_timeout_pair):
+        with pytest.raises(QualityGateError, match=r"ffprobe_tblend_motion: ffprobe timed out"):
+            run_v2_quality_gate(
+                REPO_ROOT,
+                composition_dir=comp.output_dir,
+                mp4_path=out_mp4,
+                thumbnail_jpg=thumb_jpg,
+                crop_2x3_jpg=crop_jpg,
+                master_wav_path=comp.master_wav,
+                audio_manifest=audio_manifest,
+                report_output_path=qa_report_path,
+                cfg=cfg,
+            )
+    written = json.loads(qa_report_path.read_text(encoding="utf-8"))
+    assert written["passed"] is False
+    assert written["motion_and_look_gate"]["kinocut"]["static_fraction"] is None
+    assert written["motion_and_look_gate"]["kinocut"]["temporal_motion_diagnostic"] == timeout_diag
+
+
+def test_kinocut_long_short_proxy_and_full_res_temporal_motion(tmp_path: Path) -> None:
+    """Verify >=25s 1080x1920 Shorts run unmocked KinoCut + full-res Y-plane motion cleanly without timeout."""
+    import time
+
+    cfg = load_config(REPO_ROOT)
+    long_mp4 = tmp_path / "long_dark_moving_26s.mp4"
+    # 26s dark-themed moving 1080x1920 clip with -16 LUFS sine audio
+    subprocess.run(
+        [
+            "ffmpeg", "-y", "-loglevel", "error",
+            "-f", "lavfi",
+            "-i", "testsrc2=size=1080x1920:rate=30:duration=26.0,eq=brightness=-0.25:saturation=0.6",
+            "-f", "lavfi", "-i", "sine=frequency=220:sample_rate=48000:duration=26.0",
+            "-af", "volume=-10dB,loudnorm=I=-16:TP=-2.0",
+            "-t", "26.0", "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p",
+            "-c:a", "aac", "-b:a", "192k", "-ac", "2", "-ar", "48000",
+            str(long_mp4),
+        ],
+        check=True,
+    )
+
+    t0 = time.perf_counter()
+    summary, kc_failures = _evaluate_kinocut_checks(long_mp4, cfg)
+    elapsed = time.perf_counter() - t0
+
+    assert elapsed < 60.0, f"Long-Short KinoCut gate took too long: {elapsed:.2f}s"
+    assert kc_failures == [], f"Unexpected KinoCut failures: {kc_failures}"
+    assert summary["analysis_proxy"] is not None
+    assert summary["analysis_proxy"]["width"] == 270
+    assert summary["analysis_proxy"]["height"] == 480
+    assert summary["full_res_temporal_motion"] is not None
+    assert summary["full_res_temporal_motion"]["method"] == "ffmpeg_extractplanes_y_diff"
+    assert summary["full_res_temporal_motion"]["frames_analyzed"] >= 770
+    assert summary["static_fraction"] is not None and summary["static_fraction"] <= 0.15
+    assert summary["temporal_motion_diagnostic"] is None
+    assert summary["dark_score"] >= 88.0 and summary["dark_all_passed"] is True
+    assert summary["default_score"] >= 55.0 and summary["color_balance_passed"] is True
+
+    # Also verify _measure_full_res_temporal_motion detects a truly static 2s 1080x1920 clip accurately
+    static_mp4 = tmp_path / "static_2s.mp4"
+    subprocess.run(
+        [
+            "ffmpeg", "-y", "-loglevel", "error",
+            "-f", "lavfi", "-i", "color=c=#20242c:s=1080x1920:r=30:d=2.0",
+            "-t", "2.0", "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p",
+            str(static_mp4),
+        ],
+        check=True,
+    )
+    static_tm = _measure_full_res_temporal_motion(static_mp4, width=1080, height=1920)
+    assert static_tm["static_fraction"] == 1.0
+    assert static_tm["frames_analyzed"] >= 58
