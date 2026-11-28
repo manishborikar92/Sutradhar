@@ -21,9 +21,13 @@ from typing import Any, Callable, Optional
 
 AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth"
 TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token"
-YOUTUBE_OAUTH_SCOPES = (
+YOUTUBE_WRITE_SCOPES = (
     "https://www.googleapis.com/auth/youtube.upload",
     "https://www.googleapis.com/auth/youtube",
+)
+YOUTUBE_OAUTH_SCOPES = (
+    *YOUTUBE_WRITE_SCOPES,
+    "https://www.googleapis.com/auth/youtube.readonly",
 )
 DEFAULT_CALLBACK_TIMEOUT_SECONDS = 300
 
@@ -32,12 +36,8 @@ class OAuthRefreshError(RuntimeError):
     """Raised when OAuth credential loading, loopback callback, or token exchange fails."""
 
 
-def read_env_file(path: Path) -> tuple[str, dict[str, str]]:
-    """Read an env file without mutating process environment; fail closed if missing."""
-    if not path.is_file():
-        raise OAuthRefreshError(f"Environment file not found: {path}")
-
-    content = path.read_text(encoding="utf-8-sig")
+def parse_env_content(content: str) -> dict[str, str]:
+    """Parse `.env` file text into a key-value dict without mutating `os.environ`."""
     values: dict[str, str] = {}
 
     for line in content.splitlines():
@@ -53,14 +53,28 @@ def read_env_file(path: Path) -> tuple[str, dict[str, str]]:
         key = key.strip()
         raw_value = raw_value.strip()
 
-        if len(raw_value) >= 2 and raw_value[0] == raw_value[-1] and raw_value[0] in ("'", '"'):
-            value = raw_value[1:-1]
+        if raw_value and raw_value[0] in ("'", '"'):
+            quote = raw_value[0]
+            end_idx = raw_value.find(quote, 1)
+            if end_idx != -1:
+                value = raw_value[1:end_idx]
+            else:
+                value = raw_value.split("#", 1)[0].strip()
         else:
             value = raw_value.split("#", 1)[0].strip()
 
         values[key] = value
 
-    return content, values
+    return values
+
+
+def read_env_file(path: Path) -> tuple[str, dict[str, str]]:
+    """Read an env file without mutating process environment; fail closed if missing."""
+    if not path.is_file():
+        raise OAuthRefreshError(f"Environment file not found: {path}")
+
+    content = path.read_text(encoding="utf-8-sig")
+    return content, parse_env_content(content)
 
 
 def load_oauth_client_credentials(env_file: Path) -> tuple[str, str, str]:
@@ -79,11 +93,14 @@ def load_oauth_client_credentials(env_file: Path) -> tuple[str, str, str]:
 
 def update_refresh_token(path: Path, content: str, token: str) -> None:
     """Atomically update ONLY YOUTUBE_REFRESH_TOKEN in path, preserving all other lines."""
-    if not token or not token.strip():
+    clean_token = token.strip() if isinstance(token, str) else ""
+    if not clean_token:
         raise OAuthRefreshError("Refusing to write an empty YOUTUBE_REFRESH_TOKEN.")
+    if any(ch in clean_token for ch in ("\n", "\r", '"')):
+        raise OAuthRefreshError("Refusing to write YOUTUBE_REFRESH_TOKEN containing invalid control or quote characters.")
 
     lines = content.splitlines(keepends=True)
-    replacement = f'YOUTUBE_REFRESH_TOKEN="{token}"'
+    replacement = f'YOUTUBE_REFRESH_TOKEN="{clean_token}"'
     found = False
 
     for index, line in enumerate(lines):
@@ -257,9 +274,18 @@ def exchange_authorization_code(
         with urlopen_impl(request, timeout=timeout) as response:
             return json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
-        details = exc.read().decode("utf-8", errors="replace")
+        raw_details = exc.read().decode("utf-8", errors="replace")
+        summary = raw_details[:300]
+        try:
+            err_json = json.loads(raw_details)
+            if isinstance(err_json, dict) and err_json.get("error"):
+                err_code = str(err_json["error"])
+                err_desc = str(err_json.get("error_description", "")).strip()
+                summary = f"{err_code}: {err_desc}".rstrip(": ")
+        except Exception:
+            pass
         raise OAuthRefreshError(
-            f"Google token exchange failed (HTTP {exc.code}): {details}"
+            f"Google token exchange failed (HTTP {exc.code}): {summary}"
         ) from exc
     except urllib.error.URLError as exc:
         raise OAuthRefreshError(
@@ -276,6 +302,8 @@ def run_oauth_refresh_flow(
     on_auth_url: Optional[Callable[[str], None]] = None,
 ) -> Path:
     """Run loopback OAuth2 + PKCE flow and atomically store YOUTUBE_REFRESH_TOKEN in env_file."""
+    if timeout_seconds <= 0:
+        raise OAuthRefreshError("OAuth callback timeout_seconds must be greater than 0.")
     open_browser_impl = open_browser_fn or webbrowser.open
     original_content, client_id, client_secret = load_oauth_client_credentials(env_file)
 

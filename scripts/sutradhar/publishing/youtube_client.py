@@ -26,6 +26,11 @@ from sutradhar.publishing.metadata_policy import (
     resolve_or_create_series_playlist,
     validate_english_playlist_title,
 )
+from sutradhar.publishing.oauth_refresh import (
+    TOKEN_ENDPOINT,
+    YOUTUBE_WRITE_SCOPES,
+    parse_env_content,
+)
 from sutradhar.publishing.thumbnail_verifier import (
     ThumbnailValidationError,
     ThumbnailVerificationError,
@@ -42,19 +47,9 @@ class PublishPipelineError(RuntimeError):
 def load_env_file(root: Path) -> dict[str, str]:
     """Parse .env.local if present without mutating parent process environment."""
     env_file = root / ".env.local"
-    creds: dict[str, str] = {}
     if not env_file.is_file():
-        return creds
-
-    content = env_file.read_text(encoding="utf-8")
-    for line in content.splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if "=" in line:
-            key, val = line.split("=", 1)
-            creds[key.strip()] = val.strip().strip("'\"")
-    return creds
+        return {}
+    return parse_env_content(env_file.read_text(encoding="utf-8-sig"))
 
 
 def _resolve_oauth_credentials(root: Path) -> tuple[Optional[str], Optional[str], Optional[str]]:
@@ -76,18 +71,13 @@ def build_youtube_client(root: Path, *, readonly: bool = False) -> Any:
     from google.oauth2.credentials import Credentials
     from googleapiclient.discovery import build
 
-    scopes = (
-        ["https://www.googleapis.com/auth/youtube.readonly"]
-        if readonly
-        else [
-            "https://www.googleapis.com/auth/youtube.upload",
-            "https://www.googleapis.com/auth/youtube",
-        ]
-    )
+    # For readonly audits, omit explicit scopes so Google refreshes with whatever
+    # YouTube scopes were granted to the refresh token (e.g. `youtube` or `youtube.readonly`).
+    scopes = None if readonly else list(YOUTUBE_WRITE_SCOPES)
     creds = Credentials(
         token=None,
         refresh_token=refresh_token,
-        token_uri="https://oauth2.googleapis.com/token",
+        token_uri=TOKEN_ENDPOINT,
         client_id=client_id,
         client_secret=client_secret,
         scopes=scopes,
@@ -753,7 +743,9 @@ def verify_live_channel_state(
     except Exception as exc:
         raise PublishPipelineError(
             f"YouTube API read-only audit failed during OAuth/playlists.list ({exc}). "
-            "If YOUTUBE_REFRESH_TOKEN expired or was revoked ('invalid_grant'), regenerate it per docs/SETUP_AND_OPERATIONS.md."
+            "If YOUTUBE_REFRESH_TOKEN expired, was revoked ('invalid_grant'), or lacks scope ('invalid_scope'), "
+            "regenerate it with '.\\.venv\\Scripts\\python.exe scripts\\refresh_youtube_token.py' "
+            "(see docs/SETUP_AND_OPERATIONS.md)."
         ) from exc
     playlist_results: list[dict[str, Any]] = []
     playlist_video_cache: dict[str, set[str]] = {}
