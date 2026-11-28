@@ -147,11 +147,13 @@ export function applyCameraTransform(ctx, t, localT, opts = {}) {
   const driftZoom = opts.driftZoom ?? 0.014;
   const panAmpX = opts.panAmpX ?? 9;
   const panY = opts.panY ?? 0;
+  const sceneDuration = Math.max(0.001, opts.sceneDuration ?? 16);
 
-  const camZoom = baseZoom + Math.sin(t * 0.48) * ampZoom + (localT / 16) * driftZoom;
+  const camZoom = baseZoom + Math.sin(t * 0.48) * ampZoom + smooth(localT / sceneDuration) * driftZoom;
   const camPanX = Math.sin(t * 0.55) * panAmpX;
+  const camPanY = panY + Math.cos(t * 0.72) * 6.0;
 
-  ctx.translate(width * 0.5 + camPanX, height * 0.5 + panY);
+  ctx.translate(width * 0.5 + camPanX, height * 0.5 + camPanY);
   ctx.scale(camZoom, camZoom);
   ctx.translate(-width * 0.5, -height * 0.5);
 }

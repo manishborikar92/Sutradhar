@@ -338,7 +338,7 @@ class TestSutradharPhase2Runtime(unittest.TestCase):
         # Parametric JSON registries match manifest v2
         self.assertEqual(len(manifest["characters"]), 12)
         self.assertEqual(len(manifest["environments"]), 8)
-        self.assertEqual(len(manifest["props"]), 17)
+        self.assertEqual(len(manifest["props"]), 20)
         for section in ("characters", "environments", "props"):
             for item_id, entry in manifest[section].items():
                 p = REPO_ROOT / entry["file"]
@@ -767,7 +767,7 @@ const puppeteer = require(path.join(process.env.REPO_ROOT, "node_modules", "pupp
 
                 mt = telemetry["moduleTelemetry"]
                 # All 17 manifest props render non-empty
-                self.assertEqual(len(mt["propPixels"]), 17)
+                self.assertEqual(len(mt["propPixels"]), 20)
                 for prop_id, px in mt["propPixels"].items():
                     self.assertGreater(px, 500, f"Prop '{prop_id}' rendered insufficient pixels: {px}")
 
@@ -828,3 +828,53 @@ const puppeteer = require(path.join(process.env.REPO_ROOT, "node_modules", "pupp
             finally:
                 server.shutdown()
                 server.server_close()
+
+    def test_caption_centering_and_prop_params_contracts(self) -> None:
+        import sys
+        if str(REPO_ROOT / "scripts") not in sys.path:
+            sys.path.insert(0, str(REPO_ROOT / "scripts"))
+        from sutradhar.models import CharacterPlacement, PropPlacement, SceneVisualSpec
+
+        captions_tpl = (REPO_ROOT / "templates" / "runtime" / "captions" / "captions.html.jinja2").read_text(encoding="utf-8")
+        self.assertIn("align-items: center;", captions_tpl)
+        self.assertIn("justify-content: center;", captions_tpl)
+        self.assertIn("text-align: center;", captions_tpl)
+        self.assertIn("left: 52px;", captions_tpl)
+        self.assertIn("right: 204px;", captions_tpl)
+
+        prop = PropPlacement(
+            id="meru_route_scroll",
+            kind="meru_route_scroll",
+            mount="table",
+            x=690.0,
+            scale=0.72,
+            params={"from_label": "NALANDA", "to_label": "TIBET • CHINA", "transparent_desk": True},
+        )
+        self.assertEqual(prop.params["from_label"], "NALANDA")
+        self.assertTrue(prop.params["transparent_desk"])
+
+        ch = CharacterPlacement(
+            id="ancient_scholar",
+            role="scholar",
+            x=480.0,
+            surface_type="dais",
+            seated=True,
+            pose="gesture",
+            expr="serene",
+        )
+        self.assertTrue(ch.seated)
+
+        sc = SceneVisualSpec(
+            atmosphere_mode="archival",
+            environment_preset="nalanda_archival",
+            camera_move="slow_pull_out",
+            environment_overrides={"wall_top": "#1E0908", "fire_embers": True},
+            props=[prop],
+            characters=[ch],
+        )
+        self.assertTrue(sc.environment_overrides["fire_embers"])
+
+        props_js = (REPO_ROOT / "templates" / "runtime" / "props" / "props_library.js").read_text(encoding="utf-8")
+        for key in ("dharmaganja_towers", "palm_leaf_manuscript", "eternal_diya_pedestal"):
+            self.assertIn(f"{key}:", props_js)
+            self.assertTrue((REPO_ROOT / "assets" / "props" / f"{key}.json").is_file())

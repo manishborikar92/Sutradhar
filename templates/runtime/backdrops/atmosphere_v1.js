@@ -110,6 +110,7 @@ export function drawStars(ctx, stars, t, alpha, ox, oy) {
   ctx.restore();
 }
 
+
 export function drawSunOrAura(ctx, sx, sy, rad, intensity, rayStrength, rayCount, t, coreCol, haloCol, midCol) {
   if (intensity <= 0.01) return;
   const g = ctx.createRadialGradient(sx, sy, 18, sx, sy, rad);
@@ -267,6 +268,52 @@ export function drawMotes(ctx, motes, t, col, alphaScale, ox, oy, width = CANVAS
   }
   ctx.restore();
 }
+
+/**
+ * Deterministic rising fire embers and drifting smoke wisps for crimson/fire climax scenes.
+ */
+export function drawFireEmbersAndSmoke(ctx, motes, t, ox, oy, width = CANVAS_WIDTH, height = CANVAS_HEIGHT) {
+  ctx.save();
+  // Soft drifting smoke wisps across upper/mid frame
+  for (let i = 0; i < 7; i++) {
+    const sx = wrap(i * 190 + t * (28 + (i % 3) * 11), width + 420) - 210 + ox(0.25);
+    const sy = 360 + (i % 4) * 180 + Math.sin(t * 0.9 + i * 1.7) * 28 + oy(0.2);
+    const rx = 180 + (i % 3) * 45;
+    const ry = 68 + (i % 2) * 24;
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.scale(1, ry / rx);
+    const sg = ctx.createRadialGradient(0, 0, 8, 0, 0, rx);
+    sg.addColorStop(0, "rgba(38, 14, 12, 0.34)");
+    sg.addColorStop(0.55, "rgba(72, 22, 14, 0.16)");
+    sg.addColorStop(1, "rgba(24, 8, 8, 0)");
+    ctx.fillStyle = sg;
+    ctx.beginPath();
+    ctx.arc(0, 0, rx, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Rising glowing fire embers
+  ctx.globalCompositeOperation = "lighter";
+  for (let i = 0; i < motes.length; i++) {
+    const q = motes[i];
+    const ex = wrap(q.x + Math.sin(t * 1.45 + q.ph) * 62, width + 180) - 90 + ox(0.4 + q.d * 0.8);
+    const ey = wrap(q.y - t * (q.v * 1.9 + 42) * (0.7 + q.d * 0.8), height + 200) - 100 + oy(0.4 + q.d * 0.8);
+    const flicker = 0.45 + 0.55 * Math.abs(Math.sin(t * 4.2 + q.ph));
+    const rad = 2.0 + q.d * 4.2;
+    ctx.fillStyle = `rgba(255, 112, 36, ${(0.24 * flicker).toFixed(3)})`;
+    ctx.beginPath();
+    ctx.arc(ex, ey, rad * 3.8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = `rgba(255, 214, 108, ${(0.78 * flicker).toFixed(3)})`;
+    ctx.beginPath();
+    ctx.arc(ex, ey, rad, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
 
 export function drawSnowyBoulders(ctx, floorTopCol, floorBotCol, horizonY = DEFAULT_HORIZON_Y, panOffsetX = 0, t = 0, hasDiyas = false, width = CANVAS_WIDTH, height = CANVAS_HEIGHT) {
   const fg = ctx.createLinearGradient(0, horizonY - 24, 0, height);

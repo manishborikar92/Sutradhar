@@ -1,0 +1,8 @@
+{
+  "id": "dharmaganja_towers",
+  "name": "Dharmaganja Three-Tower Nalanda Library",
+  "category": "architectural_monument",
+  "renderer": "drawDharmaganjaTowers",
+  "default_mount": "floor",
+  "description": "Monumental tiered 9-storey Nalanda Dharmaganja library towers (Ratnasagara, Ratnodadhi, Ratnaranjaka) with warm sandstone tiers and glowing arched windows."
+}

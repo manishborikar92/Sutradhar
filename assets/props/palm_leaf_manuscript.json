@@ -1,0 +1,8 @@
+{
+  "id": "palm_leaf_manuscript",
+  "name": "Nalanda Palm-Leaf Pothi Manuscript",
+  "category": "archival_prop",
+  "renderer": "drawPalmLeafManuscript",
+  "default_mount": "table",
+  "description": "Layered pothi palm-leaf manuscript bundle on a carved wooden vyasapitha stand with vermilion cord, brass stylus, inkwell, and subtle golden aura."
+}

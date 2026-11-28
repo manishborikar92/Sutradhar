@@ -396,6 +396,7 @@ class PropPlacement(BaseModel):
     y: Optional[float] = Field(default=None, ge=-200.0, le=2000.0)
     scale: float = Field(default=1.0, gt=0.1, le=4.0)
     cue_word: Optional[str] = Field(default=None, max_length=80)
+    params: dict[str, Any] = Field(default_factory=dict)
 
 
 class CharacterPlacement(BaseModel):
@@ -409,6 +410,7 @@ class CharacterPlacement(BaseModel):
     expr: str = Field(default="calm", min_length=2, max_length=60)
     turn: float = Field(default=0.0, ge=-0.45, le=0.45)
     gaze_target: Optional[str] = Field(default=None, max_length=80)
+    seated: Optional[bool] = Field(default=None)
 
 
 class ContextualPill(BaseModel):
@@ -441,6 +443,7 @@ class SceneVisualSpec(BaseModel):
     props: list[PropPlacement] = Field(default_factory=list)
     characters: list[CharacterPlacement] = Field(default_factory=list)
     contextual_pill: ContextualPill = Field(default_factory=ContextualPill)
+    environment_overrides: dict[str, Any] = Field(default_factory=dict)
 
 
 class StoryboardIR(BaseModel):

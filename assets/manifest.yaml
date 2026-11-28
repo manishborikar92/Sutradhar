@@ -478,12 +478,24 @@ props:
     renderer: drawBrassClock
     default_mount: pedestal
     file: assets/props/brass_clock.json
+  dharmaganja_towers:
+    name: Dharmaganja Three-Tower Nalanda Library
+    category: architectural_monument
+    renderer: drawDharmaganjaTowers
+    default_mount: floor
+    file: assets/props/dharmaganja_towers.json
   earth_globe:
     name: Rotating Vector Earth & Orbital Satellites
     category: explainer_prop
     renderer: drawVectorEarthGlobe
     default_mount: sky
     file: assets/props/earth_globe.json
+  eternal_diya_pedestal:
+    name: Eternal Flame Stone Stele & Diya Pedestal
+    category: sacred_vessel
+    renderer: drawEternalDiyaPedestal
+    default_mount: floor
+    file: assets/props/eternal_diya_pedestal.json
   halahala_orb:
     name: Emerald Halahala Poison Orb
     category: vfx_prop
@@ -527,6 +539,12 @@ props:
     renderer: drawMountMandara
     default_mount: terrain
     file: assets/props/mount_mandara.json
+  palm_leaf_manuscript:
+    name: Nalanda Palm-Leaf Pothi Manuscript
+    category: archival_prop
+    renderer: drawPalmLeafManuscript
+    default_mount: table
+    file: assets/props/palm_leaf_manuscript.json
   samudra_manthan_halahala:
     name: Samudra Manthan & Halahala Eruption Ensemble
     category: mythic_ensemble

@@ -9,6 +9,7 @@ import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
   clamp,
+  drawDiya,
   drawGlow,
   drawHalahalaOrb,
   easeOutBack,
@@ -583,6 +584,23 @@ export function drawGroundedHourglassStand(ctx, x, floorY, t = 0) {
 export function drawVectorEarthGlobe(ctx, cx, cy, R, rotPhase = 0, glowCol = "rgba(86, 186, 255, 0.36)") {
   ctx.save();
   drawGlow(ctx, cx, cy, R * 0.7, R * 1.45, glowCol);
+
+  // Back half of tilted orbital rings
+  for (const [tilt, rScale, col, speedMul] of [
+    [-0.36, 1.42, "rgba(255, 214, 118, 0.55)", 1.0],
+    [0.44, 1.62, "rgba(116, 214, 255, 0.44)", -0.7],
+  ]) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(tilt);
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 2.6;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, R * rScale, R * rScale * 0.28, 0, Math.PI, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   ctx.beginPath();
   ctx.arc(cx, cy, safeR(R), 0, Math.PI * 2);
   const ocean = ctx.createRadialGradient(cx - R * 0.3, cy - R * 0.3, R * 0.1, cx, cy, safeR(R));
@@ -610,20 +628,81 @@ export function drawVectorEarthGlobe(ctx, cx, cy, R, rotPhase = 0, glowCol = "rg
   ctx.beginPath();
   ctx.arc(cx, cy, safeR(R), 0, Math.PI * 2);
   ctx.stroke();
+
+  // Front half of tilted orbital rings + orbiting planetary nodes
+  for (const [tilt, rScale, col, speedMul, nodeCol] of [
+    [-0.36, 1.42, "rgba(255, 214, 118, 0.72)", 1.0, "#FFE48A"],
+    [0.44, 1.62, "rgba(116, 214, 255, 0.58)", -0.7, "#8CE2FF"],
+  ]) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(tilt);
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 2.8;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, R * rScale, R * rScale * 0.28, 0, 0, Math.PI);
+    ctx.stroke();
+    const ang = rotPhase * 1.6 * speedMul;
+    const nx = Math.cos(ang) * R * rScale;
+    const ny = Math.sin(ang) * R * rScale * 0.28;
+    drawGlow(ctx, nx, ny, 2, 16, col);
+    ctx.fillStyle = nodeCol;
+    ctx.beginPath();
+    ctx.arc(nx, ny, 6.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
   ctx.restore();
 }
 
-export function drawMeruRouteScroll(ctx, localT = 1.5, fromLabel = "DWARAKA", toLabel = "BRAHMALOKA", width = CANVAS_WIDTH, height = CANVAS_HEIGHT) {
+export function drawMeruRouteScroll(
+  ctx,
+  localT = 1.5,
+  fromLabel = "DWARAKA",
+  toLabel = "BRAHMALOKA",
+  width = CANVAS_WIDTH,
+  height = CANVAS_HEIGHT,
+  opts = {}
+) {
+  const transparentDesk = Boolean(opts.transparentDesk ?? false);
   const unfurl = easeOutCubic(localT / 0.85);
-  const desk = ctx.createLinearGradient(0, 0, 0, height);
-  desk.addColorStop(0, "#1E1418");
-  desk.addColorStop(0.5, "#331D1A");
-  desk.addColorStop(1, "#180F12");
-  ctx.fillStyle = desk;
-  ctx.fillRect(0, 0, width, height);
-  ctx.strokeStyle = "rgba(246, 196, 83, 0.14)";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(48, 48, width - 96, height - 96);
+
+  ctx.save();
+  if (!transparentDesk) {
+    const desk = ctx.createLinearGradient(0, 0, 0, height);
+    desk.addColorStop(0, "#1E1418");
+    desk.addColorStop(0.5, "#331D1A");
+    desk.addColorStop(1, "#180F12");
+    ctx.fillStyle = desk;
+    ctx.fillRect(0, 0, width, height);
+    ctx.strokeStyle = "rgba(246, 196, 83, 0.14)";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(48, 48, width - 96, height - 96);
+  } else {
+    const anchorX = Number(opts.x ?? 690);
+    const anchorY = Number(opts.y ?? 1142);
+    const sc = Number(opts.scale ?? 0.68);
+    // Grounded wooden scroll-lectern stand at anchorY
+    ctx.fillStyle = "rgba(6, 5, 16, 0.38)";
+    ctx.beginPath();
+    ctx.ellipse(anchorX, anchorY + 4, 175 * sc, 18 * sc, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#5B321C";
+    ctx.strokeStyle = "#3B1E12";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.roundRect(anchorX - 18, anchorY - 260 * sc, 36, 260 * sc, 8);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.roundRect(anchorX - 120 * sc, anchorY - 26, 240 * sc, 26, 8);
+    ctx.fill();
+    ctx.stroke();
+    ctx.translate(anchorX, anchorY - 560 * sc);
+    ctx.scale(sc, sc);
+    ctx.translate(-540, -445);
+  }
 
   const sw = lerp(140, 800, unfurl);
   const sx = 540 - sw * 0.5;
@@ -710,17 +789,18 @@ export function drawMeruRouteScroll(ctx, localT = 1.5, fromLabel = "DWARAKA", to
     for (const tag of [{ x: 270, y: 1068, txt: fromLabel }, { x: 750, y: 500, txt: toLabel }]) {
       ctx.fillStyle = "#2E190C";
       ctx.beginPath();
-      ctx.roundRect(tag.x - 95, tag.y - 20, 190, 36, 18);
+      ctx.roundRect(tag.x - 115, tag.y - 20, 230, 36, 18);
       ctx.fill();
       ctx.fillStyle = "#FFE088";
-      ctx.font = '800 20px "Cinzel", serif';
+      ctx.font = '800 19px "Cinzel", serif';
       ctx.fillText(tag.txt, tag.x, tag.y + 5);
     }
     ctx.restore();
   }
+  ctx.restore();
 }
 
-export function drawMagnifyingSectorLens(ctx, x, y, lR = 192, sectors = 27, progress = 1.0, pop = 1.0) {
+export function drawMagnifyingSectorLens(ctx, x, y, lR = 192, sectors = 27, progress = 1.0, pop = 1.0, label = null) {
   if (pop <= 0.02) return;
   const lScale = easeOutBack(clamp(pop, 0, 1));
   ctx.save();
@@ -758,7 +838,7 @@ export function drawMagnifyingSectorLens(ctx, x, y, lR = 192, sectors = 27, prog
   ctx.fillStyle = "#FFD86B";
   ctx.font = '800 54px "Cinzel", serif';
   ctx.textAlign = "center";
-  ctx.fillText(String(litN), 0, 18);
+  ctx.fillText(label !== null && label !== undefined ? String(label) : String(litN), 0, 18);
 
   ctx.strokeStyle = "#F6C453";
   ctx.lineWidth = 14;
@@ -1121,8 +1201,306 @@ const drawKalachakraProp = (c, p, t) =>
 const drawIronPillarProp = (c, p) => drawIronPillar(c, p.x ?? 540, p.y ?? 1142, p.height ?? 560);
 
 /**
+ * Monumental tiered 9-storey Nalanda Dharmaganja library towers
+ * (Ratnasagara, Ratnodadhi, Ratnaranjaka) with warm sandstone tiers & glowing arched windows.
+ */
+export function drawDharmaganjaTowers(ctx, x = 320, floorY = 1142, t = 0, scale = 1.0) {
+  ctx.save();
+  ctx.translate(x, floorY);
+  ctx.scale(scale, scale);
+  const ink = "#3B1E12";
+
+  // Ground contact shadow
+  ctx.fillStyle = "rgba(8, 5, 16, 0.36)";
+  ctx.beginPath();
+  ctx.ellipse(0, 4, 210, 20, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Subtle celestial golden aura behind central 9-storey Ratnodadhi tower
+  const auraPulse = 0.88 + 0.12 * Math.sin(t * 2.1);
+  drawGlow(ctx, 0, -340, 24, 250 * auraPulse, "rgba(255, 208, 118, 0.32)");
+
+  const drawTower = (tx, baseW, tiers, tierH, isCenter) => {
+    const topY = -tiers * tierH;
+    // Stepped plinth
+    ctx.fillStyle = "#8C4722";
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.roundRect(tx - baseW * 0.56, -24, baseW * 1.12, 24, 4);
+    ctx.fill();
+    ctx.stroke();
+
+    for (let i = 0; i < tiers; i++) {
+      const frac = i / tiers;
+      const w = baseW * (1 - frac * 0.42);
+      const y0 = -24 - (i + 1) * tierH;
+      const g = ctx.createLinearGradient(tx - w * 0.5, y0, tx + w * 0.5, y0);
+      g.addColorStop(0, "#B45E2A");
+      g.addColorStop(0.45, "#DF9355");
+      g.addColorStop(1, "#7B3918");
+      ctx.fillStyle = g;
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 2.6;
+      ctx.beginPath();
+      ctx.roundRect(tx - w * 0.5, y0, w, tierH + 2, 3);
+      ctx.fill();
+      ctx.stroke();
+
+      // Cornice ledge
+      ctx.fillStyle = "#F0B96A";
+      ctx.fillRect(tx - w * 0.54, y0 - 4, w * 1.08, 5);
+      ctx.strokeRect(tx - w * 0.54, y0 - 4, w * 1.08, 5);
+
+      // Glowing arched windows
+      const winCount = w > 110 ? 3 : w > 72 ? 2 : 1;
+      for (let wi = 0; wi < winCount; wi++) {
+        const wx = tx + (wi - (winCount - 1) * 0.5) * (w / (winCount + 0.6));
+        const wy = y0 + tierH * 0.78;
+        const glowA = 0.68 + 0.28 * Math.sin(t * 3.4 + i * 0.9 + wi * 1.3);
+        ctx.fillStyle = `rgba(255, 224, 132, ${glowA.toFixed(3)})`;
+        ctx.strokeStyle = ink;
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(wx - 7, wy);
+        ctx.lineTo(wx - 7, wy - 12);
+        ctx.arc(wx, wy - 12, 7, Math.PI, 0, false);
+        ctx.lineTo(wx + 7, wy);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      }
+    }
+
+    // Sikhara crown & golden kalasha finial
+    const crownY = -24 + topY;
+    const crownW = baseW * 0.52;
+    ctx.fillStyle = "#C97536";
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 2.6;
+    ctx.beginPath();
+    ctx.moveTo(tx - crownW * 0.55, crownY);
+    ctx.quadraticCurveTo(tx - crownW * 0.2, crownY - 44, tx, crownY - 58);
+    ctx.quadraticCurveTo(tx + crownW * 0.2, crownY - 44, tx + crownW * 0.55, crownY);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "#FFD86B";
+    ctx.beginPath();
+    ctx.arc(tx, crownY - 64, isCenter ? 8 : 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  };
+
+  // Flanking Ratnasagara & Ratnaranjaka towers + central 9-storey Ratnodadhi
+  drawTower(-122, 118, 6, 42, false);
+  drawTower(122, 118, 6, 42, false);
+  drawTower(0, 152, 9, 44, true);
+
+  ctx.restore();
+}
+
+/**
+ * Layered pothi palm-leaf manuscript bundle on carved wooden vyasapitha stand
+ * with vermilion cord, brass stylus, inkwell, and subtle golden aura.
+ */
+export function drawPalmLeafManuscript(ctx, x = 740, floorY = 1142, t = 0, scale = 1.0) {
+  ctx.save();
+  ctx.translate(x, floorY);
+  ctx.scale(scale, scale);
+  const ink = "#3B1E12";
+
+  // Ground contact shadow
+  ctx.fillStyle = "rgba(8, 5, 16, 0.34)";
+  ctx.beginPath();
+  ctx.ellipse(0, 3, 128, 16, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Carved wooden vyasapitha / low archival table grounded at y=0
+  ctx.fillStyle = "#5B2F18";
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = 3;
+  for (const lx of [-86, 66]) {
+    ctx.beginPath();
+    ctx.roundRect(lx, -112, 20, 112, 4);
+    ctx.fill();
+    ctx.stroke();
+  }
+  const topG = ctx.createLinearGradient(-120, -134, 120, -110);
+  topG.addColorStop(0, "#8B4E28");
+  topG.addColorStop(0.5, "#B06A38");
+  topG.addColorStop(1, "#6E381A");
+  ctx.fillStyle = topG;
+  ctx.beginPath();
+  ctx.roundRect(-124, -134, 248, 24, 6);
+  ctx.fill();
+  ctx.stroke();
+
+  // Subtle warm aura over manuscript
+  const pulse = 0.88 + 0.12 * Math.sin(t * 2.6);
+  drawGlow(ctx, 0, -162, 10, 115 * pulse, "rgba(255, 212, 122, 0.36)");
+
+  // Stacked palm-leaf pothi sheets
+  for (let i = 0; i < 4; i++) {
+    const oy = -138 - i * 8;
+    const ox = (i % 2 === 0 ? -1 : 1) * i * 2;
+    ctx.fillStyle = i === 3 ? "#F6E2B3" : "#DEC184";
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.roundRect(-94 + ox, oy - 22, 188, 22, 5);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // Top open folio with Devanagari-like script strokes & vermilion cord
+  ctx.fillStyle = "#FDF0CB";
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.roundRect(-98, -196, 196, 36, 6);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.strokeStyle = "rgba(72, 38, 18, 0.55)";
+  ctx.lineWidth = 1.8;
+  for (const sy of [-185, -177, -169]) {
+    ctx.beginPath();
+    ctx.moveTo(-82, sy);
+    ctx.lineTo(-14, sy);
+    ctx.moveTo(14, sy);
+    ctx.lineTo(82, sy);
+    ctx.stroke();
+  }
+
+  // Vermilion binding cord + seal
+  ctx.strokeStyle = "#C82E22";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(0, -198);
+  ctx.lineTo(0, -158);
+  ctx.stroke();
+  ctx.fillStyle = "#D93829";
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(0, -178, 7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Brass stylus resting diagonally & small inkwell on right
+  ctx.strokeStyle = "#E8B84B";
+  ctx.lineWidth = 4.5;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(46, -150);
+  ctx.lineTo(106, -184);
+  ctx.stroke();
+
+  ctx.fillStyle = "#3A2824";
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.roundRect(78, -156, 26, 22, 5);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+/**
+ * Carved sandstone inscription stele + ornate brass diya lamp with animated flickering flame halo.
+ */
+export function drawEternalDiyaPedestal(ctx, x = 740, floorY = 1142, t = 0, scale = 1.0) {
+  ctx.save();
+  ctx.translate(x, floorY);
+  ctx.scale(scale, scale);
+  const ink = "#3B1E12";
+
+  // Ground contact shadow
+  ctx.fillStyle = "rgba(8, 5, 16, 0.36)";
+  ctx.beginPath();
+  ctx.ellipse(0, 4, 110, 16, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Carved sandstone stele behind pedestal
+  const steleG = ctx.createLinearGradient(-64, -290, 64, 0);
+  steleG.addColorStop(0, "#A8704A");
+  steleG.addColorStop(0.5, "#C78E62");
+  steleG.addColorStop(1, "#6E432A");
+  ctx.fillStyle = steleG;
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-64, -20);
+  ctx.lineTo(-64, -238);
+  ctx.arc(0, -238, 64, Math.PI, 0, false);
+  ctx.lineTo(64, -20);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Carved inscription lines on stele
+  ctx.strokeStyle = "rgba(59, 30, 18, 0.52)";
+  ctx.lineWidth = 2.4;
+  for (const iy of [-244, -224, -204, -184]) {
+    ctx.beginPath();
+    ctx.moveTo(-36, iy);
+    ctx.lineTo(36, iy);
+    ctx.stroke();
+  }
+
+  // Stepped foreground pedestal
+  ctx.fillStyle = "#8C5230";
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.roundRect(-84, -26, 168, 26, 5);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#B67444";
+  ctx.beginPath();
+  ctx.roundRect(-56, -118, 112, 92, 6);
+  ctx.fill();
+  ctx.stroke();
+
+  // Ornate brass diya stand + flickering flame halo
+  ctx.fillStyle = "#D49B35";
+  ctx.beginPath();
+  ctx.roundRect(-36, -134, 72, 16, 6);
+  ctx.fill();
+  ctx.stroke();
+
+  const flicker = 0.9 + 0.14 * Math.sin(t * 8.2);
+  drawGlow(ctx, 0, -172, 8, 130 * flicker, "rgba(255, 206, 98, 0.58)");
+  drawDiya(ctx, 0, -142, t, {
+    radiusW: 32,
+    radiusH: 13,
+    flameW: 11,
+    flameH: 22,
+    glowR: 84,
+    glowAlpha: 0.78,
+  });
+
+  // Deterministic rising golden sparks
+  for (let i = 0; i < 6; i++) {
+    const ph = ((t * 0.75 + i * 0.17) % 1);
+    const sx = Math.sin(t * 2.4 + i * 1.9) * (12 + ph * 18);
+    const sy = -168 - ph * 95;
+    const sa = (1 - ph) * 0.85;
+    ctx.fillStyle = `rgba(255, 228, 130, ${sa.toFixed(3)})`;
+    ctx.beginPath();
+    ctx.arc(sx, sy, 2.6 * (1 - ph * 0.5), 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+/**
  * Shared declarative prop dispatch table used by both video scenes and cover thumbnails.
- * Covers all 17 canonical IDs in assets/manifest.yaml plus runtime scene aliases.
+ * Covers all 20 canonical IDs in assets/manifest.yaml plus runtime scene aliases.
  */
 export const PROP_DRAWERS = {
   trishul: (c, p) => {
@@ -1184,9 +1562,31 @@ export const PROP_DRAWERS = {
       p.glowCol ?? "rgba(86, 186, 255, 0.36)"
     ),
   meru_route_scroll: (c, p, _t, localT) =>
-    drawMeruRouteScroll(c, p.localT ?? localT, p.fromLabel ?? "DWARAKA", p.toLabel ?? "BRAHMALOKA"),
+    drawMeruRouteScroll(
+      c,
+      p.localT ?? localT,
+      p.fromLabel ?? p.params?.from_label ?? "DWARAKA",
+      p.toLabel ?? p.params?.to_label ?? "BRAHMALOKA",
+      CANVAS_WIDTH,
+      CANVAS_HEIGHT,
+      {
+        transparentDesk: p.transparentDesk ?? p.params?.transparent_desk ?? false,
+        x: p.x,
+        y: p.y,
+        scale: p.scale,
+      }
+    ),
   magnifying_sector_lens: (c, p) =>
-    drawMagnifyingSectorLens(c, p.x ?? 620, p.y ?? 780, p.r ?? 192, p.sectors ?? 27, p.progress ?? 1.0, p.pop ?? 1.0),
+    drawMagnifyingSectorLens(
+      c,
+      p.x ?? 620,
+      p.y ?? 780,
+      p.r ?? 192,
+      p.sectors ?? p.params?.sectors ?? 27,
+      p.progress ?? 1.0,
+      p.pop ?? 1.0,
+      p.label ?? p.params?.label ?? null
+    ),
   spacetime_comparator: (c, p, t) =>
     drawSpacetimeComparator(c, p.t ?? t, p.leftTitle ?? "RELATIVITY", p.rightTitle ?? "SURYA SIDDHANTA"),
   wedding_mandap: (c, p, t) => drawWeddingMandap(c, p.floorY ?? 1230, p.t ?? t),
@@ -1205,6 +1605,12 @@ export const PROP_DRAWERS = {
     ),
   iron_pillar: drawIronPillarProp,
   mehrauli_iron_pillar: drawIronPillarProp,
+  dharmaganja_towers: (c, p, t) =>
+    drawDharmaganjaTowers(c, p.x ?? 320, p.y ?? 1142, p.t ?? t, p.scale ?? 1.0),
+  palm_leaf_manuscript: (c, p, t) =>
+    drawPalmLeafManuscript(c, p.x ?? 740, p.y ?? 1142, p.t ?? t, p.scale ?? 1.0),
+  eternal_diya_pedestal: (c, p, t) =>
+    drawEternalDiyaPedestal(c, p.x ?? 740, p.y ?? 1142, p.t ?? t, p.scale ?? 1.0),
 };
 
 function resolvePropKey(prop) {

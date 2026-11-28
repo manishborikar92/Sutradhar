@@ -26,6 +26,7 @@ export function drawAlphaCrossfade(ctx, drawPrevFn, drawNextFn, blendCanvas, pro
   ctx.restore();
 }
 
+
 export function drawWhipBlurOverlay(ctx, intensity, width = CANVAS_WIDTH, height = CANVAS_HEIGHT, tint = "#101630") {
   if (intensity <= 0.02) return;
   ctx.save();
@@ -43,6 +44,37 @@ export function drawWhipBlurOverlay(ctx, intensity, width = CANVAS_WIDTH, height
   }
   ctx.restore();
 }
+
+export function drawWhipSlideTransition(
+  ctx,
+  drawPrevFn,
+  drawNextFn,
+  blendCanvas,
+  progress,
+  width = CANVAS_WIDTH,
+  height = CANVAS_HEIGHT,
+  tint = "#101630"
+) {
+  const p = smooth(progress);
+  const bCtx = blendCanvas.getContext("2d");
+
+  ctx.save();
+  ctx.translate(-p * width, 0);
+  drawPrevFn(ctx);
+  ctx.restore();
+
+  bCtx.setTransform(1, 0, 0, 1, 0, 0);
+  bCtx.clearRect(0, 0, blendCanvas.width, blendCanvas.height);
+  drawNextFn(bCtx);
+
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.drawImage(blendCanvas, (1 - p) * width, 0);
+  ctx.restore();
+
+  drawWhipBlurOverlay(ctx, Math.sin(p * Math.PI) * 0.85, width, height, tint);
+}
+
 
 export function drawRadialIrisWipe(ctx, drawUnderFn, drawOverFn, blendCanvas, cx, cy, progress) {
   const bCtx = blendCanvas.getContext("2d");
@@ -65,6 +97,7 @@ export function drawRadialIrisWipe(ctx, drawUnderFn, drawOverFn, blendCanvas, cx
   ctx.restore();
 }
 
+
 export function drawDipCut(ctx, progress, color = "#04050E", width = CANVAS_WIDTH, height = CANVAS_HEIGHT) {
   const p = clamp(progress, 0, 1);
   if (p <= 0.005) return;
@@ -75,6 +108,7 @@ export function drawDipCut(ctx, progress, color = "#04050E", width = CANVAS_WIDT
   ctx.fillRect(0, 0, width, height);
   ctx.restore();
 }
+
 
 export function drawBottomCaptionScrim(ctx, topY = 1210, width = CANVAS_WIDTH, height = CANVAS_HEIGHT) {
   const botGrad = ctx.createLinearGradient(0, topY, 0, height);
@@ -136,3 +170,4 @@ export function drawThrottledGrain(ctx, patternCanvas, t, opts = {}) {
   ctx.fillRect(-size, -size, width + size * 2, height + size * 2);
   ctx.restore();
 }
+

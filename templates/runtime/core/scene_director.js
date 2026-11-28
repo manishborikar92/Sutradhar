@@ -21,6 +21,7 @@ import {
   drawBirdFlock,
   drawClouds,
   drawCosmicGrid,
+  drawFireEmbersAndSmoke,
   drawFloraSway,
   drawKailashSacredPeak,
   drawMilkyWayBand,
@@ -50,6 +51,7 @@ import {
   drawThrottledGrain,
   drawVignette,
   drawWhipBlurOverlay,
+  drawWhipSlideTransition,
 } from "../fx/transitions.js";
 
 function computeSpeechMouthOpen(t) {
@@ -60,7 +62,8 @@ function computeSpeechMouthOpen(t) {
       const w = words[j];
       if (t >= w.start && t <= w.end) {
         const p = (t - w.start) / Math.max(0.06, w.end - w.start);
-        return clamp(Math.sin(p * Math.PI) * 0.72, 0.12, 0.78);
+        const mod = Math.sin(p * Math.PI) * (0.65 + 0.35 * Math.sin(p * Math.PI * 3));
+        return clamp(mod * 0.78, 0.12, 0.82);
       }
     }
   }
@@ -99,6 +102,7 @@ function drawSingleScene(targetCtx, sc, t, localT, atmoPools) {
     ampZoom: sc.camera?.amp_zoom ?? 0.008,
     driftZoom: sc.camera?.drift_zoom ?? 0.014,
     panAmpX,
+    sceneDuration: Math.max(0.001, (sc.s1 ?? 16) - (sc.s0 ?? 0)),
   });
 
   const rawMode = env.atmosphere_mode || "dawn_epic";
@@ -354,11 +358,23 @@ function drawSingleScene(targetCtx, sc, t, localT, atmoPools) {
 
   const mouthDefault = computeSpeechMouthOpen(t);
   for (const ch of sc.characters || []) {
+    const cx = ch.x ?? 540;
+    const isExpressivePose = ch.pose === "gesture" || ch.pose === "bless" || ch.pose === "shield";
+    const autoHeadTilt = Math.sin(t * 1.1 + cx * 0.01) * 0.035;
+    const autoArmLift = (ch.speaking && isExpressivePose) ? (0.25 + Math.sin(t * 2.2) * 0.25) : 0.0;
+    const autoTurn = (ch.turn ?? 0) + (ch.speaking ? Math.sin(t * 1.4 + cx * 0.01) * 0.04 : 0);
     drawMythCharacter(targetCtx, {
       ...ch,
       t,
+      turn: autoTurn,
+      headTilt: ch.headTilt !== undefined ? ch.headTilt : autoHeadTilt,
+      armLift: ch.armLift !== undefined ? ch.armLift : autoArmLift,
       mouthOpen: ch.mouthOpen !== undefined ? ch.mouthOpen : (ch.speaking ? mouthDefault : 0),
     });
+  }
+
+  if (env.fire_embers === true || sc.fire_embers === true) {
+    drawFireEmbersAndSmoke(targetCtx, atmoPools.motes, t, ox, oy, CANVAS_WIDTH, CANVAS_HEIGHT);
   }
 
   drawMotes(
@@ -366,7 +382,7 @@ function drawSingleScene(targetCtx, sc, t, localT, atmoPools) {
     atmoPools.motes,
     t,
     parseHexColor(sc.mote_color || env.motes_color || env.mote_color || "#FFE8B0"),
-    sc.mote_alpha ?? 0.45,
+    sc.mote_alpha ?? env.mote_alpha ?? 0.45,
     ox,
     oy,
     CANVAS_WIDTH,
@@ -436,7 +452,7 @@ export function createEpisodeDirector({ canvas, episodePlan, compositionId = "ma
         const drawNext = (target) => drawSingleScene(target, sc, state.t, state.localT, atmoPools);
 
         if (tType === "iris") drawRadialIrisWipe(ctx, drawPrev, drawNext, blendCanvas, 540, 880, pFrac);
-        else if (tType === "whip") { drawNext(ctx); drawWhipBlurOverlay(ctx, Math.sin(pFrac * Math.PI)); }
+        else if (tType === "whip") drawWhipSlideTransition(ctx, drawPrev, drawNext, blendCanvas, pFrac);
         else if (tType === "dip") { (pFrac < 0.5 ? drawPrev : drawNext)(ctx); drawDipCut(ctx, Math.sin(pFrac * Math.PI)); }
         else drawAlphaCrossfade(ctx, drawPrev, drawNext, blendCanvas, pFrac);
       } else {

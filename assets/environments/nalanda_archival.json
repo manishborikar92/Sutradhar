@@ -4,11 +4,11 @@
   "atmosphere_mode": "archival",
   "horizon_y": 1142,
   "palette": {
-    "wall_top": "#2D1814",
-    "wall_bot": "#5E2F1E",
-    "dado_top": "#3B1D14",
-    "floor_a": "#72492F",
-    "floor_b": "#3A2216",
+    "wall_top": "#161B32",
+    "wall_bot": "#48322E",
+    "dado_top": "#2E1E1C",
+    "floor_a": "#5A443A",
+    "floor_b": "#2A1E1B",
     "curtain": null,
     "carpet": null
   },

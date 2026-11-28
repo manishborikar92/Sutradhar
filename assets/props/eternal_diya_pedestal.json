@@ -1,0 +1,8 @@
+{
+  "id": "eternal_diya_pedestal",
+  "name": "Eternal Flame Stone Stele & Diya Pedestal",
+  "category": "sacred_vessel",
+  "renderer": "drawEternalDiyaPedestal",
+  "default_mount": "floor",
+  "description": "Carved sandstone inscription stele and stepped pedestal crowned with an ornate brass diya lamp and animated golden sparks."
+}

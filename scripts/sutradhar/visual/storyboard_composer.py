@@ -115,12 +115,12 @@ AERIAL_CENTERED_PROPS: set[str] = {
 }
 
 CAMERA_MOVE_PARAMS: dict[str, dict[str, float]] = {
-    "static": {"base_zoom": 1.032, "amp_zoom": 0.008, "drift_zoom": 0.018, "pan_amp_x": 11.0},
-    "slow_push_in": {"base_zoom": 1.055, "amp_zoom": 0.013, "drift_zoom": 0.042, "pan_amp_x": 22.0},
-    "slow_pull_out": {"base_zoom": 1.080, "amp_zoom": 0.013, "drift_zoom": -0.036, "pan_amp_x": 22.0},
-    "pan_left": {"base_zoom": 1.058, "amp_zoom": 0.013, "drift_zoom": 0.034, "pan_amp_x": 23.0},
-    "pan_right": {"base_zoom": 1.058, "amp_zoom": 0.013, "drift_zoom": 0.034, "pan_amp_x": -23.0},
-    "drift": {"base_zoom": 1.055, "amp_zoom": 0.014, "drift_zoom": 0.040, "pan_amp_x": 21.0},
+    "static": {"base_zoom": 1.032, "amp_zoom": 0.008, "drift_zoom": 0.018, "pan_amp_x": 14.0},
+    "slow_push_in": {"base_zoom": 1.055, "amp_zoom": 0.014, "drift_zoom": 0.048, "pan_amp_x": 27.0},
+    "slow_pull_out": {"base_zoom": 1.080, "amp_zoom": 0.014, "drift_zoom": -0.042, "pan_amp_x": 27.0},
+    "pan_left": {"base_zoom": 1.058, "amp_zoom": 0.014, "drift_zoom": 0.040, "pan_amp_x": 28.0},
+    "pan_right": {"base_zoom": 1.058, "amp_zoom": 0.014, "drift_zoom": 0.040, "pan_amp_x": -28.0},
+    "drift": {"base_zoom": 1.055, "amp_zoom": 0.015, "drift_zoom": 0.046, "pan_amp_x": 26.0},
 }
 
 
@@ -511,7 +511,19 @@ def _build_env_dict(env_preset: dict[str, Any], sc_vis: Any, horizon_y: int) -> 
     }
     for opt in ("palette", "sky", "sun", "terrain", "grid", "stars_alpha", "motes_color", "has_diyas", "include_curtains", "ground_top", "ground_bot"):
         if opt in env_preset:
-            env[opt] = env_preset[opt]
+            val = env_preset[opt]
+            env[opt] = dict(val) if isinstance(val, dict) else val
+
+    overrides = getattr(sc_vis, "environment_overrides", None)
+    if isinstance(overrides, dict) and overrides:
+        palette_keys = {"wall_top", "wall_bot", "dado_top", "floor_a", "floor_b", "curtain", "carpet"}
+        for ok, ov in overrides.items():
+            if ok == "palette" and isinstance(ov, dict):
+                env["palette"] = {**(env.get("palette") or {}), **ov}
+            elif ok in palette_keys:
+                env["palette"] = {**(env.get("palette") or {}), ok: ov}
+            elif ok not in ("preset_id", "horizon_y"):
+                env[ok] = dict(ov) if isinstance(ov, dict) else ov
 
     if env_id == "kailash_horizon":
         env.setdefault("has_kailash", True)
@@ -627,9 +639,10 @@ def _compile_scene_visuals(
             raise CompositionError(
                 f"Scene {scene_idx} character {ch.role!r} x={ch.x} clipped outside safe horizontal margin [90, 990]"
             )
-        norm_pose, norm_expr, seated = _normalize_pose_and_expr(
+        norm_pose, norm_expr, pose_seated = _normalize_pose_and_expr(
             ch.pose, ch.expr, c_preset, preset_key, scene_idx
         )
+        seated = bool(ch.seated) if getattr(ch, "seated", None) is not None else pose_seated
         default_scale = float((c_preset.get("proportions") or {}).get("defaultScale", 1.0))
 
         if ch.surface_type == "dais":
@@ -710,6 +723,11 @@ def _compile_scene_visuals(
             "scale": round(float(p.scale), 3),
             "mount": mount,
         }
+        if getattr(p, "params", None):
+            prop_dict["params"] = dict(p.params)
+            for pk, pv in p.params.items():
+                if pk not in ("id", "instance_id", "x", "y", "floorY", "r", "mount", "scale"):
+                    prop_dict[pk] = pv
 
         if mount == "sky" or (
             canonical in AERIAL_CENTERED_PROPS
