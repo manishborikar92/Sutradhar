@@ -8,10 +8,11 @@ import json
 import subprocess
 import sys
 import threading
+import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -22,11 +23,19 @@ if str(SCRIPTS_DIR) not in sys.path:
 
 import refresh_youtube_token  # noqa: E402
 from sutradhar.publishing.oauth_refresh import (  # noqa: E402
+    TOKEN_ENDPOINT,
     YOUTUBE_OAUTH_SCOPES,
+    YOUTUBE_WRITE_SCOPES,
     OAuthRefreshError,
+    exchange_authorization_code,
     load_oauth_client_credentials,
+    parse_env_content,
     run_oauth_refresh_flow,
     update_refresh_token,
+)
+from sutradhar.publishing.youtube_client import (  # noqa: E402
+    build_youtube_client,
+    load_env_file,
 )
 
 
@@ -300,3 +309,75 @@ def test_cli_help_exits_zero_without_side_effects() -> None:
     assert proc.returncode == 0
     assert "--env-file" in proc.stdout
     assert "--timeout" in proc.stdout
+
+
+@pytest.mark.parametrize("bad_token", ["", "   ", "line1\nline2", "line1\rline2", 'has"quote'])
+def test_update_refresh_token_rejects_invalid_tokens(tmp_path: Path, bad_token: str) -> None:
+    env_file = tmp_path / ".env.local"
+    env_file.write_text('YOUTUBE_CLIENT_ID="id"\n', encoding="utf-8")
+    with pytest.raises(OAuthRefreshError):
+        update_refresh_token(env_file, 'YOUTUBE_CLIENT_ID="id"\n', bad_token)
+
+
+def test_run_oauth_refresh_flow_rejects_non_positive_timeout(tmp_path: Path) -> None:
+    env_file = tmp_path / ".env.local"
+    env_file.write_text('YOUTUBE_CLIENT_ID="id"\nYOUTUBE_CLIENT_SECRET="sec"\n', encoding="utf-8")
+    with pytest.raises(OAuthRefreshError, match="greater than 0"):
+        run_oauth_refresh_flow(env_file, timeout_seconds=0)
+
+
+def test_exchange_authorization_code_sanitizes_http_error() -> None:
+    err_body = io.BytesIO(
+        json.dumps({"error": "invalid_grant", "error_description": "Token has been expired"}).encode("utf-8")
+    )
+    http_err = urllib.error.HTTPError(
+        TOKEN_ENDPOINT, 400, "Bad Request", hdrs=None, fp=err_body  # type: ignore[arg-type]
+    )
+
+    def _raise_http_err(*args: object, **kwargs: object) -> object:
+        raise http_err
+
+    with pytest.raises(OAuthRefreshError, match="invalid_grant: Token has been expired"):
+        exchange_authorization_code(
+            "code", "http://127.0.0.1:1234/", "cid", "csec", "verifier", urlopen_fn=_raise_http_err
+        )
+
+
+def test_load_env_file_uses_shared_parser_for_bom_export_and_comments(tmp_path: Path) -> None:
+    assert load_env_file(tmp_path) == {}
+    env_file = tmp_path / ".env.local"
+    env_file.write_bytes(
+        b'\xef\xbb\xbfexport YOUTUBE_CLIENT_ID="cid" # comment\n'
+        b"ELEVENLABS_API_KEY='el-key'\n"
+    )
+    parsed = load_env_file(tmp_path)
+    assert parsed == {"YOUTUBE_CLIENT_ID": "cid", "ELEVENLABS_API_KEY": "el-key"}
+    assert parse_env_content(env_file.read_text(encoding="utf-8-sig")) == parsed
+
+
+def test_build_youtube_client_readonly_vs_write_scopes(tmp_path: Path) -> None:
+    env_file = tmp_path / ".env.local"
+    env_file.write_text(
+        'YOUTUBE_CLIENT_ID="cid"\n'
+        'YOUTUBE_CLIENT_SECRET="csec"\n'
+        'YOUTUBE_REFRESH_TOKEN="rtok"\n',
+        encoding="utf-8",
+    )
+
+    with (
+        patch("google.oauth2.credentials.Credentials") as mock_creds,
+        patch("googleapiclient.discovery.build") as mock_build,
+    ):
+        mock_creds.return_value = MagicMock()
+        build_youtube_client(tmp_path, readonly=True)
+        assert mock_creds.call_args.kwargs["scopes"] is None
+        assert mock_creds.call_args.kwargs["token_uri"] == TOKEN_ENDPOINT
+        mock_build.assert_called_once()
+
+        mock_creds.reset_mock()
+        mock_build.reset_mock()
+        build_youtube_client(tmp_path, readonly=False)
+        assert mock_creds.call_args.kwargs["scopes"] == list(YOUTUBE_WRITE_SCOPES)
+        assert mock_creds.call_args.kwargs["token_uri"] == TOKEN_ENDPOINT
+        mock_build.assert_called_once()
+
