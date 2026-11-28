@@ -98,7 +98,7 @@ Sutradhar/
 │   └── render_and_qa.py             # Video renderer, 48kHz audio mastering & KinoCut QA
 ├── templates/                       # Jinja2 Composition Templates
 │   └── composition/                 # Self-contained composition templates (index, styles, engine)
-├── tests/                           # Comprehensive automated test suite (249 tests)
+├── tests/                           # Comprehensive automated pytest suite
 ├── config.yaml                      # Global channel configuration & thresholds
 ├── package.json                     # Node.js dependencies & scripts
 ├── pronunciations_hi.yaml           # Hindi Devanagari pronunciation overrides
@@ -197,8 +197,8 @@ Every generated episode must pass strict automated production gates before being
 Run the test suite to verify system integrity:
 
 ```powershell
-# Run full Python test suite (127 unit tests)
-.\.venv\Scripts\python.exe -m unittest discover tests
+# Run full Python test suite
+.\.venv\Scripts\python.exe -m pytest -q
 
 # Run HyperFrames animation runtime checks
 npm run hf:check

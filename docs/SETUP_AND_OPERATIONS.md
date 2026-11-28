@@ -175,8 +175,8 @@ The database schema is defined in [docs/schema.sql](./docs/schema.sql) (Version 
 ### 4.3 Automated Verification
 Run automated tests before and after making codebase changes:
 ```powershell
-# Python unit tests (127 tests)
-.\.venv\Scripts\python.exe -m unittest discover tests
+# Python test suite
+.\.venv\Scripts\python.exe -m pytest -q
 
 # HyperFrames animation engine check
 npm run hf:check
