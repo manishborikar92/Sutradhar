@@ -156,6 +156,30 @@ class TestAuditionVoices(unittest.TestCase):
             f"Standalone runpy failed:\nSTDOUT:\n{proc.stdout}\nSTDERR:\n{proc.stderr}",
         )
 
+    def test_07_cli_help_and_unknown_flags_do_not_call_elevenlabs(self) -> None:
+        """Verify --help exits 0 and unknown flags exit non-zero without invoking ElevenLabs."""
+        script_path = str(REPO_ROOT / "scripts" / "audition_voices.py")
+
+        help_proc = subprocess.run(
+            [sys.executable, script_path, "--help"],
+            cwd=str(REPO_ROOT),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(help_proc.returncode, 0, help_proc.stderr)
+        self.assertIn("usage:", help_proc.stdout.lower())
+
+        bad_proc = subprocess.run(
+            [sys.executable, script_path, "--unknown-flag-xyz"],
+            cwd=str(REPO_ROOT),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertNotEqual(bad_proc.returncode, 0)
+        self.assertIn("unrecognized arguments", bad_proc.stderr.lower())
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

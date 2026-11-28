@@ -11,6 +11,7 @@ Strictly read-only with respect to config.yaml and episodes.db.
 
 from __future__ import annotations
 
+import argparse
 import json
 import re
 import sys
@@ -262,10 +263,25 @@ def run_audition(
     return report_payload
 
 
-def main() -> int:
+def build_arg_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Sutradhar ElevenLabs v4 Voice & Vocal Tag Audition Utility."
+    )
+    parser.add_argument(
+        "--tags",
+        nargs="+",
+        default=None,
+        help="Optional subset of role tags to audition (e.g. narrator antagonist).",
+    )
+    return parser
+
+
+def main(argv: Optional[list[str]] = None) -> int:
+    parser = build_arg_parser()
+    args = parser.parse_args(argv)
     root = get_project_root()
     cfg = load_config(root)
-    payload = run_audition(root, cfg)
+    payload = run_audition(root, cfg, tag_filter=args.tags)
     print(json.dumps(payload, indent=2, ensure_ascii=False))
     return 0
 
